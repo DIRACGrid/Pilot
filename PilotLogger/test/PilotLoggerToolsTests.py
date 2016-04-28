@@ -4,12 +4,12 @@ import unittest
 import mock
 import json
 import os
-from DIRAC.WorkloadManagementSystem.PilotAgent.PilotLogger.PilotLoggerTools import generateDict, encodeMessage
-from DIRAC.WorkloadManagementSystem.PilotAgent.PilotLogger.PilotLoggerTools import decodeMessage, isMessageFormatCorrect
-from DIRAC.WorkloadManagementSystem.PilotAgent.PilotLogger.PilotLoggerTools import getUniqueIDAndSaveToFile
-from DIRAC.WorkloadManagementSystem.PilotAgent.PilotLogger.PilotLoggerTools import createPilotLoggerConfigFile
-from DIRAC.WorkloadManagementSystem.PilotAgent.PilotLogger.PilotLoggerTools import readPilotLoggerConfigFile
-from DIRAC.WorkloadManagementSystem.PilotAgent.PilotLogger.PilotLoggerTools import getUniqueIDFromOS
+from PilotLoggerTools import generateDict, encodeMessage
+from PilotLoggerTools import decodeMessage, isMessageFormatCorrect
+from PilotLoggerTools import getUniqueIDAndSaveToFile
+from PilotLoggerTools import createPilotLoggerConfigFile
+from PilotLoggerTools import readPilotLoggerConfigFile
+from PilotLoggerTools import getUniqueIDFromOS
 
 
 class TestPilotLoggerTools( unittest.TestCase ):

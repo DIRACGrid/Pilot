@@ -3,8 +3,8 @@
 
 import unittest
 import os
-from DIRAC.WorkloadManagementSystem.PilotAgent.PilotLogger.PilotLogger import PilotLogger, getPilotUUIDFromFile
-from DIRAC.WorkloadManagementSystem.PilotAgent.PilotLogger.PilotLoggerTools import getUniqueIDAndSaveToFile
+from PilotLogger import PilotLogger, getPilotUUIDFromFile
+from PilotLoggerTools import getUniqueIDAndSaveToFile
 
 class TestPilotLogger( unittest.TestCase ):
 
