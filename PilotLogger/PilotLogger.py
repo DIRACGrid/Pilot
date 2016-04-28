@@ -8,18 +8,10 @@ __RCSID__ = "$Id$"
 import stomp
 import sys
 import Queue
-#Since PilotLogger can be used without DIRAC relaying only on PilotLoggerTools, we
-#check two possiblities:
-try:
-  from DIRAC.WorkloadManagementSystem.PilotAgent.PilotLogger.PilotLoggerTools import generateDict, encodeMessage
-  from DIRAC.WorkloadManagementSystem.PilotAgent.PilotLogger.PilotLoggerTools import generateTimeStamp
-  from DIRAC.WorkloadManagementSystem.PilotAgent.PilotLogger.PilotLoggerTools import isMessageFormatCorrect
-  from DIRAC.WorkloadManagementSystem.PilotAgent.PilotLogger.PilotLoggerTools import readPilotLoggerConfigFile
-except ImportError:
-  from PilotLoggerTools import generateDict, encodeMessage
-  from PilotLoggerTools import generateTimeStamp
-  from PilotLoggerTools import isMessageFormatCorrect
-  from PilotLoggerTools import readPilotLoggerConfigFile
+from PilotLoggerTools import generateDict, encodeMessage
+from PilotLoggerTools import generateTimeStamp
+from PilotLoggerTools import isMessageFormatCorrect
+from PilotLoggerTools import readPilotLoggerConfigFile
 
 def connect(host_and_port, ssl_cfg):
   """ Connects to RabbitMQ and returns connection
