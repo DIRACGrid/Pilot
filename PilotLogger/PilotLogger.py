@@ -8,6 +8,7 @@ __RCSID__ = "$Id$"
 import stomp
 import sys
 import Queue
+import logging
 from PilotLoggerTools import generateDict, encodeMessage
 from PilotLoggerTools import generateTimeStamp
 from PilotLoggerTools import isMessageFormatCorrect
@@ -28,21 +29,21 @@ def connect(host_and_port, ssl_cfg):
     connection.connect()
     return connection
   except stomp.exception.ConnectFailedException:
-    print 'Connection error'
+    logging.error( 'Connection error')
     return None
   except IOError:
-    print 'Could not find files with ssl certificates'
+    logging.error('Could not find files with ssl certificates')
     return None
 
 def send(msg ,destination, connect_handler):
-  """Sends a message and prints info on the screen.
+  """Sends a message and logs info.
      Stomp-depended function.
   """
   if not connect_handler:
     return False
   connect_handler.send(destination=destination,
                        body=msg)
-  print " [x] Sent %r " % (  msg )
+  logging.info(" [x] Sent %r ", msg )
   return True
 
 def disconnect(connect_handler):
@@ -63,7 +64,7 @@ def getPilotUUIDFromFile( filename = 'PilotAgentUUID' ):
       uniqueId = myFile.read()
     return uniqueId
   except IOError:
-    print 'Could not open the file!!!'
+    logging.error('Could not open the file!!!')
     return ""
 
 def eraseFileContent( filename ):
@@ -126,7 +127,7 @@ class PilotLogger( object ):
     """
     config = readPilotLoggerConfigFile (filename)
     if not config:
-      print 'Could not open or load configuration File! Pilot Logger will use some default values!!!'
+      logging.warning('Could not open or load configuration File! Pilot Logger will use some default values!!!')
       return False
     else:
       self.fileWithUUID = config['fileWithID']

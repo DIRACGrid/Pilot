@@ -8,6 +8,7 @@ import json
 from uuid import uuid1
 import sys
 import os
+import logging
 
 def createPilotLoggerConfigFile( filename = 'PilotLogger.cfg',
                                  host = '',
@@ -178,7 +179,7 @@ def getUniqueIDAndSaveToFile( filename = 'PilotAgentUUID' ):
       myFile.write( myId )
     return True
   except IOError:
-    print 'could not open file'
+    logging.error('could not open file')
     return False
 
 def getUniqueIDFromOS():
