@@ -6,8 +6,8 @@ import unittest
 import json
 import os
 
-from PilotAgent.pilotTools import PilotParams
-from PilotAgent.pilotCommands import GetPilotVersion
+from Pilot.pilotTools import PilotParams
+from Pilot.pilotCommands import GetPilotVersion
 
 class PilotTestCase( unittest.TestCase ):
   """ Base class for the Agents test cases
