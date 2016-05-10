@@ -85,6 +85,8 @@ function prepareForPilot(){
         cp $PILOT_CI_PATH/consumeFromQueue.py $PILOTINSTALLDIR
         cp $PILOT_CI_PATH/simpleTestPilotLogger.py $PILOTINSTALLDIR
         cp -r certificates $PILOTINSTALLDIR
+
+        installStompIfNecessary
 }
 
 
@@ -118,5 +120,21 @@ function FullPilotTestsWithWrapper(){
 function RabbitServerCleanup()
 {
   python consumeFromQueue.py 
+}
+
+function installStompIfNecessary()
+{
+  #checking if stomp is installed
+  if ! python -c 'import stomp' > /dev/null 2>&1; then
+      #checking if pip is installed
+      if ! type pip > /dev/null 2>&1; then
+          type yum > /dev/null 2>&1 || { echo >&2 "yum installer is required. Aborting"; exit 1; }
+          yum -y install python-pip
+      fi
+      pip install --user 'stomp.py=4.1.11'
+  fi
+  #stomp should be installed now
+  python -c 'import stomp' > /dev/null 2>&1 ||{ echo >&2 "stomp installation failure. Aborting"; exit 1; }
+
 }
 
