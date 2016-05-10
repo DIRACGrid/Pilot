@@ -62,7 +62,7 @@ CLIENTINSTALLDIR=$_
 mkdir -p $WORKSPACE/PilotInstallDIR # Where pilots are installed
 PILOTINSTALLDIR=$_
 
-function runPilot(){
+function runAllPilotTests(){
   prepareForPilot
   simpleTestPilotLogger
   #FullPilotTestsWithWrapper
@@ -82,8 +82,9 @@ function prepareForPilot(){
         cp $PILOT_LOGGER_PATH/PilotLogger.py $PILOTINSTALLDIR/
         cp $PILOT_LOGGER_PATH/PilotLoggerTools.py $PILOTINSTALLDIR/
         cp $PILOT_CI_PATH/PilotLoggerTest.cfg $PILOTINSTALLDIR/PilotLogger.cfg
-        cp $PILOT_CI_PATH/default_consumer.py $PILOTINSTALLDIR
-        cp $PILOT_CI_PATH/compare.py $PILOTINSTALLDIR
+        cp $PILOT_CI_PATH/consumeFromQueue.py $PILOTINSTALLDIR
+        cp $PILOT_CI_PATH/simpleTestPilotLogger.py $PILOTINSTALLDIR
+        cp -r certificates $PILOTINSTALLDIR
 }
 
 
@@ -91,18 +92,20 @@ function prepareForPilot(){
 #Next it is taken from the RabbitMQ queue and 
 #the content of the message is compared
 function simpleTestPilotLogger(){
+
   echo '==> [simpleTestPilotLogger]'
+
   cd $PILOTINSTALLDIR 
-  PILOT_UUID="37356d94-15c6-11e6-a600-606c663dde16"
-  echo -n "$PILOT_UUID" > "PilotAgentUUID"
-  EXPECTED_MSG='{"status": "Landed", "timestamp": "1462789339.68", "pilotUUID": "37356d94-15c6-11e6-a600-606c663dde16", "minorStatus": "I will send an SOS to the world!", "source": "pilot"}'
-  
-  #python default_consumer.py #to clean up the test queue
-  python PilotLogger.py "I will send an SOS to the world!"
-  RECV_MSG=$(python default_consumer.py)
-  RESULT=$(python compare.py "$RECV_MSG" "$EXPECTED_MSG")
-  echo $RESULT
+
+  RabbitServerCleanup #to assure that the queue is empty
+
+  RESULT=$(python simpleTestPilotLogger.py)
+
+  RabbitServerCleanup #to assure that the queue is empty
+
   cd ../
+
+  echo $RESULT
 }
 
 function FullPilotTestsWithWrapper(){
@@ -111,4 +114,9 @@ function FullPilotTestsWithWrapper(){
   ./vm-pilot.sh 
 }
 
+#consume all messages from the queue, leaving it empty
+function RabbitServerCleanup()
+{
+  python consumeFromQueue.py 
+}
 
