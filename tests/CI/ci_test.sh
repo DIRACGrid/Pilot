@@ -12,7 +12,7 @@ echo -e '***' $(date -u) "**** Getting the tests ****\n"
 mkdir -p $PWD/TestCode
 cd $PWD/TestCode
 
-git clone https://github.com/wkrzemien/DIRACGrid/Pilot.git
+git clone https://github.com/wkrzemien/Pilot.git
 cd Pilot
 git checkout $(PILOTBRANCH)
 echo `pwd`
