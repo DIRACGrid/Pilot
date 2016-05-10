@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PILOTBRANCH=master
+PILOTBRANCH=pilot_loggers
 DEBUG=True
 
 PILOTUSERDN=/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=wkrzemie/CN=643820/CN=Wojciech Jan Krzemien
@@ -12,7 +12,8 @@ echo -e '***' $(date -u) "**** Getting the tests ****\n"
 mkdir -p $PWD/TestCode
 cd $PWD/TestCode
 
-git clone https://github.com/DIRACGrid/Pilot.git
+#git clone https://github.com/DIRACGrid/Pilot.git
+git clone /home/krzemien/workdir/lhcb/dirac_development/Pilot Pilot
 cd Pilot
 git checkout $(PILOTBRANCH)
 echo `pwd`
@@ -27,4 +28,4 @@ source pilot_ci.sh
 
 echo -e '***' $(date -u) "**** Pilot INSTALLATION START ****\n"
 
-runPilot 
+runAllPilotTests
