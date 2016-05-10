@@ -14,7 +14,7 @@ cd $PWD/TestCode
 
 git clone https://github.com/wkrzemien/Pilot.git
 cd Pilot
-git checkout $(PILOTBRANCH)
+git checkout $PILOTBRANCH
 echo `pwd`
 cd ../..
 echo `pwd`
