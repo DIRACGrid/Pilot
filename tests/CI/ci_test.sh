@@ -3,8 +3,6 @@
 PILOTBRANCH=pilot_loggers
 DEBUG=True
 
-PILOTUSERDN=/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=wkrzemie/CN=643820/CN=Wojciech Jan Krzemien
-
 echo -e "**** Starting Pilot tests with PilotLogger ****\n"
 
 echo -e '***' $(date -u) "**** Getting the tests ****\n"
