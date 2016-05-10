@@ -1,13 +1,12 @@
 import stomp
-import Queue
 
 class MyListener(stomp.ConnectionListener):
   def __init__( self ):
-    self.messages = Queue.Queue()
+    self.messages = []
   def on_error(self, headers, message):
     print('received an error "%s"' % message)
   def on_message(self, headers, message):
-    self.messages.put(message)
+    self.messages.append(message)
     print message
 
 def main():
