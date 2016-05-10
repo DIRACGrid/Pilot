@@ -12,7 +12,7 @@ def main():
   consume()
 
 def consume():
-  host_port  = [('127.0.0.1', int(61614))]
+  host_port  = [('128.142.242.99', int(61614))]
   key_file = 'certificates/client/key.pem'
   cert_file = 'certificates/client/cert.pem'
   ca_certs = 'certificates/testca/cacert.pem'
