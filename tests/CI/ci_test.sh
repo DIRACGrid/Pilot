@@ -19,8 +19,7 @@ echo `pwd`
 
 echo -e '***' $(date -u) "**** Got the tests ****\n"
 
-#source TestCode/Pilot/tests/CI/pilot_ci.sh 
-source pilot_ci.sh 
+source TestCode/Pilot/tests/CI/pilot_ci.sh 
 #<---- this file contains the tests logic
 
 echo -e '***' $(date -u) "**** Pilot INSTALLATION START ****\n"
