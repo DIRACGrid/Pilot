@@ -6,8 +6,10 @@ class MyListener(stomp.ConnectionListener):
     def on_error(self, headers, message):
         print('received an error "%s"' % message)
     def on_message(self, headers, message):
-        #sys.stdout.write(message)
         print(message)
+
+def main():
+  consume()
 
 def consume():
   host_port  = [('127.0.0.1', int(61614))]
@@ -18,7 +20,11 @@ def consume():
   conn.set_ssl(for_hosts=host_port, key_file = key_file,cert_file = cert_file, ca_certs=ca_certs)
   conn.set_listener('', MyListener())
   conn.start()
-  conn.connect()
+  conn.connect(wait=True)
   conn.subscribe(destination='/queue/test', id=1, ack='auto')
   conn.disconnect()
+  #while 1:
+    #pass
 
+if __name__ == '__main__':
+  main()
