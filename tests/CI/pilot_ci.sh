@@ -62,12 +62,6 @@ CLIENTINSTALLDIR=$_
 mkdir -p $WORKSPACE/PilotInstallDIR # Where pilots are installed
 PILOTINSTALLDIR=$_
 
-function runAllPilotTests(){
-  prepareForPilot
-  simpleTestPilotLogger
-  #FullPilotTestsWithWrapper
-}
-
 function prepareForPilot(){
 	echo '==> [prepareForPilot]'
 
@@ -87,33 +81,7 @@ function prepareForPilot(){
         cp -r certificates $PILOTINSTALLDIR
 
         installStompIfNecessary
-}
-
-
-#PilotLogger sends one message.
-#Next it is taken from the RabbitMQ queue and 
-#the content of the message is compared
-function simpleTestPilotLogger(){
-
-  echo '==> [simpleTestPilotLogger]'
-
-  cd $PILOTINSTALLDIR 
-
-  RabbitServerCleanup #to assure that the queue is empty
-
-  RESULT=$(python simpleTestPilotLogger.py)
-
-  RabbitServerCleanup #to assure that the queue is empty
-
-  cd ../
-
-  echo $RESULT
-}
-
-function FullPilotTestsWithWrapper(){
-  echo '==> [FullPilotTestsWithWrapper]'
-  cd $PILOTINSTALLDIR 
-  ./vm-pilot.sh 
+        RabbitServerCleanup #to assure that the queue is empty
 }
 
 #consume all messages from the queue, leaving it empty
