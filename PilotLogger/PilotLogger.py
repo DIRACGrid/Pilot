@@ -133,7 +133,7 @@ class PilotLogger( object ):
       self.fileWithUUID = config['fileWithID']
       self.networkCfg= [(config['host'], int(config['port']))]
       self.queuePath = config['queuePath']
-      self.sslCfg = { k: config[k] for k  in ('key_file', 'cert_file', 'ca_certs')}
+      self.sslCfg = dict((k, config[k]) for k  in ('key_file', 'cert_file', 'ca_certs'))
       return True
 
   def _isCorrectFlag( self, flag ):
