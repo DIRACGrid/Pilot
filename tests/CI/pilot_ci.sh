@@ -77,7 +77,7 @@ function prepareForPilot(){
         cp $PILOT_LOGGER_PATH/PilotLoggerTools.py $PILOTINSTALLDIR/
         cp $PILOT_CI_PATH/PilotLoggerTest.cfg $PILOTINSTALLDIR/PilotLogger.cfg
         cp $PILOT_CI_PATH/consumeFromQueue.py $PILOTINSTALLDIR
-        cp $PILOT_CI_PATH/simpleTestPilotLogger.py $PILOTINSTALLDIR
+        cp $PILOT_CI_PATH/Test_simplePilotLogger.py $PILOTINSTALLDIR
         cp -r certificates $PILOTINSTALLDIR
 
         installStompIfNecessary
