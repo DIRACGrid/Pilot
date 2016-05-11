@@ -15,7 +15,7 @@ def dictWithoutKey(d, keyToRemove):
 
 class TestSimplePilotLogger(unittest.TestCase):
 
-  def Test_SimplePilotLogger(self):
+  def test_SimplePilotLogger(self):
     uuid ="37356d94-15c6-11e6-a600-606c663dde16"
     filenameUUID = "PilotAgentUUID"
     expectedMsgs = [{u'status': u'Landed', u'source': u'pilot', u'pilotUUID': u'37356d94-15c6-11e6-a600-606c663dde16', u'minorStatus': u'I will send an SOS to the world!'}]
