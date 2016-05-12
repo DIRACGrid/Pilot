@@ -72,7 +72,6 @@ function prepareForPilot(){
 	cp $PILOT_SCRIPTS_PATH/dirac-pilot.py $PILOTINSTALLDIR/
 	cp $PILOT_SCRIPTS_PATH/pilotTools.py $PILOTINSTALLDIR/
 	cp $PILOT_SCRIPTS_PATH/pilotCommands.py $PILOTINSTALLDIR/
-        cp $PILOT_SCRIPTS_PATH/vm-pilot.sh $PILOTINSTALLDIR
         cp $PILOT_LOGGER_PATH/PilotLogger.py $PILOTINSTALLDIR/
         cp $PILOT_LOGGER_PATH/PilotLoggerTools.py $PILOTINSTALLDIR/
         cp $PILOT_CI_PATH/PilotLoggerTest.cfg $PILOTINSTALLDIR/PilotLogger.cfg
