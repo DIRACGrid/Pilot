@@ -84,8 +84,9 @@ function prepareForPilot(){
 function PreparePythonEnvironment()
 {
   cd $PILOTINSTALLDIR 
-  virtualenv testEnv
-  source testEnv/bin.activate
+  
+  virtualenv $PILOTINSTALLDIR/testEnv
+  source $PILOTINSTALLDIR/testEnv/bin.activate
   pip install -r requirements.txt
 }
 #consume all messages from the queue, leaving it empty
