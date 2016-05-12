@@ -25,6 +25,7 @@ source TestCode/Pilot/tests/CI/pilot_ci.sh
 echo -e '***' $(date -u) "**** Pilot INSTALLATION START ****\n"
 
 prepareForPilot
+PreparePythonEnvironment
 cd $PILOTINSTALLDIR 
 echo '==> [SimplePilotLogger ]'
 RabbitServerCleanup #to assure that the queue is empty

@@ -79,8 +79,16 @@ function prepareForPilot(){
         cp $PILOT_CI_PATH/consumeFromQueue.py $PILOTINSTALLDIR
         cp $PILOT_CI_PATH/Test_simplePilotLogger.py $PILOTINSTALLDIR
         cp -r certificates $PILOTINSTALLDIR
+        cp $TESTCODE/Pilot/requirements.txt $PILOTINSTALLDIR
 }
 
+function PreparePythonEnvironment()
+{
+  cd $PILOTINSTALLDIR 
+  virtualenv testEnv
+  source testEnv/bin.activate
+  pip install -r requirements.txt
+}
 #consume all messages from the queue, leaving it empty
 function RabbitServerCleanup()
 {
