@@ -83,11 +83,20 @@ function prepareForPilot(){
 
 function PreparePythonEnvironment()
 {
+#rmvirtualenv DIRAC_project
+#workon Pilot_env
+#if [ $? -ne 0 ]; then mkvirtualenv Pilot_env; pip install --upgrade setuptools; pip install -r Pilot/requirements.txt;fi;
   cd $PILOTINSTALLDIR 
+  rmvirtualenv $PILOTINSTALLDIR/testEnv
+  workon testEnv
+  if [ $? -ne 0 ]; then mkvirtualenv $PILOTINSTALLDIR/testEnv; 
+    pip install --upgrade setuptools; 
+    pip install -r ../Pilot/requirements.txt;
+  fi;
   
-  virtualenv $PILOTINSTALLDIR/testEnv
-  source $PILOTINSTALLDIR/testEnv/bin/activate
-  pip install -r requirements.txt
+  #virtualenv $PILOTINSTALLDIR/testEnv
+  #source $PILOTINSTALLDIR/testEnv/bin/activate
+  #pip install -r requirements.txt
 }
 #consume all messages from the queue, leaving it empty
 function RabbitServerCleanup()
