@@ -87,12 +87,11 @@ function PreparePythonEnvironment()
 #workon Pilot_env
 #if [ $? -ne 0 ]; then mkvirtualenv Pilot_env; pip install --upgrade setuptools; pip install -r Pilot/requirements.txt;fi;
   cd $PILOTINSTALLDIR 
-  rmvirtualenv $PILOTINSTALLDIR/testEnv
-  workon testEnv
-  if [ $? -ne 0 ]; then mkvirtualenv $PILOTINSTALLDIR/testEnv; 
-    pip install --upgrade setuptools; 
-    pip install -r ../Pilot/requirements.txt;
-  fi;
+  #rmvirtualenv $PILOTINSTALLDIR/testEnv
+  mkvirtualenv $PILOTINSTALLDIR/testEnv; 
+  workon $PILOTINSTALLDIR/testEnv
+  pip install --upgrade setuptools; 
+  pip install -r ../Pilot/requirements.txt;
   
   #virtualenv $PILOTINSTALLDIR/testEnv
   #source $PILOTINSTALLDIR/testEnv/bin/activate
