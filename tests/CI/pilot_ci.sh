@@ -83,21 +83,12 @@ function prepareForPilot(){
 
 function PreparePythonEnvironment()
 {
-#rmvirtualenv DIRAC_project
-#workon Pilot_env
-#if [ $? -ne 0 ]; then mkvirtualenv Pilot_env; pip install --upgrade setuptools; pip install -r Pilot/requirements.txt;fi;
-  cd $PILOTINSTALLDIR 
-  #source /usr/bin/virtualenvwrapper.sh
-  ##rmvirtualenv $PILOTINSTALLDIR/testEnv
-  #mkvirtualenv $PILOTINSTALLDIR/testEnv; 
-  #workon $PILOTINSTALLDIR/testEnv
-  #pip install --upgrade setuptools; 
-  #pip install -r $TESTCODE/Pilot/requirements.txt;
-  
-  virtualenv $PILOTINSTALLDIR/testEnv
-  source $PILOTINSTALLDIR/testEnv/bin/activate
-  pip install -r $TESTCODE/Pilot/requirements.txt;
-  #pip install -r requirements.txt
+  if ["$HOSTNAME" = lbvobox49.cern.ch]; then
+    cd $PILOTINSTALLDIR 
+    virtualenv $PILOTINSTALLDIR/testEnv
+    source $PILOTINSTALLDIR/testEnv/bin/activate
+    pip install -r $TESTCODE/Pilot/requirements.txt;
+  fi
 }
 #consume all messages from the queue, leaving it empty
 function RabbitServerCleanup()
