@@ -83,7 +83,7 @@ function prepareForPilot(){
 
 function PreparePythonEnvironment()
 {
-  if ["$HOSTNAME" = lbvobox49.cern.ch]; then
+  if [ "$HOSTNAME" = lbvobox49.cern.ch ]; then
     cd $PILOTINSTALLDIR 
     virtualenv $PILOTINSTALLDIR/testEnv
     source $PILOTINSTALLDIR/testEnv/bin/activate
