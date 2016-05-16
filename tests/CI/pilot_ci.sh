@@ -92,7 +92,7 @@ function PreparePythonEnvironment()
   mkvirtualenv $PILOTINSTALLDIR/testEnv; 
   workon $PILOTINSTALLDIR/testEnv
   pip install --upgrade setuptools; 
-  pip install -r ../Pilot/requirements.txt;
+  pip install -r $TESTCODE/Pilot/requirements.txt;
   
   #virtualenv $PILOTINSTALLDIR/testEnv
   #source $PILOTINSTALLDIR/testEnv/bin/activate
