@@ -83,11 +83,19 @@ function prepareForPilot(){
 
 function PreparePythonEnvironment()
 {
+  cd $PILOTINSTALLDIR 
   if [ "$HOSTNAME" = lbvobox49.cern.ch ]; then
-    cd $PILOTINSTALLDIR 
     virtualenv $PILOTINSTALLDIR/testEnv
     source $PILOTINSTALLDIR/testEnv/bin/activate
     pip install -r $TESTCODE/Pilot/requirements.txt;
+  else
+    echo -e '***' $(date -u) "sourcing virtualenvwrapper.sh ****"
+    . /opt/rh/python27/enable
+    source /opt/rh/python27/root/usr/bin/virtualenvwrapper.sh
+    mkvirtualenv testEnv
+    workon testEnv
+    pip install --upgrade setuptools;
+    pip install -r $TestCode/Pilot/requirements.txt;
   fi
 }
 #consume all messages from the queue, leaving it empty
