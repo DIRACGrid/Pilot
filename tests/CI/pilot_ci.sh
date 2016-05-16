@@ -102,7 +102,7 @@ function PreparePythonEnvironment()
     mkvirtualenv testEnv
     workon testEnv
     pip install --upgrade setuptools;
-    pip install -r $TestCode/Pilot/requirements.txt;
+    pip install -r $TESTCODE/Pilot/requirements.txt;
   fi
 }
 #consume all messages from the queue, leaving it empty
