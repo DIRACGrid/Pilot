@@ -77,8 +77,15 @@ function prepareForPilot(){
         cp $PILOT_CI_PATH/PilotLoggerTest.cfg $PILOTINSTALLDIR/PilotLogger.cfg
         cp $PILOT_CI_PATH/consumeFromQueue.py $PILOTINSTALLDIR
         cp $PILOT_CI_PATH/Test_simplePilotLogger.py $PILOTINSTALLDIR
-        cp -r certificates $PILOTINSTALLDIR
         cp $TESTCODE/Pilot/requirements.txt $PILOTINSTALLDIR
+        mkdir -p $PILOTINSTALLDIR/certificates
+        mkdir -p $PILOTINSTALLDIR/certificates/client
+        mkdir -p $PILOTINSTALLDIR/certificates/testca 
+  #only for this machine we copy the certificates locally
+  #for jenkins we use other tricks 
+  if [ "$HOSTNAME" = lbvobox49.cern.ch ]; then
+        cp -r certificates $PILOTINSTALLDIR
+  fi
 }
 
 function PreparePythonEnvironment()
