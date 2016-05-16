@@ -87,6 +87,7 @@ function PreparePythonEnvironment()
 #workon Pilot_env
 #if [ $? -ne 0 ]; then mkvirtualenv Pilot_env; pip install --upgrade setuptools; pip install -r Pilot/requirements.txt;fi;
   cd $PILOTINSTALLDIR 
+  source /usr/bin/virtualenvwrapper.sh
   #rmvirtualenv $PILOTINSTALLDIR/testEnv
   mkvirtualenv $PILOTINSTALLDIR/testEnv; 
   workon $PILOTINSTALLDIR/testEnv
