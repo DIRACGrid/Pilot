@@ -1,5 +1,5 @@
 import stomp
-
+import site 
 class MyListener(stomp.ConnectionListener):
   def __init__( self ):
     self.messages = []
@@ -10,6 +10,7 @@ class MyListener(stomp.ConnectionListener):
     print message
 
 def main():
+  site.getsitepackages()
   consume()
 
 def consume():
