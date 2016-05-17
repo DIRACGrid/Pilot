@@ -1,4 +1,7 @@
+import sys
 import site 
+sys.path.append(site.getsitepackages())
+sys.path.append(site.getusersitepackages())
 import stomp
 class MyListener(stomp.ConnectionListener):
   def __init__( self ):
