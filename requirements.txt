@@ -4,3 +4,4 @@ pytest
 pytest-cov
 coverage
 stomp.py
+python-coveralls
