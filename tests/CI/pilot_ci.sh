@@ -94,23 +94,9 @@ function PreparePythonEnvironment()
   USER_SITE_PACKAGE_BASE=$(python -m site --user-base)
   wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py --user --upgrade
   INSTALL_COMMAND="$USER_SITE_PACKAGE_BASE/bin/pip install --upgrade --user -r $TESTCODE/Pilot/requirements.txt"
-  echo "$INSTALL_COMMAND"
   eval $INSTALL_COMMAND
-
-  #if [ "$HOSTNAME" = lbvobox49.cern.ch ]; then
-    #virtualenv $PILOTINSTALLDIR/testEnv
-    #source $PILOTINSTALLDIR/testEnv/bin/activate
-    #pip install -r $TESTCODE/Pilot/requirements.txt;
-  #else
-    #echo -e '***' $(date -u) "sourcing virtualenvwrapper.sh ****"
-    #. /opt/rh/python27/enable
-    #source /opt/rh/python27/root/usr/bin/virtualenvwrapper.sh
-    #mkvirtualenv testEnv
-    #workon testEnv
-    #pip install --upgrade setuptools;
-    #pip install -r $TESTCODE/Pilot/requirements.txt;
-  #fi
 }
+
 #consume all messages from the queue, leaving it empty
 function RabbitServerCleanup()
 {
