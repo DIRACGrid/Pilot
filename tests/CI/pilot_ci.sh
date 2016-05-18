@@ -88,7 +88,7 @@ function prepareForPilot(){
   fi
 }
 
-function PreparePythonEnvironment()
+function preparePythonEnvironment()
 {
   cd $PILOTINSTALLDIR 
   USER_SITE_PACKAGE_BASE=$(python -m site --user-base)
