@@ -93,7 +93,10 @@ function PreparePythonEnvironment()
   cd $PILOTINSTALLDIR 
   USER_SITE_PACKAGE_BASE=$(python -m site --user-base)
   wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py --user --upgrade
-  `$USER_SITE_PACKAGE_BASE/bin/pip install --upgrade --user -r $TESTCODE/Pilot/requirements.txt`
+  INSTALL_COMMAND="$USER_SITE_PACKAGE_BASE/bin/pip install --upgrade --user -r $TESTCODE/Pilot/requirements.txt"
+  echo "$INSTALL_COMMAND"
+  eval $INSTALL_COMMAND
+
   #if [ "$HOSTNAME" = lbvobox49.cern.ch ]; then
     #virtualenv $PILOTINSTALLDIR/testEnv
     #source $PILOTINSTALLDIR/testEnv/bin/activate
