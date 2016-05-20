@@ -293,7 +293,7 @@ class ExtendedLogger( Logger ):
       #which is not yet in the DIRAC externals
       #so up to now we want to turn it off
       from PilotLogger import PilotLogger
-      self.pilotLogger = PilotLogger.PilotLogger()
+      self.pilotLogger = PilotLogger()
     else:
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
