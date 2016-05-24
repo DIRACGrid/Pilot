@@ -74,9 +74,10 @@ def retrieveUrlTimeout( url, fileName, log, timeout = 0 ):
       expectedBytes = 0
     data = remoteFD.read()
     if fileName:
-      localFD = open( fileName + '-local', "wb" )
-      localFD.write( data )
-      localFD.close()
+      if not os.path.exists( fileName + '-local' ):
+        localFD = open( fileName + '-local', "wb" )
+        localFD.write( data )
+        localFD.close()
     else:
       urlData += data
     remoteFD.close()
@@ -393,7 +394,7 @@ class PilotParams( object ):
 
         param names and defaults are defined here
     """
-
+    self.log = Logger( self.__class__.__name__ )
     self.rootPath = os.getcwd()
     self.originalRootPath = os.getcwd()
     self.pilotRootPath = os.getcwd()
@@ -448,8 +449,6 @@ class PilotParams( object ):
     self.cmdOpts = ( ( 'b', 'build', 'Force local compilation' ),
                      ( 'd', 'debug', 'Set debug flag' ),
                      ( 'e:', 'extraPackages=', 'Extra packages to install (comma separated)' ),
-                     ( 'E:', 'commandExtensions=', 'Python module with extra commands' ),
-                     ( 'X:', 'commands=', 'Pilot commands to execute commands' ),
                      ( 'g:', 'grid=', 'lcg tools package version' ),
                      ( 'h', 'help', 'Show this help' ),
                      ( 'i:', 'python=', 'Use python<26|27> interpreter' ),
@@ -492,11 +491,7 @@ class PilotParams( object ):
                                             "".join( [ opt[0] for opt in self.cmdOpts ] ),
                                             [ opt[1] for opt in self.cmdOpts ] )
     for o, v in self.optList:
-      if o == '-E' or o == '--commandExtensions':
-        self.commandExtensions = v.split( ',' )
-      elif o == '-X' or o == '--commands':
-        self.commands = v.split( ',' )
-      elif o == '-e' or o == '--extraPackages':
+      if o == '-e' or o == '--extraPackages':
         self.extensions = v.split( ',' )
       elif o == '-n' or o == '--name':
         self.site = v
@@ -553,4 +548,41 @@ class PilotParams( object ):
         self.jobCPUReq = v
       elif o == '-z' or o == '--pilotLogging':
         self.pilotLogging = True
+        
+  def retrievePilotParameters( self ):
+    """Retrieve pilot parameters from the content of a json file. The file should be something like:
+
+    { 'SetupName':{'Commands':{ Name of the grid': [list of commands]}, 'Extensions':['list of extensions'], 'Version':['xyz'],
+      'Defaults':{'Commands':{ 'defaultList': [list of commands]', 'Name of the grid': [list of commands]}, 'Version':['xyz']}}
+
+    The file must contains at least the Defaults section. """
+    try:
+      import json
+      self.log.info( "Finding the pilot commands list" )
+      result = retrieveUrlTimeout( self.pilotCFGFileLocation + '/' + self.pilotCFGFile,
+                                   self.pilotCFGFile,
+                                   self.log,
+                                   timeout = 120 )
+      if not result:
+        self.log.info( "Could not download the json file, using the default commands list." )
+      else:
+        fp = open( self.pilotCFGFile + '-local', 'r' )
+        pilotCFGFileContent = json.load( fp )
+        fp.close()
+        grid = self.site.split( '.' )[0]
+        if self.setup in pilotCFGFileContent:
+          if grid in pilotCFGFileContent[self.setup]['Commands']:
+            self.commands = [str( pv ) for pv in pilotCFGFileContent[self.setup]['Commands'][grid]]
+          elif grid in pilotCFGFileContent['Defaults']['Commands']:
+            self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands'][grid]]
+          else:
+            self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands']['defaultList']]
+          if 'Extensions' in pilotCFGFileContent[self.setup]:
+            self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent[self.setup]['Extensions']]
+          elif grid in pilotCFGFileContent['Defaults']['Commands']:
+            self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands'][grid]]
+          else:
+            self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands']['defaultList']]
+    except ImportError:
+      self.log.error( 'No json module available, using default commands list. ' )
 

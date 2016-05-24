@@ -33,6 +33,10 @@ __RCSID__ = "$Id$"
 class GetPilotVersion( CommandBase ):
   """ Used to get the pilot version that needs to be installed.
       If passed as a parameter, uses that one. If not passed, it looks for alternatives.
+      If the version is not passed as a parameter, it is taken from a json file that should look like:
+
+      { 'SetupName':{'Commands':{ Name of the grid': [list of commands]}, 'Extensions':['list of extensions'], 'Version':['xyz'],
+      'Defaults':{'Commands':{ 'defaultList': [list of commands]', 'Name of the grid': [list of commands]}, 'Version':['xyz']}}
 
       This assures that a version is always got even on non-standard Grid resources.
   """
@@ -59,7 +63,11 @@ class GetPilotVersion( CommandBase ):
       fp = open( self.pp.pilotCFGFile + '-local', 'r' )
       pilotCFGFileContent = json.load( fp )
       fp.close()
-      pilotVersions = [str( pv ) for pv in pilotCFGFileContent[self.pp.setup]['Version']]
+      # If the version of a specific setup is not present, we take the default version.
+      if self.pp.setup in pilotCFGFileContent and 'Version' in pilotCFGFileContent[self.pp.setup]:
+        pilotVersions = [str( pv ) for pv in pilotCFGFileContent[self.pp.setup]['Version']]
+      else:
+        pilotVersions = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Version']]
       self.log.debug( "Pilot versions found: %s" % ', '.join( pilotVersions ) )
       self.log.info( "Setting pilot version to %s" % pilotVersions[0] )
       self.pp.releaseVersion = pilotVersions[0]

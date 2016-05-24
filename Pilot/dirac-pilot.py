@@ -41,10 +41,12 @@ if __name__ == "__main__":
   pilotParams.pilotScript = os.path.realpath( sys.argv[0] )
   pilotParams.pilotScriptName = os.path.basename( pilotParams.pilotScript )
   log.debug( 'PARAMETER [%s]' % ', '.join( map( str, pilotParams.optList ) ) )
+  pilotParams.retrievePilotParameters()
 
-  log.info( "Executing commands: %s" % str( pilotParams.commands ) )
   if pilotParams.commandExtensions:
     log.info( "Requested command extensions: %s" % str( pilotParams.commandExtensions ) )
+
+  log.info( "Executing commands: %s" % str( pilotParams.commands ) )
 
   for commandName in pilotParams.commands:
     command, module = getCommand( pilotParams, commandName, log )
