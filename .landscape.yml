@@ -1,0 +1,8 @@
+pylint:
+  disable:
+    - no-self-use
+
+pep8:
+  disable:
+    - E114
+    - E111
