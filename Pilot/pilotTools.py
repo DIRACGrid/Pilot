@@ -74,10 +74,8 @@ def retrieveUrlTimeout( url, fileName, log, timeout = 0 ):
       expectedBytes = 0
     data = remoteFD.read()
     if fileName:
-      if not os.path.exists( fileName + '-local' ):
-        localFD = open( fileName + '-local', "wb" )
+      with open( fileName + '-local', "wb" ) as localFD:
         localFD.write( data )
-        localFD.close()
     else:
       urlData += data
     remoteFD.close()
