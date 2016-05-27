@@ -39,10 +39,9 @@ class CommandsTestCase( PilotTestCase ):
     self.assertEqual( gpv.pp.releaseVersion, 'v1r1' )
 
   def test_RetrievePilotParameters( self ):
-    fp = open( 'pilot.json', 'w' )
-    json.dump( {'TestSetup':{'Commands':{'grid1':['x', 'y', 'z'], 'grid2':['d', 'f']}, 'Extensions':['TestExtension'],
+    with open ( 'pilot.json', 'w' ) as fp:
+      json.dump( {'TestSetup':{'Commands':{'grid1':['x', 'y', 'z'], 'grid2':['d', 'f']}, 'Extensions':['TestExtension'],
                              'Version':['v1r1', 'v2r2']}}, fp )
-    fp.close()
     self.pp.setup = 'TestSetup'
     self.pp.site = 'grid1.cern.ch'
     self.pp.pilotCFGFileLocation = 'file://%s' % os.getcwd()

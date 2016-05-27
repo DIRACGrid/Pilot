@@ -564,9 +564,8 @@ class PilotParams( object ):
       if not result:
         self.log.info( "Could not download the json file, using the default commands list." )
       else:
-        fp = open( self.pilotCFGFile + '-local', 'r' )
-        pilotCFGFileContent = json.load( fp )
-        fp.close()
+        with open ( self.pilotCFGFile + '-local', 'r' ) as fp:
+          pilotCFGFileContent = json.load( fp )
         grid = self.site.split( '.' )[0]
         if self.setup in pilotCFGFileContent:
           if grid in pilotCFGFileContent[self.setup]['Commands']:
