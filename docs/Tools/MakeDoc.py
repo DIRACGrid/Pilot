@@ -8,7 +8,7 @@ def mkdir( folder ):
   """create a folder, ignore if it exists"""
   try:
     folder = os.path.join(os.getcwd(),folder)
-    os.mkdir( folder )
+    os.makedirs( folder )
   except OSError as e:
     print "MakeDoc: Exception %s when creating folder" %repr(e), folder
 
