@@ -14,7 +14,7 @@ def mkdir( folder ):
 
 
 BASEPATH = "docs/source/CodeDocumentation"
-PilotPATH = os.environ.get("Pilot","") + "/Pilot"
+PilotPATH = os.environ.get("Pilot","") + "/Pilot/Pilot"
 
 ORIGDIR = os.getcwd()
 
@@ -149,6 +149,7 @@ def createDoc(buildtype = "full"):
 
 def createCodeDocIndex( subpackages, modules, buildtype="full"):
   """create the main index file"""
+  print "MakeDoc: Now creating the main index file"
   filename = "index.rst"
   lines = []
   lines.append( ".. _code_documentation:")
