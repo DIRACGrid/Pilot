@@ -16,8 +16,8 @@ import subprocess
 sys.path.insert(0, ".")
 
 pilotRelease = os.environ.get( 'PILOTVERSION', 'master' )
-#if os.environ.get('READTHEDOCS') == 'True':
-#  cRelease = os.path.basename( os.path.abspath( "../../" ) )
+if os.environ.get('READTHEDOCS') == 'True':
+  pilotRelease = os.path.basename( os.path.abspath( "../../" ) )
 print 'conf.py: %s as PILOTVERSION' % pilotRelease
 
 
@@ -36,7 +36,7 @@ if os.environ.get('READTHEDOCS') == 'True':
   buildfolder ="_build"
   try:
     os.mkdir( os.path.abspath( "../"+buildfolder) )
-  except:
+  except OSError:
     pass
 
   ##We need to have the Pilot module somewhere, or we cannot import it, as readtheDocs clones the repo into something based on the branchname
