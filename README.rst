@@ -9,11 +9,15 @@ DIRAC - Pilots
 .. image:: https://landscape.io/github/DIRACGrid/Pilot/master/landscape.svg?style=flat
    :target: https://landscape.io/github/DIRACGrid/Pilot/master
    :alt: Code Health
-DIRAC (Distributed Infrastructure with Remote Agent Control) INTERWARE is a software framework for distributed computing providing a complete solution to one or more user community requiring access to distributed resources. DIRAC builds a layer between the users and the resources offering a common interface to a number of heterogeneous providers, integrating them in a seamless manner, providing interoperability, at the same time as an optimized, transparent and reliable usage of the resources.
+DIRAC (Distributed Infrastructure with Remote Agent Control) INTERWARE is a software framework for distributed computing 
+providing a complete solution to one or more user community requiring access to distributed resources. 
+DIRAC builds a layer between the users and the resources offering a common interface to a number of heterogeneous providers, 
+integrating them in a seamless manner, providing interoperability, at the same time as an optimized, transparent and reliable usage of the resources.
 
-DIRAC has been started by the `LHCb collaboration <https://lhcb.web.cern.ch/lhcb/>`_ who still maintains it. It is now used by several communities (AKA VO=Virtual Organizations) for their distributed computing workflows.
+DIRAC has been started by the `LHCb collaboration <https://lhcb.web.cern.ch/lhcb/>`_ who still is part of the maintainers group. 
+It is now used by several communities (AKA VO=Virtual Organizations) for their distributed computing workflows.
 
-Pilots consist of the independent part of the DIRAC system dedicated to the development of Pilot Agents.
+The Pilot repository is an independent part of the DIRAC system dedicated to the development of DIRAC Pilots.
 
 
 Important links
