@@ -33,6 +33,10 @@ __RCSID__ = "$Id$"
 class GetPilotVersion( CommandBase ):
   """ Used to get the pilot version that needs to be installed.
       If passed as a parameter, uses that one. If not passed, it looks for alternatives.
+      If the version is not passed as a parameter, it is taken from a json file that should look like:
+
+      { 'SetupName':{'Commands':{ Name of the grid': [list of commands]}, 'Extensions':['list of extensions'], 'Version':['xyz'],
+      'Defaults':{'Commands':{ 'defaultList': [list of commands]', 'Name of the grid': [list of commands]}, 'Version':['xyz']}}
 
       This assures that a version is always got even on non-standard Grid resources.
   """
@@ -59,7 +63,11 @@ class GetPilotVersion( CommandBase ):
       fp = open( self.pp.pilotCFGFile + '-local', 'r' )
       pilotCFGFileContent = json.load( fp )
       fp.close()
-      pilotVersions = [str( pv ) for pv in pilotCFGFileContent[self.pp.setup]['Version']]
+      # If the version of a specific setup is not present, we take the default version.
+      if self.pp.setup in pilotCFGFileContent and 'Version' in pilotCFGFileContent[self.pp.setup]:
+        pilotVersions = [str( pv ) for pv in pilotCFGFileContent[self.pp.setup]['Version']]
+      else:
+        pilotVersions = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Version']]
       self.log.debug( "Pilot versions found: %s" % ', '.join( pilotVersions ) )
       self.log.info( "Setting pilot version to %s" % pilotVersions[0] )
       self.pp.releaseVersion = pilotVersions[0]
@@ -358,6 +366,121 @@ class ConfigureBasics( CommandBase ):
       self.cfg.append( '--UseServerCertificate' )
       self.cfg.append( "-o /DIRAC/Security/CertFile=%s/hostcert.pem" % self.pp.certsLocation )
       self.cfg.append( "-o /DIRAC/Security/KeyFile=%s/hostkey.pem" % self.pp.certsLocation )
+
+class CheckCECapabilities( CommandBase ):
+  """ Used to get  CE tags.
+  """
+  def __init__( self, pilotParams ):
+    """ c'tor
+    """
+    super( CheckCECapabilities, self ).__init__( pilotParams )
+
+    # this variable contains the options that are passed to dirac-configure, and that will fill the local dirac.cfg file
+    self.cfg = []
+
+  def execute( self ):
+    """ Setup CE/Queue Tags
+    """
+
+    if self.pp.useServerCertificate:
+      self.cfg.append( '-o  /DIRAC/Security/UseServerCertificate=yes' )
+    if self.pp.localConfigFile:
+      self.cfg.append( self.pp.localConfigFile )  # this file is as input
+
+
+    checkCmd = 'dirac-resource-get-parameters -S %s -N %s -Q %s %s' % ( self.pp.site,
+                                                                        self.pp.ceName,
+                                                                        self.pp.queueName,
+                                                                        " ".join( self.cfg ) )
+    retCode, resourceDict = self.executeAndGetOutput( checkCmd, self.pp.installEnv )
+    if retCode:
+      self.log.error( "Could not get resource parameters [ERROR %d]" % retCode )
+      self.exitWithError( retCode )
+    try:
+      import json
+      resourceDict = json.loads( resourceDict )
+    except ValueError:
+      self.log.error( "The pilot command output is not json compatible." )
+      sys.exit( 1 )
+    if resourceDict.get( 'Tag' ):
+      self.pp.tags += resourceDict['Tag']
+      self.cfg.append( '-FDMH' )
+
+      if self.pp.useServerCertificate:
+        self.cfg.append( '-o  /DIRAC/Security/UseServerCertificate=yes' )
+
+      if self.pp.localConfigFile:
+        self.cfg.append( '-O %s' % self.pp.localConfigFile )  # this file is as output
+        self.cfg.append( self.pp.localConfigFile )  # this file is as input
+
+      if self.debugFlag:
+        self.cfg.append( '-ddd' )
+
+      self.cfg.append( '-o "/Resources/Computing/CEDefaults/Tag=%s"' % ','.join( ( str( x ) for x in self.pp.tags ) ) )
+
+      configureCmd = "%s %s" % ( self.pp.configureScript, " ".join( self.cfg ) )
+      retCode, _configureOutData = self.executeAndGetOutput( configureCmd, self.pp.installEnv )
+      if retCode:
+        self.log.error( "Could not configure DIRAC [ERROR %d]" % retCode )
+        self.exitWithError( retCode )
+
+class CheckWNCapabilities( CommandBase ):
+  """ Used to get capabilities specific to the Worker Node.
+  """
+
+  def __init__( self, pilotParams ):
+    """ c'tor
+    """
+    super( CheckWNCapabilities, self ).__init__( pilotParams )
+    self.cfg = []
+
+  def execute( self ):
+    """ Discover #Processors and memory
+    """
+
+    if self.pp.useServerCertificate:
+      self.cfg.append( '-o /DIRAC/Security/UseServerCertificate=yes' )
+    if self.pp.localConfigFile:
+      self.cfg.append( self.pp.localConfigFile )  # this file is as input
+
+    checkCmd = 'dirac-wms-get-wn-parameters -S %s -N %s -Q %s %s' % ( self.pp.site, self.pp.ceName, self.pp.queueName,
+                                                                       " ".join( self.cfg ) )
+    retCode, result = self.executeAndGetOutput( checkCmd, self.pp.installEnv )
+    if retCode:
+      self.log.error( "Could not get resource parameters [ERROR %d]" % retCode )
+      self.exitWithError( retCode )
+    try:
+      result = result.split( ' ' )
+      numberOfProcessor = int( result[0] )
+      maxRAM = int( result[1] )
+    except ValueError:
+      self.log.error( "Wrong Command output %s" % result )
+      sys.exit( 1 )
+    if numberOfProcessor or maxRAM:
+      self.cfg.append( '-FDMH' )
+
+      if self.pp.useServerCertificate:
+        self.cfg.append( '-o /DIRAC/Security/UseServerCertificate=yes' )
+      if self.pp.localConfigFile:
+        self.cfg.append( '-O %s' % self.pp.localConfigFile )  # this file is as output
+        self.cfg.append( self.pp.localConfigFile )  # this file is as input
+
+      if self.debugFlag:
+        self.cfg.append( '-ddd' )
+
+      if numberOfProcessor:
+        self.cfg.append( '-o "/Resources/Computing/CEDefaults/NumberOfProcessors=%d"' % numberOfProcessor )
+      else:
+        self.log.warn( "Could not retrieve number of processors" )
+      if maxRAM:
+        self.cfg.append( '-o "/Resources/Computing/CEDefaults/MaxRAM=%d"' % maxRAM )
+      else:
+        self.log.warn( "Could not retrieve MaxRAM" )
+      configureCmd = "%s %s" % ( self.pp.configureScript, " ".join( self.cfg ) )
+      retCode, _configureOutData = self.executeAndGetOutput( configureCmd, self.pp.installEnv )
+      if retCode:
+        self.log.error( "Could not configure DIRAC [ERROR %d]" % retCode )
+        self.exitWithError( retCode )
 
 
 class ConfigureSite( CommandBase ):
@@ -673,9 +796,12 @@ class ConfigureCPURequirements( CommandBase ):
     self.log.info( "CPUTime left (in seconds) is %s" % cpuTime )
 
     # HS06s = seconds * HS06
-    self.pp.jobCPUReq = float( cpuTime ) * float( cpuNormalizationFactor )
-    self.log.info( "Queue length (which is also set as CPUTimeLeft) is %f" % self.pp.jobCPUReq )
-
+    try:
+      self.pp.jobCPUReq = float( cpuTime ) * float( cpuNormalizationFactor )
+      self.log.info( "Queue length (which is also set as CPUTimeLeft) is %f" % self.pp.jobCPUReq )
+    except ValueError:
+      self.log.error( 'Pilot command output does not have the correct format' )
+      sys.exit( 1 )
     # now setting this value in local file
     cfg = ['-FDMH']
     if self.pp.useServerCertificate:
