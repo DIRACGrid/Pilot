@@ -1,7 +1,3 @@
-########################################################################
-# $Id$
-########################################################################
-
 """ Definitions of a standard set of pilot commands
 
     Each commands is represented by a class inheriting CommandBase class.
@@ -282,14 +278,14 @@ class InstallDIRAC( CommandBase ):
 class ConfigureBasics( CommandBase ):
   """ This command completes DIRAC installation, e.g. calls dirac-configure to:
       - download, by default, the CAs
-      - creates a standard or custom (defined by self.pp.localConfigFile) cfg file 
+      - creates a standard or custom (defined by self.pp.localConfigFile) cfg file
         to be used where all the pilot configuration is to be set, e.g.:
       - adds to it basic info like the version
       - adds to it the security configuration
 
       If there is more than one command calling dirac-configure, this one should be always the first one called.
 
-      Nota Bene: Further commands should always call dirac-configure using the options -FDMH 
+      Nota Bene: Further commands should always call dirac-configure using the options -FDMH
       Nota Bene: If custom cfg file is created further commands should call dirac-configure with
                  "-O %s %s" % ( self.pp.localConfigFile, self.pp.localConfigFile )
 
@@ -324,7 +320,7 @@ class ConfigureBasics( CommandBase ):
 
     if self.pp.debugFlag:
       self.cfg.append( '-ddd' )
-    if self.pp.localConfigFile:  
+    if self.pp.localConfigFile:
       self.cfg.append( '-O %s' % self.pp.localConfigFile )
 
     configureCmd = "%s %s" % ( self.pp.configureScript, " ".join( self.cfg ) )
@@ -421,7 +417,7 @@ class ConfigureSite( CommandBase ):
 
     # these are needed as this is not the fist time we call dirac-configure
     self.cfg.append( '-FDMH' )
-    if self.pp.localConfigFile:  
+    if self.pp.localConfigFile:
       self.cfg.append( '-O %s' % self.pp.localConfigFile )
       self.cfg.append( self.pp.localConfigFile )
 
@@ -610,7 +606,7 @@ class ConfigureArchitecture( CommandBase ):
     cfg = ['-FDMH']  # force update, skip CA checks, skip CA download, skip VOMS
     if self.pp.useServerCertificate:
       cfg.append( '--UseServerCertificate' )
-    if self.pp.localConfigFile:    
+    if self.pp.localConfigFile:
       cfg.append( '-O %s' % self.pp.localConfigFile )  # our target file for pilots
       cfg.append( self.pp.localConfigFile )  # this file is also an input
     if self.pp.debugFlag:
@@ -656,7 +652,7 @@ class ConfigureCPURequirements( CommandBase ):
       self.exitWithError( retCode )
 
     # HS06 benchmark
-    # FIXME: this is a hack!
+    # FIXME: this is a (necessary) hack!
     cpuNormalizationFactor = float( cpuNormalizationFactorOutput.split( '\n' )[0].replace( "Estimated CPU power is ",
                                                                                            '' ).replace( " HS06", '' ) )
     self.log.info( "Current normalized CPU as determined by 'dirac-wms-cpu-normalization' is %f" % cpuNormalizationFactor )
@@ -664,12 +660,16 @@ class ConfigureCPURequirements( CommandBase ):
     configFileArg = ''
     if self.pp.useServerCertificate:
       configFileArg = '-o /DIRAC/Security/UseServerCertificate=yes'
-    retCode, cpuTime = self.executeAndGetOutput( 'dirac-wms-get-queue-cpu-time %s %s' % ( configFileArg,
-                                                                                          self.pp.localConfigFile ),
-                                                 self.pp.installEnv )
+    retCode, cpuTimeOutput = self.executeAndGetOutput( 'dirac-wms-get-queue-cpu-time %s %s' % ( configFileArg,
+                                                                                                self.pp.localConfigFile ),
+                                                       self.pp.installEnv )
     if retCode:
       self.log.error( "Failed to determine cpu time left in the queue [ERROR %d]" % retCode )
       self.exitWithError( retCode )
+
+    for line in cpuTimeOutput.split( '\n' ):
+      if "CPU time left determined as" in line:
+        cpuTime = int( line.replace( "CPU time left determined as" ).strip() )
     self.log.info( "CPUTime left (in seconds) is %s" % cpuTime )
 
     # HS06s = seconds * HS06
