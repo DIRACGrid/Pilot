@@ -1,7 +1,3 @@
-########################################################################
-# $Id$
-########################################################################
-
 """ Definitions of a standard set of pilot commands
 
     Each commands is represented by a class inheriting CommandBase class.
@@ -290,14 +286,14 @@ class InstallDIRAC( CommandBase ):
 class ConfigureBasics( CommandBase ):
   """ This command completes DIRAC installation, e.g. calls dirac-configure to:
       - download, by default, the CAs
-      - creates a standard or custom (defined by self.pp.localConfigFile) cfg file 
+      - creates a standard or custom (defined by self.pp.localConfigFile) cfg file
         to be used where all the pilot configuration is to be set, e.g.:
       - adds to it basic info like the version
       - adds to it the security configuration
 
       If there is more than one command calling dirac-configure, this one should be always the first one called.
 
-      Nota Bene: Further commands should always call dirac-configure using the options -FDMH 
+      Nota Bene: Further commands should always call dirac-configure using the options -FDMH
       Nota Bene: If custom cfg file is created further commands should call dirac-configure with
                  "-O %s %s" % ( self.pp.localConfigFile, self.pp.localConfigFile )
 
@@ -332,7 +328,7 @@ class ConfigureBasics( CommandBase ):
 
     if self.pp.debugFlag:
       self.cfg.append( '-ddd' )
-    if self.pp.localConfigFile:  
+    if self.pp.localConfigFile:
       self.cfg.append( '-O %s' % self.pp.localConfigFile )
 
     configureCmd = "%s %s" % ( self.pp.configureScript, " ".join( self.cfg ) )
@@ -444,7 +440,7 @@ class CheckWNCapabilities( CommandBase ):
       self.cfg.append( self.pp.localConfigFile )  # this file is as input
 
     checkCmd = 'dirac-wms-get-wn-parameters -S %s -N %s -Q %s %s' % ( self.pp.site, self.pp.ceName, self.pp.queueName,
-                                                                       " ".join( self.cfg ) )
+                                                                      " ".join( self.cfg ) )
     retCode, result = self.executeAndGetOutput( checkCmd, self.pp.installEnv )
     if retCode:
       self.log.error( "Could not get resource parameters [ERROR %d]" % retCode )
@@ -544,7 +540,7 @@ class ConfigureSite( CommandBase ):
 
     # these are needed as this is not the fist time we call dirac-configure
     self.cfg.append( '-FDMH' )
-    if self.pp.localConfigFile:  
+    if self.pp.localConfigFile:
       self.cfg.append( '-O %s' % self.pp.localConfigFile )
       self.cfg.append( self.pp.localConfigFile )
 
@@ -585,8 +581,8 @@ class ConfigureSite( CommandBase ):
       pilotRef = 'sshge://' + self.pp.ceName + '/' + os.environ['JOB_ID']
     # Generic JOB_ID
     elif os.environ.has_key( 'JOB_ID' ):
-       self.pp.flavour = 'Generic'
-       pilotRef = 'generic://' + self.pp.ceName + '/' + os.environ['JOB_ID']
+      self.pp.flavour = 'Generic'
+      pilotRef = 'generic://' + self.pp.ceName + '/' + os.environ['JOB_ID']
 
     # Condor
     if os.environ.has_key( 'CONDOR_JOBID' ):
@@ -733,7 +729,7 @@ class ConfigureArchitecture( CommandBase ):
     cfg = ['-FDMH']  # force update, skip CA checks, skip CA download, skip VOMS
     if self.pp.useServerCertificate:
       cfg.append( '--UseServerCertificate' )
-    if self.pp.localConfigFile:    
+    if self.pp.localConfigFile:
       cfg.append( '-O %s' % self.pp.localConfigFile )  # our target file for pilots
       cfg.append( self.pp.localConfigFile )  # this file is also an input
     if self.pp.debugFlag:

@@ -2,22 +2,20 @@
 """
 The main DIRAC installer script
 """
-__RCSID__ = "$Id$"
 
 import sys
 import os
 import getopt
-import tarfile
 import urllib2
 import imp
 import signal
-import re
 import time
 import stat
 import types
 import shutil
-import zipfile
 import hashlib as md5
+
+__RCSID__ = "$Id$"
 
 executablePerms = stat.S_IWUSR | stat.S_IRUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH
 
@@ -140,7 +138,7 @@ class ReleaseConfig( object ):
       return cIndex
 
     def createSection( self, name, cfg = False ):
-      if type( name ) in ( types.ListType, types.TupleType ):
+      if isinstance( name, ( list, tuple ) ):
         pathList = name
       else:
         pathList = [ sec.strip() for sec in name.split( "/" ) if sec.strip() ]
@@ -567,8 +565,8 @@ class ReleaseConfig( object ):
           for pKey in relDeps:
             if pKey[0] == prj and pKey[1] != vrs:
               errMsg = "%s is required with two different versions ( %s and %s ) starting with %s:%s" % ( prj,
-                                                                                                    pKey[1], vrs,
-                                                                                                    project, release )
+                                                                                                          pKey[1], vrs,
+                                                                                                          project, release )
               return S_ERROR( errMsg )
           #Same version already required
       if project in relDeps and relDeps[ project ] != release:
@@ -786,9 +784,9 @@ def urlretrieveTimeout( url, fileName = '', timeout = 0 ):
     # Sometimes repositories do not return Content-Length parameter
     try:
       expectedBytes = long( remoteFD.info()[ 'Content-Length' ] )
-    except Exception, x:
+    except Exception as x:
       logWARN( 'Content-Length parameter not returned, skipping expectedBytes check' )
-        
+
     if fileName:
       localFD = open( fileName, "wb" )
     receivedBytes = 0L
@@ -948,9 +946,9 @@ def fixBuildPaths():
     line = fd.readline()
     fd.close()
     buildPath = line[2:line.find( cliParams.platform ) - 1]
-    replaceCmd = "grep -rIl '%s' %s | xargs sed -i'.org' 's:%s:%s:g'" % ( buildPath, 
-                                                                          binaryPath, 
-                                                                          buildPath, 
+    replaceCmd = "grep -rIl '%s' %s | xargs sed -i'.org' 's:%s:%s:g'" % ( buildPath,
+                                                                          binaryPath,
+                                                                          buildPath,
                                                                           cliParams.targetPath )
     os.system( replaceCmd )
 
@@ -1067,8 +1065,8 @@ def usage():
 def loadConfiguration():
 
   optList, args = getopt.getopt( sys.argv[1:],
-                               "".join( [ opt[0] for opt in cmdOpts ] ),
-                               [ opt[1] for opt in cmdOpts ] )
+                                 "".join( [ opt[0] for opt in cmdOpts ] ),
+                                 [ opt[1] for opt in cmdOpts ] )
 
   # First check if the name is defined
   for o, v in optList:
@@ -1318,11 +1316,12 @@ def createBashrc():
                      'export DIRACSCRIPTS=%s' % os.path.join( proPath, 'scripts' ),
                      'export DIRACLIB=%s' % os.path.join( proPath, cliParams.platform, 'lib' ),
                      'export TERMINFO=%s' % __getTerminfoLocations( os.path.join( proPath, cliParams.platform, 'share', 'terminfo' ) ),
-                     'export RRD_DEFAULT_FONT=%s' % os.path.join( proPath, cliParams.platform, 'share', 'rrdtool', 'fonts', 'DejaVuSansMono-Roman.ttf' ) ] )
+                     'export RRD_DEFAULT_FONT=%s' % os.path.join( proPath, cliParams.platform,
+                                                                  'share', 'rrdtool', 'fonts', 'DejaVuSansMono-Roman.ttf' ) ] )
 
       lines.extend( ['# Clear the PYTHONPATH and the LD_LIBRARY_PATH',
-                    'PYTHONPATH=""',
-                    'LD_LIBRARY_PATH=""'] )
+                     'PYTHONPATH=""',
+                     'LD_LIBRARY_PATH=""'] )
 
       lines.extend( ['( echo $PATH | grep -q $DIRACBIN ) || export PATH=$DIRACBIN:$PATH',
                      '( echo $PATH | grep -q $DIRACSCRIPTS ) || export PATH=$DIRACSCRIPTS:$PATH',
@@ -1375,8 +1374,8 @@ def createCshrc():
                      'setenv TERMINFO %s' % __getTerminfoLocations( os.path.join( proPath, cliParams.platform, 'share', 'terminfo' ) ) ] )
 
       lines.extend( ['# Clear the PYTHONPATH and the LD_LIBRARY_PATH',
-                    'setenv PYTHONPATH',
-                    'setenv LD_LIBRARY_PATH'] )
+                     'setenv PYTHONPATH',
+                     'setenv LD_LIBRARY_PATH'] )
 
       lines.extend( ['( echo $PATH | grep -q $DIRACBIN ) || setenv PATH ${DIRACBIN}:$PATH',
                      '( echo $PATH | grep -q $DIRACSCRIPTS ) || setenv PATH ${DIRACSCRIPTS}:$PATH',
@@ -1480,4 +1479,3 @@ if __name__ == "__main__":
   installExternalRequirements( cliParams.externalsType )
   logNOTICE( "%s properly installed" % cliParams.installation )
   sys.exit( 0 )
-

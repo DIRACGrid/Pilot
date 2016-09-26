@@ -14,7 +14,7 @@ class PilotTestCase( unittest.TestCase ):
   """
   def setUp( self ):
     self.pp = PilotParams()
-  
+
   def tearDown( self ):
     try:
       os.remove('pilot.out')
@@ -41,7 +41,7 @@ class CommandsTestCase( PilotTestCase ):
   def test_RetrievePilotParameters( self ):
     with open ( 'pilot.json', 'w' ) as fp:
       json.dump( {'TestSetup':{'Commands':{'grid1':['x', 'y', 'z'], 'grid2':['d', 'f']}, 'Extensions':['TestExtension'],
-                             'Version':['v1r1', 'v2r2']}}, fp )
+                               'Version':['v1r1', 'v2r2']}}, fp )
     self.pp.setup = 'TestSetup'
     self.pp.site = 'grid1.cern.ch'
     self.pp.pilotCFGFileLocation = 'file://%s' % os.getcwd()
