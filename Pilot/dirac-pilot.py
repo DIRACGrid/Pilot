@@ -26,8 +26,7 @@ import sys
 import requests
 
 from types import ListType
-
-
+REST_URL = 'https://pclhcb192.cern.ch:9910'
 
 from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
 
