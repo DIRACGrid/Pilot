@@ -23,7 +23,10 @@ __RCSID__ = "$Id$"
 import os
 import getopt
 import sys
+import requests
+
 from types import ListType
+REST_URL = 'https://pclhcb192.cern.ch:9910'
 
 from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
 
@@ -41,14 +44,20 @@ if __name__ == "__main__":
   pilotParams.pilotScript = os.path.realpath( sys.argv[0] )
   pilotParams.pilotScriptName = os.path.basename( pilotParams.pilotScript )
   log.debug( 'PARAMETER [%s]' % ', '.join( map( str, pilotParams.optList ) ) )
-  pilotParams.retrievePilotParameters()
+
+  log.info( ' Getting commands from CS ' )
+  access_token = open( os.environ["OA_USER_TOKEN"], 'r' )
+  pilotCommands = requests.get( REST_URL + '/config/Value',
+                                params = {'access_token':access_token.read(),
+                                         'ValuePath':'/Operations/LHCb-Certification/Pilot/Commands/BOINC'}, verify = False )
+  log.info( "Executing commands: %s" % str( pilotCommands.text ) )
+
+  # pilotParams.retrievePilotParameters()
 
   if pilotParams.commandExtensions:
     log.info( "Requested command extensions: %s" % str( pilotParams.commandExtensions ) )
 
-  log.info( "Executing commands: %s" % str( pilotParams.commands ) )
-
-  for commandName in pilotParams.commands:
+  for commandName in pilotCommands:
     command, module = getCommand( pilotParams, commandName, log )
     if command is not None:
       log.info( "Command %s instantiated from %s" % ( commandName, module ) )
