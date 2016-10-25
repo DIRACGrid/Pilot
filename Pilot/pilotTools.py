@@ -239,21 +239,19 @@ class Logger( object ):
 
   def __outputMessage( self, msg, level, header ):
     if self.out:
-      outputFile = open( self.out, 'a' )
-    for _line in msg.split( "\n" ):
-      if header:
-        outLine = "%s UTC %s [%s] %s" % ( time.strftime( '%Y-%m-%d %H:%M:%S', time.gmtime() ),
-                                          level,
-                                          self.name,
-                                          _line )
-        print outLine
-        if self.out:
-          outputFile.write( outLine + '\n' )
-      else:
-        print _line
-        outputFile.write( _line + '\n' )
-    if self.out:
-      outputFile.close()
+      with open( self.out, 'a' ) as outputFile:
+        for _line in msg.split( "\n" ):
+          if header:
+            outLine = "%s UTC %s [%s] %s" % ( time.strftime( '%Y-%m-%d %H:%M:%S', time.gmtime() ),
+                                              level,
+                                              self.name,
+                                              _line )
+            print outLine
+            if self.out:
+              outputFile.write( outLine + '\n' )
+          else:
+            print _line
+            outputFile.write( _line + '\n' )
     sys.stdout.flush()
 
   def setDebug( self ):
@@ -398,10 +396,11 @@ class PilotParams( object ):
     self.debugFlag = False
     self.local = False
     self.commandExtensions = []
-    self.commands = ['GetPilotVersion', 'CheckWorkerNode', 'InstallDIRAC',
-                     'ConfigureBasics', 'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements',
+    self.commands = ['GetPilotVersion', 'CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics', 'CheckCECapabilities',
+                     'CheckWNCapabilities', 'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements',
                      'LaunchAgent']
     self.extensions = []
+    self.tags = []
     self.site = ""
     self.setup = ""
     self.configServer = ""
@@ -417,7 +416,7 @@ class PilotParams( object ):
     self.userDN = ""
     self.maxCycles = self.MAX_CYCLES
     self.flavour = 'DIRAC'
-    self.gridVersion = '2014-04-09'
+    self.gridVersion = ''
     self.pilotReference = ''
     self.releaseVersion = ''
     self.releaseProject = ''
@@ -443,6 +442,8 @@ class PilotParams( object ):
     self.cmdOpts = ( ( 'b', 'build', 'Force local compilation' ),
                      ( 'd', 'debug', 'Set debug flag' ),
                      ( 'e:', 'extraPackages=', 'Extra packages to install (comma separated)' ),
+                     ( 'E:', 'commandExtensions=', 'Python module with extra commands' ),
+                     ( 'X:', 'commands=', 'Pilot commands to execute commands' ),
                      ( 'g:', 'grid=', 'lcg tools package version' ),
                      ( 'h', 'help', 'Show this help' ),
                      ( 'i:', 'python=', 'Use python<26|27> interpreter' ),
@@ -462,7 +463,7 @@ class PilotParams( object ):
                      ( 'G:', 'Group=', 'DIRAC Group to use' ),
                      ( 'O:', 'OwnerDN', 'Pilot OwnerDN (for private pilots)' ),
                      ( 'U', 'Upload', 'Upload compiled distribution (if built)' ),
-                     ( 'V:', 'VO=', 'Virtual Organization' ),
+                     ( 'V:', 'installation=', 'Installation configuration file' ),
                      ( 'W:', 'gateway=', 'Configure <gateway> as DIRAC Gateway during installation' ),
                      ( 's:', 'section=', 'Set base section for relative parsed options' ),
                      ( 'o:', 'option=', 'Option=value to add' ),
@@ -485,7 +486,11 @@ class PilotParams( object ):
                                             "".join( [ opt[0] for opt in self.cmdOpts ] ),
                                             [ opt[1] for opt in self.cmdOpts ] )
     for o, v in self.optList:
-      if o == '-e' or o == '--extraPackages':
+      if o == '-E' or o == '--commandExtensions':
+        self.commandExtensions = v.split( ',' )
+      elif o == '-X' or o == '--commands':
+        self.commands = v.split( ',' )
+      elif o == '-e' or o == '--extraPackages':
         self.extensions = v.split( ',' )
       elif o == '-n' or o == '--name':
         self.site = v

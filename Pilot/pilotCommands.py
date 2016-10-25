@@ -37,7 +37,7 @@ class GetPilotVersion( CommandBase ):
       This assures that a version is always got even on non-standard Grid resources.
   """
 
-  def execute(self):
+  def execute( self ):
     """ Standard method for pilot commands
     """
     if self.pp.releaseVersion:
@@ -54,7 +54,7 @@ class GetPilotVersion( CommandBase ):
                                    self.log,
                                    timeout = 120 )
       if not result:
-        self.log.error( "Failed to get pilot version, exiting ...")
+        self.log.error( "Failed to get pilot version, exiting ..." )
         sys.exit( 1 )
       fp = open( self.pp.pilotCFGFile + '-local', 'r' )
       pilotCFGFileContent = json.load( fp )
@@ -566,42 +566,52 @@ class ConfigureSite( CommandBase ):
       pilotRef = self.pp.pilotReference
 
     # Take the reference from the Torque batch system
-    if os.environ.has_key( 'PBS_JOBID' ):
+    if 'PBS_JOBID' in os.environ:
       self.pp.flavour = 'SSHTorque'
-      pilotRef = 'sshtorque://' + self.pp.ceName + '/' + os.environ['PBS_JOBID']
+      pilotRef = 'sshtorque://' + self.pp.ceName + '/' + os.environ['PBS_JOBID'].split('.')[0]
 
     # Take the reference from the OAR batch system
-    if os.environ.has_key( 'OAR_JOBID' ):
+    if 'OAR_JOBID' in os.environ:
       self.pp.flavour = 'SSHOAR'
       pilotRef = 'sshoar://' + self.pp.ceName + '/' + os.environ['OAR_JOBID']
 
     # Grid Engine
-    if os.environ.has_key( 'JOB_ID' ) and os.environ.has_key( 'SGE_TASK_ID' ):
+    if 'JOB_ID' in os.environ and 'SGE_TASK_ID' in os.environ:
       self.pp.flavour = 'SSHGE'
       pilotRef = 'sshge://' + self.pp.ceName + '/' + os.environ['JOB_ID']
     # Generic JOB_ID
-    elif os.environ.has_key( 'JOB_ID' ):
+    elif 'JOB_ID' in os.environ:
       self.pp.flavour = 'Generic'
       pilotRef = 'generic://' + self.pp.ceName + '/' + os.environ['JOB_ID']
 
     # Condor
-    if os.environ.has_key( 'CONDOR_JOBID' ):
+    if 'CONDOR_JOBID' in os.environ:
       self.pp.flavour = 'SSHCondor'
       pilotRef = 'sshcondor://' + self.pp.ceName + '/' + os.environ['CONDOR_JOBID']
+
+    # HTCondor
+    if 'HTCONDOR_JOBID' in os.environ:
+      self.pp.flavour = 'HTCondorCE'
+      pilotRef = 'htcondorce://' + self.pp.ceName + '/' + os.environ['HTCONDOR_JOBID']
 
     # LSF
     if os.environ.has_key( 'LSB_BATCH_JID' ):
       self.pp.flavour = 'SSHLSF'
       pilotRef = 'sshlsf://' + self.pp.ceName + '/' + os.environ['LSB_BATCH_JID']
 
+    #  SLURM batch system
+    if 'SLURM_JOBID' in os.environ:
+      self.pp.flavour = 'SSHSLURM'
+      pilotRef = 'sshslurm://' + self.pp.ceName + '/' + os.environ['SLURM_JOBID']
+
     # This is the CREAM direct submission case
-    if os.environ.has_key( 'CREAM_JOBID' ):
+    if 'CREAM_JOBID' in os.environ:
       self.pp.flavour = 'CREAM'
       pilotRef = os.environ['CREAM_JOBID']
 
     # If we still have the GLITE_WMS_JOBID, it means that the submission
     # was through the WMS, take this reference then
-    if os.environ.has_key( 'EDG_WL_JOBID' ):
+    if 'EDG_WL_JOBID' in os.environ:
       self.pp.flavour = 'LCG'
       pilotRef = os.environ['EDG_WL_JOBID']
 
@@ -619,28 +629,33 @@ class ConfigureSite( CommandBase ):
       pilotRef = os.environ['GLOBUS_GRAM_JOB_CONTACT']
 
     # Direct SSH tunnel submission
-    if os.environ.has_key( 'SSHCE_JOBID' ):
+    if 'SSHCE_JOBID' in os.environ:
       self.pp.flavour = 'SSH'
       pilotRef = 'ssh://' + self.pp.ceName + '/' + os.environ['SSHCE_JOBID']
 
     # ARC case
-    if os.environ.has_key( 'GRID_GLOBAL_JOBID' ):
+    if 'GRID_GLOBAL_JOBID' in os.environ:
       self.pp.flavour = 'ARC'
       pilotRef = os.environ['GRID_GLOBAL_JOBID']
 
+    # VMDIRAC case
+    if 'VMDIRAC_VERSION' in os.environ:
+      self.pp.flavour = 'VMDIRAC'
+      pilotRef = 'vm://' + self.pp.ceName + '/' + os.environ['JOB_ID']
+
     # This is for BOINC case
-    if os.environ.has_key( 'BOINC_JOB_ID' ):
+    if 'BOINC_JOB_ID' in os.environ:
       self.pp.flavour = 'BOINC'
       pilotRef = os.environ['BOINC_JOB_ID']
 
     if self.pp.flavour == 'BOINC':
-      if os.environ.has_key( 'BOINC_USER_ID' ):
+      if 'BOINC_USER_ID' in os.environ:
         self.boincUserID = os.environ['BOINC_USER_ID']
-      if os.environ.has_key( 'BOINC_HOST_ID' ):
+      if 'BOINC_HOST_ID' in os.environ:
         self.boincHostID = os.environ['BOINC_HOST_ID']
-      if os.environ.has_key( 'BOINC_HOST_PLATFORM' ):
+      if 'BOINC_HOST_PLATFORM' in os.environ:
         self.boincHostPlatform = os.environ['BOINC_HOST_PLATFORM']
-      if os.environ.has_key( 'BOINC_HOST_NAME' ):
+      if 'BOINC_HOST_NAME' in os.environ:
         self.boincHostName = os.environ['BOINC_HOST_NAME']
 
     self.log.debug( "Flavour: %s; pilot reference: %s " % ( self.pp.flavour, pilotRef ) )
@@ -656,7 +671,7 @@ class ConfigureSite( CommandBase ):
                                                   self.pp.installEnv )
       if retCode:
         self.log.warn( "Could not get CE name with 'glite-brokerinfo getCE' command [ERROR %d]" % retCode )
-        if os.environ.has_key( 'OSG_JOB_CONTACT' ):
+        if 'OSG_JOB_CONTACT' in os.environ:
           # OSG_JOB_CONTACT String specifying the endpoint to use within the job submission
           #                 for reaching the site (e.g. manager.mycluster.edu/jobmanager-pbs )
           CE = os.environ['OSG_JOB_CONTACT']
@@ -686,7 +701,7 @@ class ConfigureSite( CommandBase ):
       # configureOpts.append( '-N "%s"' % cliParams.ceName )
 
     elif self.pp.flavour == "CREAM":
-      if os.environ.has_key( 'CE_ID' ):
+      if 'CE_ID' in os.environ:
         self.log.debug( "Found CE %s" % os.environ['CE_ID'] )
         self.pp.ceName = os.environ['CE_ID'].split( ':' )[0]
         if os.environ['CE_ID'].count( "/" ):
@@ -775,7 +790,7 @@ class ConfigureCPURequirements( CommandBase ):
       self.exitWithError( retCode )
 
     # HS06 benchmark
-    # FIXME: this is a hack!
+    # FIXME: this is a (necessary) hack!
     cpuNormalizationFactor = float( cpuNormalizationFactorOutput.split( '\n' )[0].replace( "Estimated CPU power is ",
                                                                                            '' ).replace( " HS06", '' ) )
     self.log.info( "Current normalized CPU as determined by 'dirac-wms-cpu-normalization' is %f" % cpuNormalizationFactor )
@@ -783,12 +798,17 @@ class ConfigureCPURequirements( CommandBase ):
     configFileArg = ''
     if self.pp.useServerCertificate:
       configFileArg = '-o /DIRAC/Security/UseServerCertificate=yes'
-    retCode, cpuTime = self.executeAndGetOutput( 'dirac-wms-get-queue-cpu-time %s %s' % ( configFileArg,
-                                                                                          self.pp.localConfigFile ),
-                                                 self.pp.installEnv )
+    retCode, cpuTimeOutput = self.executeAndGetOutput( 'dirac-wms-get-queue-cpu-time %s %s' % ( configFileArg,
+                                                                                                self.pp.localConfigFile ),
+                                                       self.pp.installEnv )
+
     if retCode:
       self.log.error( "Failed to determine cpu time left in the queue [ERROR %d]" % retCode )
       self.exitWithError( retCode )
+
+    for line in cpuTimeOutput.split( '\n' ):
+      if "CPU time left determined as" in line:
+        cpuTime = int(line.replace("CPU time left determined as", '').strip())
     self.log.info( "CPUTime left (in seconds) is %s" % cpuTime )
 
     # HS06s = seconds * HS06
@@ -844,7 +864,7 @@ class LaunchAgent( CommandBase ):
     self.inProcessOpts.append( '-o MaxRunningJobs=%s' % 1 )
     # To prevent a wayward agent picking up and failing many jobs.
     self.inProcessOpts.append( '-o MaxTotalJobs=%s' % 10 )
-    self.jobAgentOpts= ['-o MaxCycles=%s' % self.pp.maxCycles]
+    self.jobAgentOpts = ['-o MaxCycles=%s' % self.pp.maxCycles]
 
     if self.debugFlag:
       self.jobAgentOpts.append( '-o LogLevel=DEBUG' )
@@ -870,7 +890,7 @@ class LaunchAgent( CommandBase ):
       self.inProcessOpts.append( self.pp.localConfigFile )
 
 
-  def __startJobAgent(self):
+  def __startJobAgent( self ):
     """ Starting of the JobAgent
     """
 

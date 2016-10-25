@@ -20,11 +20,16 @@ class PilotTestCase( unittest.TestCase ):
       os.remove('pilot.out')
       os.remove( 'pilot.json' )
       os.remove( 'pilot.json-local' )
-    except IOError:
+    except OSError:
       pass
 
 
 class CommandsTestCase( PilotTestCase ):
+
+  def test_commandBase(self):
+    cb = CommandBase(self.pp)
+    returnCode, _outputData = cb.executeAndGetOutput("ls")
+    self.assertEqual(returnCode, 0)
 
   def test_GetPilotVersion( self ):
 
@@ -35,7 +40,7 @@ class CommandsTestCase( PilotTestCase ):
     self.pp.setup = 'TestSetup'
     self.pp.pilotCFGFileLocation = 'file://%s' % os.getcwd()
     gpv = GetPilotVersion( self.pp )
-    self.assertTrue( gpv.execute() is None )
+    self.assertIsNone( gpv.execute() )
     self.assertEqual( gpv.pp.releaseVersion, 'v1r1' )
 
   def test_RetrievePilotParameters( self ):
