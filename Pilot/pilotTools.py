@@ -440,7 +440,7 @@ class PilotParams( object ):
     self.installation = ""
     self.ceName = ""
     self.ceType = ""
-    self.ceTypeGrid = ""
+    self.gridCEType = ""
     self.queueName = ""
     self.platform = ""
     self.minDiskSpace = 2560 #MB
@@ -496,7 +496,7 @@ class PilotParams( object ):
                      ( 'N:', 'Name=', 'CE Name' ),
                      ( 'Q:', 'Queue=', 'Queue name' ),
                      ( 'y:', 'CEType=', 'CE Type (normally InProcess)' ),
-                     ( 'a:', 'CETypeGrid=', 'Grid CE Type (CREAM etc)' ),
+                     ( 'a:', 'gridCEType=', 'Grid CE Type (CREAM etc)' ),
                      ( 'S:', 'setup=', 'DIRAC Setup to use' ),
                      ( 'C:', 'configurationServer=', 'Configuration servers to use' ),
                      ( 'T:', 'CPUTime', 'Requested CPU Time' ),
@@ -534,8 +534,8 @@ class PilotParams( object ):
     for o, v in self.optList:
       if o == '-N' or o == '--Name':
         self.ceName = v
-      elif o == '-a' or o == '--CETypeGrid':
-        self.ceTypeGrid = v
+      elif o == '-a' or o == '--gridCEType':
+        self.gridCEType = v
       elif o == '-d' or o == '--debug':
         self.debugFlag = True
       elif o in ( '-S', '--setup' ):
@@ -612,8 +612,8 @@ class PilotParams( object ):
       'Setups'      :{
                       'SetupName':{
                                     'Commands'           :{ 
-                                                           'CETypeGrid1' : ['cmd1','cmd2',...],
-                                                           'CETypeGrid2' : ['cmd1','cmd2',...],
+                                                           'GridCEType1' : ['cmd1','cmd2',...],
+                                                           'GridCEType2' : ['cmd1','cmd2',...],
                                                            'Defaults'    : ['cmd1','cmd2',...] 
                                                           },
                                     'Extensions'         :['ext1','ext2',...],
@@ -624,8 +624,8 @@ class PilotParams( object ):
 
                       'Defaults' :{
                                     'Commands'           :{ 
-                                                            'CETypeGrid1' : ['cmd1','cmd2',...],
-                                                            'CETypeGrid2' : ['cmd1','cmd2',...],
+                                                            'GridCEType1' : ['cmd1','cmd2',...],
+                                                            'GridCEType2' : ['cmd1','cmd2',...],
                                                             'Defaults'    : ['cmd1','cmd2',...] 
                                                           },
                                     'Extensions'         :['ext1','ext2',...],
@@ -638,11 +638,11 @@ class PilotParams( object ):
       'CEs'         :{
                       'ce1.domain':{
                                     'Site'      :'XXX.yyyy.zz',
-                                    'CETypeGrid':'AABBCC'
+                                    'GridCEType':'AABBCC'
                                    },
                       'ce2.domain':{
                                     'Site'      :'ZZZ.yyyy.xx',
-                                    'CETypeGrid':'CCBBAA'
+                                    'GridCEType':'CCBBAA'
                                    }
                      }                   
     }
@@ -654,16 +654,16 @@ class PilotParams( object ):
 
     if self.ceName:
       # Try to get the site name and grid CEType from the CE name
-      # CETypeGrid is like "CREAM" or "HTCondorCE" not "InProcess" etc
+      # GridCEType is like "CREAM" or "HTCondorCE" not "InProcess" etc
       try:
         self.name = str( pilotCFGFileContent['CEs'][self.ceName]['Site'] )
       except:
         pass
       else:
-        if not self.ceTypeGrid:
+        if not self.gridCEType:
           # We don't override a grid CEType given on the command line!
           try:
-            self.ceTypeGrid = str( pilotCFGFileContent['CEs'][self.ceName]['CETypeGrid'] )
+            self.gridCEType = str( pilotCFGFileContent['CEs'][self.ceName]['GridCEType'] )
           except:
             pass
 
@@ -676,13 +676,13 @@ class PilotParams( object ):
 
     # Commands first
     try:
-      self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands'][self.ceTypeGrid]]
+      self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands'][self.gridCEType]]
     except:
       try: 
         self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands']['Defaults']]
       except:
         try:
-          self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['Commands'][self.ceTypeGrid]]
+          self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['Commands'][self.gridCEType]]
         except:
           try:
             self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands']['Defaults']]
