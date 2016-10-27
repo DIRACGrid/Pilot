@@ -691,10 +691,10 @@ class PilotParams( object ):
               
     # Now the other options we handle
     try:
-      self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Extensions']]
+      self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['CommandExtensions']]
     except:
       try:
-        self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['Extensions']]
+        self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['CommandExtensions']]
       except:
         pass
 
