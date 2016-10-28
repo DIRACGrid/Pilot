@@ -42,7 +42,7 @@ class CommandsTestCase( PilotTestCase ):
     self.assertEqual( self.pp.commandExtensions, ['TestExtension'] )
     
   def test_CheckWorkerNode ( self ):
-    CheckWorkerNode()
+    CheckWorkerNode( self.pp )
         
 
 #############################################################################
