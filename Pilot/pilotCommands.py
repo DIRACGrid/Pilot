@@ -925,7 +925,7 @@ class MultiLaunchAgent( CommandBase ):
     self.inProcessOpts.append( '-o MaxTotalJobs=%s' % self.pp.maxCycles )
     self.jobAgentOpts= [ '-o MaxCycles=%s' % self.pp.maxCycles,
                          '-o StopAfterFailedMatches=0' ]
-    
+
     if self.debugFlag:
       self.jobAgentOpts.append( '-o LogLevel=DEBUG' )
 
@@ -976,18 +976,19 @@ class MultiLaunchAgent( CommandBase ):
     for i in range(0, self.pp.processors):
 
       # One JobAgent per processor allocated to this pilot
-      jobAgent = ('%s WorkloadManagement/JobAgent %s %s %s '
+      
+      if self.pp.ceType == 'sudo':
+        sudoOpts = '-o /LocalSite/SudoBaseUsername=%s%02dp00' % ( os.environ['USER'], i )
+      else:
+        sudoOpts = ''
+      
+      jobAgent = ('%s WorkloadManagement/JobAgent %s %s %s %s'
                   % ( diracAgentScript,
                       " ".join( self.jobAgentOpts ),
                       " ".join( self.inProcessOpts ),
+                      sudoOpts,
                       " ".join( extraCFG )))
 
-      # Log file hardcoded for now
-      # SUDO_BASE_USERNAME is a brute force way of communicating with sudoComputingElement
-      # and it would be better to modify the jobAgent to pass this through somehow...
-      
-      self.pp.installEnv['SUDO_BASE_USERNAME'] = os.environ['USER'] + ('%02dp00' % i)
-      
       pid[i] = self.forkAndExecute( jobAgent, 
                                     os.path.join( self.pp.workingDir, 'jobagent.%02d.log' % i ),
                                     self.pp.installEnv )
