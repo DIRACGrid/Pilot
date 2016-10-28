@@ -8,7 +8,7 @@ import sys
 import os
 
 from Pilot.pilotTools import PilotParams
-from Pilot.pilotCommands import GetPilotVersion, CheckWorkerNode
+from Pilot.pilotCommands import GetPilotVersion, CheckWorkerNode, ConfigureSite
 
 class PilotTestCase( unittest.TestCase ):
   """ Base class for the Agents test cases
@@ -43,6 +43,10 @@ class CommandsTestCase( PilotTestCase ):
     
   def test_CheckWorkerNode ( self ):
     CheckWorkerNode( self.pp )
+        
+  def test_ConfigureSite ( self ):
+    self.pp.configureScript = 'echo'
+    ConfigureSite( self.pp )
         
 
 #############################################################################
