@@ -8,7 +8,7 @@ import sys
 import os
 
 from Pilot.pilotTools import PilotParams
-from Pilot.pilotCommands import GetPilotVersion
+from Pilot.pilotCommands import GetPilotVersion, CheckWorkerNode
 
 class PilotTestCase( unittest.TestCase ):
   """ Base class for the Agents test cases
@@ -40,6 +40,10 @@ class CommandsTestCase( PilotTestCase ):
   def test_InitJSON( self ):
     self.assertEqual( self.pp.commands, ['x', 'y', 'z'] )
     self.assertEqual( self.pp.commandExtensions, ['TestExtension'] )
+    
+  def test_CheckWorkerNode ( self ):
+    CheckWorkerNode()
+        
 
 #############################################################################
 # Test Suite run
