@@ -30,19 +30,12 @@ class PilotTestCase( unittest.TestCase ):
   
   def tearDown( self ):
     try:
-      os.remove('pilot.out')
       os.remove( 'pilot.json' )
-      os.remove( 'pilot.json-local' )
     except IOError:
       pass
 
 
 class CommandsTestCase( PilotTestCase ):
-
-  def test_GetPilotVersion( self ):
-    gpv = GetPilotVersion()
-    self.assertTrue( gpv.execute() is None )
-    self.assertEqual( gpv.pp.releaseVersion, 'v1r1' )
 
   def test_InitJSON( self ):
     self.assertEqual( self.pp.commands, ['x', 'y', 'z'] )
