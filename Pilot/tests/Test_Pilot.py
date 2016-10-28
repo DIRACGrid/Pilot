@@ -19,7 +19,7 @@ class PilotTestCase( unittest.TestCase ):
       json.dump( {'Setups':{'TestSetup':{'Commands':{'cetype1':['x', 'y', 'z'], 
                                                      'cetype2':['d', 'f']}, 
                                          'CommandExtensions':['TestExtension'],
-                                         'Version':['v1r1','v2r2']}}
+                                         'Version':['v1r1','v2r2']}},
                   'CEs':{'grid1.example.com':{'GridCEType':'cetype1','Site':'site.example.com'}},
                   'DefaultSetup':'TestSetup'}, 
                  fp )
