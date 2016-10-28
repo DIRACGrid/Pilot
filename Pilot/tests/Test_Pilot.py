@@ -40,7 +40,7 @@ class PilotTestCase( unittest.TestCase ):
 class CommandsTestCase( PilotTestCase ):
 
   def test_GetPilotVersion( self ):
-    gpv = GetPilotVersion( self.pp )
+    gpv = GetPilotVersion()
     self.assertTrue( gpv.execute() is None )
     self.assertEqual( gpv.pp.releaseVersion, 'v1r1' )
 
