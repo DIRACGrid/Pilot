@@ -715,7 +715,7 @@ class PilotParams( object ):
       except:
         v = None
 
-    if isinstance(v, str):
+    if isinstance(v, basestring):
       self.releaseVersion = str( v )
     elif v:
       self.releaseVersion = str( v[0] )
