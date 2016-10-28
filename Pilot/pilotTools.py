@@ -706,14 +706,20 @@ class PilotParams( object ):
       except:
         pass
 
+    # Version might be a scalar or a list. We just want the first one.
     try:
-      self.releaseVersion = str( pilotCFGFileContent['Setups'][self.setup]['Version'] )
+      v = pilotCFGFileContent['Setups'][self.setup]['Version']
     except:
       try:
-        self.releaseVersion = str( pilotCFGFileContent['Setups']['Defaults']['Version'] )
+        v = pilotCFGFileContent['Setups']['Defaults']['Version']
       except:
-        pass
+        v = None
 
+    if isinstance(v, str):
+      self.releaseVersion = str( v )
+    elif v:
+      self.releaseVersion = str( v[0] )
+      
     try:
       self.releaseProject = str( pilotCFGFileContent['Setups'][self.setup]['Project'] )
     except:

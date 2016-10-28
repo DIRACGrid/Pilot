@@ -31,7 +31,10 @@ from pilotTools import CommandBase, retrieveUrlTimeout
 __RCSID__ = "$Id$"
 
 class GetPilotVersion( CommandBase ):
-  pass
+  """ Now just return what was obtained by pilotTools.py
+  """
+  def __init__( self ):
+    return self.pp.releaseVersion
 
 class CheckWorkerNode( CommandBase ):
   """ Executes some basic checks
