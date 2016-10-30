@@ -980,8 +980,9 @@ class MultiLaunchAgent( CommandBase ):
 
       # One JobAgent per processor allocated to this pilot
       
-      if self.pp.ceType == 'sudo':
-        sudoOpts = '-o /LocalSite/SudoBaseUsername=%s%02dp00' % ( os.environ['USER'], i )
+      if self.pp.ceType == 'Sudo':
+        # Available within the SudoComputingElement as BaseUsername in the ceParameters
+        sudoOpts = '-o /LocalSite/BaseUsername=%s%02dp00' % ( os.environ['USER'], i )
       else:
         sudoOpts = ''
       
