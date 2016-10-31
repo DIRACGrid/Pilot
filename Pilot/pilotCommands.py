@@ -976,7 +976,7 @@ class MultiLaunchAgent( CommandBase ):
 
     pid = {}
 
-    for i in range(0, self.pp.processors):
+    for i in xrange(self.pp.processors):
 
       # One JobAgent per processor allocated to this pilot
       
@@ -1003,10 +1003,10 @@ class MultiLaunchAgent( CommandBase ):
         self.log.info( "Forked JobAgent %02d/%d with PID %d" % ( i, self.pp.processors, pid[i] ) )
 
     # Not very subtle this. How about a time limit??
-    for i in range(0, self.pp.processors):
+    for i in xrange(self.pp.processors):
       os.waitpid(pid[i], 0)
 
-    for i in range(0, self.pp.processors):
+    for i in xrange(self.pp.processors):
       shutdownMessage = self.__parseJobAgentLog( os.path.join( self.pp.workingDir, 'jobagent.%02d.log' % i ) )
       open( os.path.join( self.pp.workingDir, 'shutdown_message.%02d' % i ), 'w' ).write( shutdownMessage )
       print shutdownMessage
@@ -1038,7 +1038,7 @@ class MultiLaunchAgent( CommandBase ):
     # Variants of: "200 Intended work completed ok"
     ###############################################
     # Our work is done. More work available in the queue? Who knows!
-    ['INFO: JobAgent will stop with message "Filling Mode is Disabled', '200 Fillling Mode is Disabled'],
+    ['INFO: JobAgent will stop with message "Filling Mode is Disabled', '200 Filling Mode is Disabled'],
     ['NOTICE:  Cycle was successful', '200 Success'],
 
     #
