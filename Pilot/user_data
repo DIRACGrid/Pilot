@@ -1,0 +1,275 @@
+From nobody Wed Nov 18 09:59:29 2015
+Comments:
+ #
+ # Generic DIRAC Cloud Init user_data template file for use with VMs, and 
+ # containing the following ##user_data___## substitutions:
+ #
+ # user_data_file_hostkey
+ # user_data_file_hostcert
+ # user_data_option_cvmfs_proxy
+ # user_data_space
+ #
+ # Each substitution pattern may occur more than once in this template. If you
+ # are reading a processed file, then these substitutions will already have 
+ # been made below.
+ #
+ # This file should normally be processed by Vac (version 0.20.0 onwards) or
+ # Vcycle (0.3.0 onwards) internally. 
+ #
+ # Andrew.McNab@cern.ch January 2016
+ #
+Content-Type: multipart/mixed; boundary="===============3141592653589793238=="
+MIME-Version: 1.0
+
+--===============3141592653589793238==
+MIME-Version: 1.0
+Content-Type: text/cloud-config; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="cloud-config-file"
+
+# cloud-config
+
+cvmfs:
+    local:
+        CVMFS_REPOSITORIES: grid
+        CVMFS_HTTP_PROXY: ##user_data_option_cvmfs_proxy##
+
+--===============3141592653589793238==
+MIME-Version: 1.0
+Content-Type: text/ucernvm; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="ucernvm-file"
+
+[ucernvm-begin]
+resize_rootfs=off
+cvmfs_http_proxy='##user_data_option_cvmfs_proxy##'
+[ucernvm-end]
+
+--===============3141592653589793238==
+MIME-Version: 1.0
+Content-Type: text/x-shellscript; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="user_data_script"
+
+#!/bin/sh
+
+mkdir -p /var/spool/joboutputs
+(
+
+# Set the hostname if available; display otherwise
+hostname ##user_data_vm_hostname##
+date --utc +"%Y-%m-%d %H:%M:%S %Z user_data_script Start user_data on `hostname`"
+
+# Record MJFJO if substituted here by VM lifecycle manager
+export MACHINEFEATURES='##user_data_machinefeatures_url##'
+export JOBFEATURES='##user_data_jobfeatures_url##'
+export JOBOUTPUTS='##user_data_joboutputs_url##'
+
+# Save whatever we use by other scripts
+/bin/echo -e "export MACHINEFEATURES=$MACHINEFEATURES\nexport JOBFEATURES=$JOBFEATURES\nexport JOBOUTPUTS=$JOBOUTPUTS" > /etc/profile.d/mjf.sh
+/bin/echo -e "setenv MACHINEFEATURES $MACHINEFEATURES\nsetenv JOBFEATURES $JOBFEATURES\nsetenv JOBOUTPUTS $JOBOUTPUTS" > /etc/profile.d/mjf.csh
+
+cat <<X5_EOF >/root/hostkey.pem
+##user_data_file_hostkey##
+##user_data_file_hostcert##
+X5_EOF
+
+export CE_NAME='##user_data_space##'
+export VM_UUID='##user_data_uuid##'
+
+if [ "$VM_UUID" = "" ] ; then
+  # Try getting it from OpenStack metadata instead
+  export VM_UUID=`python -c 'import requests ; print requests.get("http://169.254.169.254/openstack/2013-10-17/meta_data.json").json()["uuid"]'`
+fi
+
+# Create a shutdown_message if ACPI shutdown signal received
+/bin/echo -e 'echo "100 VM received ACPI shutdown signal from hypervisor" > /var/spool/joboutputs/shutdown_message\n/sbin/shutdown -h now' >/etc/acpi/actions/power.sh
+chmod +x /etc/acpi/actions/power.sh
+
+# We never let VMs send emails (likely to be annoying errors from root)
+/sbin/iptables -A OUTPUT -p tcp --dport 25 -j DROP
+
+# Once we have finished with the metadata, stop any user process reading it later
+/sbin/iptables -A OUTPUT -d 169.254.169.254 -p tcp --dport 80 -j DROP 
+
+machine_syslog=`python -c "import urllib ; print urllib.urlopen('$MACHINEFEATURES/syslog').read().strip()"`
+if [ "$machine_syslog" ] ; then
+ echo "*.* @$machinesyslog" > /etc/rsyslog.d/vm.conf
+ /sbin/service rsyslog restart
+fi
+
+# Get the big 40GB+ logical partition as /scratch
+mkdir -p /scratch
+if [ -b /dev/vdb1 -a -b /dev/vdb2 ] ; then
+  # Openstack at CERN with cvm* flavor? 
+  # vda1 is boot image, vdb1 is root partition, vdb2 is unformatted
+  mkfs -q -t ext4 /dev/vdb2
+  mount /dev/vdb2 /scratch 
+elif [ -b /dev/vdb1 ] ; then
+  # Openstack at CERN with hep* flavor?
+  # vda1 is boot image, vdb1 is root partition, and no vdb2
+  # Since boot image is small, can use rest of vda for /scratch
+  echo -e 'n\np\n2\n\n\nw\n'| fdisk /dev/vda
+  mkfs -q -t ext4 /dev/vda2
+  mount /dev/vda2 /scratch 
+elif [ -b /dev/vdb ] ; then
+  # Efficient virtio device
+  mkfs -q -t ext4 /dev/vdb
+  mount /dev/vdb /scratch
+elif [ -b /dev/vda1 -a -b /dev/vda2 ] ; then
+  # We just have a big vda with unused space in vda2
+  mkfs -q -t ext4 /dev/vda2
+  mount /dev/vda2 /scratch
+elif [ -b /dev/sdb ] ; then
+  # Virtual SCSI
+  mkfs -q -t ext4 /dev/sdb
+  mount /dev/sdb /scratch
+elif [ -b /dev/hdb ] ; then
+  # Virtual IDE
+  mkfs -q -t ext4 /dev/hdb
+  mount /dev/hdb /scratch
+elif [ -b /dev/xvdb ] ; then
+  # Xen virtual disk device
+  mkfs -q -t ext4 /dev/xvdb
+  mount /dev/xvdb /scratch
+else
+  date --utc +'%Y-%m-%d %H:%M:%S %Z user_data_script Missing vdb/hdb/sdb/xvdb block device for /scratch'
+  echo "500 Missing vdb/hdb/sdb block device for /scratch" > /var/spool/joboutputs/shutdown_message
+  /sbin/shutdown -h now
+  sleep 1234567890
+fi  
+
+# We rely on the hypervisor's disk I/O scheduling
+echo 'noop' > /sys/block/vda/queue/scheduler
+echo 'noop' > /sys/block/vdb/queue/scheduler
+
+# anyone can create directories there
+chmod ugo+rwxt /scratch
+
+# Scratch tmp for TMPDIR
+mkdir -p /scratch/tmp
+chmod ugo+rwxt /scratch/tmp
+
+# Get CA certs from cvmfs
+rm -Rf /etc/grid-security
+ln -sf /cvmfs/grid.cern.ch/etc/grid-security /etc/grid-security
+
+# make a first heartbeat
+echo 0.0 0.0 0.0 0.0 0.0 > /var/spool/joboutputs/heartbeat
+/usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/heartbeat"
+/usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/vm-heartbeat"
+
+# put heartbeat on MJF server every 5 minutes
+echo -e "*/5 * * * * root echo \`cut -f1-3 -d' ' /proc/loadavg\` \`cat /proc/uptime\` >/var/spool/joboutputs/heartbeat ; /usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/vm-heartbeat ; /usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/heartbeat >/var/log/heartbeat.log 2>&1" >/etc/cron.d/heartbeat
+
+# We swap on the logical partition (cannot on CernVM 3 aufs filesystem)
+# Since ext4 we can use fallocate:
+fallocate -l 4g /scratch/swapfile
+chmod 0600 /scratch/swapfile
+mkswap /scratch/swapfile 
+swapon /scratch/swapfile
+
+# Swap as little as possible
+sysctl vm.swappiness=1
+       
+# Don't want to be doing this at 4 or 5am every day!
+rm -f /etc/cron.daily/mlocate.cron
+
+# Log proxies used for cvmfs
+attr -g proxy /mnt/.ro
+attr -g proxy /cvmfs/lhcb.cern.ch/
+
+# Avoid age-old sudo problem
+echo 'Defaults !requiretty' >>/etc/sudoers
+echo 'Defaults visiblepw'   >>/etc/sudoers
+
+/usr/sbin/useradd -b /scratch plt
+
+chown plt.plt /var/spool/joboutputs
+chmod 0755 /var/spool/joboutputs
+
+mkdir -p /scratch/plt/etc/grid-security
+cp /root/hostkey.pem /scratch/plt/etc/grid-security/hostkey.pem
+cp /root/hostkey.pem /scratch/plt/etc/grid-security/hostcert.pem
+chmod 0600 /scratch/plt/etc/grid-security/host*.pem
+
+# This takes forever so we do it in the background, starting with
+# the zeroth payload for each possible jobagent - to be ready to go
+(
+n=0
+while [ $n -le 99 ]
+do
+ for m in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+ do
+    mn=`printf '%02dp%02d' $m $n`
+    # add plt0102 etc accounts for the payloads that plt can sudo to
+    /usr/sbin/useradd -m -b /scratch plt$mn
+    /usr/sbin/usermod -a -G plt$mn plt
+    /usr/sbin/usermod -a -G plt plt$mn
+    chmod 0775 /scratch/plt$mn
+    echo "Defaults>plt$mn !requiretty"           >>/etc/sudoers
+    echo "Defaults>plt$mn visiblepw"             >>/etc/sudoers
+    echo "Defaults>plt$mn !env_reset"            >>/etc/sudoers
+    echo "plt ALL = (plt$mn) NOPASSWD: ALL"      >>/etc/sudoers
+ done
+ n=`expr $n + 1`
+done
+) 2>&1 >/var/spool/joboutputs/useradd.log &
+
+cd /scratch/plt
+# Fetch the DIRAC pilot scripts
+if [ '##user_data_option_dirac_pilot_url##' == '' ] ; then
+  wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' https://lhcbproject.web.cern.ch/lhcbproject/Operations/diracpilot/
+else
+  wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' '##user_data_option_dirac_pilot_url##'
+fi    
+
+# So payload accounts can create directories here, but not interfere
+chown -R plt.plt /scratch/plt
+chmod 1775 /scratch/plt
+
+# Now run the pilot script
+/usr/bin/sudo -n -u plt \
+ X509_USER_PROXY=/scratch/plt/etc/grid-security/hostkey.pem \
+ JOB_ID="##user_data_space##:$VM_UUID:##user_data_machinetype##" \
+ MACHINEFEATURES="$MACHINEFEATURES" JOBFEATURES="$JOBFEATURES" \
+ python /scratch/plt/dirac-pilot.py \
+ --debug \
+ -o '/LocalSite/SubmitPool=Test' \
+ --Name '##user_data_space##' \
+ --Queue default \
+ --MaxCycles 1 \
+ --CEType Sudo \
+ --cert \
+ --certLocation=/scratch/plt/etc/grid-security \
+ >/var/spool/joboutputs/dirac-pilot.log 2>&1
+
+# Save JobAgent and System logs
+cp -f /scratch/plt/jobagent.*.log /scratch/plt/shutdown_message* /var/log/boot.log /var/log/dmesg /var/log/secure /var/log/messages* /etc/cvmfs/default.* \
+  /var/spool/joboutputs/
+
+(
+  cd /var/spool/joboutputs
+  for i in *
+  do
+   if [ -f $i ] ; then 
+    curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file "$i" "$JOBOUTPUTS/"
+
+    # This should go into an LHCb-specific pilot command
+    curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file "$i" \
+      "https://lbvobox06.cern.ch:9132/`openssl x509 -in /root/hostkey.pem -noout -subject | sed 's/^subject=.*CN=//'`/$CE_NAME/$HOSTNAME/$VM_UUID/"
+   fi
+  done
+)
+
+# Try conventional shutdown
+date --utc +'%Y-%m-%d %H:%M:%S %Z user_data_script Run /sbin/shutdown -h now'
+/sbin/shutdown -h now
+sleep 60
+
+# If that fails, do an instant reboot
+date --utc +'%Y-%m-%d %H:%M:%S %Z user_data_script Run echo o > /proc/sysrq-trigger'
+echo o > /proc/sysrq-trigger
+
+) >/var/spool/joboutputs/user_data_script.log 2>&1 &
+--===============3141592653589793238==--
