@@ -18,14 +18,12 @@
     But, as said, all the actions are actually configurable.
 """
 
-__RCSID__ = "$Id$"
-
 import os
-import getopt
 import sys
-from types import ListType
 
 from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
+
+__RCSID__ = "$Id$"
 
 if __name__ == "__main__":
 
@@ -55,4 +53,3 @@ if __name__ == "__main__":
     else:
       log.error( "Command %s could not be instantiated" % commandName )
       sys.exit( -1 )
-

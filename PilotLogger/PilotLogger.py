@@ -3,16 +3,17 @@
     The current implementation uses stomp.
 """
 
-__RCSID__ = "$Id$"
-
-import stomp
 import sys
 import Queue
 import logging
+import stomp
 from PilotLoggerTools import generateDict, encodeMessage
 from PilotLoggerTools import generateTimeStamp
 from PilotLoggerTools import isMessageFormatCorrect
 from PilotLoggerTools import readPilotLoggerConfigFile
+
+__RCSID__ = "$Id$"
+
 
 def connect(host_and_port, ssl_cfg):
   """ Connects to RabbitMQ and returns connection
@@ -221,4 +222,3 @@ def main():
 
 if __name__ == '__main__':
   main()
-

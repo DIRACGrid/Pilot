@@ -27,7 +27,7 @@ class PilotTestCase( unittest.TestCase ):
     sys.argv[1:] = ['--Name', 'grid1.example.com']
 
     self.pp = PilotParams()
-  
+
   def tearDown( self ):
     try:
       os.remove( 'pilot.json' )

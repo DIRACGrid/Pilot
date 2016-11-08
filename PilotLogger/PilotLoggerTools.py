@@ -1,7 +1,6 @@
 """A set of tools for the remote pilot agent logging system
 """
 
-__RCSID__ = "$Id$"
 
 import time
 import json
@@ -9,6 +8,8 @@ from uuid import uuid1
 import sys
 import os
 import logging
+
+__RCSID__ = "$Id$"
 
 def createPilotLoggerConfigFile( filename = 'PilotLogger.cfg',
                                  host = '',
@@ -142,7 +143,7 @@ def isMessageFormatCorrect( content ):
   # if any value is not of basestring type
   if any( not isinstance( val, basestring ) for val in values ):
     return False
-  #checking if all elements are not empty 
+  #checking if all elements are not empty
   if any( not val for val in values ):
     return False
   return True
@@ -217,4 +218,3 @@ def main():
 
 if __name__ == '__main__':
   main()
-
