@@ -40,7 +40,7 @@ class CommandsTestCase( PilotTestCase ):
     self.pp.setup = 'TestSetup'
     self.pp.pilotCFGFileLocation = 'file://%s' % os.getcwd()
     gpv = GetPilotVersion( self.pp )
-    self.assertIsNone( gpv.execute() )
+    self.assertTrue( gpv.execute() is None )
     self.assertEqual( gpv.pp.releaseVersion, 'v1r1' )
 
   def test_RetrievePilotParameters( self ):
