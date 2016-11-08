@@ -1,7 +1,3 @@
-########################################################################
-# $Id$
-########################################################################
-
 """ Definitions of a standard set of pilot commands
 
     Each commands is represented by a class inheriting CommandBase class.
@@ -41,7 +37,7 @@ class GetPilotVersion( CommandBase ):
       This assures that a version is always got even on non-standard Grid resources.
   """
 
-  def execute(self):
+  def execute( self ):
     """ Standard method for pilot commands
     """
     if self.pp.releaseVersion:
@@ -58,7 +54,7 @@ class GetPilotVersion( CommandBase ):
                                    self.log,
                                    timeout = 120 )
       if not result:
-        self.log.error( "Failed to get pilot version, exiting ...")
+        self.log.error( "Failed to get pilot version, exiting ..." )
         sys.exit( 1 )
       fp = open( self.pp.pilotCFGFile + '-local', 'r' )
       pilotCFGFileContent = json.load( fp )
@@ -290,14 +286,14 @@ class InstallDIRAC( CommandBase ):
 class ConfigureBasics( CommandBase ):
   """ This command completes DIRAC installation, e.g. calls dirac-configure to:
       - download, by default, the CAs
-      - creates a standard or custom (defined by self.pp.localConfigFile) cfg file 
+      - creates a standard or custom (defined by self.pp.localConfigFile) cfg file
         to be used where all the pilot configuration is to be set, e.g.:
       - adds to it basic info like the version
       - adds to it the security configuration
 
       If there is more than one command calling dirac-configure, this one should be always the first one called.
 
-      Nota Bene: Further commands should always call dirac-configure using the options -FDMH 
+      Nota Bene: Further commands should always call dirac-configure using the options -FDMH
       Nota Bene: If custom cfg file is created further commands should call dirac-configure with
                  "-O %s %s" % ( self.pp.localConfigFile, self.pp.localConfigFile )
 
@@ -332,7 +328,7 @@ class ConfigureBasics( CommandBase ):
 
     if self.pp.debugFlag:
       self.cfg.append( '-ddd' )
-    if self.pp.localConfigFile:  
+    if self.pp.localConfigFile:
       self.cfg.append( '-O %s' % self.pp.localConfigFile )
 
     configureCmd = "%s %s" % ( self.pp.configureScript, " ".join( self.cfg ) )
@@ -444,7 +440,7 @@ class CheckWNCapabilities( CommandBase ):
       self.cfg.append( self.pp.localConfigFile )  # this file is as input
 
     checkCmd = 'dirac-wms-get-wn-parameters -S %s -N %s -Q %s %s' % ( self.pp.site, self.pp.ceName, self.pp.queueName,
-                                                                       " ".join( self.cfg ) )
+                                                                      " ".join( self.cfg ) )
     retCode, result = self.executeAndGetOutput( checkCmd, self.pp.installEnv )
     if retCode:
       self.log.error( "Could not get resource parameters [ERROR %d]" % retCode )
@@ -544,7 +540,7 @@ class ConfigureSite( CommandBase ):
 
     # these are needed as this is not the fist time we call dirac-configure
     self.cfg.append( '-FDMH' )
-    if self.pp.localConfigFile:  
+    if self.pp.localConfigFile:
       self.cfg.append( '-O %s' % self.pp.localConfigFile )
       self.cfg.append( self.pp.localConfigFile )
 
@@ -570,42 +566,52 @@ class ConfigureSite( CommandBase ):
       pilotRef = self.pp.pilotReference
 
     # Take the reference from the Torque batch system
-    if os.environ.has_key( 'PBS_JOBID' ):
+    if 'PBS_JOBID' in os.environ:
       self.pp.flavour = 'SSHTorque'
-      pilotRef = 'sshtorque://' + self.pp.ceName + '/' + os.environ['PBS_JOBID']
+      pilotRef = 'sshtorque://' + self.pp.ceName + '/' + os.environ['PBS_JOBID'].split('.')[0]
 
     # Take the reference from the OAR batch system
-    if os.environ.has_key( 'OAR_JOBID' ):
+    if 'OAR_JOBID' in os.environ:
       self.pp.flavour = 'SSHOAR'
       pilotRef = 'sshoar://' + self.pp.ceName + '/' + os.environ['OAR_JOBID']
 
     # Grid Engine
-    if os.environ.has_key( 'JOB_ID' ) and os.environ.has_key( 'SGE_TASK_ID' ):
+    if 'JOB_ID' in os.environ and 'SGE_TASK_ID' in os.environ:
       self.pp.flavour = 'SSHGE'
       pilotRef = 'sshge://' + self.pp.ceName + '/' + os.environ['JOB_ID']
     # Generic JOB_ID
-    elif os.environ.has_key( 'JOB_ID' ):
-       self.pp.flavour = 'Generic'
-       pilotRef = 'generic://' + self.pp.ceName + '/' + os.environ['JOB_ID']
+    elif 'JOB_ID' in os.environ:
+      self.pp.flavour = 'Generic'
+      pilotRef = 'generic://' + self.pp.ceName + '/' + os.environ['JOB_ID']
 
     # Condor
-    if os.environ.has_key( 'CONDOR_JOBID' ):
+    if 'CONDOR_JOBID' in os.environ:
       self.pp.flavour = 'SSHCondor'
       pilotRef = 'sshcondor://' + self.pp.ceName + '/' + os.environ['CONDOR_JOBID']
+
+    # HTCondor
+    if 'HTCONDOR_JOBID' in os.environ:
+      self.pp.flavour = 'HTCondorCE'
+      pilotRef = 'htcondorce://' + self.pp.ceName + '/' + os.environ['HTCONDOR_JOBID']
 
     # LSF
     if os.environ.has_key( 'LSB_BATCH_JID' ):
       self.pp.flavour = 'SSHLSF'
       pilotRef = 'sshlsf://' + self.pp.ceName + '/' + os.environ['LSB_BATCH_JID']
 
+    #  SLURM batch system
+    if 'SLURM_JOBID' in os.environ:
+      self.pp.flavour = 'SSHSLURM'
+      pilotRef = 'sshslurm://' + self.pp.ceName + '/' + os.environ['SLURM_JOBID']
+
     # This is the CREAM direct submission case
-    if os.environ.has_key( 'CREAM_JOBID' ):
+    if 'CREAM_JOBID' in os.environ:
       self.pp.flavour = 'CREAM'
       pilotRef = os.environ['CREAM_JOBID']
 
     # If we still have the GLITE_WMS_JOBID, it means that the submission
     # was through the WMS, take this reference then
-    if os.environ.has_key( 'EDG_WL_JOBID' ):
+    if 'EDG_WL_JOBID' in os.environ:
       self.pp.flavour = 'LCG'
       pilotRef = os.environ['EDG_WL_JOBID']
 
@@ -623,28 +629,33 @@ class ConfigureSite( CommandBase ):
       pilotRef = os.environ['GLOBUS_GRAM_JOB_CONTACT']
 
     # Direct SSH tunnel submission
-    if os.environ.has_key( 'SSHCE_JOBID' ):
+    if 'SSHCE_JOBID' in os.environ:
       self.pp.flavour = 'SSH'
       pilotRef = 'ssh://' + self.pp.ceName + '/' + os.environ['SSHCE_JOBID']
 
     # ARC case
-    if os.environ.has_key( 'GRID_GLOBAL_JOBID' ):
+    if 'GRID_GLOBAL_JOBID' in os.environ:
       self.pp.flavour = 'ARC'
       pilotRef = os.environ['GRID_GLOBAL_JOBID']
 
+    # VMDIRAC case
+    if 'VMDIRAC_VERSION' in os.environ:
+      self.pp.flavour = 'VMDIRAC'
+      pilotRef = 'vm://' + self.pp.ceName + '/' + os.environ['JOB_ID']
+
     # This is for BOINC case
-    if os.environ.has_key( 'BOINC_JOB_ID' ):
+    if 'BOINC_JOB_ID' in os.environ:
       self.pp.flavour = 'BOINC'
       pilotRef = os.environ['BOINC_JOB_ID']
 
     if self.pp.flavour == 'BOINC':
-      if os.environ.has_key( 'BOINC_USER_ID' ):
+      if 'BOINC_USER_ID' in os.environ:
         self.boincUserID = os.environ['BOINC_USER_ID']
-      if os.environ.has_key( 'BOINC_HOST_ID' ):
+      if 'BOINC_HOST_ID' in os.environ:
         self.boincHostID = os.environ['BOINC_HOST_ID']
-      if os.environ.has_key( 'BOINC_HOST_PLATFORM' ):
+      if 'BOINC_HOST_PLATFORM' in os.environ:
         self.boincHostPlatform = os.environ['BOINC_HOST_PLATFORM']
-      if os.environ.has_key( 'BOINC_HOST_NAME' ):
+      if 'BOINC_HOST_NAME' in os.environ:
         self.boincHostName = os.environ['BOINC_HOST_NAME']
 
     self.log.debug( "Flavour: %s; pilot reference: %s " % ( self.pp.flavour, pilotRef ) )
@@ -660,7 +671,7 @@ class ConfigureSite( CommandBase ):
                                                   self.pp.installEnv )
       if retCode:
         self.log.warn( "Could not get CE name with 'glite-brokerinfo getCE' command [ERROR %d]" % retCode )
-        if os.environ.has_key( 'OSG_JOB_CONTACT' ):
+        if 'OSG_JOB_CONTACT' in os.environ:
           # OSG_JOB_CONTACT String specifying the endpoint to use within the job submission
           #                 for reaching the site (e.g. manager.mycluster.edu/jobmanager-pbs )
           CE = os.environ['OSG_JOB_CONTACT']
@@ -690,7 +701,7 @@ class ConfigureSite( CommandBase ):
       # configureOpts.append( '-N "%s"' % cliParams.ceName )
 
     elif self.pp.flavour == "CREAM":
-      if os.environ.has_key( 'CE_ID' ):
+      if 'CE_ID' in os.environ:
         self.log.debug( "Found CE %s" % os.environ['CE_ID'] )
         self.pp.ceName = os.environ['CE_ID'].split( ':' )[0]
         if os.environ['CE_ID'].count( "/" ):
@@ -733,7 +744,7 @@ class ConfigureArchitecture( CommandBase ):
     cfg = ['-FDMH']  # force update, skip CA checks, skip CA download, skip VOMS
     if self.pp.useServerCertificate:
       cfg.append( '--UseServerCertificate' )
-    if self.pp.localConfigFile:    
+    if self.pp.localConfigFile:
       cfg.append( '-O %s' % self.pp.localConfigFile )  # our target file for pilots
       cfg.append( self.pp.localConfigFile )  # this file is also an input
     if self.pp.debugFlag:
@@ -779,7 +790,7 @@ class ConfigureCPURequirements( CommandBase ):
       self.exitWithError( retCode )
 
     # HS06 benchmark
-    # FIXME: this is a hack!
+    # FIXME: this is a (necessary) hack!
     cpuNormalizationFactor = float( cpuNormalizationFactorOutput.split( '\n' )[0].replace( "Estimated CPU power is ",
                                                                                            '' ).replace( " HS06", '' ) )
     self.log.info( "Current normalized CPU as determined by 'dirac-wms-cpu-normalization' is %f" % cpuNormalizationFactor )
@@ -787,12 +798,17 @@ class ConfigureCPURequirements( CommandBase ):
     configFileArg = ''
     if self.pp.useServerCertificate:
       configFileArg = '-o /DIRAC/Security/UseServerCertificate=yes'
-    retCode, cpuTime = self.executeAndGetOutput( 'dirac-wms-get-queue-cpu-time %s %s' % ( configFileArg,
-                                                                                          self.pp.localConfigFile ),
-                                                 self.pp.installEnv )
+    retCode, cpuTimeOutput = self.executeAndGetOutput( 'dirac-wms-get-queue-cpu-time %s %s' % ( configFileArg,
+                                                                                                self.pp.localConfigFile ),
+                                                       self.pp.installEnv )
+
     if retCode:
       self.log.error( "Failed to determine cpu time left in the queue [ERROR %d]" % retCode )
       self.exitWithError( retCode )
+
+    for line in cpuTimeOutput.split( '\n' ):
+      if "CPU time left determined as" in line:
+        cpuTime = int(line.replace("CPU time left determined as", '').strip())
     self.log.info( "CPUTime left (in seconds) is %s" % cpuTime )
 
     # HS06s = seconds * HS06
@@ -848,7 +864,7 @@ class LaunchAgent( CommandBase ):
     self.inProcessOpts.append( '-o MaxRunningJobs=%s' % 1 )
     # To prevent a wayward agent picking up and failing many jobs.
     self.inProcessOpts.append( '-o MaxTotalJobs=%s' % 10 )
-    self.jobAgentOpts= ['-o MaxCycles=%s' % self.pp.maxCycles]
+    self.jobAgentOpts = ['-o MaxCycles=%s' % self.pp.maxCycles]
 
     if self.debugFlag:
       self.jobAgentOpts.append( '-o LogLevel=DEBUG' )
@@ -874,7 +890,7 @@ class LaunchAgent( CommandBase ):
       self.inProcessOpts.append( self.pp.localConfigFile )
 
 
-  def __startJobAgent(self):
+  def __startJobAgent( self ):
     """ Starting of the JobAgent
     """
 

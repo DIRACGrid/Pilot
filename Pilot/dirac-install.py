@@ -2,22 +2,20 @@
 """
 The main DIRAC installer script
 """
-__RCSID__ = "$Id$"
 
 import sys
 import os
 import getopt
-import tarfile
 import urllib2
 import imp
 import signal
-import re
 import time
 import stat
 import types
 import shutil
-import zipfile
 import hashlib as md5
+
+__RCSID__ = "$Id$"
 
 executablePerms = stat.S_IWUSR | stat.S_IRUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH
 
@@ -140,7 +138,7 @@ class ReleaseConfig( object ):
       return cIndex
 
     def createSection( self, name, cfg = False ):
-      if type( name ) in ( types.ListType, types.TupleType ):
+      if isinstance( name, ( list, tuple ) ):
         pathList = name
       else:
         pathList = [ sec.strip() for sec in name.split( "/" ) if sec.strip() ]
@@ -296,14 +294,20 @@ class ReleaseConfig( object ):
       self.__debugCB( msg )
 
   def __loadCFGFromURL( self, urlcfg, checkHash = False ):
-    if urlcfg in self.__cfgCache:
-      return S_OK( self.__cfgCache[ urlcfg ] )
-    try:
-      cfgData = urlretrieveTimeout( urlcfg, timeout = cliParams.timeout )
-      if not cfgData:
-        return S_ERROR( "Could not get data from %s" % urlcfg )
-    except:
-      return S_ERROR( "Could not open %s" % urlcfg )
+
+    # This can be a local file
+    if os.path.exists( urlcfg ):
+      with open( urlcfg, 'r' ) as relFile:
+        cfgData = relFile.read()
+    else:
+      if urlcfg in self.__cfgCache:
+        return S_OK( self.__cfgCache[ urlcfg ] )
+      try:
+        cfgData = urlretrieveTimeout( urlcfg, timeout = cliParams.timeout )
+        if not cfgData:
+          return S_ERROR( "Could not get data from %s" % urlcfg )
+      except:
+        return S_ERROR( "Could not open %s" % urlcfg )
     try:
       #cfgData = cfgFile.read()
       cfg = ReleaseConfig.CFG( cfgData )
@@ -567,8 +571,8 @@ class ReleaseConfig( object ):
           for pKey in relDeps:
             if pKey[0] == prj and pKey[1] != vrs:
               errMsg = "%s is required with two different versions ( %s and %s ) starting with %s:%s" % ( prj,
-                                                                                                    pKey[1], vrs,
-                                                                                                    project, release )
+                                                                                                          pKey[1], vrs,
+                                                                                                          project, release )
               return S_ERROR( errMsg )
           #Same version already required
       if project in relDeps and relDeps[ project ] != release:
@@ -627,7 +631,7 @@ class ReleaseConfig( object ):
       #Default modules with the same version as the release version
       modules = self.getReleaseOption( project, release, "DefaultModules" )
       if modules:
-        modules = dict( [ ( modName.strip() , release ) for modName in modules.split( "," ) if modName.strip() ] )
+        modules = dict( ( modName.strip() , release ) for modName in modules.split( "," ) if modName.strip() )
       else:
         #Mod = project and same version
         modules = { project : release }
@@ -661,6 +665,8 @@ class ReleaseConfig( object ):
       return False
 
   def getLCGVersion( self, lcgVersion = "" ):
+    if lcgVersion:
+      return lcgVersion
     for objName in self.__projectsLoadedBy:
       try:
         return self.__prjRelCFG[ self.__projectName ][ cliParams.release ].get( "Releases/%s/LcgVer" % cliParams.release, lcgVersion )
@@ -704,6 +710,11 @@ class ReleaseConfig( object ):
       except KeyError:
         modNames = []
       for extraMod in extraModules:
+        # Check if the version of the extension module is specified in the command line
+        extraVersion = None
+        if ":" in extraMod:
+          extraMod, extraVersion = extraMod.split( ":" )
+          modVersions[extraMod] = extraVersion
         if extraMod in modVersions:
           modNames.append( extraMod )
           extraFound.append( extraMod )
@@ -719,7 +730,7 @@ class ReleaseConfig( object ):
         modsOrder.insert( 0, modName )
 
     for modName in extraModules:
-      if modName not in extraFound:
+      if modName.split(":")[0] not in extraFound:
         return S_ERROR( "No module %s defined. You sure it's defined for this release?" % modName )
 
     return S_OK( ( modsOrder, modsToInstall ) )
@@ -786,9 +797,9 @@ def urlretrieveTimeout( url, fileName = '', timeout = 0 ):
     # Sometimes repositories do not return Content-Length parameter
     try:
       expectedBytes = long( remoteFD.info()[ 'Content-Length' ] )
-    except Exception, x:
+    except Exception as x:
       logWARN( 'Content-Length parameter not returned, skipping expectedBytes check' )
-        
+
     if fileName:
       localFD = open( fileName, "wb" )
     receivedBytes = 0L
@@ -802,12 +813,12 @@ def urlretrieveTimeout( url, fileName = '', timeout = 0 ):
       else:
         urlData += data
       data = remoteFD.read( 16384 )
-      if count % 20 == 0:
+      if count % 20 == 0 and sys.stdout.isatty():
         print '\033[1D' + ".",
         sys.stdout.flush()
         progressBar = True
       count += 1
-    if progressBar:
+    if progressBar and sys.stdout.isatty():
       # return cursor to the beginning of the line
       print '\033[1K',
       print '\033[1A'
@@ -948,9 +959,9 @@ def fixBuildPaths():
     line = fd.readline()
     fd.close()
     buildPath = line[2:line.find( cliParams.platform ) - 1]
-    replaceCmd = "grep -rIl '%s' %s | xargs sed -i'.org' 's:%s:%s:g'" % ( buildPath, 
-                                                                          binaryPath, 
-                                                                          buildPath, 
+    replaceCmd = "grep -rIl '%s' %s | xargs sed -i'.org' 's:%s:%s:g'" % ( buildPath,
+                                                                          binaryPath,
+                                                                          buildPath,
                                                                           cliParams.targetPath )
     os.system( replaceCmd )
 
@@ -968,8 +979,7 @@ def runExternalsPostInstall():
     return
   postInstallSuffix = "-postInstall"
   for scriptName in os.listdir( postInstallPath ):
-    suffixFindPos = scriptName.find( postInstallSuffix )
-    if suffixFindPos == -1 or not suffixFindPos == len( scriptName ) - len( postInstallSuffix ):
+    if not scriptName.endswith( postInstallSuffix ):
       logDEBUG( "%s does not have the %s suffix. Skipping.." % ( scriptName, postInstallSuffix ) )
       continue
     scriptPath = os.path.join( postInstallPath, scriptName )
@@ -1025,7 +1035,7 @@ cmdOpts = ( ( 'r:', 'release=', 'Release version to install' ),
             ( 'l:', 'project=', 'Project to install' ),
             ( 'e:', 'extraModules=', 'Extra modules to install (comma separated)' ),
             ( 't:', 'installType=', 'Installation type (client/server)' ),
-            ( 'i:', 'pythonVersion=', 'Python version to compile (25/24)' ),
+            ( 'i:', 'pythonVersion=', 'Python version to compile (27/26)' ),
             ( 'p:', 'platform=', 'Platform to install' ),
             ( 'P:', 'installationPath=', 'Path where to install (default current working dir)' ),
             ( 'b', 'build', 'Force local compilation' ),
@@ -1067,8 +1077,8 @@ def usage():
 def loadConfiguration():
 
   optList, args = getopt.getopt( sys.argv[1:],
-                               "".join( [ opt[0] for opt in cmdOpts ] ),
-                               [ opt[1] for opt in cmdOpts ] )
+                                 "".join( [ opt[0] for opt in cmdOpts ] ),
+                                 [ opt[1] for opt in cmdOpts ] )
 
   # First check if the name is defined
   for o, v in optList:
@@ -1110,7 +1120,7 @@ def loadConfiguration():
       opName = 'extraModules'
     if opName == 'installType':
       opName = 'externalsType'
-    if type( getattr( cliParams, opName ) ) == types.StringType:
+    if isinstance( getattr( cliParams, opName ), basestring ):
       setattr( cliParams, opName, opVal )
     elif type( getattr( cliParams, opName ) ) == types.BooleanType:
       setattr( cliParams, opName, opVal.lower() in ( "y", "yes", "true", "1" ) )
@@ -1313,24 +1323,29 @@ def createBashrc():
         lines.append( "[[ -d '%s/etc/grid-security/certificates' ]] && export X509_CERT_DIR='%s/etc/grid-security/certificates'" % ( proPath, proPath ) )
       lines.append( 'export X509_VOMS_DIR=%s' % os.path.join( proPath, 'etc', 'grid-security', 'vomsdir' ) )
       lines.extend( ['# Some DIRAC locations',
-                     'export DIRAC=%s' % proPath,
-                     'export DIRACBIN=%s' % os.path.join( proPath, cliParams.platform, 'bin' ),
-                     'export DIRACSCRIPTS=%s' % os.path.join( proPath, 'scripts' ),
-                     'export DIRACLIB=%s' % os.path.join( proPath, cliParams.platform, 'lib' ),
-                     'export TERMINFO=%s' % __getTerminfoLocations( os.path.join( proPath, cliParams.platform, 'share', 'terminfo' ) ),
-                     'export RRD_DEFAULT_FONT=%s' % os.path.join( proPath, cliParams.platform, 'share', 'rrdtool', 'fonts', 'DejaVuSansMono-Roman.ttf' ) ] )
+                     '[ -z "$DIRAC" ] && export DIRAC=%s' % proPath,
+                     'export DIRACBIN=%s' % os.path.join( "$DIRAC", cliParams.platform, 'bin' ),
+                     'export DIRACSCRIPTS=%s' % os.path.join( "$DIRAC", 'scripts' ),
+                     'export DIRACLIB=%s' % os.path.join( "$DIRAC", cliParams.platform, 'lib' ),
+                     'export TERMINFO=%s' % __getTerminfoLocations( os.path.join( "$DIRAC", cliParams.platform, 'share', 'terminfo' ) ),
+                     'export RRD_DEFAULT_FONT=%s' % os.path.join( "$DIRAC", cliParams.platform, 'share', 
+                                                                  'rrdtool', 'fonts', 'DejaVuSansMono-Roman.ttf' ) ] )
 
-      lines.extend( ['# Clear the PYTHONPATH and the LD_LIBRARY_PATH',
-                    'PYTHONPATH=""',
-                    'LD_LIBRARY_PATH=""'] )
+      lines.extend( ['# Prepend the PYTHONPATH, the LD_LIBRARY_PATH, and the DYLD_LIBRARY_PATH'] )
 
       lines.extend( ['( echo $PATH | grep -q $DIRACBIN ) || export PATH=$DIRACBIN:$PATH',
                      '( echo $PATH | grep -q $DIRACSCRIPTS ) || export PATH=$DIRACSCRIPTS:$PATH',
-                     'export LD_LIBRARY_PATH=$DIRACLIB:$DIRACLIB/mysql',
-                     'export DYLD_LIBRARY_PATH=$DIRACLIB:$DIRACLIB/mysql',
-                     'export PYTHONPATH=$DIRAC'] )
+                     '( echo $LD_LIBRARY_PATH | grep -q $DIRACLIB ) || export LD_LIBRARY_PATH=$DIRACLIB:$LD_LIBRARY_PATH',
+                     '( echo $LD_LIBRARY_PATH | grep -q $DIRACLIB/mysql ) || export LD_LIBRARY_PATH=$DIRACLIB/mysql:$LD_LIBRARY_PATH',
+                     '( echo $DYLD_LIBRARY_PATH | grep -q $DIRACLIB ) || export DYLD_LIBRARY_PATH=$DIRACLIB:$DYLD_LIBRARY_PATH',
+                     '( echo $DYLD_LIBRARY_PATH | grep -q $DIRACLIB/mysql ) || export DYLD_LIBRARY_PATH=$DIRACLIB/mysql:$DYLD_LIBRARY_PATH',
+                     '( echo $PYTHONPATH | grep -q $DIRAC ) || export PYTHONPATH=$DIRAC:$PYTHONPATH'] )
       lines.extend( ['# new OpenSSL version require OPENSSL_CONF to point to some accessible location',
                      'export OPENSSL_CONF=/tmp'] )
+      # add DIRACPLAT environment variable for client installations
+      if cliParams.externalsType == 'client':
+        lines.extend( ['# DIRAC platform',
+                       '[ -z "$DIRACPLAT" ] && export DIRACPLAT=`$DIRAC/scripts/dirac-platform`'] )
       # Add the lines required for globus-* tools to use IPv6
       lines.extend( ['# IPv6 support',
                      'export GLOBUS_IO_IPV6=TRUE',
@@ -1365,29 +1380,37 @@ def createCshrc():
                 'setenv PYTHONUNBUFFERED yes',
                 'setenv PYTHONOPTIMIZE x' ]
       if not 'X509_CERT_DIR' in os.environ and not os.path.isdir( "/etc/grid-security/certificates" ):
-        lines.append( "[ -d '%s/etc/grid-security/certificates' ] && setenv X509_CERT_DIR %s/etc/grid-security/certificates" % ( proPath, proPath ) )
+        lines.append( "test -d '%s/etc/grid-security/certificates' && setenv X509_CERT_DIR %s/etc/grid-security/certificates" % ( proPath, proPath ) )
       lines.append( 'setenv X509_VOMS_DIR %s' % os.path.join( proPath, 'etc', 'grid-security', 'vomsdir' ) )
       lines.extend( ['# Some DIRAC locations',
-                     'setenv DIRAC %s' % proPath,
-                     'setenv DIRACBIN %s' % os.path.join( proPath, cliParams.platform, 'bin' ),
-                     'setenv DIRACSCRIPTS %s' % os.path.join( proPath, 'scripts' ),
-                     'setenv DIRACLIB %s' % os.path.join( proPath, cliParams.platform, 'lib' ),
-                     'setenv TERMINFO %s' % __getTerminfoLocations( os.path.join( proPath, cliParams.platform, 'share', 'terminfo' ) ) ] )
+                     '( test $?DIRAC -eq 1 ) || setenv DIRAC %s' % proPath,
+                     'setenv DIRACBIN %s' % os.path.join( "$DIRAC", cliParams.platform, 'bin' ),
+                     'setenv DIRACSCRIPTS %s' % os.path.join( "$DIRAC", 'scripts' ),
+                     'setenv DIRACLIB %s' % os.path.join( "$DIRAC", cliParams.platform, 'lib' ),
+                     'setenv TERMINFO %s' % __getTerminfoLocations( os.path.join( "$DIRAC", cliParams.platform, 'share', 'terminfo' ) ) ] )
 
-      lines.extend( ['# Clear the PYTHONPATH and the LD_LIBRARY_PATH',
-                    'setenv PYTHONPATH',
-                    'setenv LD_LIBRARY_PATH'] )
+      lines.extend( ['# Prepend the PYTHONPATH, the LD_LIBRARY_PATH, and the DYLD_LIBRARY_PATH'] )
 
-      lines.extend( ['( echo $PATH | grep -q $DIRACBIN ) || setenv PATH ${DIRACBIN}:$PATH',
+      lines.extend( ['( test $?PATH -eq 1 ) || setenv PATH ""',
+                     '( test $?LD_LIBRARY_PATH -eq 1 ) || setenv LD_LIBRARY_PATH ""',
+                     '( test $?DY_LD_LIBRARY_PATH -eq 1 ) || setenv DYLD_LIBRARY_PATH ""',
+                     '( test $?PYTHONPATH -eq 1 ) || setenv PYTHONPATH ""',
+                     '( echo $PATH | grep -q $DIRACBIN ) || setenv PATH ${DIRACBIN}:$PATH',
                      '( echo $PATH | grep -q $DIRACSCRIPTS ) || setenv PATH ${DIRACSCRIPTS}:$PATH',
-                     'setenv LD_LIBRARY_PATH $DIRACLIB',
-                     'setenv DYLD_LIBRARY_PATH $DIRACLIB',
-                     'setenv PYTHONPATH $DIRAC'] )
+                     '( echo $LD_LIBRARY_PATH | grep -q $DIRACLIB ) || setenv LD_LIBRARY_PATH ${DIRACLIB}:$LD_LIBRARY_PATH',
+                     '( echo $LD_LIBRARY_PATH | grep -q $DIRACLIB/mysql ) || setenv LD_LIBRARY_PATH ${DIRACLIB}/mysql:$LD_LIBRARY_PATH',
+                     '( echo $DYLD_LIBRARY_PATH | grep -q $DIRACLIB ) || setenv DYLD_LIBRARY_PATH ${DIRACLIB}:$DYLD_LIBRARY_PATH',
+                     '( echo $DYLD_LIBRARY_PATH | grep -q $DIRACLIB/mysql ) || setenv DYLD_LIBRARY_PATH ${DIRACLIB}/mysql:$DYLD_LIBRARY_PATH',
+                     '( echo $PYTHONPATH | grep -q $DIRAC ) || setenv PYTHONPATH ${DIRAC}:$PYTHONPATH'] )
       lines.extend( ['# new OpenSSL version require OPENSSL_CONF to point to some accessible location',
                      'setenv OPENSSL_CONF /tmp'] )
       lines.extend( ['# IPv6 support',
                      'setenv GLOBUS_IO_IPV6 TRUE',
                      'setenv GLOBUS_FTP_CLIENT_IPV6 TRUE'] )
+      # add DIRACPLAT environment variable for client installations
+      if cliParams.externalsType == 'client':
+        lines.extend( ['# DIRAC platform',
+                       'test $?DIRACPLAT -eq 1 || setenv DIRACPLAT `$DIRAC/scripts/dirac-platform`'] )
       # Add the lines required for ARC CE support
       lines.extend( ['# ARC Computing Element',
                      'setenv ARC_PLUGIN_PATH $DIRACLIB/arc'] )
@@ -1421,7 +1444,10 @@ def writeDefaultConfiguration():
 
 def __getTerminfoLocations( defaultLocation=None ):
   """returns the terminfo locations as a colon separated string"""
-  terminfoLocations = [ defaultLocation ] if defaultLocation else []
+
+  terminfoLocations = []
+  if defaultLocation:
+    terminfoLocations = [ defaultLocation ]
 
   for termpath in [ '/usr/share/terminfo', '/etc/terminfo' ]:
     if os.path.exists( termpath ):
@@ -1480,4 +1506,3 @@ if __name__ == "__main__":
   installExternalRequirements( cliParams.externalsType )
   logNOTICE( "%s properly installed" % cliParams.installation )
   sys.exit( 0 )
-

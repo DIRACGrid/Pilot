@@ -1,7 +1,3 @@
-########################################################################
-# $Id$
-########################################################################
-
 """ A set of common tools to be used in pilot commands
 """
 
@@ -21,10 +17,9 @@ def printVersion( log ):
 
   log.info( "Running %s" % " ".join( sys.argv ) )
   try:
-    fd = open( "%s.run" % sys.argv[0], "w" )
-    pickle.dump( sys.argv[1:], fd )
-    fd.close()
-  except:
+    with open( "%s.run" % sys.argv[0], "w" ) as fd:
+      pickle.dump( sys.argv[1:], fd )
+  except OSError:
     pass
   log.info( "Version %s" % __RCSID__ )
 
@@ -35,7 +30,8 @@ def pythonPathCheck():
     pythonpath = os.getenv( 'PYTHONPATH', '' ).split( ':' )
     print 'Directories in PYTHONPATH:', pythonpath
     for p in pythonpath:
-      if p == '': continue
+      if p == '':
+        continue
       try:
         if os.path.normpath( p ) in sys.path:
           # In case a given directory is twice in PYTHONPATH it has to removed only once
@@ -70,7 +66,7 @@ def retrieveUrlTimeout( url, fileName, log, timeout = 0 ):
     # Sometimes repositories do not return Content-Length parameter
     try:
       expectedBytes = long( remoteFD.info()[ 'Content-Length' ] )
-    except Exception, x:
+    except Exception as x:
       expectedBytes = 0
     data = remoteFD.read()
     if fileName:
@@ -90,7 +86,7 @@ def retrieveUrlTimeout( url, fileName, log, timeout = 0 ):
     else:
       return urlData
 
-  except urllib2.HTTPError, x:
+  except urllib2.HTTPError as x:
     if x.code == 404:
       log.error( "URL retrieve: %s does not exist" % url )
       if timeout:
@@ -99,7 +95,7 @@ def retrieveUrlTimeout( url, fileName, log, timeout = 0 ):
   except urllib2.URLError:
     log.error( 'Timeout after %s seconds on transfer request for "%s"' % ( str( timeout ), url ) )
     return False
-  except Exception, x:
+  except Exception as x:
     if x == 'Timeout':
       log.error( 'Timeout after %s seconds on transfer request for "%s"' % ( str( timeout ), url ) )
     if timeout:
@@ -243,21 +239,19 @@ class Logger( object ):
 
   def __outputMessage( self, msg, level, header ):
     if self.out:
-      outputFile = open( self.out, 'a' )
-    for _line in msg.split( "\n" ):
-      if header:
-        outLine = "%s UTC %s [%s] %s" % ( time.strftime( '%Y-%m-%d %H:%M:%S', time.gmtime() ),
-                                          level,
-                                          self.name,
-                                          _line )
-        print outLine
-        if self.out:
-          outputFile.write( outLine + '\n' )
-      else:
-        print _line
-        outputFile.write( _line + '\n' )
-    if self.out:
-      outputFile.close()
+      with open( self.out, 'a' ) as outputFile:
+        for _line in msg.split( "\n" ):
+          if header:
+            outLine = "%s UTC %s [%s] %s" % ( time.strftime( '%Y-%m-%d %H:%M:%S', time.gmtime() ),
+                                              level,
+                                              self.name,
+                                              _line )
+            print outLine
+            if self.out:
+              outputFile.write( outLine + '\n' )
+          else:
+            print _line
+            outputFile.write( _line + '\n' )
     sys.stdout.flush()
 
   def setDebug( self ):
@@ -291,7 +285,7 @@ class ExtendedLogger( Logger ):
       #<the import here was suggest F.S cause PilotLogger imports pika
       #which is not yet in the DIRAC externals
       #so up to now we want to turn it off
-      from PilotLogger import PilotLogger
+      from PilotLogger.PilotLogger import PilotLogger
       self.pilotLogger = PilotLogger()
     else:
       self.pilotLogger = None
@@ -402,10 +396,11 @@ class PilotParams( object ):
     self.debugFlag = False
     self.local = False
     self.commandExtensions = []
-    self.commands = ['GetPilotVersion', 'CheckWorkerNode', 'InstallDIRAC',
-                     'ConfigureBasics', 'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements',
+    self.commands = ['GetPilotVersion', 'CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics', 'CheckCECapabilities',
+                     'CheckWNCapabilities', 'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements',
                      'LaunchAgent']
     self.extensions = []
+    self.tags = []
     self.site = ""
     self.setup = ""
     self.configServer = ""
@@ -421,7 +416,7 @@ class PilotParams( object ):
     self.userDN = ""
     self.maxCycles = self.MAX_CYCLES
     self.flavour = 'DIRAC'
-    self.gridVersion = '2014-04-09'
+    self.gridVersion = ''
     self.pilotReference = ''
     self.releaseVersion = ''
     self.releaseProject = ''
@@ -447,6 +442,8 @@ class PilotParams( object ):
     self.cmdOpts = ( ( 'b', 'build', 'Force local compilation' ),
                      ( 'd', 'debug', 'Set debug flag' ),
                      ( 'e:', 'extraPackages=', 'Extra packages to install (comma separated)' ),
+                     ( 'E:', 'commandExtensions=', 'Python module with extra commands' ),
+                     ( 'X:', 'commands=', 'Pilot commands to execute commands' ),
                      ( 'g:', 'grid=', 'lcg tools package version' ),
                      ( 'h', 'help', 'Show this help' ),
                      ( 'i:', 'python=', 'Use python<26|27> interpreter' ),
@@ -466,7 +463,7 @@ class PilotParams( object ):
                      ( 'G:', 'Group=', 'DIRAC Group to use' ),
                      ( 'O:', 'OwnerDN', 'Pilot OwnerDN (for private pilots)' ),
                      ( 'U', 'Upload', 'Upload compiled distribution (if built)' ),
-                     ( 'V:', 'VO=', 'Virtual Organization' ),
+                     ( 'V:', 'installation=', 'Installation configuration file' ),
                      ( 'W:', 'gateway=', 'Configure <gateway> as DIRAC Gateway during installation' ),
                      ( 's:', 'section=', 'Set base section for relative parsed options' ),
                      ( 'o:', 'option=', 'Option=value to add' ),
@@ -489,7 +486,11 @@ class PilotParams( object ):
                                             "".join( [ opt[0] for opt in self.cmdOpts ] ),
                                             [ opt[1] for opt in self.cmdOpts ] )
     for o, v in self.optList:
-      if o == '-e' or o == '--extraPackages':
+      if o == '-E' or o == '--commandExtensions':
+        self.commandExtensions = v.split( ',' )
+      elif o == '-X' or o == '--commands':
+        self.commands = v.split( ',' )
+      elif o == '-e' or o == '--extraPackages':
         self.extensions = v.split( ',' )
       elif o == '-n' or o == '--name':
         self.site = v
@@ -521,7 +522,7 @@ class PilotParams( object ):
       elif o == '-D' or o == '--disk':
         try:
           self.minDiskSpace = int( v )
-        except:
+        except ValueError:
           pass
       elif o == '-r' or o == '--release':
         self.releaseVersion = v.split(',',1)[0]
@@ -540,13 +541,13 @@ class PilotParams( object ):
       elif o == '-M' or o == '--MaxCycles':
         try:
           self.maxCycles = min( self.MAX_CYCLES, int( v ) )
-        except:
+        except ValueError:
           pass
       elif o in ( '-T', '--CPUTime' ):
         self.jobCPUReq = v
       elif o == '-z' or o == '--pilotLogging':
         self.pilotLogging = True
-        
+
   def retrievePilotParameters( self ):
     """Retrieve pilot parameters from the content of a json file. The file should be something like:
 
@@ -564,7 +565,7 @@ class PilotParams( object ):
       if not result:
         self.log.info( "Could not download the json file, using the default commands list." )
       else:
-        with open ( self.pilotCFGFile + '-local', 'r' ) as fp:
+        with open( self.pilotCFGFile + '-local', 'r' ) as fp:
           pilotCFGFileContent = json.load( fp )
         grid = self.site.split( '.' )[0]
         if self.setup in pilotCFGFileContent:
@@ -582,4 +583,3 @@ class PilotParams( object ):
             self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands']['defaultList']]
     except ImportError:
       self.log.error( 'No json module available, using default commands list. ' )
-

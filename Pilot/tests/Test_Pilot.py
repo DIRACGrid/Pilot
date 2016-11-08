@@ -6,7 +6,7 @@ import unittest
 import json
 import os
 
-from Pilot.pilotTools import PilotParams
+from Pilot.pilotTools import PilotParams, CommandBase
 from Pilot.pilotCommands import GetPilotVersion
 
 class PilotTestCase( unittest.TestCase ):
@@ -14,17 +14,22 @@ class PilotTestCase( unittest.TestCase ):
   """
   def setUp( self ):
     self.pp = PilotParams()
-  
+
   def tearDown( self ):
     try:
       os.remove('pilot.out')
       os.remove( 'pilot.json' )
       os.remove( 'pilot.json-local' )
-    except IOError:
+    except OSError:
       pass
 
 
 class CommandsTestCase( PilotTestCase ):
+
+  def test_commandBase(self):
+    cb = CommandBase(self.pp)
+    returnCode, _outputData = cb.executeAndGetOutput("ls")
+    self.assertEqual(returnCode, 0)
 
   def test_GetPilotVersion( self ):
 
@@ -41,7 +46,7 @@ class CommandsTestCase( PilotTestCase ):
   def test_RetrievePilotParameters( self ):
     with open ( 'pilot.json', 'w' ) as fp:
       json.dump( {'TestSetup':{'Commands':{'grid1':['x', 'y', 'z'], 'grid2':['d', 'f']}, 'Extensions':['TestExtension'],
-                             'Version':['v1r1', 'v2r2']}}, fp )
+                               'Version':['v1r1', 'v2r2']}}, fp )
     self.pp.setup = 'TestSetup'
     self.pp.site = 'grid1.cern.ch'
     self.pp.pilotCFGFileLocation = 'file://%s' % os.getcwd()
