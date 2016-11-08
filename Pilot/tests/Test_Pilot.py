@@ -6,7 +6,7 @@ import unittest
 import json
 import os
 
-from Pilot.pilotTools import PilotParams
+from Pilot.pilotTools import PilotParams, CommandBase
 from Pilot.pilotCommands import GetPilotVersion
 
 class PilotTestCase( unittest.TestCase ):
