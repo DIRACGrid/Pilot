@@ -257,7 +257,7 @@ cp -f /scratch/plt/jobagent.*.log /scratch/plt/shutdown_message* /var/log/boot.l
 
     # This should go into an LHCb-specific pilot command
     curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file "$i" \
-      "https://lbvobox06.cern.ch:9132/`openssl x509 -in /root/hostkey.pem -noout -subject | sed 's/^subject=.*CN=//'`/$CE_NAME/$HOSTNAME/$VM_UUID/"
+      "https://lbvobox06.cern.ch:9132/hosts/`openssl x509 -in /root/hostkey.pem -noout -subject | sed 's/^subject=.*CN=//'`/$CE_NAME/$HOSTNAME/$VM_UUID/"
    fi
   done
 )
