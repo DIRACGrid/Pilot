@@ -7,9 +7,12 @@ import os
 import pickle
 import getopt
 import imp
+import json
 import types
+import urllib
 import urllib2
 import signal
+import subprocess
 
 __RCSID__ = '$Id$'
 
@@ -252,6 +255,7 @@ class Logger( object ):
           else:
             print _line
             outputFile.write( _line + '\n' )
+
     sys.stdout.flush()
 
   def setDebug( self ):
@@ -375,6 +379,31 @@ class CommandBase( object ):
       self.log.error( "Failed to issue ps [ERROR %d] " % retCode )
     sys.exit( errorCode )
 
+  def forkAndExecute( self, cmd, logFile, environDict = None ):
+    """ Fork and execute a command on the worker node
+    """
+
+    self.log.info( "Fork and execute command %s" % cmd )
+    pid = os.fork()
+    
+    if pid != 0: 
+      # Still in the parent, return the subprocess ID
+      return pid
+      
+    # The subprocess stdout/stderr will be written to logFile
+    with open(logFile, 'a+', 0) as fpLogFile:
+
+      try:
+        _p = subprocess.Popen( "%s" % cmd, shell = True, env=environDict, close_fds = False, stdout = fpLogFile, stderr = fpLogFile )
+
+        # return code
+        returnCode = _p.wait()
+        self.log.debug( "Return code of %s: %d" % ( cmd, returnCode ) )
+      except:
+        returnCode = 99
+      
+    sys.exit(returnCode)
+
 class PilotParams( object ):
   """ Class that holds the structure with all the parameters to be used across all the commands
   """
@@ -396,9 +425,9 @@ class PilotParams( object ):
     self.debugFlag = False
     self.local = False
     self.commandExtensions = []
-    self.commands = ['GetPilotVersion', 'CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics', 'CheckCECapabilities',
-                     'CheckWNCapabilities', 'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements',
-                     'LaunchAgent']
+    self.commands = ['CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics', 
+                     'CheckCECapabilities', 'CheckWNCapabilities', 
+                     'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements', 'LaunchAgent']
     self.extensions = []
     self.tags = []
     self.site = ""
@@ -406,7 +435,8 @@ class PilotParams( object ):
     self.configServer = ""
     self.installation = ""
     self.ceName = ""
-    self.ceType = ''
+    self.ceType = ""
+    self.gridCEType = ""
     self.queueName = ""
     self.platform = ""
     self.minDiskSpace = 2560 #MB
@@ -435,8 +465,13 @@ class PilotParams( object ):
     self.architectureScript = 'dirac-platform'
     self.certsLocation = '%s/etc/grid-security' % self.workingDir
     self.pilotCFGFile = 'pilot.json'
-    self.pilotCFGFileLocation = 'http://lhcbproject.web.cern.ch/lhcbproject/dist/DIRAC3/defaults/'
     self.pilotLogging = False
+
+    # Set number of allocatable processors from MJF if available
+    try:
+      self.processors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
+    except:
+      self.processors = 1
 
     # Pilot command options
     self.cmdOpts = ( ( 'b', 'build', 'Force local compilation' ),
@@ -457,29 +492,55 @@ class PilotParams( object ):
                      ( 'N:', 'Name=', 'CE Name' ),
                      ( 'Q:', 'Queue=', 'Queue name' ),
                      ( 'y:', 'CEType=', 'CE Type (normally InProcess)' ),
+                     ( 'a:', 'gridCEType=', 'Grid CE Type (CREAM etc)' ),
                      ( 'S:', 'setup=', 'DIRAC Setup to use' ),
                      ( 'C:', 'configurationServer=', 'Configuration servers to use' ),
                      ( 'T:', 'CPUTime', 'Requested CPU Time' ),
                      ( 'G:', 'Group=', 'DIRAC Group to use' ),
                      ( 'O:', 'OwnerDN', 'Pilot OwnerDN (for private pilots)' ),
-                     ( 'U', 'Upload', 'Upload compiled distribution (if built)' ),
+                     ( 'U',  'Upload', 'Upload compiled distribution (if built)' ),
                      ( 'V:', 'installation=', 'Installation configuration file' ),
                      ( 'W:', 'gateway=', 'Configure <gateway> as DIRAC Gateway during installation' ),
                      ( 's:', 'section=', 'Set base section for relative parsed options' ),
                      ( 'o:', 'option=', 'Option=value to add' ),
                      ( 'c', 'cert', 'Use server certificate instead of proxy' ),
                      ( 'C:', 'certLocation=', 'Specify server certificate location' ),
-                     ( 'L:', 'pilotCFGLocation=', 'Specify pilot CFG location' ),
                      ( 'F:', 'pilotCFGFile=', 'Specify pilot CFG file' ),
                      ( 'R:', 'reference=', 'Use this pilot reference' ),
                      ( 'x:', 'execute=', 'Execute instead of JobAgent' ),
                      ( 'z:', 'pilotLogging', 'Activate pilot logging system' ),
                    )
 
-    self.__initOptions()
+    # Possibly get Setup and JSON URL/filename from command line
+    self.__initCommandLine1()
 
-  def __initOptions( self ):
-    """ Parses and interpret options on the command line
+    # Get main options from the JSON file
+    self.__initJSON()
+
+    # Command line can override options from JSON 
+    self.__initCommandLine2()
+
+  def __initCommandLine1( self ):
+    """ Parses and interpret options on the command line: first pass
+    """
+
+    self.optList, __args__ = getopt.getopt( sys.argv[1:],
+                                            "".join( [ opt[0] for opt in self.cmdOpts ] ),
+                                            [ opt[1] for opt in self.cmdOpts ] )
+    for o, v in self.optList:
+      if o == '-N' or o == '--Name':
+        self.ceName = v
+      elif o == '-a' or o == '--gridCEType':
+        self.gridCEType = v
+      elif o == '-d' or o == '--debug':
+        self.debugFlag = True
+      elif o in ( '-S', '--setup' ):
+        self.setup = v
+      elif o == '-F' or o == '--pilotCFGFile':
+        self.pilotCFGFile = v
+
+  def __initCommandLine2( self ):
+    """ Parses and interpret options on the command line: second pass
     """
 
     self.optList, __args__ = getopt.getopt( sys.argv[1:],
@@ -494,18 +555,12 @@ class PilotParams( object ):
         self.extensions = v.split( ',' )
       elif o == '-n' or o == '--name':
         self.site = v
-      elif o == '-N' or o == '--Name':
-        self.ceName = v
       elif o == '-y' or o == '--CEType':
         self.ceType = v
       elif o == '-Q' or o == '--Queue':
         self.queueName = v
       elif o == '-R' or o == '--reference':
         self.pilotReference = v
-      elif o == '-d' or o == '--debug':
-        self.debugFlag = True
-      elif o in ( '-S', '--setup' ):
-        self.setup = v
       elif o in ( '-C', '--configurationServer' ):
         self.configServer = v
       elif o in ( '-G', '--Group' ):
@@ -514,7 +569,6 @@ class PilotParams( object ):
         self.executeCmd = v
       elif o in ( '-O', '--OwnerDN' ):
         self.userDN = v
-
       elif o in ( '-V', '--installation' ):
         self.installation = v
       elif o == '-p' or o == '--platform':
@@ -534,10 +588,6 @@ class PilotParams( object ):
         self.useServerCertificate = True
       elif o == '-C' or o == '--certLocation':
         self.certsLocation = v
-      elif o == '-L' or o == '--pilotCFGLocation':
-        self.pilotCFGFileLocation = v
-      elif o == '-F' or o == '--pilotCFGFile':
-        self.pilotCFGFile = v
       elif o == '-M' or o == '--MaxCycles':
         try:
           self.maxCycles = min( self.MAX_CYCLES, int( v ) )
@@ -545,41 +595,136 @@ class PilotParams( object ):
           pass
       elif o in ( '-T', '--CPUTime' ):
         self.jobCPUReq = v
+      elif o == '-P' or o == '--processors':
+        try:
+          self.procesors = int(v)
+        except:
+          pass
       elif o == '-z' or o == '--pilotLogging':
         self.pilotLogging = True
 
-  def retrievePilotParameters( self ):
-    """Retrieve pilot parameters from the content of a json file. The file should be something like:
+  def __initJSON( self ):
+    """Retrieve pilot parameters from the content of json file. The file should be something like:
 
-    { 'SetupName':{'Commands':{ Name of the grid': [list of commands]}, 'Extensions':['list of extensions'], 'Version':['xyz'],
-      'Defaults':{'Commands':{ 'defaultList': [list of commands]', 'Name of the grid': [list of commands]}, 'Version':['xyz']}}
+    {
+      'DefaultSetup':'xyz',
 
-    The file must contains at least the Defaults section. """
-    try:
-      import json
-      self.log.info( "Finding the pilot commands list" )
-      result = retrieveUrlTimeout( self.pilotCFGFileLocation + '/' + self.pilotCFGFile,
-                                   self.pilotCFGFile,
-                                   self.log,
-                                   timeout = 120 )
-      if not result:
-        self.log.info( "Could not download the json file, using the default commands list." )
+      'Setups'      :{
+                      'SetupName':{
+                                    'Commands'           :{ 
+                                                           'GridCEType1' : ['cmd1','cmd2',...],
+                                                           'GridCEType2' : ['cmd1','cmd2',...],
+                                                           'Defaults'    : ['cmd1','cmd2',...] 
+                                                          },
+                                    'Extensions'         :['ext1','ext2',...],
+                                    'ConfigurationServer':'url', 
+                                    'Version'            :['xyz']
+                                    'Project'            :['xyz']
+                                  },
+
+                      'Defaults' :{
+                                    'Commands'           :{ 
+                                                            'GridCEType1' : ['cmd1','cmd2',...],
+                                                            'GridCEType2' : ['cmd1','cmd2',...],
+                                                            'Defaults'    : ['cmd1','cmd2',...] 
+                                                          },
+                                    'Extensions'         :['ext1','ext2',...],
+                                    'ConfigurationServer':'url',
+                                    'Version'            :['xyz']
+                                    'Project'            :['xyz']
+                                  }
+                     }
+
+      'CEs'         :{
+                      'ce1.domain':{
+                                    'Site'      :'XXX.yyyy.zz',
+                                    'GridCEType':'AABBCC'
+                                   },
+                      'ce2.domain':{
+                                    'Site'      :'ZZZ.yyyy.xx',
+                                    'GridCEType':'CCBBAA'
+                                   }
+                     }                   
+    }
+
+    The file must contains at least the Defaults section. Missing values are taken from the Defaults setup. """
+
+    with open ( self.pilotCFGFile, 'r' ) as fp:
+      pilotCFGFileContent = json.load( fp )
+
+    if self.ceName:
+      # Try to get the site name and grid CEType from the CE name
+      # GridCEType is like "CREAM" or "HTCondorCE" not "InProcess" etc
+      try:
+        self.name = str( pilotCFGFileContent['CEs'][self.ceName]['Site'] )
+      except:
+        pass
       else:
-        with open( self.pilotCFGFile + '-local', 'r' ) as fp:
-          pilotCFGFileContent = json.load( fp )
-        grid = self.site.split( '.' )[0]
-        if self.setup in pilotCFGFileContent:
-          if grid in pilotCFGFileContent[self.setup]['Commands']:
-            self.commands = [str( pv ) for pv in pilotCFGFileContent[self.setup]['Commands'][grid]]
-          elif grid in pilotCFGFileContent['Defaults']['Commands']:
-            self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands'][grid]]
-          else:
-            self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands']['defaultList']]
-          if 'Extensions' in pilotCFGFileContent[self.setup]:
-            self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent[self.setup]['Extensions']]
-          elif grid in pilotCFGFileContent['Defaults']['Commands']:
-            self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands'][grid]]
-          else:
-            self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands']['defaultList']]
-    except ImportError:
-      self.log.error( 'No json module available, using default commands list. ' )
+        if not self.gridCEType:
+          # We don't override a grid CEType given on the command line!
+          try:
+            self.gridCEType = str( pilotCFGFileContent['CEs'][self.ceName]['GridCEType'] )
+          except:
+            pass
+
+    if not self.setup:
+      # We don't use the default to override an explicit value from command line!
+      try:
+        self.setup = str( pilotCFGFileContent['DefaultSetup'] )
+      except:
+        pass
+
+    # Commands first
+    try:
+      self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands'][self.gridCEType]]
+    except:
+      try: 
+        self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands']['Defaults']]
+      except:
+        try:
+          self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['Commands'][self.gridCEType]]
+        except:
+          try:
+            self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands']['Defaults']]
+          except:
+            pass
+              
+    # Now the other options we handle
+    try:
+      self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['CommandExtensions']]
+    except:
+      try:
+        self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['CommandExtensions']]
+      except:
+        pass
+
+    try:
+      self.configServer = str( pilotCFGFileContent['Setups'][self.setup]['ConfigurationServer'] )
+    except:
+      try:
+        self.configServer = str( pilotCFGFileContent['Setups']['Defaults']['ConfigurationServer'] )
+      except:
+        pass
+
+    # Version might be a scalar or a list. We just want the first one.
+    try:
+      v = pilotCFGFileContent['Setups'][self.setup]['Version']
+    except:
+      try:
+        v = pilotCFGFileContent['Setups']['Defaults']['Version']
+      except:
+        v = None
+
+    if isinstance(v, basestring):
+      self.releaseVersion = str( v )
+    elif v:
+      self.releaseVersion = str( v[0] )
+      
+    try:
+      self.releaseProject = str( pilotCFGFileContent['Setups'][self.setup]['Project'] )
+    except:
+      try:
+        self.releaseProject = str( pilotCFGFileContent['Setups']['Defaults']['Project'] )
+      except:
+        pass
+

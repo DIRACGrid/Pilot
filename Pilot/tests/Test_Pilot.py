@@ -4,55 +4,50 @@
 # imports
 import unittest
 import json
+import sys
 import os
 
-from Pilot.pilotTools import PilotParams, CommandBase
-from Pilot.pilotCommands import GetPilotVersion
+from Pilot.pilotTools import PilotParams
+from Pilot.pilotCommands import GetPilotVersion, CheckWorkerNode, ConfigureSite
 
 class PilotTestCase( unittest.TestCase ):
   """ Base class for the Agents test cases
   """
   def setUp( self ):
+    # Define a local file for test, and all the necessary parameters
+    with open ( 'pilot.json', 'w' ) as fp:
+      json.dump( {'Setups':{'TestSetup':{'Commands':{'cetype1':['x', 'y', 'z'], 
+                                                     'cetype2':['d', 'f']}, 
+                                         'CommandExtensions':['TestExtension'],
+                                         'Version':['v1r1','v2r2']}},
+                  'CEs':{'grid1.example.com':{'GridCEType':'cetype1','Site':'site.example.com'}},
+                  'DefaultSetup':'TestSetup'}, 
+                 fp )
+                
+    sys.argv[1:] = ['--Name', 'grid1.example.com']
+
     self.pp = PilotParams()
 
   def tearDown( self ):
     try:
-      os.remove('pilot.out')
       os.remove( 'pilot.json' )
-      os.remove( 'pilot.json-local' )
-    except OSError:
+    except IOError:
       pass
 
 
 class CommandsTestCase( PilotTestCase ):
 
-  def test_commandBase(self):
-    cb = CommandBase(self.pp)
-    returnCode, _outputData = cb.executeAndGetOutput("ls")
-    self.assertEqual(returnCode, 0)
-
-  def test_GetPilotVersion( self ):
-
-    # Now defining a local file for test, and all the necessary parameters
-    fp = open( 'pilot.json', 'w' )
-    json.dump( {'TestSetup':{'Commands':{'grid1':['x', 'y', 'z'], 'grid2':['d', 'f']}, 'Version':['v1r1', 'v2r2']}}, fp )
-    fp.close()
-    self.pp.setup = 'TestSetup'
-    self.pp.pilotCFGFileLocation = 'file://%s' % os.getcwd()
-    gpv = GetPilotVersion( self.pp )
-    self.assertTrue( gpv.execute() is None )
-    self.assertEqual( gpv.pp.releaseVersion, 'v1r1' )
-
-  def test_RetrievePilotParameters( self ):
-    with open ( 'pilot.json', 'w' ) as fp:
-      json.dump( {'TestSetup':{'Commands':{'grid1':['x', 'y', 'z'], 'grid2':['d', 'f']}, 'Extensions':['TestExtension'],
-                               'Version':['v1r1', 'v2r2']}}, fp )
-    self.pp.setup = 'TestSetup'
-    self.pp.site = 'grid1.cern.ch'
-    self.pp.pilotCFGFileLocation = 'file://%s' % os.getcwd()
-    self.pp.retrievePilotParameters()
+  def test_InitJSON( self ):
     self.assertEqual( self.pp.commands, ['x', 'y', 'z'] )
     self.assertEqual( self.pp.commandExtensions, ['TestExtension'] )
+    
+  def test_CheckWorkerNode ( self ):
+    CheckWorkerNode( self.pp )
+        
+  def test_ConfigureSite ( self ):
+    self.pp.configureScript = 'echo'
+    ConfigureSite( self.pp )
+        
 
 #############################################################################
 # Test Suite run

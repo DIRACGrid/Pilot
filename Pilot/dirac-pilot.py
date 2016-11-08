@@ -39,7 +39,6 @@ if __name__ == "__main__":
   pilotParams.pilotScript = os.path.realpath( sys.argv[0] )
   pilotParams.pilotScriptName = os.path.basename( pilotParams.pilotScript )
   log.debug( 'PARAMETER [%s]' % ', '.join( map( str, pilotParams.optList ) ) )
-  pilotParams.retrievePilotParameters()
 
   if pilotParams.commandExtensions:
     log.info( "Requested command extensions: %s" % str( pilotParams.commandExtensions ) )
