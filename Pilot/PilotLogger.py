@@ -4,13 +4,16 @@
 """
 
 import sys
+import os
 import Queue
 import logging
 import stomp
+import argparse
 from PilotLoggerTools import generateDict, encodeMessage
 from PilotLoggerTools import generateTimeStamp
 from PilotLoggerTools import isMessageFormatCorrect
 from PilotLoggerTools import readPilotLoggerConfigFile
+from PilotLoggerTools import getUniqueIDAndSaveToFile
 
 __RCSID__ = "$Id$"
 
@@ -65,7 +68,7 @@ def getPilotUUIDFromFile( filename = 'PilotAgentUUID' ):
       uniqueId = myFile.read()
     return uniqueId
   except IOError:
-    logging.error('Could not open the file!!!')
+    logging.error('Could not open the file with UUID:'+ filename)
     return ""
 
 def eraseFileContent( filename ):
@@ -80,7 +83,7 @@ def saveMessageToFile( msg, filename = 'myLocalQueueOfMessages' ):
   """
 
   with open(filename, 'a+') as myFile:
-    myFile.write(msg)
+    myFile.write(msg+'\n')
 
 def readMessagesFromFileAndEraseFileContent( filename = 'myLocalQueueOfMessages' ):
   """ Generates the queue FIFO and fills it
@@ -102,12 +105,19 @@ class PilotLogger( object ):
   """ Base pilot logger class.
   """
 
-  def __init__( self, configFile = 'PilotLogger.cfg'):
-    """ ctr
-    Args:
+  FLAGS = ['info', 'warning', 'error', 'debug']
 
+  def __init__( self, configFile = 'PilotLogger.cfg'):
+    """ ctr loads the configuration parameters from the file
+        or if the file does not exists, loads the default set
+        of values. Next, if self.fileWithUUID is not set (this
+        variable corresponds to the name of the file with Pilot
+        Agent ID) the default value is used, and if the file does
+        not exist, the Pilot ID is created and saved in this file.
+    Args:
+      configFile(str): File with the configuration parameters.
     """
-    self.FLAGS = ['info', 'warning', 'error', 'debug']
+    self.FLAGS = PilotLogger.FLAGS
     self.STATUSES = [
         'Landed',
         'Installing',
@@ -122,6 +132,16 @@ class PilotLogger( object ):
     self.queuePath = ''
     self.sslCfg = None
     self._loadConfigurationFromFile(configFile)
+
+    if not self.fileWithUUID:
+      self.fileWithUUID = 'PilotAgentUUID'
+      logging.warning('No pilot logger id file name was specified. The default file name will be used:'+self.fileWithUUID)
+      if os.path.isfile(self.fileWithUUID):
+        logging.warning('The default file: '+self.fileWithUUID + ' already exists. The content will be used to get UUID.')
+      else:
+        res = getUniqueIDAndSaveToFile(filename = self.fileWithUUID)
+        if not res:
+          logging.error('Error while generating pilot logger id.')
 
   def _loadConfigurationFromFile( self, filename ):
     """ Add comment
@@ -185,17 +205,20 @@ class PilotLogger( object ):
     disconnect(connection)
     return True
 
-  def sendMessage( self, minorStatus, flag = 'info', status='Installing' ):
+  def sendMessage( self, minorStatus, flag = 'info', status='Installing', localOutputFile = None ):
     """ Sends the message after
         creating the correct format:
         including content, timestamp, status, minor status and the uuid
-        of the pilot
+        of the pilot. If the localOutputFile is set, than the message is saved
+        to the local file instead of the MQ system.
     Returns:
       bool: False in case of any errors, True otherwise
     """
     if not self._isCorrectFlag( flag ):
+      logging.error('flag: ' + str(flag) + ' is not correct')
       return False
     if not self._isCorrectStatus( status ):
+      logging.error('status: ' + str(status) + ' is not correct')
       return False
     myUUID = getPilotUUIDFromFile(self.fileWithUUID)
     message = generateDict(
@@ -206,9 +229,13 @@ class PilotLogger( object ):
         "pilot"
         )
     if not isMessageFormatCorrect( message ):
+      logging.warning("Message format is not correct.")
       return False
     encodedMsg = encodeMessage( message )
-    return self._sendMessage( encodedMsg, flag )
+    if localOutputFile:
+      return saveMessageToFile(msg = encodedMsg, filename = localOutputFile)
+    else:
+      return self._sendMessage( encodedMsg, flag )
 
 def main():
   """ main() function  is used to send a message
@@ -216,9 +243,41 @@ def main():
       Remember that it is assumed that the PilotUUID was
       already generated and stored into some file.
   """
-  message = ' '.join( sys.argv[1:] ) or "Something wrong no message to send!"
+
+  parser = argparse.ArgumentParser(description="command line interface to send logs to MQ system.")
+  parser.add_argument('source',
+                      nargs='?',
+                      default ='unspecified',
+                      help='''Source of the message e.g. "InstallDIRAC". It must be one word.
+                            If not specified it is set to "unspecified".''')
+  parser.add_argument('phase',
+                      nargs='?',
+                      default ='unspecified',
+                      help='''Phase of the process e.g. "fetching". It must be one word.
+                            If not specified it is set to "unspecified".''')
+  parser.add_argument('status',
+                      nargs = '?',
+                      choices = PilotLogger.FLAGS,
+                      default = 'info',
+                      help = 'Allowed values are: '+ ', '.join(PilotLogger.FLAGS)+'''.
+                      If not specified it is set to "info".''',
+                      metavar='status ')
+  parser.add_argument('message',
+                      nargs='+',
+                      help='Human readable content of the message. ')
+  parser.add_argument('--output',
+                      help = '''Log the content to the specified file
+                              instead of sending it to the Message Queue server.''')
+  args = parser.parse_args()
   logger = PilotLogger()
-  logger.sendMessage( message, 'info', 'Landed' )
+  if args.output:
+    print args.output
+    logger.sendMessage( minorStatus = " ".join(args.message),
+                        flag = args.status,
+                        status = args.phase,
+                        localOutputFile = args.output)
+  else:
+    logger.sendMessage( minorStatus = " ".join(args.message), flag = args.status, status = args.phase  )
 
 if __name__ == '__main__':
   main()
