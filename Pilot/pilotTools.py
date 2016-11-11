@@ -286,10 +286,10 @@ class ExtendedLogger( Logger ):
     """
     super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
     if isPilotLoggerOn:
-      #<the import here was suggest F.S cause PilotLogger imports pika
+      #the import here was suggest F.S cause PilotLogger imports stomp
       #which is not yet in the DIRAC externals
       #so up to now we want to turn it off
-      from PilotLogger.PilotLogger import PilotLogger
+      from Pilot.PilotLogger import PilotLogger
       self.pilotLogger = PilotLogger()
     else:
       self.pilotLogger = None
@@ -299,25 +299,35 @@ class ExtendedLogger( Logger ):
     super(ExtendedLogger, self).debug(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
-        self.pilotLogger.sendMessage(msg,"debug")
+        self.pilotLogger.sendMessage(msg, status = "debug")
 
   def error( self, msg, header = True, sendPilotLog = False ):
     super(ExtendedLogger, self).error(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
-        self.pilotLogger.sendMessage(msg,"error")
+        self.pilotLogger.sendMessage(msg, status = "error")
 
   def warn( self, msg, header = True, sendPilotLog = False):
     super(ExtendedLogger, self).warn(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
-        self.pilotLogger.sendMessage(msg,"warning")
+        self.pilotLogger.sendMessage(msg, status ="warning")
 
   def info( self, msg, header = True, sendPilotLog = False ):
     super(ExtendedLogger, self).info(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
-        self.pilotLogger.sendMessage(msg,"info")
+        self.pilotLogger.sendMessage(msg, status = "info")
+
+  def sendMessage( self, msg,  source, phase, status ='info',localFile = None, sendPilotLog = False ):
+    pass
+    if self.isPilotLoggerOn:
+      if sendPilotLog:
+        self.pilotLogger.sendMessage(messageContent = msg,
+                                      source=source,
+                                      phase = phase,
+                                      status=status,
+                                      localOutputFile = localFile)
 class CommandBase( object ):
   """ CommandBase is the base class for every command in the pilot commands toolbox
   """
@@ -385,11 +395,11 @@ class CommandBase( object ):
 
     self.log.info( "Fork and execute command %s" % cmd )
     pid = os.fork()
-    
-    if pid != 0: 
+
+    if pid != 0:
       # Still in the parent, return the subprocess ID
       return pid
-      
+
     # The subprocess stdout/stderr will be written to logFile
     with open(logFile, 'a+', 0) as fpLogFile:
 
@@ -401,7 +411,7 @@ class CommandBase( object ):
         self.log.debug( "Return code of %s: %d" % ( cmd, returnCode ) )
       except:
         returnCode = 99
-      
+
     sys.exit(returnCode)
 
 class PilotParams( object ):
@@ -425,8 +435,8 @@ class PilotParams( object ):
     self.debugFlag = False
     self.local = False
     self.commandExtensions = []
-    self.commands = ['CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics', 
-                     'CheckCECapabilities', 'CheckWNCapabilities', 
+    self.commands = ['CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics',
+                     'CheckCECapabilities', 'CheckWNCapabilities',
                      'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements', 'LaunchAgent']
     self.extensions = []
     self.tags = []
@@ -517,7 +527,7 @@ class PilotParams( object ):
     # Get main options from the JSON file
     self.__initJSON()
 
-    # Command line can override options from JSON 
+    # Command line can override options from JSON
     self.__initCommandLine2()
 
   def __initCommandLine1( self ):
@@ -611,22 +621,22 @@ class PilotParams( object ):
 
       'Setups'      :{
                       'SetupName':{
-                                    'Commands'           :{ 
+                                    'Commands'           :{
                                                            'GridCEType1' : ['cmd1','cmd2',...],
                                                            'GridCEType2' : ['cmd1','cmd2',...],
-                                                           'Defaults'    : ['cmd1','cmd2',...] 
+                                                           'Defaults'    : ['cmd1','cmd2',...]
                                                           },
                                     'Extensions'         :['ext1','ext2',...],
-                                    'ConfigurationServer':'url', 
+                                    'ConfigurationServer':'url',
                                     'Version'            :['xyz']
                                     'Project'            :['xyz']
                                   },
 
                       'Defaults' :{
-                                    'Commands'           :{ 
+                                    'Commands'           :{
                                                             'GridCEType1' : ['cmd1','cmd2',...],
                                                             'GridCEType2' : ['cmd1','cmd2',...],
-                                                            'Defaults'    : ['cmd1','cmd2',...] 
+                                                            'Defaults'    : ['cmd1','cmd2',...]
                                                           },
                                     'Extensions'         :['ext1','ext2',...],
                                     'ConfigurationServer':'url',
@@ -644,7 +654,7 @@ class PilotParams( object ):
                                     'Site'      :'ZZZ.yyyy.xx',
                                     'GridCEType':'CCBBAA'
                                    }
-                     }                   
+                     }
     }
 
     The file must contains at least the Defaults section. Missing values are taken from the Defaults setup. """
@@ -678,7 +688,7 @@ class PilotParams( object ):
     try:
       self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands'][self.gridCEType]]
     except:
-      try: 
+      try:
         self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands']['Defaults']]
       except:
         try:
@@ -688,7 +698,7 @@ class PilotParams( object ):
             self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands']['Defaults']]
           except:
             pass
-              
+
     # Now the other options we handle
     try:
       self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['CommandExtensions']]
@@ -719,7 +729,7 @@ class PilotParams( object ):
       self.releaseVersion = str( v )
     elif v:
       self.releaseVersion = str( v[0] )
-      
+
     try:
       self.releaseProject = str( pilotCFGFileContent['Setups'][self.setup]['Project'] )
     except:
