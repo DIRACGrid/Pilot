@@ -3,8 +3,8 @@
 
 import unittest
 import os
-from PilotLogger.PilotLogger import PilotLogger, getPilotUUIDFromFile
-from PilotLogger.PilotLoggerTools import getUniqueIDAndSaveToFile
+from Pilot.PilotLogger import PilotLogger, getPilotUUIDFromFile
+from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
 
 class TestPilotLogger( unittest.TestCase ):
 
