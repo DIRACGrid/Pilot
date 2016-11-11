@@ -58,7 +58,7 @@ def readPilotLoggerConfigFile ( filename ):
   except (IOError, ValueError):
     return None
 
-def generateDict( pilotUUID, status, minorStatus, timestamp, source ):
+def generateDict( pilotUUID, timestamp, source, phase,  status, messageContent ):
   """Helper function that returs a dictionnary based on the
      set of input values.
   Returns
@@ -67,17 +67,19 @@ def generateDict( pilotUUID, status, minorStatus, timestamp, source ):
 
   keys = [
       'pilotUUID',
-      'status',
-      'minorStatus',
       'timestamp',
-      'source'
+      'source',
+      'phase',
+      'status',
+      'messageContent'
       ]
   values = [
       pilotUUID,
-      status,
-      minorStatus,
       timestamp,
-      source
+      source,
+      phase,
+      status,
+      messageContent
       ]
   return dict( zip( keys, values ) )
 
@@ -111,18 +113,19 @@ def isMessageFormatCorrect( content ):
      in the following format:
      0) content is a dictionary,
      1) it contains only those keys of basestring types:
-     'pilotUUID', 'status', 'minorStatus', 'timestamp', 'source',
+     'pilotUUID', 'status', 'messageContent', 'timestamp', 'source','phase'
      2) it contains only values of basestring types.
   Args:
     content(dict): all values must be non-empty
   Returns:
     bool: True if message format is correct, False otherwise
   Example:
-    {"status": "DIRAC Installation",
+    {"status": "info",
      "timestamp": "1427121370.7",
-      "minorStatus": "Uname = Linux localhost 3.10.64-85.cernvm.x86_64",
+      "messageContent": "Uname = Linux localhost 3.10.64-85.cernvm.x86_64",
       "pilotUUID": "eda78924-d169-11e4-bfd2-0800275d1a0a",
-      "source": "pilot"
+      "phase": "Installing",
+      "source": "InstallDIRAC"
       }
   """
   if not isinstance( content, dict ):
@@ -130,8 +133,9 @@ def isMessageFormatCorrect( content ):
   refKeys = [
       'pilotUUID',
       'status',
-      'minorStatus',
+      'messageContent',
       'timestamp',
+      'phase',
       'source'
       ]
   refKeys.sort()

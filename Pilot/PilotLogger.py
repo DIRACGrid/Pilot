@@ -3,7 +3,6 @@
     The current implementation uses stomp.
 """
 
-import sys
 import os
 import Queue
 import logging
@@ -105,7 +104,7 @@ class PilotLogger( object ):
   """ Base pilot logger class.
   """
 
-  FLAGS = ['info', 'warning', 'error', 'debug']
+  STATUSES = ['info', 'warning', 'error', 'debug']
 
   def __init__( self, configFile = 'PilotLogger.cfg'):
     """ ctr loads the configuration parameters from the file
@@ -117,16 +116,7 @@ class PilotLogger( object ):
     Args:
       configFile(str): File with the configuration parameters.
     """
-    self.FLAGS = PilotLogger.FLAGS
-    self.STATUSES = [
-        'Landed',
-        'Installing',
-        'Configuring',
-        'Matching',
-        'Running',
-        'Done',
-        'Failed'
-        ]
+    self.STATUSES = PilotLogger.STATUSES
     self.fileWithUUID = ''
     self.networkCfg= None
     self.queuePath = ''
@@ -157,13 +147,6 @@ class PilotLogger( object ):
       self.sslCfg = dict((k, config[k]) for k  in ('key_file', 'cert_file', 'ca_certs'))
       return True
 
-  def _isCorrectFlag( self, flag ):
-    """ Checks if the flag corresponds to one of the predefined
-        FLAGS, check constructor for current set.
-    """
-
-    return flag in self.FLAGS
-
   def _isCorrectStatus( self, status ):
 
     """ Checks if the flag corresponds to one of the predefined
@@ -176,7 +159,7 @@ class PilotLogger( object ):
     """ Retrives all messages from the local storage
         and sends it.
     """
-    queue =readMessagesFromFileAndEraseFileContent()
+    queue = readMessagesFromFileAndEraseFileContent()
     while not queue.empty():
       msg = queue.get()
       send(msg, self.queuePath, connect_handler)
@@ -195,8 +178,6 @@ class PilotLogger( object ):
       bool: False in case of any errors, True otherwise
     """
 
-    if not self._isCorrectFlag( flag ):
-      return False
     saveMessageToFile(msg)
     connection = connect(self.networkCfg, self.sslCfg)
     if not connection:
@@ -205,28 +186,26 @@ class PilotLogger( object ):
     disconnect(connection)
     return True
 
-  def sendMessage( self, minorStatus, flag = 'info', status='Installing', localOutputFile = None ):
+  def sendMessage( self, messageContent, source = 'unspecified', phase = 'unspecified' , status='info',  localOutputFile = None ):
     """ Sends the message after
         creating the correct format:
-        including content, timestamp, status, minor status and the uuid
+        including content, timestamp, status, source, phase and the uuid
         of the pilot. If the localOutputFile is set, than the message is saved
         to the local file instead of the MQ system.
     Returns:
       bool: False in case of any errors, True otherwise
     """
-    if not self._isCorrectFlag( flag ):
-      logging.error('flag: ' + str(flag) + ' is not correct')
-      return False
     if not self._isCorrectStatus( status ):
       logging.error('status: ' + str(status) + ' is not correct')
       return False
     myUUID = getPilotUUIDFromFile(self.fileWithUUID)
     message = generateDict(
         myUUID,
-        status,
-        minorStatus,
         generateTimeStamp(),
-        "pilot"
+        source,
+        phase,
+        status,
+        messageContent
         )
     if not isMessageFormatCorrect( message ):
       logging.warning("Message format is not correct.")
@@ -235,7 +214,7 @@ class PilotLogger( object ):
     if localOutputFile:
       return saveMessageToFile(msg = encodedMsg, filename = localOutputFile)
     else:
-      return self._sendMessage( encodedMsg, flag )
+      return self._sendMessage( encodedMsg, flag = status )
 
 def main():
   """ main() function  is used to send a message
@@ -257,9 +236,9 @@ def main():
                             If not specified it is set to "unspecified".''')
   parser.add_argument('status',
                       nargs = '?',
-                      choices = PilotLogger.FLAGS,
+                      choices = PilotLogger.STATUSES,
                       default = 'info',
-                      help = 'Allowed values are: '+ ', '.join(PilotLogger.FLAGS)+'''.
+                      help = 'Allowed values are: '+ ', '.join(PilotLogger.STATUSES)+'''.
                       If not specified it is set to "info".''',
                       metavar='status ')
   parser.add_argument('message',
@@ -272,12 +251,16 @@ def main():
   logger = PilotLogger()
   if args.output:
     print args.output
-    logger.sendMessage( minorStatus = " ".join(args.message),
-                        flag = args.status,
-                        status = args.phase,
+    logger.sendMessage( messageContent = " ".join(args.message),
+                        source = args.source,
+                        phase = args.phase,
+                        status = args.status,
                         localOutputFile = args.output)
   else:
-    logger.sendMessage( minorStatus = " ".join(args.message), flag = args.status, status = args.phase  )
+    logger.sendMessage( messageContent = " ".join(args.message),
+                        source = args.source,
+                        phase = args.phase,
+                        status = args.status)
 
 if __name__ == '__main__':
   main()

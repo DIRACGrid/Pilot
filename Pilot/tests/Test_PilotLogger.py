@@ -36,18 +36,6 @@ class TestGetPilotUUIDFromFile( TestPilotLogger ):
     uuid = getPilotUUIDFromFile( self.nonExistentFile )
     self.assertFalse( uuid )
 
-class TestPilotLogger_isCorrectFlag( TestPilotLogger ):
-
-  def test_success( self ):
-    for flag in self.logger.FLAGS:
-      self.assertTrue( self.logger._isCorrectFlag( flag ) )
-
-  def test_failure( self ):
-    self.assertFalse( self.logger._isCorrectFlag( 'mamma Mia' ) )
-
-  def test_failureEmpty( self ):
-    self.assertFalse( self.logger._isCorrectFlag( '' ) )
-
 class TestPilotLogger_isCorrectStatus( TestPilotLogger ):
 
   def test_success( self ):

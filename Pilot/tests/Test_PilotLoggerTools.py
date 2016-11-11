@@ -16,11 +16,12 @@ class TestPilotLoggerTools( unittest.TestCase ):
 
   def setUp( self ):
     self.msg = {
-      'status': 'Installing',
+      'status': 'info',
+      'phase': 'Installing',
       'timestamp': '1427121370.7',
-      'minorStatus': 'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
+      'messageContent': 'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
       'pilotUUID': 'eda78924-d169-11e4-bfd2-0800275d1a0a',
-      'source': 'pilot'
+      'source': 'InstallDIRAC'
        }
     self.testFile = 'test_file_to_remove'
     self.testFileCfg = 'TestConf.cfg'
@@ -98,20 +99,23 @@ class TestPilotLoggerToolsGenerateDict( TestPilotLoggerTools ):
 
   def test_success( self ):
     result = generateDict(
-        'eda78924-d169-11e4-bfd2-0800275d1a0a',
-        'Installing',
-        'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
-        '1427121370.7',
-        'pilot'
+        pilotUUID = 'eda78924-d169-11e4-bfd2-0800275d1a0a',
+        timestamp = '1427121370.7',
+        source = 'InstallDIRAC',
+        phase = 'Installing',
+        status = 'info',
+        messageContent = 'Uname = Linux localhost 3.10.64-85.cernvm.x86_64'
         )
+
     self.assertEqual( result, self.msg )
   def test_failure( self ):
     result = generateDict(
         'eda78924-d169-11e4-bfd2-0800275d1a0a',
-        'AAA Installation',
-        'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
         '1427121370.7',
-        'pilot'
+        'InstallDIRAC',
+        'AAA Installation',
+        'info',
+        'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
         )
     self.assertNotEqual( result, self.msg )
 
