@@ -4,23 +4,24 @@ import unittest
 import mock
 import json
 import os
-from PilotLogger.PilotLoggerTools import generateDict, encodeMessage
-from PilotLogger.PilotLoggerTools import decodeMessage, isMessageFormatCorrect
-from PilotLogger.PilotLoggerTools import getUniqueIDAndSaveToFile
-from PilotLogger.PilotLoggerTools import createPilotLoggerConfigFile
-from PilotLogger.PilotLoggerTools import readPilotLoggerConfigFile
-from PilotLogger.PilotLoggerTools import getUniqueIDFromOS
+from Pilot.PilotLoggerTools import generateDict, encodeMessage
+from Pilot.PilotLoggerTools import decodeMessage, isMessageFormatCorrect
+from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
+from Pilot.PilotLoggerTools import createPilotLoggerConfigFile
+from Pilot.PilotLoggerTools import readPilotLoggerConfigFile
+from Pilot.PilotLoggerTools import getUniqueIDFromOS
 
 
 class TestPilotLoggerTools( unittest.TestCase ):
 
   def setUp( self ):
     self.msg = {
-      'status': 'Installing',
+      'status': 'info',
+      'phase': 'Installing',
       'timestamp': '1427121370.7',
-      'minorStatus': 'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
+      'messageContent': 'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
       'pilotUUID': 'eda78924-d169-11e4-bfd2-0800275d1a0a',
-      'source': 'pilot'
+      'source': 'InstallDIRAC'
        }
     self.testFile = 'test_file_to_remove'
     self.testFileCfg = 'TestConf.cfg'
@@ -98,20 +99,23 @@ class TestPilotLoggerToolsGenerateDict( TestPilotLoggerTools ):
 
   def test_success( self ):
     result = generateDict(
-        'eda78924-d169-11e4-bfd2-0800275d1a0a',
-        'Installing',
-        'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
-        '1427121370.7',
-        'pilot'
+        pilotUUID = 'eda78924-d169-11e4-bfd2-0800275d1a0a',
+        timestamp = '1427121370.7',
+        source = 'InstallDIRAC',
+        phase = 'Installing',
+        status = 'info',
+        messageContent = 'Uname = Linux localhost 3.10.64-85.cernvm.x86_64'
         )
+
     self.assertEqual( result, self.msg )
   def test_failure( self ):
     result = generateDict(
         'eda78924-d169-11e4-bfd2-0800275d1a0a',
-        'AAA Installation',
-        'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
         '1427121370.7',
-        'pilot'
+        'InstallDIRAC',
+        'AAA Installation',
+        'info',
+        'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
         )
     self.assertNotEqual( result, self.msg )
 
@@ -185,31 +189,31 @@ def helper_get(var):
   #environVars = ['CREAM_JOBID', 'GRID_GLOBAL_JOBID', 'VM_UUID']
 class TestPilotLoggerGetUniqueIDFromOS( TestPilotLoggerTools ):
 
-  @mock.patch('PilotLogger.PilotLoggerTools.os.environ.__contains__',
+  @mock.patch('Pilot.PilotLoggerTools.os.environ.__contains__',
               side_effect = lambda var: var =='CREAM_JOBID')
-  @mock.patch('PilotLogger.PilotLoggerTools.os.environ.get',
+  @mock.patch('Pilot.PilotLoggerTools.os.environ.get',
               side_effect = lambda var: 'CREAM_uuid' if var =='CREAM_JOBID' else '')
   def test_successCREAM( self, mock_environ_get, mock_environ_key):
     self.assertEqual(getUniqueIDFromOS(), 'CREAM_uuid')
 
-  @mock.patch('PilotLogger.PilotLoggerTools.os.environ.__contains__',
+  @mock.patch('Pilot.PilotLoggerTools.os.environ.__contains__',
               side_effect = lambda var: var =='GRID_GLOBAL_JOBID')
-  @mock.patch('PilotLogger.PilotLoggerTools.os.environ.get',
+  @mock.patch('Pilot.PilotLoggerTools.os.environ.get',
               side_effect = lambda var: 'GRID_uuid' if var =='GRID_GLOBAL_JOBID' else '')
   def test_successGRID( self, mock_environ_get, mock_environ_key):
     self.assertEqual(getUniqueIDFromOS(), 'GRID_uuid')
 
 
-  @mock.patch('PilotLogger.PilotLoggerTools.os.environ.__contains__',
+  @mock.patch('Pilot.PilotLoggerTools.os.environ.__contains__',
               side_effect = lambda var: var =='VM_UUID' or var == 'CE_NAME' or var == 'VMTYPE' )
-  @mock.patch('PilotLogger.PilotLoggerTools.os.environ.get',
+  @mock.patch('Pilot.PilotLoggerTools.os.environ.get',
               side_effect = helper_get)
   def test_successVM( self, mock_environ_get, mock_environ_key):
     self.assertEqual(getUniqueIDFromOS(), 'vm://myCE/myCE:myVMTYPE:VM_uuid')
 
-  @mock.patch('PilotLogger.PilotLoggerTools.os.environ.__contains__',
+  @mock.patch('Pilot.PilotLoggerTools.os.environ.__contains__',
               side_effect = lambda var: False)
-  @mock.patch('PilotLogger.PilotLoggerTools.os.environ.get',
+  @mock.patch('Pilot.PilotLoggerTools.os.environ.get',
               side_effect = lambda var: None)
   def test_failVM( self, mock_environ_get, mock_environ_key):
     self.assertFalse(getUniqueIDFromOS())

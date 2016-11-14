@@ -3,8 +3,8 @@
 
 import unittest
 import os
-from PilotLogger.PilotLogger import PilotLogger, getPilotUUIDFromFile
-from PilotLogger.PilotLoggerTools import getUniqueIDAndSaveToFile
+from Pilot.PilotLogger import PilotLogger, getPilotUUIDFromFile
+from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
 
 class TestPilotLogger( unittest.TestCase ):
 
@@ -35,18 +35,6 @@ class TestGetPilotUUIDFromFile( TestPilotLogger ):
   def test_failureNonExistent( self ):
     uuid = getPilotUUIDFromFile( self.nonExistentFile )
     self.assertFalse( uuid )
-
-class TestPilotLogger_isCorrectFlag( TestPilotLogger ):
-
-  def test_success( self ):
-    for flag in self.logger.FLAGS:
-      self.assertTrue( self.logger._isCorrectFlag( flag ) )
-
-  def test_failure( self ):
-    self.assertFalse( self.logger._isCorrectFlag( 'mamma Mia' ) )
-
-  def test_failureEmpty( self ):
-    self.assertFalse( self.logger._isCorrectFlag( '' ) )
 
 class TestPilotLogger_isCorrectStatus( TestPilotLogger ):
 
