@@ -195,12 +195,13 @@ cp /root/hostkey.pem /scratch/plt/etc/grid-security/hostcert.pem
 chmod 0600 /scratch/plt/etc/grid-security/host*.pem
 
 # Add plt0102 etc accounts for the payloads that plt can sudo to
-# Up to 16 jobagents
-for m in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+
+# At most one jobagent per logical processor
+processors=`grep '^processor[[:space:]]' /proc/cpuinfo | wc --lines`
+for ((m=0; m < processors; m++))
 do
-  n=0
   # Up to 100 successive payloads per jobagent
-  while [ $n -le 99 ]
+  for ((n=0; n < 100; n++))
   do
     payloaduser=`printf 'plt%02dp%02d' $m $n`
     payloaduserid=`printf '1%02d%02d' $m $n`
@@ -230,8 +231,6 @@ do
     echo "Defaults>$payloaduser visiblepw"             >>/etc/sudoers
     echo "Defaults>$payloaduser !env_reset"            >>/etc/sudoers
     echo "plt ALL = ($payloaduser) NOPASSWD: ALL"      >>/etc/sudoers
-
-    n=`expr $n + 1`
   done
 done
 
