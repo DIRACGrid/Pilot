@@ -1127,15 +1127,15 @@ class NagiosProbes( CommandBase ):
     """
    
     try:
-      self.nagiosProbes = [str( pv ) for pv in self.pp.pilotJSON['Setups'][self.setup]['NagiosProbes']]
+      self.nagiosProbes = [str( pv ).strip() for pv in self.pp.pilotJSON['Setups'][self.pp.setup]['NagiosProbes'].split(',')]
     except KeyError:
       try:
-        self.nagiosProbes = [str( pv ) for pv in self.pp.pilotJSON['Setups']['Defaults']['NagiosProbes']]
+        self.nagiosProbes = [str( pv ).strip() for pv in self.pp.pilotJSON['Setups']['Defaults']['NagiosProbes'].split(',')]
       except KeyError:
         pass
 
     try:
-      self.nagiosPutURL = str( self.pp.pilotJSON['Setups'][self.setup]['NagiosPutURL'] )
+      self.nagiosPutURL = str( self.pp.pilotJSON['Setups'][self.pp.setup]['NagiosPutURL'] )
     except KeyError:
       try:
         self.nagiosPutURL = str( self.pp.pilotJSON['Setups']['Defaults']['NagiosPutURL'] )
@@ -1156,7 +1156,7 @@ class NagiosProbes( CommandBase ):
        os.chmod( probeCmd, stat.S_IXUSR + os.stat( probeCmd ).st_mode )
 
      except OSError:
-       sys.log.error( 'File %s is missing! Skipping test' % probeCmd )
+       self.log.error( 'File %s is missing! Skipping test' % probeCmd )
        retCode = 2
        output  = 'Probe file %s missing from pilot!' % probeCmd
 

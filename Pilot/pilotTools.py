@@ -688,26 +688,28 @@ class PilotParams( object ):
         pass
 
     # Commands first
+    # FIXME: pilotSynchronizer() should publish these as comma-separated lists and we should split(',') them!!!
     try:
-      self.commands = [str( pv ) for pv in self.pilotJSON['Setups'][self.setup]['Commands'][self.gridCEType]]
+      self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands'][self.gridCEType]]
     except KeyError:
       try:
-        self.commands = [str( pv ) for pv in self.pilotJSON['Setups'][self.setup]['Commands']['Defaults']]
+        self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands']['Defaults']]
       except KeyError:
         try:
-          self.commands = [str( pv ) for pv in self.pilotJSON['Setups']['Defaults']['Commands'][self.gridCEType]]
+          self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['Commands'][self.gridCEType]]
         except KeyError:
           try:
-            self.commands = [str( pv ) for pv in self.pilotJSON['Defaults']['Commands']['Defaults']]
+            self.commands = [str( pv ).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults']]
           except KeyError:
             pass
 
     # Now the other options we handle
+    # FIXME: pilotSynchronizer() should publish this as a comma separated list and we should split(',') it!!!
     try:
-      self.commandExtensions = [str( pv ) for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
+      self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
     except KeyError:
       try:
-        self.commandExtensions = [str( pv ) for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
+        self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
       except KeyError:
         pass
 
