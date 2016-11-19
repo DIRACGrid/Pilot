@@ -1165,18 +1165,18 @@ class NagiosProbes( CommandBase ):
        retCode, output = self.executeAndGetOutput( './' + probeCmd )
 
      if retCode == 0:
-       self.log.info( 'Return code = 0: %s' % output.split('/',1)[0] )
+       self.log.info( 'Return code = 0: %s' % output.split('\n',1)[0] )
        retStatus = 'info'
      elif retCode == 1:
-       self.log.warn( 'Return code = 1: %s' % output.split('/',1)[0] )
+       self.log.warn( 'Return code = 1: %s' % output.split('\n',1)[0] )
        retStatus = 'warning'
      else:
        # retCode could be 2 (error) or 3 (unknown) or something we haven't thought of
-       self.log.error( 'Return code = %d: %s' % ( retCode, output.split('/',1)[0] ) )
+       self.log.error( 'Return code = %d: %s' % ( retCode, output.split('\n',1)[0] ) )
        retStatus = 'error'
 
      # report results to pilot logger too. Like this:
-     #   "NagiosProbes", probeCmd, retStatus, str(retCode) + ' ' + output.split('/',1)[0]
+     #   "NagiosProbes", probeCmd, retStatus, str(retCode) + ' ' + output.split('\n',1)[0]
      
      if self.nagiosPutURL:
        # Alternate logging of results to HTTPS PUT service too              
