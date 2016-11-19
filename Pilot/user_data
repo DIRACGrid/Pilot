@@ -236,10 +236,14 @@ done
 
 cd /scratch/plt
 # Fetch the DIRAC pilot scripts
-if [ '##user_data_option_dirac_pilot_url##' == '' ] ; then
-  wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' --ca-directory=/etc/grid-security/certificates https://lhcb-portal-dirac.cern.ch/pilot/
-else
+if [ '##user_data_option_dirac_pilot_url##' != '' ] ; then
   wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' --ca-directory=/etc/grid-security/certificates '##user_data_option_dirac_pilot_url##'
+elif [ '##user_data_url##' != '' ] ; then
+  # Remove user_data file name back to final slash
+  user_data_dir=`echo '##user_data_url##' | sed 's:[^/]*$::'`
+  wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' --ca-directory=/etc/grid-security/certificates "$user_data_dir"
+else
+  wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' --ca-directory=/etc/grid-security/certificates https://lhcb-portal-dirac.cern.ch/pilot/
 fi    
 
 # So payload accounts can create directories here, but not interfere
