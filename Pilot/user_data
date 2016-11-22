@@ -159,8 +159,8 @@ echo 0.0 0.0 0.0 0.0 0.0 > /var/spool/joboutputs/heartbeat
 /usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/heartbeat"
 /usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/vm-heartbeat"
 
-# put heartbeat on MJF server every 5 minutes
-echo -e "*/5 * * * * root echo \`cut -f1-3 -d' ' /proc/loadavg\` \`cat /proc/uptime\` >/var/spool/joboutputs/heartbeat ; /usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/vm-heartbeat ; /usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/heartbeat >/var/log/heartbeat.log 2>&1" >/etc/cron.d/heartbeat
+# put heartbeat on MJF server every 5 minutes with a random offset
+echo -e "*/5 * * * * root sleep `expr $RANDOM / 110` ; echo \`cut -f1-3 -d' ' /proc/loadavg\` \`cat /proc/uptime\` >/var/spool/joboutputs/heartbeat ; /usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/vm-heartbeat ; /usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/heartbeat >/var/log/heartbeat.log 2>&1" >/etc/cron.d/heartbeat
 
 # We swap on the logical partition (cannot on CernVM 3 aufs filesystem)
 # Since ext4 we can use fallocate:
