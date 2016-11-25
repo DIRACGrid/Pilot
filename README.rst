@@ -16,9 +16,11 @@ DIRAC Pilots
    :alt: Code Health
    
 Jenkins Status
-=============
-.. image::https://jenkins-lhcb-core-soft.web.cern.ch/buildStatus/icon?job=DIRAC PILOT
+~~~~~~~~~~~~~~
+.. image:: https://jenkins-lhcb-core-soft.web.cern.ch/buildStatus/icon?job=DIRAC%20PILOT
     :target: https://jenkins-lhcb-core-soft.web.cern.ch/job/DIRAC%20PILOT/
+    
+
 
 DIRAC (Distributed Infrastructure with Remote Agent Control) INTERWARE is a software framework for distributed computing 
 providing a complete solution to one or more user community requiring access to distributed resources.
