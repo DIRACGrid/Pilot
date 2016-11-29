@@ -25,6 +25,7 @@ then
   then
     es=''
     cp "${1/file:\/\//$es}"/*.py .
+    cp "${1/file:\/\//$es}"/*.json .
   fi
 else
   echo "ERROR: no URL supplied"

@@ -26,8 +26,6 @@
 # DEBUG=True
 # WORKSPACE=$PWD
 # PILOT_FILES='file:///home/toffo/pyDevs/Pilot/Pilot' #Change this!
-# JENKINS_CE='jenkins.cern.ch'
-# JENKINS_QUEUE='jenkins-queue_not_important'
 # mkdir $PWD/TestCode
 # cd $PWD/TestCode
 # mkdir Pilot
@@ -68,12 +66,12 @@ PILOTINSTALLDIR=$_
 source $TESTCODE/Pilot/tests/CI/utilities.sh
 
 
+# basically it just calls the pilot wrapper
+# don't launch the JobAgent here
 function PilotInstall(){
-  # basically it just calls the pilot wrapper
 
   default
 
-  #Don't launch the JobAgent here
   cwd=$PWD
   cd $PILOTINSTALLDIR
   if [ $? -ne 0 ]
@@ -82,8 +80,15 @@ function PilotInstall(){
     return
   fi
 
-  wget https://raw.githubusercontent.com/fstagni/Pilot/integrationTest/Pilot/pilot_wrapper.sh
-  # wget https://raw.githubusercontent.com/DIRACGrid/Pilot/master/Pilot/pilot_wrapper.sh
+  #get the configuration file, and adapt it
+  cp $TESTCODE/Pilot/tests/CI/pilot.json .
+  sed -i s/VAR_JENKINS_SITE/$JENKINS_SITE/g pilot.json
+  sed -i s/VAR_JENKINS_CE/$JENKINS_CE/g pilot.json
+  sed -i s/VAR_JENKINS_QUEUE/$JENKINS_QUEUE/g pilot.json
+  sed -i s/VAR_DIRAC_VERSION/$DIRAC_VERSION/g pilot.json
+
+  #get the pilot wrapper and launch it
+  wget https://raw.githubusercontent.com/DIRACGrid/Pilot/master/Pilot/pilot_wrapper.sh
   chmod +x pilot_wrapper.sh
   ./pilot_wrapper.sh $PILOT_FILES $JENKINS_CE $JENKINS_QUEUE
   if [ $? -ne 0 ]

@@ -737,4 +737,3 @@ class PilotParams( object ):
         self.releaseProject = str( pilotCFGFileContent['Setups']['Defaults']['Project'] )
       except:
         pass
-
