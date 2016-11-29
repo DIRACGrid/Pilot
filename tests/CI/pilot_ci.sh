@@ -20,6 +20,22 @@
 # ~/ServerInstallDIR
 # ~/PilotInstallDIR
 
+# you can try this out with:
+#
+# bash
+# DEBUG=True
+# WORKSPACE=$PWD
+# PILOT_FILES='file:///home/toffo/pyDevs/Pilot/Pilot' #Change this!
+# JENKINS_CE='jenkins.cern.ch'
+# JENKINS_QUEUE='jenkins-queue_not_important'
+# mkdir $PWD/TestCode
+# cd $PWD/TestCode
+# mkdir Pilot
+# cd Pilot
+# cp -r ~/pyDevs/Pilot/* .
+# cd ../..
+# source TestCode/Pilot/tests/CI/pilot_ci.sh
+# fullPilot
 
 # Def of environment variables:
 

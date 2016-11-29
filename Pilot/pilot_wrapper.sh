@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #-------------------------------------------------------------------------------
 #
 # pilot_wrapper.sh
@@ -23,7 +23,8 @@ then
     wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' $1
   elif [[ $1 == 'file'* ]]
   then
-    cp $1/*.py .
+    es=''
+    cp "${1/file:\/\//$es}"/*.py .
   fi
 else
   echo "ERROR: no URL supplied"

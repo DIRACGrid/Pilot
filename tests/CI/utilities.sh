@@ -30,8 +30,8 @@ function default(){
 # }
 
 #consume all messages from the queue, leaving it empty
-function RabbitServerCleanup()
-{
-  cd $PILOTINSTALLDIR
-  python consumeFromQueue.py
-}
+# function RabbitServerCleanup()
+# {
+#   cd $PILOTINSTALLDIR
+#   python consumeFromQueue.py
+# }
