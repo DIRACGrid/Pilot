@@ -5,8 +5,7 @@
 # Several functions used for Jenkins style jobs
 # They may also work on other CI systems
 #
-# wojciech.krzemien@ncbj.gov.pl
-# based on F.Stagni dirac_ci script
+# wojciech.krzemien@ncbj.gov.pl and fstagni@cern.ch
 # 09/05/2016
 #-------------------------------------------------------------------------------
 
@@ -15,7 +14,6 @@
 # === environment variables (minimum set):
 # DEBUG
 # WORKSPACE
-# PILOTBRANCH
 #
 # === a default directory structure is created:
 # ~/TestCode
@@ -27,24 +25,17 @@
 
 if [ ! -z "$DEBUG" ]
 then
-	echo '==> Running in DEBUG mode'
-	DEBUG='-ddd'
+  echo '==> Running in DEBUG mode'
+  DEBUG='-ddd'
 else
-	echo '==> Running in non-DEBUG mode'
+  echo '==> Running in non-DEBUG mode'
 fi
 
 if [ ! -z "$WORKSPACE" ]
 then
-	echo '==> We are in Jenkins I guess'
+  echo '==> We are in Jenkins I guess'
 else
   WORKSPACE=$PWD
-fi
-
-if [ ! -z "$PILOTBRANCH" ]
-then
-	echo '==> Working on Pilot branch ' $PILOTBRANCH
-else
-  PILOTBRANCH='master'
 fi
 
 echo `pwd`
@@ -75,10 +66,10 @@ function PilotInstall(){
     return
   fi
 
-  wget https://raw.githubusercontent.com/DIRACGrid/Pilot/master/Pilot/pilot_wrapper.sh
+  wget https://raw.githubusercontent.com/fstagni/Pilot/integrationTest/Pilot/pilot_wrapper.sh
+  # wget https://raw.githubusercontent.com/DIRACGrid/Pilot/master/Pilot/pilot_wrapper.sh
   chmod +x pilot_wrapper.sh
-  pilot_wrapper.sh file://$PILOT_FILES $JENKINS_CE $JENKINS_QUEUE
-#  python dirac-pilot.py -S $DIRACSETUP -r $projectVersion -C $CSURL -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE -M 1 --cert --certLocation=/home/dirac/certs/ -X GetPilotVersion,CheckWorkerNode,InstallDIRAC,ConfigureBasics,CheckCECapabilities,CheckWNCapabilities,ConfigureSite,ConfigureArchitecture,ConfigureCPURequirements $DEBUG
+  ./pilot_wrapper.sh $PILOT_FILES $JENKINS_CE $JENKINS_QUEUE
   if [ $? -ne 0 ]
   then
     echo 'ERROR: pilot script failed'
