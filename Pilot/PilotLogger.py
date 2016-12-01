@@ -6,13 +6,13 @@
 import os
 import Queue
 import logging
-import stomp
 import argparse
-from PilotLoggerTools import generateDict, encodeMessage
-from PilotLoggerTools import generateTimeStamp
-from PilotLoggerTools import isMessageFormatCorrect
-from PilotLoggerTools import readPilotLoggerConfigFile
-from PilotLoggerTools import getUniqueIDAndSaveToFile
+import stomp
+from Pilot.PilotLoggerTools import generateDict, encodeMessage
+from Pilot.PilotLoggerTools import generateTimeStamp
+from Pilot.PilotLoggerTools import isMessageFormatCorrect
+from Pilot.PilotLoggerTools import readPilotLoggerConfigFile
+from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
 
 __RCSID__ = "$Id$"
 
@@ -84,7 +84,7 @@ def saveMessageToFile( msg, filename = 'myLocalQueueOfMessages' ):
   with open(filename, 'a+') as myFile:
     myFile.write(msg+'\n')
 
-def readMessagesFromFileAndEraseFileContent( filename = 'myLocalQueueOfMessages' ):
+def readMessagesFromFileAndClean(filename = 'myLocalQueueOfMessages' ):
   """ Generates the queue FIFO and fills it
       with values from the file, assuming that one line
       corresponds to one message.
@@ -116,7 +116,7 @@ class PilotLogger( object ):
     Args:
       configFile(str): File with the configuration parameters.
     """
-    self.STATUSES = PilotLogger.STATUSES
+    self.statuses = PilotLogger.STATUSES
     self.fileWithUUID = ''
     self.networkCfg= None
     self.queuePath = ''
@@ -147,19 +147,19 @@ class PilotLogger( object ):
       self.sslCfg = dict((k, config[k]) for k  in ('key_file', 'cert_file', 'ca_certs'))
       return True
 
-  def _isCorrectStatus( self, status ):
+  def isCorrectStatus( self, status ):
 
     """ Checks if the flag corresponds to one of the predefined
         STATUSES, check constructor for current set.
     """
 
-    return status in self.STATUSES
+    return status in self.statuses
 
-  def _sendAllLocalMessages(self, connect_handler, flag = 'info' ):
+  def _sendAllLocalMessages(self, connect_handler, _='info' ):
     """ Retrives all messages from the local storage
         and sends it.
     """
-    queue = readMessagesFromFileAndEraseFileContent()
+    queue = readMessagesFromFileAndClean()
     while not queue.empty():
       msg = queue.get()
       send(msg, self.queuePath, connect_handler)
@@ -195,7 +195,7 @@ class PilotLogger( object ):
     Returns:
       bool: False in case of any errors, True otherwise
     """
-    if not self._isCorrectStatus( status ):
+    if not self.isCorrectStatus( status ):
       logging.error('status: ' + str(status) + ' is not correct')
       return False
     myUUID = getPilotUUIDFromFile(self.fileWithUUID)
@@ -224,32 +224,33 @@ def main():
   """
 
   def singleWord(arg):
+    """ check if an argument is just a single world
+    """
     if len(arg.split()) !=1:
       msg = 'argument must be single word'
       raise argparse.ArgumentTypeError(msg)
     return arg
 
   parser = argparse.ArgumentParser(description="command line interface to send logs to MQ system.",
-                                  formatter_class=argparse.RawTextHelpFormatter,
-                                  epilog=
-                                    'examples:\n'
-                                    +'                   python PilotLogger.py InstallDIRAC installing info My message\n'
-                                    +'                   python PilotLogger.py InstallDIRAC installing debug Debug message\n'
-                                    +'                   python PilotLogger.py "My message"\n'
-                                    +'                   python PilotLogger.py "My message" --output myFileName\n'
+                                   formatter_class=argparse.RawTextHelpFormatter,
+                                   epilog='examples:\n' +
+                                   '                   python PilotLogger.py InstallDIRAC installing info My message\n' +
+                                   '                   python PilotLogger.py InstallDIRAC installing debug Debug message\n' +
+                                   '                   python PilotLogger.py "My message"\n' +
+                                   '                   python PilotLogger.py "My message" --output myFileName\n'
                                   )
   parser.add_argument('source',
                       type = singleWord,
                       nargs='?',
                       default ='unspecified',
-                      help='Source of the message e.g. "InstallDIRAC". It must be one word. '
-                           +'If not specified it is set to "unspecified".')
+                      help='Source of the message e.g. "InstallDIRAC". It must be one word. ' +
+                      'If not specified it is set to "unspecified".')
   parser.add_argument('phase',
                       type = singleWord,
                       nargs='?',
                       default ='unspecified',
-                      help='Phase of the process e.g. "fetching". It must be one word. '
-                            +'If not specified it is set to "unspecified".')
+                      help='Phase of the process e.g. "fetching". It must be one word. ' +
+                      'If not specified it is set to "unspecified".')
   parser.add_argument('status',
                       nargs = '?',
                       choices = PilotLogger.STATUSES,
@@ -261,8 +262,8 @@ def main():
                       nargs='+',
                       help='Human readable content of the message. ')
   parser.add_argument('--output',
-                      help = 'Log the content to the specified file'
-                             +' instead of sending it to the Message Queue server.')
+                      help = 'Log the content to the specified file' +
+                      ' instead of sending it to the Message Queue server.')
   args = parser.parse_args()
 
   if len(" ".join(args.message)) >= 200:

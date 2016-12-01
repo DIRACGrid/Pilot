@@ -16,8 +16,20 @@ import subprocess
 
 __RCSID__ = '$Id$'
 
-def printVersion( log ):
+def S_OK( value = None ):
+  """ Converts a value to a OK/true dictionary message
+  """
+  return { 'OK' : True, 'Value' : value }
 
+def S_ERROR( msg = None ):
+  """ Converts an error message to a OK/false dictionary message
+  """
+  return { 'OK' : False, 'Message' : msg }
+
+def printVersion( log ):
+  """
+  Print the version
+  """
   log.info( "Running %s" % " ".join( sys.argv ) )
   try:
     with open( "%s.run" % sys.argv[0], "w" ) as fd:
@@ -27,21 +39,23 @@ def printVersion( log ):
   log.info( "Version %s" % __RCSID__ )
 
 def pythonPathCheck():
-
+  """
+  Check Python path
+  """
   try:
     os.umask( 18 ) # 022
     pythonpath = os.getenv( 'PYTHONPATH', '' ).split( ':' )
     print 'Directories in PYTHONPATH:', pythonpath
-    for p in pythonpath:
-      if p == '':
+    for path in pythonpath:
+      if path == '':
         continue
       try:
-        if os.path.normpath( p ) in sys.path:
+        if os.path.normpath( path ) in sys.path:
           # In case a given directory is twice in PYTHONPATH it has to removed only once
-          sys.path.remove( os.path.normpath( p ) )
+          sys.path.remove( os.path.normpath( path ) )
       except Exception, x:
         print x
-        print "[EXCEPTION-info] Failing path:", p, os.path.normpath( p )
+        print "[EXCEPTION-info] Failing path:", path, os.path.normpath( path )
         print "[EXCEPTION-info] sys.path:", sys.path
         raise x
   except Exception, x:
@@ -51,59 +65,132 @@ def pythonPathCheck():
     print "[EXCEPTION-info] os.uname():", os.uname()
     raise x
 
-def alarmTimeoutHandler( *args ):
+def alarmTimeoutHandler( *_ ):
+  """ Alarm timeout handler """
   raise Exception( 'Timeout' )
 
-def retrieveUrlTimeout( url, fileName, log, timeout = 0 ):
+####
+# Start of helper functions
+####
+
+def logERROR( msg ):
   """
-   Retrieve remote url to local file, with timeout wrapper
+  Error Logger
   """
+  for line in msg.split( "\n" ):
+    print "%s UTC dirac-install [ERROR] %s" % ( time.strftime( '%Y-%m-%d %H:%M:%S', time.gmtime() ), line )
+  sys.stdout.flush()
+
+def logWARN( msg ):
+  """
+  Warn logger
+  """
+  for line in msg.split( "\n" ):
+    print "%s UTC dirac-install [WARN] %s" % ( time.strftime( '%Y-%m-%d %H:%M:%S', time.gmtime() ), line )
+  sys.stdout.flush()
+
+def logNOTICE( msg ):
+  """
+  Notice Logger
+  """
+  for line in msg.split( "\n" ):
+    print "%s UTC dirac-install [NOTICE]  %s" % ( time.strftime( '%Y-%m-%d %H:%M:%S', time.gmtime() ), line )
+  sys.stdout.flush()
+
+
+def urlDownloadData(remoteFD, localFD, expectedBytes, log=None):
+  """ Helper to download data form already opened URL """
   urlData = ''
+  receivedBytes = 0L
+  progressBar = False
+  count = 1
+  data = remoteFD.read( 16384 )
+  while data:
+    receivedBytes += len( data )
+    if localFD:
+      localFD.write( data )
+    else:
+      urlData += data
+    data = remoteFD.read( 16384 )
+    if count % 20 == 0 and sys.stdout.isatty():
+      print '\033[1D' + ".",
+      sys.stdout.flush()
+      progressBar = True
+    count += 1
+  if progressBar and sys.stdout.isatty():
+    # return cursor to the beginning of the line
+    print '\033[1K',
+    print '\033[1A'
+  if localFD:
+    localFD.close()
+  remoteFD.close()
+  if receivedBytes != expectedBytes and expectedBytes > 0:
+    if log:
+      log.error( 'URL retrieve: expected size does not match the received one' )
+    else:
+      logERROR( "File should be %s bytes but received %s" % ( expectedBytes, receivedBytes ) )
+    return False, None
+  return True, urlData
+
+def urlRetriveTimeout( url, fileName='', log=None, timeout = 0 ):
+  """
+  Retrieve remote url to local file, with timeout wrapper
+  """
+  # NOTE: Not thread-safe, since all threads will catch same alarm.
+  #       This is OK for dirac-install, since there are no threads.
+
   if timeout:
     signal.signal( signal.SIGALRM, alarmTimeoutHandler )
     # set timeout alarm
     signal.alarm( timeout + 5 )
   try:
+    # if "http_proxy" in os.environ and os.environ['http_proxy']:
+    #   proxyIP = os.environ['http_proxy']
+    #   proxy = urllib2.ProxyHandler( {'http': proxyIP} )
+    #   opener = urllib2.build_opener( proxy )
+    #   #opener = urllib2.build_opener()
+    #  urllib2.install_opener( opener )
     remoteFD = urllib2.urlopen( url )
-    expectedBytes = 0
+    expectedBytes = long(0)
     # Sometimes repositories do not return Content-Length parameter
     try:
       expectedBytes = long( remoteFD.info()[ 'Content-Length' ] )
-    except Exception as x:
-      expectedBytes = 0
-    data = remoteFD.read()
-    if fileName:
-      with open( fileName + '-local', "wb" ) as localFD:
-        localFD.write( data )
-    else:
-      urlData += data
-    remoteFD.close()
-    if len( data ) != expectedBytes and expectedBytes > 0:
-      log.error( 'URL retrieve: expected size does not match the received one' )
-      return False
-
-    if timeout:
-      signal.alarm( 0 )
-    if fileName:
-      return True
-    else:
-      return urlData
-
-  except urllib2.HTTPError as x:
+    except Exception as x: # pylint: disable=W0703
+      msg = 'Content-Length parameter not returned, skipping expectedBytes check'
+      logger = log.warn if log else logWARN
+      logger(msg)
+      expectedBytes = long(0)
+    localFD = open( fileName, "wb" ) if fileName else None
+    result, urlData = urlDownloadData(remoteFD, localFD, expectedBytes, log)
+    if not result:
+      return None
+  except urllib2.HTTPError, x:
     if x.code == 404:
-      log.error( "URL retrieve: %s does not exist" % url )
+      msg =  "%s does not exist" % url
+      logger = log.error if log else logERROR
+      logger(msg)
       if timeout:
         signal.alarm( 0 )
-      return False
+      return None
   except urllib2.URLError:
-    log.error( 'Timeout after %s seconds on transfer request for "%s"' % ( str( timeout ), url ) )
-    return False
-  except Exception as x:
-    if x == 'Timeout':
-      log.error( 'Timeout after %s seconds on transfer request for "%s"' % ( str( timeout ), url ) )
+    msg =  'Timeout after %s seconds on transfer request for "%s"' % ( str( timeout ), url )
+    logger = log.error if log else logERROR
+    logger(msg)
+  except Exception, x:
+    msg =  'Timeout after %s seconds on transfer request for "%s"' % ( str( timeout ), url )
+    logger = log.error if log else logERROR
+    logger(msg)
     if timeout:
       signal.alarm( 0 )
     raise x
+
+  if timeout:
+    signal.alarm( 0 )
+
+  if fileName:
+    return True
+  else:
+    return urlData
 
 
 class ObjectLoader( object ):
@@ -144,7 +231,7 @@ class ObjectLoader( object ):
   def __recurseImport( self, modName, parentModule = None, hideExceptions = False ):
     """ Internal function to load modules
     """
-    if type( modName ) in types.StringTypes:
+    if isinstance( modName, types.StringTypes):
       modName = modName.split( '.' )
     try:
       if parentModule:
@@ -187,11 +274,11 @@ def getCommand( params, commandName, log ):
       Commands are looked in the following modules in the order:
 
       1. <CommandExtension>Commands
-      2. pilotCommands
+      2. PilotCommands
       3. <Extension>.WorkloadManagementSystem.PilotAgent.<CommandExtension>Commands
-      4. <Extension>.WorkloadManagementSystem.PilotAgent.pilotCommands
+      4. <Extension>.WorkloadManagementSystem.PilotAgent.PilotCommands
       5. DIRAC.WorkloadManagementSystem.PilotAgent.<CommandExtension>Commands
-      6. DIRAC.WorkloadManagementSystem.PilotAgent.pilotCommands
+      6. DIRAC.WorkloadManagementSystem.PilotAgent.PilotCommands
 
       Note that commands in 3.-6. can only be used of the the DIRAC installation
       has been done. DIRAC extensions are taken from -e ( --extraPackages ) option
@@ -207,7 +294,7 @@ def getCommand( params, commandName, log ):
       impData = imp.find_module( module )
       commandModule = imp.load_module( module, *impData )
       commandObject = getattr( commandModule, commandName )
-    except Exception, _e:
+    except Exception as _e: # pylint: disable=W0703
       pass
     if commandObject:
       return commandObject( params ), module
@@ -241,6 +328,7 @@ class Logger( object ):
     self.out = pilotOutput
 
   def __outputMessage( self, msg, level, header ):
+    """ Outputs a message based on the level """
     if self.out:
       with open( self.out, 'a' ) as outputFile:
         for _line in msg.split( "\n" ):
@@ -259,19 +347,24 @@ class Logger( object ):
     sys.stdout.flush()
 
   def setDebug( self ):
+    """ Set the debug flag"""
     self.debugFlag = True
 
-  def debug( self, msg, header = True ):
+  def debug( self, msg, header = True):
+    """ Prints the debug message"""
     if self.debugFlag:
       self.__outputMessage( msg, "DEBUG", header )
 
   def error( self, msg, header = True ):
+    """ Error printing"""
     self.__outputMessage( msg, "ERROR", header )
 
   def warn( self, msg, header = True ):
+    """ Warn printing """
     self.__outputMessage( msg, "WARN", header )
 
   def info( self, msg, header = True ):
+    """ Info printing """
     self.__outputMessage( msg, "INFO", header )
 
 
@@ -295,59 +388,65 @@ class ExtendedLogger( Logger ):
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
 
-  def debug( self, msg, header = True, sendPilotLog = False ):
+  def debug( self, msg, header = True, sendPilotLog = False ):  # pylint: disable=W0221
+    """ Debug logger"""
     super(ExtendedLogger, self).debug(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status = "debug")
 
-  def error( self, msg, header = True, sendPilotLog = False ):
+  def error( self, msg, header = True, sendPilotLog = False ): # pylint: disable=W0221
+    """ Error logger """
     super(ExtendedLogger, self).error(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status = "error")
 
-  def warn( self, msg, header = True, sendPilotLog = False):
+  def warn( self, msg, header = True, sendPilotLog = False): # pylint: disable=W0221
+    """ Warn logger """
     super(ExtendedLogger, self).warn(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status ="warning")
 
-  def info( self, msg, header = True, sendPilotLog = False ):
+  def info( self, msg, header = True, sendPilotLog = False ): # pylint: disable=W0221
+    """ Info logger """
     super(ExtendedLogger, self).info(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status = "info")
 
   def sendMessage( self, msg,  source, phase, status ='info',localFile = None, sendPilotLog = False ):
-    pass
+    """ Sends a message """
+    # pass
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage(messageContent = msg,
-                                      source=source,
-                                      phase = phase,
-                                      status=status,
-                                      localOutputFile = localFile)
+                                     source=source,
+                                     phase = phase,
+                                     status=status,
+                                     localOutputFile = localFile)
+
+
 class CommandBase( object ):
   """ CommandBase is the base class for every command in the pilot commands toolbox
   """
 
   def __init__( self, pilotParams, dummy='' ):
-    """ c'tor
-
-        Defines the logger and the pilot parameters
     """
-    self.pp = pilotParams
+    Defines the logger and the pilot parameters
+    """
+    self.pilotParams = pilotParams
     self.log = ExtendedLogger(
         name = self.__class__.__name__,
         debugFlag = False,
         pilotOutput = 'pilot.out',
-        isPilotLoggerOn = self.pp.pilotLogging
+        isPilotLoggerOn = self.pilotParams.pilotLogging
         )
     #self.log = Logger( self.__class__.__name__ )
     self.debugFlag = False
-    for o, _ in self.pp.optList:
-      if o == '-d' or o == '--debug':
+    for option, _ in self.pilotParams.optList:
+      if option == '-d' or option == '--debug':
         self.log.setDebug()
         self.debugFlag = True
     self.log.debug( "\n\n Initialized command %s" % self.__class__ )
@@ -358,7 +457,7 @@ class CommandBase( object ):
 
     self.log.info( "Executing command %s" % cmd )
     try:
-      import subprocess  # spawn new processes, connect to their input/output/error pipes, and obtain their return codes.
+      # spawn new processes, connect to their input/output/error pipes, and obtain their return codes.
       _p = subprocess.Popen( "%s" % cmd, shell = True, env=environDict, stdout = subprocess.PIPE,
                              stderr = subprocess.PIPE, close_fds = False )
 
@@ -409,16 +508,112 @@ class CommandBase( object ):
         # return code
         returnCode = _p.wait()
         self.log.debug( "Return code of %s: %d" % ( cmd, returnCode ) )
-      except:
+      except Exception as _: # pylint: disable=W0703
         returnCode = 99
 
     sys.exit(returnCode)
 
-class PilotParams( object ):
+class PilotParams( object ): # pylint: disable=R0902
   """ Class that holds the structure with all the parameters to be used across all the commands
   """
 
+  rootPath = os.getcwd()
+  originalRootPath = os.getcwd()
+  pilotRootPath = os.getcwd()
+  workingDir = os.getcwd()
+
   MAX_CYCLES = 10
+  name = ""
+  extensions = []
+  tags = []
+  site = ""
+  setup = ""
+  configServer = ""
+  installation = ""
+  ceName = ""
+  ceType = ""
+  gridCEType = ""
+  queueName = ""
+  platform = ""
+  minDiskSpace = 2560 #MB
+  jobCPUReq = 900
+  pythonVersion = '27'
+  userGroup = ""
+  userDN = ""
+  flavour = 'DIRAC'
+  optList = {}
+  debugFlag = False
+  local = False
+
+  commandExtensions = []
+  commands = ['CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics',
+              'CheckCECapabilities', 'CheckWNCapabilities',
+              'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements', 'LaunchAgent']
+
+  gridVersion = ''
+  pilotReference = ''
+  releaseVersion = ''
+  releaseProject = ''
+  gateway = ""
+  useServerCertificate = False
+  pilotScriptName = ''
+  # DIRAC client installation environment
+  diracInstalled = False
+  diracExtensions = []
+
+  # If DIRAC is preinstalled this file will receive the updates of the local configuration
+  localConfigFile = ''
+  executeCmd = False
+  configureScript = 'dirac-configure'
+  architectureScript = 'dirac-platform'
+
+  pilotCFGFile = 'pilot.json'
+  pilotLogging = False
+
+  maxCycles = MAX_CYCLES
+  # Some commands can define environment necessary to execute subsequent commands
+  installEnv = os.environ
+
+  certsLocation = '%s/etc/grid-security' % workingDir
+  processors = 1
+
+  # Pilot command options
+  cmdOpts = ( ( 'b', 'build', 'Force local compilation' ),
+              ( 'd', 'debug', 'Set debug flag' ),
+              ( 'e:', 'extraPackages=', 'Extra packages to install (comma separated)' ),
+              ( 'E:', 'commandExtensions=', 'Python module with extra commands' ),
+              ( 'X:', 'commands=', 'Pilot commands to execute commands' ),
+              ( 'g:', 'grid=', 'lcg tools package version' ),
+              ( 'h', 'help', 'Show this help' ),
+              ( 'i:', 'python=', 'Use python<26|27> interpreter' ),
+              ( 'l:', 'project=', 'Project to install' ),
+              ( 'p:', 'platform=', 'Use <platform> instead of local one' ),
+              ( 'u:', 'url=', 'Use <url> to download tarballs' ),
+              ( 'r:', 'release=', 'DIRAC release to install' ),
+              ( 'n:', 'name=', 'Set <Site> as Site Name' ),
+              ( 'D:', 'disk=', 'Require at least <space> MB available' ),
+              ( 'M:', 'MaxCycles=', 'Maximum Number of JobAgent cycles to run' ),
+              ( 'N:', 'Name=', 'CE Name' ),
+              ( 'Q:', 'Queue=', 'Queue name' ),
+              ( 'y:', 'CEType=', 'CE Type (normally InProcess)' ),
+              ( 'a:', 'gridCEType=', 'Grid CE Type (CREAM etc)' ),
+              ( 'S:', 'setup=', 'DIRAC Setup to use' ),
+              ( 'C:', 'configurationServer=', 'Configuration servers to use' ),
+              ( 'T:', 'CPUTime', 'Requested CPU Time' ),
+              ( 'G:', 'Group=', 'DIRAC Group to use' ),
+              ( 'O:', 'OwnerDN', 'Pilot OwnerDN (for private pilots)' ),
+              ( 'U',  'Upload', 'Upload compiled distribution (if built)' ),
+              ( 'V:', 'installation=', 'Installation configuration file' ),
+              ( 'W:', 'gateway=', 'Configure <gateway> as DIRAC Gateway during installation' ),
+              ( 's:', 'section=', 'Set base section for relative parsed options' ),
+              ( 'o:', 'option=', 'Option=value to add' ),
+              ( 'c', 'cert', 'Use server certificate instead of proxy' ),
+              ( 'C:', 'certLocation=', 'Specify server certificate location' ),
+              ( 'F:', 'pilotCFGFile=', 'Specify pilot CFG file' ),
+              ( 'R:', 'reference=', 'Use this pilot reference' ),
+              ( 'x:', 'execute=', 'Execute instead of JobAgent' ),
+              ( 'z:', 'pilotLogging', 'Activate pilot logging system' ),
+            )
 
   def __init__( self ):
     """ c'tor
@@ -426,100 +621,15 @@ class PilotParams( object ):
         param names and defaults are defined here
     """
     self.log = Logger( self.__class__.__name__ )
-    self.rootPath = os.getcwd()
-    self.originalRootPath = os.getcwd()
-    self.pilotRootPath = os.getcwd()
-    self.workingDir = os.getcwd()
 
-    self.optList = {}
-    self.debugFlag = False
-    self.local = False
-    self.commandExtensions = []
-    self.commands = ['CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics',
-                     'CheckCECapabilities', 'CheckWNCapabilities',
-                     'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements', 'LaunchAgent']
-    self.extensions = []
-    self.tags = []
-    self.site = ""
-    self.setup = ""
-    self.configServer = ""
-    self.installation = ""
-    self.ceName = ""
-    self.ceType = ""
-    self.gridCEType = ""
-    self.queueName = ""
-    self.platform = ""
-    self.minDiskSpace = 2560 #MB
-    self.jobCPUReq = 900
-    self.pythonVersion = '27'
-    self.userGroup = ""
-    self.userDN = ""
-    self.maxCycles = self.MAX_CYCLES
-    self.flavour = 'DIRAC'
-    self.gridVersion = ''
-    self.pilotReference = ''
-    self.releaseVersion = ''
-    self.releaseProject = ''
-    self.gateway = ""
-    self.useServerCertificate = False
-    self.pilotScriptName = ''
-    # DIRAC client installation environment
-    self.diracInstalled = False
-    self.diracExtensions = []
-    # Some commands can define environment necessary to execute subsequent commands
-    self.installEnv = os.environ
-    # If DIRAC is preinstalled this file will receive the updates of the local configuration
-    self.localConfigFile = ''
-    self.executeCmd = False
-    self.configureScript = 'dirac-configure'
-    self.architectureScript = 'dirac-platform'
-    self.certsLocation = '%s/etc/grid-security' % self.workingDir
-    self.pilotCFGFile = 'pilot.json'
-    self.pilotLogging = False
+
 
     # Set number of allocatable processors from MJF if available
     try:
       self.processors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
-    except:
+    except Exception  as _: # pylint: disable=W0703
       self.processors = 1
 
-    # Pilot command options
-    self.cmdOpts = ( ( 'b', 'build', 'Force local compilation' ),
-                     ( 'd', 'debug', 'Set debug flag' ),
-                     ( 'e:', 'extraPackages=', 'Extra packages to install (comma separated)' ),
-                     ( 'E:', 'commandExtensions=', 'Python module with extra commands' ),
-                     ( 'X:', 'commands=', 'Pilot commands to execute commands' ),
-                     ( 'g:', 'grid=', 'lcg tools package version' ),
-                     ( 'h', 'help', 'Show this help' ),
-                     ( 'i:', 'python=', 'Use python<26|27> interpreter' ),
-                     ( 'l:', 'project=', 'Project to install' ),
-                     ( 'p:', 'platform=', 'Use <platform> instead of local one' ),
-                     ( 'u:', 'url=', 'Use <url> to download tarballs' ),
-                     ( 'r:', 'release=', 'DIRAC release to install' ),
-                     ( 'n:', 'name=', 'Set <Site> as Site Name' ),
-                     ( 'D:', 'disk=', 'Require at least <space> MB available' ),
-                     ( 'M:', 'MaxCycles=', 'Maximum Number of JobAgent cycles to run' ),
-                     ( 'N:', 'Name=', 'CE Name' ),
-                     ( 'Q:', 'Queue=', 'Queue name' ),
-                     ( 'y:', 'CEType=', 'CE Type (normally InProcess)' ),
-                     ( 'a:', 'gridCEType=', 'Grid CE Type (CREAM etc)' ),
-                     ( 'S:', 'setup=', 'DIRAC Setup to use' ),
-                     ( 'C:', 'configurationServer=', 'Configuration servers to use' ),
-                     ( 'T:', 'CPUTime', 'Requested CPU Time' ),
-                     ( 'G:', 'Group=', 'DIRAC Group to use' ),
-                     ( 'O:', 'OwnerDN', 'Pilot OwnerDN (for private pilots)' ),
-                     ( 'U',  'Upload', 'Upload compiled distribution (if built)' ),
-                     ( 'V:', 'installation=', 'Installation configuration file' ),
-                     ( 'W:', 'gateway=', 'Configure <gateway> as DIRAC Gateway during installation' ),
-                     ( 's:', 'section=', 'Set base section for relative parsed options' ),
-                     ( 'o:', 'option=', 'Option=value to add' ),
-                     ( 'c', 'cert', 'Use server certificate instead of proxy' ),
-                     ( 'C:', 'certLocation=', 'Specify server certificate location' ),
-                     ( 'F:', 'pilotCFGFile=', 'Specify pilot CFG file' ),
-                     ( 'R:', 'reference=', 'Use this pilot reference' ),
-                     ( 'x:', 'execute=', 'Execute instead of JobAgent' ),
-                     ( 'z:', 'pilotLogging', 'Activate pilot logging system' ),
-                   )
 
     # Possibly get Setup and JSON URL/filename from command line
     self.__initCommandLine1()
@@ -530,6 +640,21 @@ class PilotParams( object ):
     # Command line can override options from JSON
     self.__initCommandLine2()
 
+
+  def __parseOption(self, optionValues, field, lambda_func=None, compare=False):
+    """ Append an option to the configuration from the PilotPramas"""
+    for option, value in self.optList:
+      if option in optionValues:
+        if lambda_func:
+          try:
+            value = lambda_func(value)
+            if compare:
+              value = min(value, self.MAX_CYCLES)
+          except Exception  as _: # pylint: disable=W0703
+            pass
+        setattr(self, field, value)
+        break
+
   def __initCommandLine1( self ):
     """ Parses and interpret options on the command line: first pass
     """
@@ -537,17 +662,12 @@ class PilotParams( object ):
     self.optList, __args__ = getopt.getopt( sys.argv[1:],
                                             "".join( [ opt[0] for opt in self.cmdOpts ] ),
                                             [ opt[1] for opt in self.cmdOpts ] )
-    for o, v in self.optList:
-      if o == '-N' or o == '--Name':
-        self.ceName = v
-      elif o == '-a' or o == '--gridCEType':
-        self.gridCEType = v
-      elif o == '-d' or o == '--debug':
-        self.debugFlag = True
-      elif o in ( '-S', '--setup' ):
-        self.setup = v
-      elif o == '-F' or o == '--pilotCFGFile':
-        self.pilotCFGFile = v
+    self.__parseOption(['-N','--Name'], 'ceName')
+    self.__parseOption(['-a','--gridCEType'], 'gridCEType')
+    self.__parseOption(['-d','--debug'], 'debugFlag', lambda_func=lambda x: True)
+    self.__parseOption(['-S','--setup'], 'setup')
+    self.__parseOption(['-F','--pilotCFGFile'], 'gridCEType')
+
 
   def __initCommandLine2( self ):
     """ Parses and interpret options on the command line: second pass
@@ -556,62 +676,82 @@ class PilotParams( object ):
     self.optList, __args__ = getopt.getopt( sys.argv[1:],
                                             "".join( [ opt[0] for opt in self.cmdOpts ] ),
                                             [ opt[1] for opt in self.cmdOpts ] )
-    for o, v in self.optList:
-      if o == '-E' or o == '--commandExtensions':
-        self.commandExtensions = v.split( ',' )
-      elif o == '-X' or o == '--commands':
-        self.commands = v.split( ',' )
-      elif o == '-e' or o == '--extraPackages':
-        self.extensions = v.split( ',' )
-      elif o == '-n' or o == '--name':
-        self.site = v
-      elif o == '-y' or o == '--CEType':
-        self.ceType = v
-      elif o == '-Q' or o == '--Queue':
-        self.queueName = v
-      elif o == '-R' or o == '--reference':
-        self.pilotReference = v
-      elif o in ( '-C', '--configurationServer' ):
-        self.configServer = v
-      elif o in ( '-G', '--Group' ):
-        self.userGroup = v
-      elif o in ( '-x', '--execute' ):
-        self.executeCmd = v
-      elif o in ( '-O', '--OwnerDN' ):
-        self.userDN = v
-      elif o in ( '-V', '--installation' ):
-        self.installation = v
-      elif o == '-p' or o == '--platform':
-        self.platform = v
-      elif o == '-D' or o == '--disk':
+    self.__parseOption(['-E', '--commandExtensions'], 'commandExtensions', lambda_func=lambda x: x.split(','))
+    self.__parseOption(['-X', '--commands'], 'commands', lambda_func=lambda x: x.split(','))
+    self.__parseOption(['-e', '--extraPackages'], 'extensions', lambda_func=lambda x: x.split(','))
+    self.__parseOption(['-n', '--name'], 'site')
+    self.__parseOption(['-y', '--CEType'], 'ceType')
+    self.__parseOption(['-Q', '--Queue'], 'queueName')
+    self.__parseOption(['-R', '--reference'], 'pilotReference')
+    self.__parseOption(['-C', '--configurationServer'], 'configServer')
+    self.__parseOption(['-G', '--Group'], 'userGroup')
+    self.__parseOption(['-x', '--execute'], 'executeCmd')
+    self.__parseOption(['-O', '--OwnerDN'], 'userDN')
+    self.__parseOption(['-V', '--installation'], 'installation')
+    self.__parseOption(['-p', '--platform'], 'platform')
+    self.__parseOption(['-D', '--disk'], 'minDiskSpace', lambda_func=int)
+    self.__parseOption(['-r', '--release'], 'releaseVersion', lambda_func=lambda x: x.split(',',1)[0])
+    self.__parseOption(['-l', '--project'], 'releaseProject')
+    self.__parseOption(['-W', '--gateway'], 'gateway')
+    self.__parseOption(['-c', '--cert'], 'useServerCertificate', lambda_func=lambda x: True)
+    self.__parseOption(['-C', '--certLocation'], 'certsLocation')
+    self.__parseOption(['-M', '--MaxCycles'], 'maxCycles', lambda_func=int, compare=True)
+    self.__parseOption(['-T', '--CPUTime'], 'jobCPUReq')
+    self.__parseOption(['-P', '--processors'], 'site',lambda_func=int)
+    self.__parseOption(['-z', '--pilotLogging'], 'pilotLogging', lambda_func=lambda x: True)
+
+
+  def __parseCeName(self, pilotCFGFileContent):
+    """ Parse CeName from Json """
+    if self.ceName:
+      # Try to get the site name and grid CEType from the CE name
+      # GridCEType is like "CREAM" or "HTCondorCE" not "InProcess" etc
+      try:
+        setattr(self, 'name', str( pilotCFGFileContent['CEs'][self.ceName]['Site'] ))
+      except Exception  as _: # pylint: disable=W0703
+        pass
+      if not self.gridCEType:
+        # We don't override a grid CEType given on the command line!
         try:
-          self.minDiskSpace = int( v )
-        except ValueError:
+          self.gridCEType = str( pilotCFGFileContent['CEs'][self.ceName]['GridCEType'] )
+        except Exception  as _: # pylint: disable=W0703
           pass
-      elif o == '-r' or o == '--release':
-        self.releaseVersion = v.split(',',1)[0]
-      elif o in ( '-l', '--project' ):
-        self.releaseProject = v
-      elif o in ( '-W', '--gateway' ):
-        self.gateway = v
-      elif o == '-c' or o == '--cert':
-        self.useServerCertificate = True
-      elif o == '-C' or o == '--certLocation':
-        self.certsLocation = v
-      elif o == '-M' or o == '--MaxCycles':
+
+  def __parseCommands(self, pilotCFGFileContent):
+    """ Parse commands from Json"""
+    # Commands first
+    try:
+      self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands'][self.gridCEType]]
+    except Exception  as _: # pylint: disable=W0703
+      try:
+        self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands']['Defaults']]
+      except Exception  as _: # pylint: disable=W0703
         try:
-          self.maxCycles = min( self.MAX_CYCLES, int( v ) )
-        except ValueError:
-          pass
-      elif o in ( '-T', '--CPUTime' ):
-        self.jobCPUReq = v
-      elif o == '-P' or o == '--processors':
-        try:
-          self.procesors = int(v)
-        except:
-          pass
-      elif o == '-z' or o == '--pilotLogging':
-        self.pilotLogging = True
+          self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['Commands'][self.gridCEType]]
+        except Exception  as _: # pylint: disable=W0703
+          try:
+            self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands']['Defaults']]
+          except Exception  as _: # pylint: disable=W0703
+            pass
+
+  def __parseCommandsExtension(self, pilotCFGFileContent):
+    """ Parse commands extensions from Json"""
+    # Now the other options we handle
+    try:
+      self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['CommandExtensions']]
+    except Exception  as _: # pylint: disable=W0703
+      try:
+        self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['CommandExtensions']]
+      except Exception  as _: # pylint: disable=W0703
+        pass
+
+    try:
+      self.configServer = str( pilotCFGFileContent['Setups'][self.setup]['ConfigurationServer'] )
+    except Exception  as _: # pylint: disable=W0703
+      try:
+        self.configServer = str( pilotCFGFileContent['Setups']['Defaults']['ConfigurationServer'] )
+      except Exception  as _: # pylint: disable=W0703
+        pass
 
   def __initJSON( self ):
     """Retrieve pilot parameters from the content of json file. The file should be something like:
@@ -662,79 +802,36 @@ class PilotParams( object ):
     with open ( self.pilotCFGFile, 'r' ) as fp:
       pilotCFGFileContent = json.load( fp )
 
-    if self.ceName:
-      # Try to get the site name and grid CEType from the CE name
-      # GridCEType is like "CREAM" or "HTCondorCE" not "InProcess" etc
-      try:
-        self.name = str( pilotCFGFileContent['CEs'][self.ceName]['Site'] )
-      except:
-        pass
-      else:
-        if not self.gridCEType:
-          # We don't override a grid CEType given on the command line!
-          try:
-            self.gridCEType = str( pilotCFGFileContent['CEs'][self.ceName]['GridCEType'] )
-          except:
-            pass
+    self.__parseCeName(pilotCFGFileContent)
 
     if not self.setup:
       # We don't use the default to override an explicit value from command line!
       try:
         self.setup = str( pilotCFGFileContent['DefaultSetup'] )
-      except:
+      except Exception  as _: # pylint: disable=W0703
         pass
+    self.__parseCommands(pilotCFGFileContent)
 
-    # Commands first
-    try:
-      self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands'][self.gridCEType]]
-    except:
-      try:
-        self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands']['Defaults']]
-      except:
-        try:
-          self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['Commands'][self.gridCEType]]
-        except:
-          try:
-            self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands']['Defaults']]
-          except:
-            pass
-
-    # Now the other options we handle
-    try:
-      self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['CommandExtensions']]
-    except:
-      try:
-        self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['CommandExtensions']]
-      except:
-        pass
-
-    try:
-      self.configServer = str( pilotCFGFileContent['Setups'][self.setup]['ConfigurationServer'] )
-    except:
-      try:
-        self.configServer = str( pilotCFGFileContent['Setups']['Defaults']['ConfigurationServer'] )
-      except:
-        pass
+    self.__parseCommandsExtension(pilotCFGFileContent)
 
     # Version might be a scalar or a list. We just want the first one.
     try:
-      v = pilotCFGFileContent['Setups'][self.setup]['Version']
-    except:
+      value = pilotCFGFileContent['Setups'][self.setup]['Version']
+    except Exception  as _: # pylint: disable=W0703
       try:
-        v = pilotCFGFileContent['Setups']['Defaults']['Version']
-      except:
-        v = None
+        value = pilotCFGFileContent['Setups']['Defaults']['Version']
+      except Exception  as _: # pylint: disable=W0703
+        value = None
 
-    if isinstance(v, basestring):
-      self.releaseVersion = str( v )
-    elif v:
-      self.releaseVersion = str( v[0] )
+    if isinstance(value, basestring):
+      self.releaseVersion = str( value )
+    elif value:
+      self.releaseVersion = str( value[0] )
 
     try:
       self.releaseProject = str( pilotCFGFileContent['Setups'][self.setup]['Project'] )
-    except:
+    except Exception  as _: # pylint: disable=W0703
       try:
         self.releaseProject = str( pilotCFGFileContent['Setups']['Defaults']['Project'] )
-      except:
+      except Exception  as _: # pylint: disable=W0703
         pass
-

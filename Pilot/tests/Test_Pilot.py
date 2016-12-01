@@ -7,8 +7,8 @@ import json
 import sys
 import os
 
-from Pilot.pilotTools import PilotParams
-from Pilot.pilotCommands import GetPilotVersion, CheckWorkerNode, ConfigureSite
+from Pilot.PilotTools import PilotParams
+from Pilot.PilotCommands import CheckWorkerNode, ConfigureSite
 
 class PilotTestCase( unittest.TestCase ):
   """ Base class for the Agents test cases
@@ -16,17 +16,17 @@ class PilotTestCase( unittest.TestCase ):
   def setUp( self ):
     # Define a local file for test, and all the necessary parameters
     with open ( 'pilot.json', 'w' ) as fp:
-      json.dump( {'Setups':{'TestSetup':{'Commands':{'cetype1':['x', 'y', 'z'], 
-                                                     'cetype2':['d', 'f']}, 
+      json.dump( {'Setups':{'TestSetup':{'Commands':{'cetype1':['x', 'y', 'z'],
+                                                     'cetype2':['d', 'f']},
                                          'CommandExtensions':['TestExtension'],
                                          'Version':['v1r1','v2r2']}},
                   'CEs':{'grid1.example.com':{'GridCEType':'cetype1','Site':'site.example.com'}},
-                  'DefaultSetup':'TestSetup'}, 
+                  'DefaultSetup':'TestSetup'},
                  fp )
-                
+
     sys.argv[1:] = ['--Name', 'grid1.example.com']
 
-    self.pp = PilotParams()
+    self.pilotParams = PilotParams()
 
   def tearDown( self ):
     try:
@@ -36,18 +36,22 @@ class PilotTestCase( unittest.TestCase ):
 
 
 class CommandsTestCase( PilotTestCase ):
+  """ Command test cases """
 
   def test_InitJSON( self ):
-    self.assertEqual( self.pp.commands, ['x', 'y', 'z'] )
-    self.assertEqual( self.pp.commandExtensions, ['TestExtension'] )
-    
+    """ Test init Json"""
+    self.assertEqual( self.pilotParams.commands, ['x', 'y', 'z'] )
+    self.assertEqual( self.pilotParams.commandExtensions, ['TestExtension'] )
+
   def test_CheckWorkerNode ( self ):
-    CheckWorkerNode( self.pp )
-        
+    """ Test worker node """
+    CheckWorkerNode( self.pilotParams )
+
   def test_ConfigureSite ( self ):
-    self.pp.configureScript = 'echo'
-    ConfigureSite( self.pp )
-        
+    """ Test configure Site """
+    self.pilotParams.configureScript = 'echo'
+    ConfigureSite( self.pilotParams )
+
 
 #############################################################################
 # Test Suite run

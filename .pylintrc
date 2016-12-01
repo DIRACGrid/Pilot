@@ -32,7 +32,7 @@ load-plugins=
 
 #R0903 = Too few public methods (%s/%s)
 #C0326 = bad-whitespace
-disable=R0903,C0326
+disable=R0903,C0326,R0801
 
 
 [REPORTS]
@@ -63,7 +63,7 @@ bad-functions=map,filter,apply,input,raw_input,has_key
 
 # Regular expression which should only match correct module names
 # Added last option, to take into account script names
-module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+)|([dirac_-][a-zA-Z_-]+))$
+module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9_]+)|([dirac_-][a-zA-Z_-]+))$
 
 # Regular expression which should only match correct module level names
 #const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__)|(g[A-Z][a-zA-Z0-9]*))$

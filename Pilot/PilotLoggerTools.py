@@ -40,8 +40,8 @@ def createPilotLoggerConfigFile( filename = 'PilotLogger.cfg',
       ca_certs,
       fileWithID
       ]
-  config = dict( zip( keys, values ) )
-  config = json.dumps(config)
+  tmp_config = dict( zip( keys, values ) )
+  config = json.dumps(tmp_config)
   with open(filename, 'w') as myFile:
     myFile.write(config)
 
