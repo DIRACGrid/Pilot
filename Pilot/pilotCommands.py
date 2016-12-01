@@ -1179,7 +1179,7 @@ class NagiosProbes( CommandBase ):
       #   "NagiosProbes", probeCmd, retStatus, str(retCode) + ' ' + output.split('\n',1)[0]
      
       if self.nagiosPutURL:
-        # Alternate logging of results to HTTPS PUT service too              
+        # Alternate logging of results to HTTPS PUT service too
         hostPort = self.nagiosPutURL.split('/')[2]
         path = '/' + '/'.join( self.nagiosPutURL.split('/')[3:] ) + self.pp.ceName + '/' + probeCmd
 
@@ -1190,7 +1190,7 @@ class NagiosProbes( CommandBase ):
                                                 timeout   = 30,
                                                 key_file  = os.environ['X509_USER_PROXY'],
                                                 cert_file = os.environ['X509_USER_PROXY'] )
-                                               
+
           connection.request( 'PUT', path, str(retCode) + '\n' + output )
 
         except Exception as e:

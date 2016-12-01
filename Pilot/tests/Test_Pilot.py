@@ -4,11 +4,12 @@
 # imports
 import unittest
 import json
+import stat
 import sys
 import os
 
 from Pilot.pilotTools import PilotParams
-from Pilot.pilotCommands import GetPilotVersion, CheckWorkerNode, ConfigureSite
+from Pilot.pilotCommands import GetPilotVersion, CheckWorkerNode, ConfigureSite, NagiosProbes
 
 class PilotTestCase( unittest.TestCase ):
   """ Base class for the Agents test cases
@@ -19,6 +20,8 @@ class PilotTestCase( unittest.TestCase ):
       json.dump( {'Setups':{'TestSetup':{'Commands':{'cetype1':['x', 'y', 'z'], 
                                                      'cetype2':['d', 'f']}, 
                                          'CommandExtensions':['TestExtension'],
+                                         'NagiosProbes':'Nagios1,Nagios2',
+                                         'NagiosPutURL':'https://127.0.0.2/',
                                          'Version':['v1r1','v2r2']}},
                   'CEs':{'grid1.example.com':{'GridCEType':'cetype1','Site':'site.example.com'}},
                   'DefaultSetup':'TestSetup'}, 
@@ -48,6 +51,24 @@ class CommandsTestCase( PilotTestCase ):
     self.pp.configureScript = 'echo'
     ConfigureSite( self.pp )
         
+  def test_NagiosProbes ( self ):
+    # Check pilot.json has been read correctly
+    nagios = NagiosProbes( self.pp )
+    self.assertEqual( nagios.Probes, ['Nagios1', 'Nagios2'] )
+    self.assertEqual( nagios.PutURL, 'https://127.0.0.2/' )
+
+    # Now try creating and running some probe scripts
+    with open ( 'Nagios1', 'w') as fp:
+      fp.write('#!/bin/sh\necho 123\n')
+      
+    os.chmod( 'Nagios1', stat.S_IRWXU )
+
+    with open ( 'Nagios2', 'w') as fp:
+      fp.write('#!/bin/sh\necho 567\n')
+      
+    os.chmod( 'Nagios2', stat.S_IRWXU )
+  
+    nagios.execute()
 
 #############################################################################
 # Test Suite run
