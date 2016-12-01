@@ -52,12 +52,8 @@ class CommandsTestCase( PilotTestCase ):
     ConfigureSite( self.pp )
         
   def test_NagiosProbes ( self ):
-    # Check pilot.json has been read correctly
     nagios = NagiosProbes( self.pp )
-    self.assertEqual( nagios.nagiosProbes, ['Nagios1', 'Nagios2'] )
-    self.assertEqual( nagios.nagiosPutURL, 'https://127.0.0.2/' )
 
-    # Now try creating and running some probe scripts
     with open ( 'Nagios1', 'w') as fp:
       fp.write('#!/bin/sh\necho 123\n')
       
@@ -69,6 +65,9 @@ class CommandsTestCase( PilotTestCase ):
     os.chmod( 'Nagios2', stat.S_IRWXU )
   
     nagios.execute()
+
+    self.assertEqual( nagios.nagiosProbes, ['Nagios1', 'Nagios2'] )
+    self.assertEqual( nagios.nagiosPutURL, 'https://127.0.0.2/' )
 
 #############################################################################
 # Test Suite run
