@@ -54,8 +54,8 @@ class CommandsTestCase( PilotTestCase ):
   def test_NagiosProbes ( self ):
     # Check pilot.json has been read correctly
     nagios = NagiosProbes( self.pp )
-    self.assertEqual( nagios.Probes, ['Nagios1', 'Nagios2'] )
-    self.assertEqual( nagios.PutURL, 'https://127.0.0.2/' )
+    self.assertEqual( nagios.nagiosProbes, ['Nagios1', 'Nagios2'] )
+    self.assertEqual( nagios.nagiosPutURL, 'https://127.0.0.2/' )
 
     # Now try creating and running some probe scripts
     with open ( 'Nagios1', 'w') as fp:
