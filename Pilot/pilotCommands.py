@@ -1149,60 +1149,60 @@ class NagiosProbes( CommandBase ):
     """
 
     for probeCmd in self.nagiosProbes:
-     self.log.debug( "Running Nagios probe %s" % probeCmd )
+      self.log.debug( "Running Nagios probe %s" % probeCmd )
 
-     try:
-       # Make sure the probe is executable
-       os.chmod( probeCmd, stat.S_IXUSR + os.stat( probeCmd ).st_mode )
+      try:
+        # Make sure the probe is executable
+        os.chmod( probeCmd, stat.S_IXUSR + os.stat( probeCmd ).st_mode )
 
-     except OSError:
-       self.log.error( 'File %s is missing! Skipping test' % probeCmd )
-       retCode = 2
-       output  = 'Probe file %s missing from pilot!' % probeCmd
+      except OSError:
+        self.log.error( 'File %s is missing! Skipping test' % probeCmd )
+        retCode = 2
+        output  = 'Probe file %s missing from pilot!' % probeCmd
 
-     else:
-       # FIXME: need a time limit on this in case the probe hangs
-       retCode, output = self.executeAndGetOutput( './' + probeCmd )
+      else:
+        # FIXME: need a time limit on this in case the probe hangs
+        retCode, output = self.executeAndGetOutput( './' + probeCmd )
 
-     if retCode == 0:
-       self.log.info( 'Return code = 0: %s' % output.split('\n',1)[0] )
-       retStatus = 'info'
-     elif retCode == 1:
-       self.log.warn( 'Return code = 1: %s' % output.split('\n',1)[0] )
-       retStatus = 'warning'
-     else:
-       # retCode could be 2 (error) or 3 (unknown) or something we haven't thought of
-       self.log.error( 'Return code = %d: %s' % ( retCode, output.split('\n',1)[0] ) )
-       retStatus = 'error'
+      if retCode == 0:
+        self.log.info( 'Return code = 0: %s' % output.split('\n',1)[0] )
+        retStatus = 'info'
+      elif retCode == 1:
+        self.log.warn( 'Return code = 1: %s' % output.split('\n',1)[0] )
+        retStatus = 'warning'
+      else:
+        # retCode could be 2 (error) or 3 (unknown) or something we haven't thought of
+        self.log.error( 'Return code = %d: %s' % ( retCode, output.split('\n',1)[0] ) )
+        retStatus = 'error'
 
-     # report results to pilot logger too. Like this:
-     #   "NagiosProbes", probeCmd, retStatus, str(retCode) + ' ' + output.split('\n',1)[0]
+      # report results to pilot logger too. Like this:
+      #   "NagiosProbes", probeCmd, retStatus, str(retCode) + ' ' + output.split('\n',1)[0]
      
-     if self.nagiosPutURL:
-       # Alternate logging of results to HTTPS PUT service too              
-       hostPort = self.nagiosPutURL.split('/')[2]
-       path = '/' + '/'.join( self.nagiosPutURL.split('/')[3:] ) + self.pp.ceName + '/' + probeCmd
+      if self.nagiosPutURL:
+        # Alternate logging of results to HTTPS PUT service too              
+        hostPort = self.nagiosPutURL.split('/')[2]
+        path = '/' + '/'.join( self.nagiosPutURL.split('/')[3:] ) + self.pp.ceName + '/' + probeCmd
 
-       self.log.info( 'Putting %s Nagios output to https://%s%s' % ( probeCmd, hostPort, path ) )
+        self.log.info( 'Putting %s Nagios output to https://%s%s' % ( probeCmd, hostPort, path ) )
 
-       try:
-         connection = httplib.HTTPSConnection( host      = hostPort,
-                                               timeout   = 30,
-                                               key_file  = os.environ['X509_USER_PROXY'],
-                                               cert_file = os.environ['X509_USER_PROXY'] )
+        try:
+          connection = httplib.HTTPSConnection( host      = hostPort,
+                                                timeout   = 30,
+                                                key_file  = os.environ['X509_USER_PROXY'],
+                                                cert_file = os.environ['X509_USER_PROXY'] )
                                                
-         connection.request( 'PUT', path, str(retCode) + '\n' + output )
+          connection.request( 'PUT', path, str(retCode) + '\n' + output )
 
-       except Exception as e:
-         self.log.error( 'PUT of %s Nagios output fails with %s' % ( probeCmd, str(e) ) )
+        except Exception as e:
+          self.log.error( 'PUT of %s Nagios output fails with %s' % ( probeCmd, str(e) ) )
          
-       else:
-         result = connection.getresponse()
+        else:
+          result = connection.getresponse()
          
-         if result.status / 100 == 2:
-           self.log.info( 'PUT of %s Nagios output succeeds with %d %s' % ( probeCmd, result.status, result.reason ) )
-         else :
-           self.log.error( 'PUT of %s Nagios output fails with %d %s' % ( probeCmd, result.status, result.reason ) )
+          if result.status / 100 == 2:
+            self.log.info( 'PUT of %s Nagios output succeeds with %d %s' % ( probeCmd, result.status, result.reason ) )
+          else :
+            self.log.error( 'PUT of %s Nagios output fails with %d %s' % ( probeCmd, result.status, result.reason ) )
 
   def execute( self ):
     """ Standard entry point to a pilot command
