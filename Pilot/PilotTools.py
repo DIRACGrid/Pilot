@@ -155,7 +155,7 @@ def urlRetriveTimeout( url, fileName='', log=None, timeout = 0 ):
     # Sometimes repositories do not return Content-Length parameter
     try:
       expectedBytes = long( remoteFD.info()[ 'Content-Length' ] )
-    except Exception as x: # pylint: disable=W0703
+    except Exception as x:
       msg = 'Content-Length parameter not returned, skipping expectedBytes check'
       logger = log.warn if log else logWARN
       logger(msg)
@@ -294,7 +294,7 @@ def getCommand( params, commandName, log ):
       impData = imp.find_module( module )
       commandModule = imp.load_module( module, *impData )
       commandObject = getattr( commandModule, commandName )
-    except Exception as _e: # pylint: disable=W0703
+    except Exception as _e:
       pass
     if commandObject:
       return commandObject( params ), module
@@ -388,28 +388,28 @@ class ExtendedLogger( Logger ):
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
 
-  def debug( self, msg, header = True, sendPilotLog = False ):  # pylint: disable=W0221
+  def debug( self, msg, header = True, sendPilotLog = False ):
     """ Debug logger"""
     super(ExtendedLogger, self).debug(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status = "debug")
 
-  def error( self, msg, header = True, sendPilotLog = False ): # pylint: disable=W0221
+  def error( self, msg, header = True, sendPilotLog = False ):
     """ Error logger """
     super(ExtendedLogger, self).error(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status = "error")
 
-  def warn( self, msg, header = True, sendPilotLog = False): # pylint: disable=W0221
+  def warn( self, msg, header = True, sendPilotLog = False):
     """ Warn logger """
     super(ExtendedLogger, self).warn(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status ="warning")
 
-  def info( self, msg, header = True, sendPilotLog = False ): # pylint: disable=W0221
+  def info( self, msg, header = True, sendPilotLog = False ):
     """ Info logger """
     super(ExtendedLogger, self).info(msg,header)
     if self.isPilotLoggerOn:
@@ -508,12 +508,12 @@ class CommandBase( object ):
         # return code
         returnCode = _p.wait()
         self.log.debug( "Return code of %s: %d" % ( cmd, returnCode ) )
-      except Exception as _: # pylint: disable=W0703
+      except Exception as _:
         returnCode = 99
 
     sys.exit(returnCode)
 
-class PilotParams( object ): # pylint: disable=R0902
+class PilotParams( object ):
   """ Class that holds the structure with all the parameters to be used across all the commands
   """
 
@@ -627,7 +627,7 @@ class PilotParams( object ): # pylint: disable=R0902
     # Set number of allocatable processors from MJF if available
     try:
       self.processors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
-    except Exception  as _: # pylint: disable=W0703
+    except Exception  as _:
       self.processors = 1
 
 
@@ -650,7 +650,7 @@ class PilotParams( object ): # pylint: disable=R0902
             value = lambda_func(value)
             if compare:
               value = min(value, self.MAX_CYCLES)
-          except Exception  as _: # pylint: disable=W0703
+          except Exception  as _:
             pass
         setattr(self, field, value)
         break
@@ -708,13 +708,13 @@ class PilotParams( object ): # pylint: disable=R0902
       # GridCEType is like "CREAM" or "HTCondorCE" not "InProcess" etc
       try:
         setattr(self, 'name', str( pilotCFGFileContent['CEs'][self.ceName]['Site'] ))
-      except Exception  as _: # pylint: disable=W0703
+      except Exception  as _:
         pass
       if not self.gridCEType:
         # We don't override a grid CEType given on the command line!
         try:
           self.gridCEType = str( pilotCFGFileContent['CEs'][self.ceName]['GridCEType'] )
-        except Exception  as _: # pylint: disable=W0703
+        except Exception  as _:
           pass
 
   def __parseCommands(self, pilotCFGFileContent):
@@ -722,16 +722,16 @@ class PilotParams( object ): # pylint: disable=R0902
     # Commands first
     try:
       self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands'][self.gridCEType]]
-    except Exception  as _: # pylint: disable=W0703
+    except Exception  as _:
       try:
         self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands']['Defaults']]
-      except Exception  as _: # pylint: disable=W0703
+      except Exception  as _:
         try:
           self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['Commands'][self.gridCEType]]
-        except Exception  as _: # pylint: disable=W0703
+        except Exception  as _:
           try:
             self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands']['Defaults']]
-          except Exception  as _: # pylint: disable=W0703
+          except Exception  as _:
             pass
 
   def __parseCommandsExtension(self, pilotCFGFileContent):
@@ -739,18 +739,18 @@ class PilotParams( object ): # pylint: disable=R0902
     # Now the other options we handle
     try:
       self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['CommandExtensions']]
-    except Exception  as _: # pylint: disable=W0703
+    except Exception  as _:
       try:
         self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['CommandExtensions']]
-      except Exception  as _: # pylint: disable=W0703
+      except Exception  as _:
         pass
 
     try:
       self.configServer = str( pilotCFGFileContent['Setups'][self.setup]['ConfigurationServer'] )
-    except Exception  as _: # pylint: disable=W0703
+    except Exception  as _:
       try:
         self.configServer = str( pilotCFGFileContent['Setups']['Defaults']['ConfigurationServer'] )
-      except Exception  as _: # pylint: disable=W0703
+      except Exception  as _:
         pass
 
   def __initJSON( self ):
@@ -808,7 +808,7 @@ class PilotParams( object ): # pylint: disable=R0902
       # We don't use the default to override an explicit value from command line!
       try:
         self.setup = str( pilotCFGFileContent['DefaultSetup'] )
-      except Exception  as _: # pylint: disable=W0703
+      except Exception  as _:
         pass
     self.__parseCommands(pilotCFGFileContent)
 
@@ -817,10 +817,10 @@ class PilotParams( object ): # pylint: disable=R0902
     # Version might be a scalar or a list. We just want the first one.
     try:
       value = pilotCFGFileContent['Setups'][self.setup]['Version']
-    except Exception  as _: # pylint: disable=W0703
+    except Exception  as _:
       try:
         value = pilotCFGFileContent['Setups']['Defaults']['Version']
-      except Exception  as _: # pylint: disable=W0703
+      except Exception  as _:
         value = None
 
     if isinstance(value, basestring):
@@ -830,8 +830,8 @@ class PilotParams( object ): # pylint: disable=R0902
 
     try:
       self.releaseProject = str( pilotCFGFileContent['Setups'][self.setup]['Project'] )
-    except Exception  as _: # pylint: disable=W0703
+    except Exception  as _:
       try:
         self.releaseProject = str( pilotCFGFileContent['Setups']['Defaults']['Project'] )
-      except Exception  as _: # pylint: disable=W0703
+      except Exception  as _:
         pass

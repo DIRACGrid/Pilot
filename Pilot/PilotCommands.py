@@ -501,7 +501,7 @@ class ConfigureSite( CommandBase ):
     if self.pilotParams.pilotReference != 'Unknown':
       self.cfg.append( '-o /LocalSite/PilotReference=%s' % self.pilotParams.pilotReference )
     # add options for BOINc
-    # FIXME: this should not be part of the standard configuration # pylint: disable=W0511
+    # FIXME: this should not be part of the standard configuration
     if self.boincUserID:
       self.cfg.append( '-o /LocalSite/BoincUserID=%s' % self.boincUserID )
     if self.boincHostID:
@@ -708,7 +708,7 @@ class ConfigureSite( CommandBase ):
   def __getCEName( self ):
     """ Try to get the CE name
     """
-    # FIXME: this should not be part of the standard configuration (flavours discriminations should stay out) pylint: disable=W0511
+    # FIXME: this should not be part of the standard configuration (flavours discriminations should stay out)
     if self.pilotParams.flavour in ['LCG', 'gLite', 'OSG']:
       self.__LCGgLiteOSGFlavor()
     elif self.pilotParams.flavour == "CREAM":
@@ -790,7 +790,7 @@ class ConfigureCPURequirements( CommandBase ):
       self.exitWithError( retCode )
 
     # HS06 benchmark
-    # FIXME: this is a (necessary) hack! pylint: disable=W0511
+    # FIXME: this is a (necessary) hack!
     cpuNormalizationFactor = float( cpuNormalizationFactorOutput.split( '\n' )[0].replace( "Estimated CPU power is ",
                                                                                            '' ).replace( " HS06", '' ) )
     self.log.info( "Current normalized CPU as determined by 'dirac-wms-cpu-normalization' is %f" % cpuNormalizationFactor )
@@ -859,7 +859,7 @@ class LaunchAgent( CommandBase ):
     self.log.info( 'User Id    = %s' % localUid )
     self.inProcessOpts = ['-s /Resources/Computing/CEDefaults' ]
     self.inProcessOpts.append( '-o WorkingDirectory=%s' % self.pilotParams.workingDir )
-    # FIXME: this is artificial  pylint: disable=W0511
+    # FIXME: this is artificial
     self.inProcessOpts.append( '-o TotalCPUs=%s' % 1 )
     self.inProcessOpts.append( '-o /LocalSite/MaxCPUTime=%s' % ( int( self.pilotParams.jobCPUReq ) ) )
     self.inProcessOpts.append( '-o /LocalSite/CPUTime=%s' % ( int( self.pilotParams.jobCPUReq ) ) )
@@ -1050,7 +1050,7 @@ class MultiLaunchAgent( CommandBase ):
       open( os.path.join( self.pilotParams.workingDir, 'shutdown_message.%02d' % i ), 'w' ).write( shutdownMessage )
       print shutdownMessage
 
-    # FIX ME: this effectively picks one at random. Should be the last one to finish chronologically. pylint: disable=W0511
+    # FIX ME: this effectively picks one at random. Should be the last one to finish chronologically.
     # Not in order of being started.
     open( os.path.join( self.pilotParams.workingDir, 'shutdown_message' ), 'w' ).write( shutdownMessage )
 
@@ -1117,7 +1117,7 @@ class MultiLaunchAgent( CommandBase ):
 
     try:
       fFile = open(logFile, 'r')
-    except Exception as _: # pylint: disable=W0703
+    except Exception as _:
       return '700 Internal VM logging failed'
 
     oneline = fFile.readline()

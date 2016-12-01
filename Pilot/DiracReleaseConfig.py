@@ -332,12 +332,12 @@ class ReleaseConfig( object ):
         cfgData = urlRetriveTimeout( urlcfg, timeout = self.__cliParams.timeout )
         if not cfgData:
           return S_ERROR( "Could not get data from %s" % urlcfg )
-      except Exception, excp: # pylint: disable=W0703
+      except Exception, excp:
         return S_ERROR( "Could not open %s" % urlcfg )
     try:
       #cfgData = cfgFile.read()
       cfg = ReleaseConfig.CFG( cfgData )
-    except Exception, excp: # pylint: disable=W0703
+    except Exception, excp:
       return S_ERROR( "Could not parse %s: %s" % ( urlcfg, excp ) )
     #cfgFile.close()
     if not checkHash:
@@ -349,7 +349,7 @@ class ReleaseConfig( object ):
       #md5File.close()
       if md5Hex != md5.md5( cfgData ).hexdigest():
         return S_ERROR( "Hash check failed on %s" % urlcfg )
-    except Exception, excp: # pylint: disable=W0703
+    except Exception, excp:
       return S_ERROR( "Hash check failed on %s: %s" % ( urlcfg, excp ) )
     self.__cfgCache[ urlcfg ] = cfg
     return S_OK( cfg )
@@ -445,10 +445,10 @@ class ReleaseConfig( object ):
     """
     try:
       fd = open( fileName, "r" )
-      #TODO: Merge with installation CFG  pylint: disable=W0511
+      #TODO: Merge with installation CFG
       cfg = ReleaseConfig.CFG().parse( fd.read() )
       fd.close()
-    except Exception, excp : # pylint: disable=W0703
+    except Exception, excp :
       return S_ERROR( "Could not load %s: %s" % ( fileName, excp ) )
     self.__globalDefaults.update( "Installations/%s" % self.genericGetter('__getInstallation'), cfg )
     return S_OK()

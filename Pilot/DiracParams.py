@@ -3,7 +3,7 @@ Parametres class
 """
 import os
 
-class Params( object ): # pylint: disable=R0902
+class Params( object ):
   """
   Parametres class
   """

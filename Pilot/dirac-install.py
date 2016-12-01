@@ -56,7 +56,7 @@ def checkHashFunction(pkgName, pkgVer, tarsURLInternal, cacheDir, cache, tarName
       if not urlRetriveTimeout( md5FileURL, fileName=md5Path, timeout=60 ):
         logERROR( "Cannot download %s" % tarName )
         return False
-    except Exception, e: # pylint: disable=W0703
+    except Exception, e:
       logERROR( "Cannot download %s: %s" % ( md5Name, str( e ) ) )
       return False
   #Read md5
@@ -109,7 +109,7 @@ def downloadAndExtractTarball( tarsURLInternal, pkgName, pkgVer, checkHash = Tru
       if not urlRetriveTimeout( tarFileURL, fileName=tarPath, timeout=cliParams.timeout ):
         logERROR( "Cannot download %s" % tarName )
         return False
-    except Exception, e: # pylint: disable=W0703
+    except Exception, e:
       logERROR( "Cannot download %s: %s" % ( tarName, str( e ) ) )
       sys.exit( 1 )
   if checkHash:
@@ -166,7 +166,7 @@ def fixBuildPaths():
                                                                           cliParams.targetPath )
     os.system( replaceCmd )
 
-  except Exception as _: # pylint: disable=W0703
+  except Exception as _:
     pass
 
 
@@ -320,7 +320,7 @@ def parseInstallPath(value):
   cliParams.targetPath = value
   try:
     os.makedirs( value )
-  except Exception as _: # pylint: disable=W0703
+  except Exception as _:
     pass
 
 def parseUseVersionsDir(_):
@@ -462,7 +462,7 @@ def loadConfiguration():
     cliParams.targetPath = os.path.join( cliParams.targetPath, 'versions', '%s_%s' % ( cliParams.release, int( time.time() ) ) )
     try:
       os.makedirs( cliParams.targetPath )
-    except Exception as _: # pylint: disable=W0703
+    except Exception as _:
       pass
 
   logNOTICE( "Destination path for installation is %s" % cliParams.targetPath )
@@ -557,7 +557,7 @@ def createPermanentDirLinks():
           createFakeDirLinks(fake, real)
           os.rename( fake, fake + '.bak' )
         os.symlink( real, fake )
-    except Exception, x: # pylint: disable=W0703
+    except Exception, x:
       logERROR( str( x ) )
       return False
   return True
@@ -585,7 +585,7 @@ def createOldProLinks():
           os.unlink( oldPath )
         os.rename( proPath, oldPath )
       os.symlink( cliParams.targetPath, proPath )
-    except Exception, x: # pylint: disable=W0703
+    except Exception, x:
       logERROR( str( x ) )
       return False
 
@@ -652,7 +652,7 @@ def createBashrc():
       fFile = open( bashrcFile, 'w' )
       fFile.write( '\n'.join( lines ) )
       fFile.close()
-  except Exception, x: # pylint: disable=W0703
+  except Exception, x:
     logERROR( str( x ) )
     return False
 
@@ -716,7 +716,7 @@ def createCshrc():
       fFile = open( cshrcFile, 'w' )
       fFile.write( '\n'.join( lines ) )
       fFile.close()
-  except Exception, x: # pylint: disable=W0703
+  except Exception, x:
     logERROR( str( x ) )
     return False
 
@@ -739,7 +739,7 @@ def writeDefaultConfiguration():
     fd = open( filePath, "wb" )
     fd.write( instCFG.toString() )
     fd.close()
-  except Exception, excp: # pylint: disable=W0703
+  except Exception, excp:
     logERROR( "Could not write %s: %s" % ( filePath, excp ) )
   logNOTICE( "Defaults written to %s" % filePath )
 
