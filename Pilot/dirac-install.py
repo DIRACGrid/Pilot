@@ -416,9 +416,9 @@ def parseInstallConfOption(releaseConfigInternal):
       opName = 'externalsType'
     if isinstance( getattr( cliParams, opName ), basestring ):
       setattr( cliParams, opName, opVal )
-    elif getattr( cliParams, opName ).isinstance(types.BooleanType):
+    elif isinstance(getattr( cliParams, opName ), types.BooleanType):
       setattr( cliParams, opName, opVal.lower() in ( "y", "yes", "true", "1" ) )
-    elif getattr( cliParams, opName ).isinstance(types.ListType):
+    elif isinstance(getattr( cliParams, opName ), types.ListType):
       setattr( cliParams, opName, [ opV.strip() for opV in opVal.split( "," ) if opV ] )
 
 def loadConfiguration():

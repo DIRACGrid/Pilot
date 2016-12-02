@@ -46,11 +46,9 @@ class ReleaseConfig( object ):
       """ Return a child path
       """
       child = self
-      pathList = None
-      for tmp in [types.ListType, types.TupleType]:
-        if path.isinstance(tmp):
-          pathList = path
-      if pathList is None:
+      if isinstance(path, (types.ListType, types.TupleType)):
+        pathList = path
+      else:
         pathList = [ sec.strip() for sec in path.split( "/" ) if sec.strip() ]
       for childName in pathList:
         if childName not in child.getChildren():
