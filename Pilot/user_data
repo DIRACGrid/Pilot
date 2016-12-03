@@ -72,6 +72,7 @@ export JOBOUTPUTS='##user_data_joboutputs_url##'
 cat <<X5_EOF >/root/hostkey.pem
 ##user_data_file_hostkey##
 ##user_data_file_hostcert##
+##user_data_option_x509_proxy##
 X5_EOF
 
 export CE_NAME='##user_data_space##'
@@ -157,11 +158,11 @@ export X509_CERT_DIR=/etc/grid-security/certificates
 
 # make a first heartbeat
 echo 0.0 0.0 0.0 0.0 0.0 > /var/spool/joboutputs/heartbeat
-/usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/heartbeat"
-/usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/vm-heartbeat"
+/usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/heartbeat"
+/usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/vm-heartbeat"
 
 # put heartbeat on MJF server every 5 minutes with a random offset
-echo -e "*/5 * * * * root sleep `expr $RANDOM / 110` ; echo \`cut -f1-3 -d' ' /proc/loadavg\` \`cat /proc/uptime\` >/var/spool/joboutputs/heartbeat ; /usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/vm-heartbeat ; /usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/heartbeat >/var/log/heartbeat.log 2>&1" >/etc/cron.d/heartbeat
+echo -e "*/5 * * * * root sleep `expr $RANDOM / 110` ; echo \`cut -f1-3 -d' ' /proc/loadavg\` \`cat /proc/uptime\` >/var/spool/joboutputs/heartbeat ; /usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/vm-heartbeat ; /usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/heartbeat >/var/log/heartbeat.log 2>&1" >/etc/cron.d/heartbeat
 
 # We swap on the logical partition (cannot on CernVM 3 aufs filesystem)
 # Since ext4 we can use fallocate:
@@ -276,11 +277,11 @@ cp -f /scratch/plt/jobagent.*.log /scratch/plt/shutdown_message* /var/log/boot.l
   for i in *
   do
    if [ -f $i ] ; then 
-    curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --location --upload-file "$i" "$JOBOUTPUTS/"
+    curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file "$i" "$JOBOUTPUTS/"
 
     # This will be replaced by extended pilot logging??
-    curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --location --upload-file "$i" \
-      "https://lbvobox06.cern.ch:9132/hosts/`openssl x509 -in /root/hostkey.pem -noout -subject | sed 's/^subject=.*CN=//'`/$CE_NAME/$HOSTNAME/$VM_UUID/"
+    curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file "$i" \
+      "https://lbvobox200.cern.ch:9132/hosts/$CE_NAME/$HOSTNAME/$VM_UUID/"
    fi
   done
 )
