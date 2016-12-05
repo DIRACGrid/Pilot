@@ -72,6 +72,7 @@ export JOBOUTPUTS='##user_data_joboutputs_url##'
 cat <<X5_EOF >/root/hostkey.pem
 ##user_data_file_hostkey##
 ##user_data_file_hostcert##
+##user_data_option_x509_proxy##
 X5_EOF
 
 export CE_NAME='##user_data_space##'
@@ -153,14 +154,15 @@ chmod ugo+rwxt /scratch/tmp
 # Get CA certs from cvmfs
 rm -Rf /etc/grid-security
 ln -sf /cvmfs/grid.cern.ch/etc/grid-security /etc/grid-security
+export X509_CERT_DIR=/etc/grid-security/certificates
 
 # make a first heartbeat
 echo 0.0 0.0 0.0 0.0 0.0 > /var/spool/joboutputs/heartbeat
-/usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/heartbeat"
-/usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/vm-heartbeat"
+/usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/heartbeat"
+/usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/vm-heartbeat"
 
-# put heartbeat on MJF server every 5 minutes
-echo -e "*/5 * * * * root echo \`cut -f1-3 -d' ' /proc/loadavg\` \`cat /proc/uptime\` >/var/spool/joboutputs/heartbeat ; /usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/vm-heartbeat ; /usr/bin/curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/heartbeat >/var/log/heartbeat.log 2>&1" >/etc/cron.d/heartbeat
+# put heartbeat on MJF server every 5 minutes with a random offset
+echo -e "*/5 * * * * root sleep `expr $RANDOM / 110` ; echo \`cut -f1-3 -d' ' /proc/loadavg\` \`cat /proc/uptime\` >/var/spool/joboutputs/heartbeat ; /usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/vm-heartbeat ; /usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/heartbeat >/var/log/heartbeat.log 2>&1" >/etc/cron.d/heartbeat
 
 # We swap on the logical partition (cannot on CernVM 3 aufs filesystem)
 # Since ext4 we can use fallocate:
@@ -183,6 +185,7 @@ attr -g proxy /cvmfs/lhcb.cern.ch/
 echo 'Defaults !requiretty' >>/etc/sudoers
 echo 'Defaults visiblepw'   >>/etc/sudoers
 
+# The pilot user account plt
 /usr/sbin/useradd -b /scratch plt
 
 chown plt.plt /var/spool/joboutputs
@@ -193,35 +196,56 @@ cp /root/hostkey.pem /scratch/plt/etc/grid-security/hostkey.pem
 cp /root/hostkey.pem /scratch/plt/etc/grid-security/hostcert.pem
 chmod 0600 /scratch/plt/etc/grid-security/host*.pem
 
-# This takes forever so we do it in the background, starting with
-# the zeroth payload for each possible jobagent - to be ready to go
-(
-n=0
-while [ $n -le 99 ]
+# Add plt0102 etc accounts for the payloads that plt can sudo to
+
+# At most one jobagent per logical processor
+processors=`grep '^processor[[:space:]]' /proc/cpuinfo | wc --lines`
+for ((m=0; m < processors; m++))
 do
- for m in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
- do
-    mn=`printf '%02dp%02d' $m $n`
-    # add plt0102 etc accounts for the payloads that plt can sudo to
-    /usr/sbin/useradd -m -b /scratch plt$mn
-    /usr/sbin/usermod -a -G plt$mn plt
-    /usr/sbin/usermod -a -G plt plt$mn
-    chmod 0775 /scratch/plt$mn
-    echo "Defaults>plt$mn !requiretty"           >>/etc/sudoers
-    echo "Defaults>plt$mn visiblepw"             >>/etc/sudoers
-    echo "Defaults>plt$mn !env_reset"            >>/etc/sudoers
-    echo "plt ALL = (plt$mn) NOPASSWD: ALL"      >>/etc/sudoers
- done
- n=`expr $n + 1`
+  # Up to 100 successive payloads per jobagent
+  for ((n=0; n < 100; n++))
+  do
+    payloaduser=`printf 'plt%02dp%02d' $m $n`
+    payloaduserid=`printf '1%02d%02d' $m $n`
+
+    # Payload user home directory and dot files
+    mkdir /scratch/$payloaduser
+    cp -f /etc/skel/.*shrc /scratch/$payloaduser
+    cp -f /etc/skel/.bash* /scratch/$payloaduser
+
+    # Add to /etc/passwd and /etc/group
+    echo "$payloaduser:x:$payloaduserid:$payloaduserid::/scratch/$payloaduser:/bin/bash" >>/etc/passwd
+    echo "$payloaduser:x:$payloaduserid:plt" >>/etc/group
+
+    # Add the plt group as a secondary group
+    if [ "$payloaduser" = "plt00p00" ] ; then
+      sed -i "s/^plt:.*/&$payloaduser/" /etc/group
+    else
+      sed -i "s/^plt:.*/&,$payloaduser/" /etc/group
+    fi
+
+    # Ownership and permissions of payload home directory
+    chown -R $payloaduser.$payloaduser /scratch/$payloaduser
+    chmod 0775 /scratch/$payloaduser
+
+    # plt user can sudo to any payload user
+    echo "Defaults>$payloaduser !requiretty"           >>/etc/sudoers
+    echo "Defaults>$payloaduser visiblepw"             >>/etc/sudoers
+    echo "Defaults>$payloaduser !env_reset"            >>/etc/sudoers
+    echo "plt ALL = ($payloaduser) NOPASSWD: ALL"      >>/etc/sudoers
+  done
 done
-) 2>&1 >/var/spool/joboutputs/useradd.log &
 
 cd /scratch/plt
 # Fetch the DIRAC pilot scripts
-if [ '##user_data_option_dirac_pilot_url##' == '' ] ; then
-  wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' https://lhcbproject.web.cern.ch/lhcbproject/Operations/diracpilot/
+if [ '##user_data_option_dirac_pilot_url##' != '' ] ; then
+  wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' --ca-directory=$X509_CERT_DIR '##user_data_option_dirac_pilot_url##'
+elif [ '##user_data_url##' != '' ] ; then
+  # Remove user_data file name back to final slash
+  user_data_dir=`echo '##user_data_url##' | sed 's:[^/]*$::'`
+  wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' --ca-directory=$X509_CERT_DIR "$user_data_dir"
 else
-  wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' '##user_data_option_dirac_pilot_url##'
+  wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' --ca-directory=$X509_CERT_DIR https://lhcb-portal-dirac.cern.ch/pilot/
 fi    
 
 # So payload accounts can create directories here, but not interfere
@@ -253,11 +277,11 @@ cp -f /scratch/plt/jobagent.*.log /scratch/plt/shutdown_message* /var/log/boot.l
   for i in *
   do
    if [ -f $i ] ; then 
-    curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file "$i" "$JOBOUTPUTS/"
+    curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file "$i" "$JOBOUTPUTS/"
 
-    # This should go into an LHCb-specific pilot command
-    curl --capath /etc/grid-security/certificates --cert /root/hostkey.pem --location --upload-file "$i" \
-      "https://lbvobox06.cern.ch:9132/hosts/`openssl x509 -in /root/hostkey.pem -noout -subject | sed 's/^subject=.*CN=//'`/$CE_NAME/$HOSTNAME/$VM_UUID/"
+    # This will be replaced by extended pilot logging??
+    curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file "$i" \
+      "https://lbvobox200.cern.ch:9132/hosts/$CE_NAME/$HOSTNAME/$VM_UUID/"
    fi
   done
 )

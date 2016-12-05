@@ -434,6 +434,7 @@ class PilotParams( object ):
     self.optList = {}
     self.debugFlag = False
     self.local = False
+    self.pilotJSON = None
     self.commandExtensions = []
     self.commands = ['CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics',
                      'CheckCECapabilities', 'CheckWNCapabilities',
@@ -660,81 +661,85 @@ class PilotParams( object ):
     The file must contains at least the Defaults section. Missing values are taken from the Defaults setup. """
 
     with open ( self.pilotCFGFile, 'r' ) as fp:
-      pilotCFGFileContent = json.load( fp )
+      # We save the parsed JSON in case pilot commands need it 
+      # to read their own options 
+      self.pilotJSON = json.load( fp )
 
     if self.ceName:
       # Try to get the site name and grid CEType from the CE name
       # GridCEType is like "CREAM" or "HTCondorCE" not "InProcess" etc
       try:
-        self.name = str( pilotCFGFileContent['CEs'][self.ceName]['Site'] )
-      except:
+        self.name = str( self.pilotJSON['CEs'][self.ceName]['Site'] )
+      except KeyError:
         pass
       else:
         if not self.gridCEType:
           # We don't override a grid CEType given on the command line!
           try:
-            self.gridCEType = str( pilotCFGFileContent['CEs'][self.ceName]['GridCEType'] )
-          except:
+            self.gridCEType = str( self.pilotJSON['CEs'][self.ceName]['GridCEType'] )
+          except KeyError:
             pass
 
     if not self.setup:
       # We don't use the default to override an explicit value from command line!
       try:
-        self.setup = str( pilotCFGFileContent['DefaultSetup'] )
-      except:
+        self.setup = str( self.pilotJSON['DefaultSetup'] )
+      except KeyError:
         pass
 
     # Commands first
+    # FIXME: pilotSynchronizer() should publish these as comma-separated lists and we should split(',') them!!!
     try:
-      self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands'][self.gridCEType]]
-    except:
+      self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands'][self.gridCEType]]
+    except KeyError:
       try:
-        self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands']['Defaults']]
-      except:
+        self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands']['Defaults']]
+      except KeyError:
         try:
-          self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['Commands'][self.gridCEType]]
-        except:
+          self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['Commands'][self.gridCEType]]
+        except KeyError:
           try:
-            self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands']['Defaults']]
-          except:
+            self.commands = [str( pv ).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults']]
+          except KeyError:
             pass
 
     # Now the other options we handle
+    # FIXME: pilotSynchronizer() should publish this as a comma separated list and we should split(',') it!!!
     try:
-      self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['CommandExtensions']]
-    except:
+      self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
+    except KeyError:
       try:
-        self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['CommandExtensions']]
-      except:
+        self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
+      except KeyError:
         pass
 
     try:
-      self.configServer = str( pilotCFGFileContent['Setups'][self.setup]['ConfigurationServer'] )
-    except:
+      self.configServer = str( self.pilotJSON['Setups'][self.setup]['ConfigurationServer'] )
+    except KeyError:
       try:
-        self.configServer = str( pilotCFGFileContent['Setups']['Defaults']['ConfigurationServer'] )
-      except:
+        self.configServer = str( self.pilotJSON['Setups']['Defaults']['ConfigurationServer'] )
+      except KeyError:
         pass
 
     # Version might be a scalar or a list. We just want the first one.
     try:
-      v = pilotCFGFileContent['Setups'][self.setup]['Version']
-    except:
+      v = self.pilotJSON['Setups'][self.setup]['Version']
+    except KeyError:
       try:
-        v = pilotCFGFileContent['Setups']['Defaults']['Version']
-      except:
+        v = self.pilotJSON['Setups']['Defaults']['Version']
+      except KeyError:
         v = None
 
+    # However version v got set, try to use it if not None
     if isinstance(v, basestring):
       self.releaseVersion = str( v )
     elif v:
       self.releaseVersion = str( v[0] )
 
     try:
-      self.releaseProject = str( pilotCFGFileContent['Setups'][self.setup]['Project'] )
-    except:
+      self.releaseProject = str( self.pilotJSON['Setups'][self.setup]['Project'] )
+    except KeyError:
       try:
-        self.releaseProject = str( pilotCFGFileContent['Setups']['Defaults']['Project'] )
-      except:
+        self.releaseProject = str( self.pilotJSON['Setups']['Defaults']['Project'] )
+      except KeyError:
         pass
-
