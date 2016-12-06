@@ -2,7 +2,7 @@
 
 """ The dirac-pilot.py script is a steering script to execute a series of
     pilot commands. The commands may be provided in the pilot input sandbox, and are coded in
-    the pilotCommands.py module or in any <EXTENSION>Commands.py module.
+    the PilotCommands.py module or in any <EXTENSION>Commands.py module.
     The pilot script defines two switches in order to choose a set of commands for the pilot:
 
      -E, --commandExtensions value
@@ -21,7 +21,7 @@
 import os
 import sys
 
-from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
+from Pilot.PilotTools import Logger, pythonPathCheck, PilotParams, getCommand
 
 __RCSID__ = "$Id$"
 
