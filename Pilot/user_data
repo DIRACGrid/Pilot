@@ -281,7 +281,7 @@ cp -f /scratch/plt/jobagent.*.log /scratch/plt/shutdown_message* /var/log/boot.l
 
     # This will be replaced by extended pilot logging??
     curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file "$i" \
-      "https://lbvobox200.cern.ch:9132/hosts/$CE_NAME/$HOSTNAME/$VM_UUID/"
+      "https://lhcb-depo.cern.ch:9132/hosts/$CE_NAME/$HOSTNAME/$VM_UUID/"
    fi
   done
 )
