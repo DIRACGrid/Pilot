@@ -9,8 +9,7 @@ import sys
 import os
 
 from Pilot.PilotTools import PilotParams
-from Pilot.PilotCommands import CheckWorkerNode, ConfigureSite
-from Pilot.PilotNagiosProbes import NagiosProbes
+from Pilot.PilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes
 
 class PilotTestCase( unittest.TestCase ):
   """ Base class for the Agents test cases
@@ -34,11 +33,11 @@ class PilotTestCase( unittest.TestCase ):
 
   def tearDown( self ):
     try:
-      os.remove( 'pilot.json' )
+      os.remove('pilot.json' )
       if os.path.exists('Nagios1'):
-        os.remove( 'Nagios1')
+        os.remove('Nagios1')
       if os.path.exists('Nagios2'):
-        os.remove( 'Nagios2')
+        os.remove('Nagios2')
     except IOError:
       pass
 
@@ -68,15 +67,15 @@ class CommandsTestCase( PilotTestCase ):
     """
     nagios = NagiosProbes( self.pilotParams )
 
-    with open ( 'Nagios1', 'w') as fp:
+    with open ('Nagios1', 'w') as fp:
       fp.write('#!/bin/sh\necho 123\n')
 
-    os.chmod( 'Nagios1', stat.S_IRWXU )
+    os.chmod('Nagios1', stat.S_IRWXU )
 
-    with open ( 'Nagios2', 'w') as fp:
+    with open ('Nagios2', 'w') as fp:
       fp.write('#!/bin/sh\necho 567\n')
 
-    os.chmod( 'Nagios2', stat.S_IRWXU )
+    os.chmod('Nagios2', stat.S_IRWXU )
 
     nagios.execute()
 

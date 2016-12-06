@@ -508,7 +508,7 @@ class CommandBase( object ):
         # return code
         returnCode = _p.wait()
         self.log.debug( "Return code of %s: %d" % ( cmd, returnCode ) )
-      except Exception as _:
+      except Exception:
         returnCode = 99
 
     sys.exit(returnCode)
@@ -626,7 +626,7 @@ class PilotParams( object ):
     # Set number of allocatable processors from MJF if available
     try:
       self.processors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
-    except Exception  as _:
+    except Exception:
       self.processors = 1
 
 
@@ -649,7 +649,7 @@ class PilotParams( object ):
             value = lambda_func(value)
             if compare:
               value = min(value, self.MAX_CYCLES)
-          except Exception  as _:
+          except Exception:
             pass
         setattr(self, field, value)
         break
@@ -722,16 +722,16 @@ class PilotParams( object ):
     # Commands first
     try:
       self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands'][self.gridCEType]]
-    except KeyError  as _:
+    except KeyError:
       try:
         self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands']['Defaults']]
-      except KeyError  as _:
+      except KeyError:
         try:
           self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['Commands'][self.gridCEType]]
-        except KeyError  as _:
+        except KeyError:
           try:
             self.commands = [str( pv ).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults']]
-          except KeyError  as _:
+          except KeyError:
             pass
 
   def __parseCommandsExtension(self):
@@ -739,18 +739,18 @@ class PilotParams( object ):
     # Now the other options we handle
     try:
       self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
-    except KeyError  as _:
+    except KeyError:
       try:
         self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
-      except KeyError  as _:
+      except KeyError:
         pass
 
     try:
       self.configServer = str( self.pilotJSON['Setups'][self.setup]['ConfigurationServer'] )
-    except KeyError  as _:
+    except KeyError:
       try:
         self.configServer = str( self.pilotJSON['Setups']['Defaults']['ConfigurationServer'] )
-      except KeyError  as _:
+      except KeyError:
         pass
 
   def __initJSON( self ):
@@ -819,10 +819,10 @@ class PilotParams( object ):
     # Version might be a scalar or a list. We just want the first one.
     try:
       value = self.pilotJSON['Setups'][self.setup]['Version']
-    except KeyError  as _:
+    except KeyError:
       try:
         value = self.pilotJSON['Setups']['Defaults']['Version']
-      except KeyError  as _:
+      except KeyError:
         value = None
 
     if isinstance(value, basestring):
@@ -832,8 +832,8 @@ class PilotParams( object ):
 
     try:
       self.releaseProject = str( self.pilotJSON['Setups'][self.setup]['Project'] )
-    except KeyError  as _:
+    except KeyError:
       try:
         self.releaseProject = str( self.pilotJSON['Setups']['Defaults']['Project'] )
-      except KeyError  as _:
+      except KeyError:
         pass
