@@ -516,6 +516,7 @@ class CommandBase( object ):
 class PilotParams( object ):
   """ Class that holds the structure with all the parameters to be used across all the commands
   """
+  pilotJSON = None
 
   rootPath = os.getcwd()
   originalRootPath = os.getcwd()
@@ -622,8 +623,6 @@ class PilotParams( object ):
     """
     self.log = Logger( self.__class__.__name__ )
 
-
-
     # Set number of allocatable processors from MJF if available
     try:
       self.processors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
@@ -701,56 +700,57 @@ class PilotParams( object ):
     self.__parseOption(['-z', '--pilotLogging'], 'pilotLogging', lambda_func=lambda x: True)
 
 
-  def __parseCeName(self, pilotCFGFileContent):
+  def __parseCeName(self):
     """ Parse CeName from Json """
     if self.ceName:
       # Try to get the site name and grid CEType from the CE name
       # GridCEType is like "CREAM" or "HTCondorCE" not "InProcess" etc
       try:
-        setattr(self, 'name', str( pilotCFGFileContent['CEs'][self.ceName]['Site'] ))
-      except Exception  as _:
+        self.name = str( self.pilotJSON['CEs'][self.ceName]['Site'] )
+      except KeyError:
         pass
-      if not self.gridCEType:
-        # We don't override a grid CEType given on the command line!
-        try:
-          self.gridCEType = str( pilotCFGFileContent['CEs'][self.ceName]['GridCEType'] )
-        except Exception  as _:
-          pass
+      else:
+        if not self.gridCEType:
+          # We don't override a grid CEType given on the command line!
+          try:
+            self.gridCEType = str( self.pilotJSON['CEs'][self.ceName]['GridCEType'] )
+          except KeyError:
+            pass
 
-  def __parseCommands(self, pilotCFGFileContent):
+  def __parseCommands(self):
     """ Parse commands from Json"""
     # Commands first
     try:
-      self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands'][self.gridCEType]]
-    except Exception  as _:
+      self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands'][self.gridCEType]]
+    except KeyError  as _:
       try:
-        self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['Commands']['Defaults']]
-      except Exception  as _:
+        self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands']['Defaults']]
+      except KeyError  as _:
         try:
-          self.commands = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['Commands'][self.gridCEType]]
-        except Exception  as _:
+          self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['Commands'][self.gridCEType]]
+        except KeyError  as _:
           try:
-            self.commands = [str( pv ) for pv in pilotCFGFileContent['Defaults']['Commands']['Defaults']]
-          except Exception  as _:
+            self.commands = [str( pv ).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults']]
+          except KeyError  as _:
             pass
 
-  def __parseCommandsExtension(self, pilotCFGFileContent):
+  def __parseCommandsExtension(self):
     """ Parse commands extensions from Json"""
     # Now the other options we handle
     try:
-      self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups'][self.setup]['CommandExtensions']]
-    except Exception  as _:
+      self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
+    except KeyError  as _:
       try:
-        self.commandExtensions = [str( pv ) for pv in pilotCFGFileContent['Setups']['Defaults']['CommandExtensions']]
-      except Exception  as _:
+        self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
+      except KeyError  as _:
         pass
 
     try:
-      self.configServer = str( pilotCFGFileContent['Setups'][self.setup]['ConfigurationServer'] )
-    except Exception  as _:
+      self.configServer = str( self.pilotJSON['Setups'][self.setup]['ConfigurationServer'] )
+    except KeyError  as _:
       try:
-        self.configServer = str( pilotCFGFileContent['Setups']['Defaults']['ConfigurationServer'] )
-      except Exception  as _:
+        self.configServer = str( self.pilotJSON['Setups']['Defaults']['ConfigurationServer'] )
+      except KeyError  as _:
         pass
 
   def __initJSON( self ):
@@ -800,27 +800,29 @@ class PilotParams( object ):
     The file must contains at least the Defaults section. Missing values are taken from the Defaults setup. """
 
     with open ( self.pilotCFGFile, 'r' ) as fp:
-      pilotCFGFileContent = json.load( fp )
+      # We save the parsed JSON in case pilot commands need it
+      # to read their own options
+      self.pilotJSON = json.load( fp )
 
-    self.__parseCeName(pilotCFGFileContent)
+    self.__parseCeName()
 
     if not self.setup:
       # We don't use the default to override an explicit value from command line!
       try:
-        self.setup = str( pilotCFGFileContent['DefaultSetup'] )
-      except Exception  as _:
+        self.setup = str( self.pilotJSON['DefaultSetup'] )
+      except KeyError:
         pass
-    self.__parseCommands(pilotCFGFileContent)
+    self.__parseCommands()
 
-    self.__parseCommandsExtension(pilotCFGFileContent)
+    self.__parseCommandsExtension()
 
     # Version might be a scalar or a list. We just want the first one.
     try:
-      value = pilotCFGFileContent['Setups'][self.setup]['Version']
-    except Exception  as _:
+      value = self.pilotJSON['Setups'][self.setup]['Version']
+    except KeyError  as _:
       try:
-        value = pilotCFGFileContent['Setups']['Defaults']['Version']
-      except Exception  as _:
+        value = self.pilotJSON['Setups']['Defaults']['Version']
+      except KeyError  as _:
         value = None
 
     if isinstance(value, basestring):
@@ -829,9 +831,9 @@ class PilotParams( object ):
       self.releaseVersion = str( value[0] )
 
     try:
-      self.releaseProject = str( pilotCFGFileContent['Setups'][self.setup]['Project'] )
-    except Exception  as _:
+      self.releaseProject = str( self.pilotJSON['Setups'][self.setup]['Project'] )
+    except KeyError  as _:
       try:
-        self.releaseProject = str( pilotCFGFileContent['Setups']['Defaults']['Project'] )
-      except Exception  as _:
+        self.releaseProject = str( self.pilotJSON['Setups']['Defaults']['Project'] )
+      except KeyError  as _:
         pass

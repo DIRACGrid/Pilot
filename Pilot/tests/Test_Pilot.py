@@ -4,11 +4,13 @@
 # imports
 import unittest
 import json
+import stat
 import sys
 import os
 
 from Pilot.PilotTools import PilotParams
 from Pilot.PilotCommands import CheckWorkerNode, ConfigureSite
+from Pilot.PilotNagiosProbes import NagiosProbes
 
 class PilotTestCase( unittest.TestCase ):
   """ Base class for the Agents test cases
@@ -19,6 +21,8 @@ class PilotTestCase( unittest.TestCase ):
       json.dump( {'Setups':{'TestSetup':{'Commands':{'cetype1':['x', 'y', 'z'],
                                                      'cetype2':['d', 'f']},
                                          'CommandExtensions':['TestExtension'],
+                                         'NagiosProbes':'Nagios1,Nagios2',
+                                         'NagiosPutURL':'https://127.0.0.2/',
                                          'Version':['v1r1','v2r2']}},
                   'CEs':{'grid1.example.com':{'GridCEType':'cetype1','Site':'site.example.com'}},
                   'DefaultSetup':'TestSetup'},
@@ -34,24 +38,46 @@ class PilotTestCase( unittest.TestCase ):
     except IOError:
       pass
 
-
 class CommandsTestCase( PilotTestCase ):
-  """ Command test cases """
+  """ Test case for each pilot command
+  """
 
   def test_InitJSON( self ):
-    """ Test init Json"""
+    """ Test the pilot.json parsing
+    """
     self.assertEqual( self.pilotParams.commands, ['x', 'y', 'z'] )
     self.assertEqual( self.pilotParams.commandExtensions, ['TestExtension'] )
 
   def test_CheckWorkerNode ( self ):
-    """ Test worker node """
+    """ Test CheckWorkerNode command
+    """
     CheckWorkerNode( self.pilotParams )
 
   def test_ConfigureSite ( self ):
-    """ Test configure Site """
+    """ Test ConfigureSite command
+    """
     self.pilotParams.configureScript = 'echo'
     ConfigureSite( self.pilotParams )
 
+  def test_NagiosProbes ( self ):
+    """ Test NagiosProbes command
+    """
+    nagios = NagiosProbes( self.pilotParams )
+
+    with open ( 'Nagios1', 'w') as fp:
+      fp.write('#!/bin/sh\necho 123\n')
+
+    os.chmod( 'Nagios1', stat.S_IRWXU )
+
+    with open ( 'Nagios2', 'w') as fp:
+      fp.write('#!/bin/sh\necho 567\n')
+
+    os.chmod( 'Nagios2', stat.S_IRWXU )
+
+    nagios.execute()
+
+    self.assertEqual( nagios.nagiosProbes, ['Nagios1', 'Nagios2'] )
+    self.assertEqual( nagios.nagiosPutURL, 'https://127.0.0.2/' )
 
 #############################################################################
 # Test Suite run
