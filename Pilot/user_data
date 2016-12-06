@@ -277,11 +277,12 @@ cp -f /scratch/plt/jobagent.*.log /scratch/plt/shutdown_message* /var/log/boot.l
   for i in *
   do
    if [ -f $i ] ; then 
-    curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file "$i" "$JOBOUTPUTS/"
+    curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file "$i" \
+     "$JOBOUTPUTS/"
 
     # This will be replaced by extended pilot logging??
     curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file "$i" \
-      "https://lhcb-depo.cern.ch:9132/hosts/$CE_NAME/$HOSTNAME/$VM_UUID/"
+     "https://lhcb-depo.cern.ch:9132/hosts/##user_data_space##/##user_data_machinetype##/##user_data_machine_hostname##/##user_data_uuid##/"
    fi
   done
 )
