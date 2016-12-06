@@ -236,7 +236,7 @@ class TestPilotLoggerGetUniqueIDFromOS( TestPilotLoggerTools ):
   @mock.patch('Pilot.PilotLoggerTools.os.environ.get',
               side_effect = lambda var: 'CREAM_uuid' if var =='CREAM_JOBID' else '')
 
-  def test_successCREAM( self, mock_environ_get, mock_environ_key): # pylint: disable=W0613
+  def test_successCREAM( self, mock_environ_get, mock_environ_key): # pylint: disable=unused-argument
     """ Test success Cream """
     self.assertEqual(getUniqueIDFromOS(), 'CREAM_uuid')
 
@@ -245,7 +245,7 @@ class TestPilotLoggerGetUniqueIDFromOS( TestPilotLoggerTools ):
   @mock.patch('Pilot.PilotLoggerTools.os.environ.get',
               side_effect = lambda var: 'GRID_uuid' if var =='GRID_GLOBAL_JOBID' else '')
 
-  def test_successGRID( self, mock_environ_get, mock_environ_key): # pylint: disable=W0613
+  def test_successGRID( self, mock_environ_get, mock_environ_key): # pylint: disable=unused-argument
     """ Test success grid """
     self.assertEqual(getUniqueIDFromOS(), 'GRID_uuid')
 
@@ -255,7 +255,7 @@ class TestPilotLoggerGetUniqueIDFromOS( TestPilotLoggerTools ):
   @mock.patch('Pilot.PilotLoggerTools.os.environ.get',
               side_effect = helper_get)
 
-  def test_successVM( self, mock_environ_get, mock_environ_key): # pylint: disable=W0613
+  def test_successVM( self, mock_environ_get, mock_environ_key): # pylint: disable=unused-argument
     """ Test success wm """
     self.assertEqual(getUniqueIDFromOS(), 'vm://myCE/myCE:myVMTYPE:VM_uuid')
 
@@ -264,7 +264,7 @@ class TestPilotLoggerGetUniqueIDFromOS( TestPilotLoggerTools ):
   @mock.patch('Pilot.PilotLoggerTools.os.environ.get',
               side_effect = lambda var: None)
 
-  def test_failVM( self, mock_environ_get, mock_environ_key): # pylint: disable=W0613
+  def test_failVM( self, mock_environ_get, mock_environ_key): # pylint: disable=unused-argument
     """ Test Fail VM """
     self.assertFalse(getUniqueIDFromOS())
 

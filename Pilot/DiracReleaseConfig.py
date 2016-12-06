@@ -2,7 +2,7 @@
 
 import os
 import types
-import hashlib as md5
+import hashlib
 from Pilot.PilotTools import S_OK, S_ERROR, urlRetriveTimeout
 
 class ReleaseConfig( object ):
@@ -345,7 +345,7 @@ class ReleaseConfig( object ):
       md5Data = urlRetriveTimeout( urlcfg[:-4] + ".md5", timeout = 60 )
       md5Hex = md5Data.strip()
       #md5File.close()
-      if md5Hex != md5.md5( cfgData ).hexdigest():
+      if md5Hex != hashlib.md5( cfgData ).hexdigest():
         return S_ERROR( "Hash check failed on %s" % urlcfg )
     except Exception, excp:
       return S_ERROR( "Hash check failed on %s: %s" % ( urlcfg, excp ) )

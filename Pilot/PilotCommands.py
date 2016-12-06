@@ -58,21 +58,18 @@ class CheckWorkerNode( CommandBase ):
 
     fileName = '/etc/redhat-release'
     if os.path.exists( fileName ):
-      fFile = open( fileName, 'r' )
-      self.log.info( 'RedHat Release = %s' % fFile.read().strip() )
-      fFile.close()
+      with open(fileName, 'r') as fFile:
+        self.log.info( 'RedHat Release = %s' % fFile.read().strip() )
 
     fileName = '/etc/lsb-release'
     if os.path.isfile( fileName ):
-      fFile = open( fileName, 'r' )
-      self.log.info( 'Linux release:\n%s' % fFile.read().strip() )
-      fFile.close()
+      with open(fileName, 'r') as fFile:
+        self.log.info( 'Linux release:\n%s' % fFile.read().strip() )
 
     fileName = '/proc/cpuinfo'
     if os.path.exists( fileName ):
-      fFile = open( fileName, 'r' )
-      cpu = fFile.readlines()
-      fFile.close()
+      with open(fileName, 'r') as fFile:
+        cpu = fFile.readlines()
       nCPU = 0
       for line in cpu:
         if line.find( 'cpu MHz' ) == 0:
@@ -85,9 +82,8 @@ class CheckWorkerNode( CommandBase ):
 
     fileName = '/proc/meminfo'
     if os.path.exists( fileName ):
-      fFile = open( fileName, 'r' )
-      mem = fFile.readlines()
-      fFile.close()
+      with open(fileName, 'r') as fFile:
+        mem = fFile.readlines()
       freeMem = 0
       for line in mem:
         if line.find( 'MemTotal:' ) == 0:
@@ -402,7 +398,7 @@ class CheckWNCapabilities( CommandBase ):
     super( CheckWNCapabilities, self ).__init__( pilotParams )
     self.cfg = []
 
-  def execute( self ): #pylint: disable=R0912
+  def execute( self ): # pylint: disable=too-many-branches
     """ Discover #Processors and memory
     """
 
@@ -674,7 +670,7 @@ class ConfigureSite( CommandBase ):
           self.exitWithError( retCode )
       else:
         self.log.info( "Looking if queue name is already present in local cfg" )
-        from DIRAC import gConfig # pylint: disable=E0401
+        from DIRAC import gConfig # pylint: disable=import-error
         ceName = gConfig.getValue( 'LocalSite/GridCE', '' )
         ceQueue = gConfig.getValue( 'LocalSite/CEQueue', '' )
         if ceName and ceQueue:
