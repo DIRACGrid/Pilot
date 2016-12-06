@@ -9,7 +9,6 @@ import getopt
 import imp
 import time
 import stat
-import types
 import shutil
 import hashlib as md5
 from Pilot.DiracParams import Params
@@ -416,9 +415,9 @@ def parseInstallConfOption(releaseConfigInternal):
       opName = 'externalsType'
     if isinstance( getattr( cliParams, opName ), basestring ):
       setattr( cliParams, opName, opVal )
-    elif isinstance(getattr( cliParams, opName ), types.BooleanType):
+    elif isinstance(getattr( cliParams, opName ), bool):
       setattr( cliParams, opName, opVal.lower() in ( "y", "yes", "true", "1" ) )
-    elif isinstance(getattr( cliParams, opName ), types.ListType):
+    elif isinstance(getattr( cliParams, opName ), list):
       setattr( cliParams, opName, [ opV.strip() for opV in opVal.split( "," ) if opV ] )
 
 def loadConfiguration():

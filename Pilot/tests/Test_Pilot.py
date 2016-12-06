@@ -35,6 +35,10 @@ class PilotTestCase( unittest.TestCase ):
   def tearDown( self ):
     try:
       os.remove( 'pilot.json' )
+      if os.path.exists('Nagios1'):
+        os.remove( 'Nagios1')
+      if os.path.exists('Nagios2'):
+        os.remove( 'Nagios2')
     except IOError:
       pass
 

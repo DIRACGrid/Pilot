@@ -1,7 +1,6 @@
 """ Release config manager """
 
 import os
-import types
 import hashlib
 from Pilot.PilotTools import S_OK, S_ERROR, urlRetriveTimeout
 
@@ -46,7 +45,7 @@ class ReleaseConfig( object ):
       """ Return a child path
       """
       child = self
-      if isinstance(path, (types.ListType, types.TupleType)):
+      if isinstance(path, (list, tuple)):
         pathList = path
       else:
         pathList = [ sec.strip() for sec in path.split( "/" ) if sec.strip() ]
@@ -180,7 +179,7 @@ class ReleaseConfig( object ):
       if defaultValue is None:
         return value
       defType = type( defaultValue )
-      if defType == types.BooleanType:
+      if defType == bool:
         return value.lower() in ( "1", "true", "yes" )
       try:
         return defType( value )
@@ -609,7 +608,7 @@ class ReleaseConfig( object ):
     """
     project = self.__projectName if not project else project
 
-    releases = [ releases ] if not isinstance(releases, (types.ListType, types.TupleType)) else releases
+    releases = [ releases ] if not isinstance(releases, (list, tuple)) else releases
 
     #Load defaults
     res = self.__loadObjectDefaults( "Projects", project )
