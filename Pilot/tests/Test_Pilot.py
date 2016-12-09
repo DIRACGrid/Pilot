@@ -17,9 +17,9 @@ class PilotTestCase( unittest.TestCase ):
   def setUp( self ):
     # Define a local file for test, and all the necessary parameters
     with open ( 'pilot.json', 'w' ) as fp:
-      json.dump( {'Setups':{'TestSetup':{'Commands':{'cetype1':['x', 'y', 'z'],
+      json.dump( {'Setups':{'TestSetup':{'Commands':{'cetype1':['x,y, z'],
                                                      'cetype2':['d', 'f']},
-                                         'CommandExtensions':['TestExtension'],
+                                         'CommandExtensions':['TestExtension1,TestExtension2'],
                                          'NagiosProbes':'Nagios1,Nagios2',
                                          'NagiosPutURL':'https://127.0.0.2/',
                                          'Version':['v1r1','v2r2']}},
@@ -45,7 +45,7 @@ class CommandsTestCase( PilotTestCase ):
     """ Test the pilot.json parsing
     """
     self.assertEqual( self.pp.commands, ['x', 'y', 'z'] )
-    self.assertEqual( self.pp.commandExtensions, ['TestExtension'] )
+    self.assertEqual( self.pp.commandExtensions, ['TestExtension1','TestExtension2'] )
 
   def test_CheckWorkerNode ( self ):
     """ Test CheckWorkerNode command
