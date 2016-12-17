@@ -727,7 +727,7 @@ class PilotParams( object ):
         if isinstance(self.pilotJSON['Setups']['Defaults']['CommandExtensions'], basestring):
           self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions'].split(',')]
         else:
-          self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]        
+          self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
       except KeyError:
         pass
 
