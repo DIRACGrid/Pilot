@@ -718,7 +718,7 @@ class PilotParams( object ):
     # Now the other options we handle
     # FIXME: pilotSynchronizer() should publish this as a comma separated list. We are ready for that.
     try:
-      if isinstance(self.pilotJSON['Setups'][self.setup]['CommandExtensions'], basestring):       
+      if isinstance(self.pilotJSON['Setups'][self.setup]['CommandExtensions'], basestring):
         self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions'].split(',')]
       else:
         self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
