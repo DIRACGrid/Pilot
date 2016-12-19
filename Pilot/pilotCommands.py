@@ -19,6 +19,7 @@
 
 import sys
 import os
+import time
 import stat
 import socket
 import httplib
@@ -1191,7 +1192,7 @@ class NagiosProbes( CommandBase ):
                                                 key_file  = os.environ['X509_USER_PROXY'],
                                                 cert_file = os.environ['X509_USER_PROXY'] )
 
-          connection.request( 'PUT', path, str(retCode) + '\n' + output )
+          connection.request( 'PUT', path, str(retCode) + ' ' + str( int( time.time() ) ) + '\n' + output )
 
         except Exception as e:
           self.log.error( 'PUT of %s Nagios output fails with %s' % ( probeCmd, str(e) ) )
