@@ -1210,3 +1210,29 @@ class NagiosProbes( CommandBase ):
     """
     self._setNagiosOptions()
     self._runNagiosProbes()
+
+class UnpackDev( CommandBase ):
+  """ Unpack dev.tgz from the pilot directory into the pilot directory
+      Put dev.tgz in the remote pilot directory to have it fetched along
+      with the rest of the pilot scripts. The UnpackDev pilot command
+      needs to be listed after InstallDIRAC if it contains dev versions
+      of DIRAC modules.
+  """
+
+  def __init__( self, pilotParams ):
+    """ c'tor
+    """
+    super( UnpackDev, self ).__init__( pilotParams )
+    self.devFile = 'dev.tgz'
+
+  def execute( self ):
+    """ Standard entry point to a pilot command
+    """
+    self.log.info( 'Unpacking ' + self.devFile )
+    retCode, output = self.executeAndGetOutput( 'tar zxvf ' + self.devFile )
+    self.log.info( output, header = False )
+
+    if retCode:
+      self.log.error( "Could not unpack %s [ERROR %d]" % ( self.devFile, retCode ) )
+      self.exitWithError( retCode )
+    self.log.info( "%s unpacked successfully" % self.devFile )
