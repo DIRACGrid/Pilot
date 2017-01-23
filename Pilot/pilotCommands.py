@@ -1228,6 +1228,10 @@ class UnpackDev( CommandBase ):
   def execute( self ):
     """ Standard entry point to a pilot command
     """
+    self.log.info( 'Adding %s to bashrc' % os.getcwd() )
+    retCode, output = self.executeAndGetOutput( 'sed -i "s,^PYTHONPATH=,PYTHONPATH=%s:," bashrc' % os.getcwd() )
+    self.log.info( output, header = False )
+            
     self.log.info( 'Unpacking ' + self.devFile )
     retCode, output = self.executeAndGetOutput( 'tar zxvf ' + self.devFile )
     self.log.info( output, header = False )
