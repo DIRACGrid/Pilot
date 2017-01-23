@@ -439,6 +439,7 @@ class PilotParams( object ):
     self.commands = ['CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics',
                      'CheckCECapabilities', 'CheckWNCapabilities',
                      'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements', 'LaunchAgent']
+    self.commandOptions = {}
     self.extensions = []
     self.tags = []
     self.site = ""
@@ -490,6 +491,7 @@ class PilotParams( object ):
                      ( 'e:', 'extraPackages=', 'Extra packages to install (comma separated)' ),
                      ( 'E:', 'commandExtensions=', 'Python module with extra commands' ),
                      ( 'X:', 'commands=', 'Pilot commands to execute commands' ),
+                     ( 'Z:', 'commandOptions=', 'Options parsed by command modules' ),
                      ( 'g:', 'grid=', 'lcg tools package version' ),
                      ( 'h', 'help', 'Show this help' ),
                      ( 'i:', 'python=', 'Use python<26|27> interpreter' ),
@@ -562,6 +564,9 @@ class PilotParams( object ):
         self.commandExtensions = v.split( ',' )
       elif o == '-X' or o == '--commands':
         self.commands = v.split( ',' )
+      elif o == '-Z' or o == '--commandOptions':
+        for i in v.split( ',' ):
+          self.commandOptions[i.split( ':' )[0]] = i.split( ':', 1 )[1]
       elif o == '-e' or o == '--extraPackages':
         self.extensions = v.split( ',' )
       elif o == '-n' or o == '--name':
