@@ -34,6 +34,8 @@ class PilotTestCase( unittest.TestCase ):
   def tearDown( self ):
     try:
       os.remove( 'pilot.json' )
+      os.remove( 'dev.tgz' )
+      os.remove( '123.txt' )
     except IOError:
       pass
 

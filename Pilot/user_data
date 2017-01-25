@@ -156,6 +156,10 @@ rm -Rf /etc/grid-security
 ln -sf /cvmfs/grid.cern.ch/etc/grid-security /etc/grid-security
 export X509_CERT_DIR=/etc/grid-security/certificates
 
+# Use grid WN configuration from cvmfs
+ln -sf /cvmfs/grid.cern.ch/emi3wn-latest/etc/profile.d/a1_grid_env.sh \
+       /cvmfs/grid.cern.ch/emi3wn-latest/etc/profile.d/setup-wn-example.sh /etc/profile.d
+
 # make a first heartbeat
 echo 0.0 0.0 0.0 0.0 0.0 > /var/spool/joboutputs/heartbeat
 /usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/heartbeat"
@@ -253,7 +257,7 @@ chown -R plt.plt /scratch/plt
 chmod 1775 /scratch/plt
 
 # Now run the pilot script
-/usr/bin/sudo -n -u plt \
+/usr/bin/sudo -i -n -u plt \
  X509_USER_PROXY=/scratch/plt/etc/grid-security/hostkey.pem \
  JOB_ID="##user_data_space##:$VM_UUID:##user_data_machinetype##" \
  MACHINEFEATURES="$MACHINEFEATURES" JOBFEATURES="$JOBFEATURES" \

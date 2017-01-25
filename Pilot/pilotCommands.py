@@ -22,6 +22,7 @@ import os
 import time
 import stat
 import socket
+import tarfile
 import httplib
 
 from pilotTools import CommandBase, retrieveUrlTimeout
@@ -1228,15 +1229,11 @@ class UnpackDev( CommandBase ):
   def execute( self ):
     """ Standard entry point to a pilot command
     """
-    self.log.info( 'Adding %s to bashrc' % os.getcwd() )
-    retCode, output = self.executeAndGetOutput( 'sed -i "s,^PYTHONPATH=,PYTHONPATH=%s:," bashrc' % os.getcwd() )
-    self.log.info( output, header = False )
-            
     self.log.info( 'Unpacking ' + self.devFile )
-    retCode, output = self.executeAndGetOutput( 'tar zxvf ' + self.devFile )
-    self.log.info( output, header = False )
-
-    if retCode:
-      self.log.error( "Could not unpack %s [ERROR %d]" % ( self.devFile, retCode ) )
-      self.exitWithError( retCode )
-    self.log.info( "%s unpacked successfully" % self.devFile )
+    try:
+      with tarfile.open( self.devFile ) as tar:
+        tar.extractall()
+    except Exception as e:
+      self.log.error( "Could not unpack %s (%s)" % ( self.devFile, str( e ) ) )
+    else:
+      self.log.info( "%s unpacked successfully" % self.devFile )
