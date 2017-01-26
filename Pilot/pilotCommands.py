@@ -1231,9 +1231,10 @@ class UnpackDev( CommandBase ):
     """
     self.log.info( 'Unpacking ' + self.devFile )
     try:
-      with tarfile.open( self.devFile ) as tar:
-        tar.extractall()
+      tar = tarfile.open( self.devFile )
+      tar.extractall()
     except Exception as e:
-      self.log.error( "Could not unpack %s (%s)" % ( self.devFile, str( e ) ) )
+      raise Exception( "Could not unpack %s (%s)" % ( self.devFile, str( e ) ) )
     else:
+      tar.close()
       self.log.info( "%s unpacked successfully" % self.devFile )
