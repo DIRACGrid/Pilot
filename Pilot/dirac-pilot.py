@@ -20,12 +20,15 @@
 
 import os
 import sys
+import time
 
 from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
 
 __RCSID__ = "$Id$"
 
 if __name__ == "__main__":
+
+  pilotStartTime = int( time.time() )
 
   pythonPathCheck()
 
@@ -35,6 +38,7 @@ if __name__ == "__main__":
   if pilotParams.debugFlag:
     log.setDebug()
 
+  pilotParams.pilotStartTime = pilotStartTime
   pilotParams.pilotRootPath = os.getcwd()
   pilotParams.pilotScript = os.path.realpath( sys.argv[0] )
   pilotParams.pilotScriptName = os.path.basename( pilotParams.pilotScript )
