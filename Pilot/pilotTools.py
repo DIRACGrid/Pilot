@@ -611,6 +611,8 @@ class PilotParams( object ):
           self.procesors = int(v)
         except:
           pass
+      elif o in ( '-o', '--option' ):
+        self.genericOption = v
       elif o == '-z' or o == '--pilotLogging':
         self.pilotLogging = True
 
@@ -661,8 +663,8 @@ class PilotParams( object ):
     The file must contains at least the Defaults section. Missing values are taken from the Defaults setup. """
 
     with open ( self.pilotCFGFile, 'r' ) as fp:
-      # We save the parsed JSON in case pilot commands need it 
-      # to read their own options 
+      # We save the parsed JSON in case pilot commands need it
+      # to read their own options
       self.pilotJSON = json.load( fp )
 
     if self.ceName:
