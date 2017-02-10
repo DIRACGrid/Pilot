@@ -477,6 +477,7 @@ class PilotParams( object ):
     self.certsLocation = '%s/etc/grid-security' % self.workingDir
     self.pilotCFGFile = 'pilot.json'
     self.pilotLogging = False
+    self.genericOption = ''
 
     # Set number of allocatable processors from MJF if available
     try:
