@@ -323,7 +323,7 @@ class ExtendedLogger( Logger ):
     pass
     if self.isPilotLoggerOn:
       if sendPilotLog:
-        self.pilotLogger.sendMessage(messageContent = msg,
+        self.pilotLogger.sendMessage( messageContent = msg,
                                       source=source,
                                       phase = phase,
                                       status=status,
@@ -464,6 +464,7 @@ class PilotParams( object ):
     self.gateway = ""
     self.useServerCertificate = False
     self.pilotScriptName = ''
+    self.genericOption = ''
     # DIRAC client installation environment
     self.diracInstalled = False
     self.diracExtensions = []
@@ -613,6 +614,8 @@ class PilotParams( object ):
           pass
       elif o == '-z' or o == '--pilotLogging':
         self.pilotLogging = True
+      elif o in ( '-o', '--option' ):
+        self.genericOption = v
 
   def __initJSON( self ):
     """Retrieve pilot parameters from the content of json file. The file should be something like:
@@ -661,8 +664,8 @@ class PilotParams( object ):
     The file must contains at least the Defaults section. Missing values are taken from the Defaults setup. """
 
     with open ( self.pilotCFGFile, 'r' ) as fp:
-      # We save the parsed JSON in case pilot commands need it 
-      # to read their own options 
+      # We save the parsed JSON in case pilot commands need it
+      # to read their own options
       self.pilotJSON = json.load( fp )
 
     if self.ceName:
