@@ -742,20 +742,16 @@ class PilotParams( object ):
       except KeyError:
         pass
 
-    # Version might be a scalar or a list. We just want the first one.
+    # There may be a list of versions specified (in a string, comma separated). We just want the first one.
     try:
-      v = self.pilotJSON['Setups'][self.setup]['Version']
+      dVersion = [dv.strip() for dv in self.pilotJSON['Setups'][self.setup]['Version'].split(',', 1)]
     except KeyError:
       try:
-        v = self.pilotJSON['Setups']['Defaults']['Version']
+        dVersion = [dv.strip() for dv in self.pilotJSON['Setups']['Defaults']['Version'].split(',', 1)]
       except KeyError:
-        v = None
-
-    # However version v got set, try to use it if not None
-    if isinstance(v, basestring):
-      self.releaseVersion = str( v )
-    elif v:
-      self.releaseVersion = str( v[0] )
+        dVersion = None
+    if dVersion:
+      self.releaseVersion = str( dVersion[0] )
 
     try:
       self.releaseProject = str( self.pilotJSON['Setups'][self.setup]['Project'] )
