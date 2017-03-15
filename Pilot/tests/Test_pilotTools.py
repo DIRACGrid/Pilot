@@ -29,7 +29,6 @@ class TestPilotTools( unittest.TestCase ):
       os.remove( self.testOutputFile )
     except OSError:
       pass
-    pass
 
 def removeTimeStampAndPilotUUID( message ):
   msg_result  = dictWithoutKey(message, 'timestamp')
@@ -39,14 +38,15 @@ class TestPilotToolsExtendedLogger( TestPilotTools ):
 
   def test_sendMessageToLocalFile( self ):
     msg_pattern = {
-      'status': 'error',
-      'phase': 'testing',
-      'messageContent': 'test message',
-      'pilotUUID': 'eda78924-d169-11e4-bfd2-0800275d1a0a',
-      'source': 'testSource'
-      }
+        'status': 'error',
+        'phase': 'testing',
+        'messageContent': 'test message',
+        'pilotUUID': 'eda78924-d169-11e4-bfd2-0800275d1a0a',
+        'source': 'testSource'
+        }
     logger = ExtendedLogger(name='Pilot', debugFlag = True, pilotOutput = 'pilot.out', isPilotLoggerOn = True)
-    logger.sendMessage(msg = "test message", source = "testSource", phase = "testing",status ='error', localFile =self.testOutputFile, sendPilotLog = True)
+    logger.sendMessage(msg = "test message", source = "testSource", phase = "testing",status ='error',
+                       localFile =self.testOutputFile, sendPilotLog = True)
     queue = readMessagesFromFileQueue(self.testOutputFile)
     msg_result = json.loads(queue.get())
     msg_result = removeTimeStampAndPilotUUID (msg_result)
