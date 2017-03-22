@@ -22,6 +22,7 @@ import os
 import time
 import stat
 import socket
+import tarfile
 import httplib
 
 from pilotTools import CommandBase, retrieveUrlTimeout
@@ -1216,3 +1217,35 @@ class NagiosProbes( CommandBase ):
     """
     self._setNagiosOptions()
     self._runNagiosProbes()
+
+class UnpackDev( CommandBase ):
+  """ Unpack dev.tgz from the pilot directory into the pilot directory
+      Put dev.tgz in the remote pilot directory to have it fetched along
+      with the rest of the pilot scripts. The UnpackDev pilot command
+      needs to be listed after InstallDIRAC if it contains dev versions
+      of DIRAC modules.
+  """
+
+  def __init__( self, pilotParams ):
+    """ c'tor
+    """
+    super( UnpackDev, self ).__init__( pilotParams )
+    self.devFile = 'dev.tgz'
+
+  def execute( self ):
+    """ Standard entry point to a pilot command
+    """
+    self.log.info( 'Unpacking ' + self.devFile )
+    try:
+      tar = tarfile.open( self.devFile )
+    except Exception as e:
+      raise Exception( "Could not open %s (%s)" % ( self.devFile, str( e ) ) )
+    
+    try:
+      tar.extractall()
+    except Exception as e:
+      raise Exception( "Could not unpack %s (%s)" % ( self.devFile, str( e ) ) )
+    finally:
+      tar.close()
+
+    self.log.info( "%s unpacked successfully" % self.devFile )

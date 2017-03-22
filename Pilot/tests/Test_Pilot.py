@@ -9,7 +9,7 @@ import sys
 import os
 
 from Pilot.pilotTools import PilotParams
-from Pilot.pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes
+from Pilot.pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes, UnpackDev
 
 class PilotTestCase( unittest.TestCase ):
   """ Base class for the Agents test cases
@@ -29,10 +29,10 @@ class PilotTestCase( unittest.TestCase ):
                   'DefaultSetup':'TestSetup'},
                  fp )
 
-    sys.argv[1:] = ['--Name', 'grid1.example.com']
+    sys.argv[1:] = ['--Name', 'grid1.example.com', '--commandOptions', 'a=1,b=2', '-Z', 'c=3' ]
 
     self.pp = PilotParams()
-
+    
   def tearDown( self ):
     try:
       os.remove( 'pilot.json' )
@@ -44,10 +44,14 @@ class CommandsTestCase( PilotTestCase ):
   """
 
   def test_InitJSON( self ):
-    """ Test the pilot.json parsing
+    """ Test the pilot.json and command line parsing
     """
     self.assertEqual( self.pp.commands, ['x', 'y', 'z'] )
     self.assertEqual( self.pp.commandExtensions, ['TestExtension1','TestExtension2'] )
+
+    self.assertEqual( self.pp.commandOptions['a'], '1' )
+    self.assertEqual( self.pp.commandOptions['b'], '2' )
+    self.assertEqual( self.pp.commandOptions['c'], '3' )
 
   def test_CheckWorkerNode ( self ):
     """ Test CheckWorkerNode command
@@ -79,6 +83,15 @@ class CommandsTestCase( PilotTestCase ):
 
     self.assertEqual( nagios.nagiosProbes, ['Nagios1', 'Nagios2'] )
     self.assertEqual( nagios.nagiosPutURL, 'https://127.0.0.2/' )
+
+  def test_UnpackDev ( self ):
+    """ Test UnpackDev command
+    """
+    # Set up the dev.tgz file
+    os.system( 'echo 123 > 123.txt ; tar zcvf dev.tgz 123.txt ; rm -f 123.txt ' )
+
+    # Fails if tar zxvf command fails
+    UnpackDev( self.pp )
 
 #############################################################################
 # Test Suite run
