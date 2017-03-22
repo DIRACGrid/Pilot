@@ -29,10 +29,17 @@ from pilotTools import CommandBase, retrieveUrlTimeout
 __RCSID__ = "$Id$"
 
 class GetPilotVersion( CommandBase ):
-  """ Now just return what was obtained by pilotTools.py
+  """ Now just returns what was obtained by pilotTools.py
   """
 
-  def __init__( self ):
+  def __init__( self, pilotParams ):
+    """ c'tor
+    """
+    super( GetPilotVersion, self ).__init__( pilotParams )
+
+  def execute(self):
+    """ Just returns what was obtained by pilotTools.py
+    """
     return self.pp.releaseVersion
 
 class CheckWorkerNode( CommandBase ):
@@ -169,7 +176,7 @@ class InstallDIRAC( CommandBase ):
       self.installOpts.append( '-p "%s"' % self.pp.platform )
     if self.pp.releaseProject:
       self.installOpts.append( "-l '%s'" % self.pp.releaseProject )
-      
+
     # The release version to install is a requirement
     self.installOpts.append( '-r "%s"' % self.pp.releaseVersion )
 
@@ -200,12 +207,15 @@ class InstallDIRAC( CommandBase ):
       pass
 
   def _installDIRAC( self ):
-    """ launch the installation script
+    """ Install DIRAC or its extension, then parse the environment file created, and use it for subsequent calls
     """
+    # Installing
     installCmd = "%s %s" % ( self.installScript, " ".join( self.installOpts ) )
     self.log.debug( "Installing with: %s" % installCmd )
 
-    retCode, output = self.executeAndGetOutput( installCmd )
+    # At this point self.pp.installEnv may coincide with os.environ
+    # If extensions want to pass in a modified environment, it's easy to set self.pp.installEnv in an extended command
+    retCode, output = self.executeAndGetOutput( installCmd, self.pp.installEnv )
     self.log.info( output, header = False )
 
     if retCode:
@@ -213,31 +223,21 @@ class InstallDIRAC( CommandBase ):
       self.exitWithError( retCode )
     self.log.info( "%s completed successfully" % self.installScriptName )
 
-    diracScriptsPath = os.path.join( self.pp.rootPath, 'scripts' )
-    platformScript = os.path.join( diracScriptsPath, "dirac-platform" )
-    if not self.pp.platform:
-      retCode, output = self.executeAndGetOutput( platformScript )
-      if retCode:
-        self.log.error( "Failed to determine DIRAC platform [ERROR %d]" % retCode )
-        self.exitWithError( retCode )
-      self.pp.platform = output
-    diracBinPath = os.path.join( self.pp.rootPath, self.pp.platform, 'bin' )
-    diracLibPath = os.path.join( self.pp.rootPath, self.pp.platform, 'lib' )
-
-    for envVarName in ( 'LD_LIBRARY_PATH', 'PYTHONPATH' ):
-      if envVarName in os.environ:
-        os.environ[ '%s_SAVE' % envVarName ] = os.environ[ envVarName ]
-        del os.environ[ envVarName ]
-      else:
-        os.environ[ '%s_SAVE' % envVarName ] = ""
-
-    os.environ['LD_LIBRARY_PATH'] = "%s" % ( diracLibPath )
-    sys.path.insert( 0, self.pp.rootPath )
-    sys.path.insert( 0, diracScriptsPath )
-    if "PATH" in os.environ:
-      os.environ['PATH'] = '%s:%s:%s' % ( diracBinPath, diracScriptsPath, os.getenv( 'PATH' ) )
-    else:
-      os.environ['PATH'] = '%s:%s' % ( diracBinPath, diracScriptsPath )
+    # Parsing the bashrc then adding its content to the installEnv
+    # at this point self.pp.installEnv may still coincide with os.environ
+    retCode, output = self.executeAndGetOutput( 'bash -c "source bashrc && env"', self.pp.installEnv )
+    if retCode:
+      self.log.error( "Could not parse the bashrc file [ERROR %d]" % retCode )
+      self.exitWithError( retCode )
+    for line in output.split('\n'):
+      try:
+        var, value = [vx.strip() for vx in line.split( '=', 1 )]
+        if var == '_' or 'SSH' in var or '{' in value or '}' in value: # Avoiding useless/confusing stuff
+          continue
+        self.pp.installEnv[var] = value
+      except (IndexError, ValueError):
+        continue
+    # At this point self.pp.installEnv should contain all content of bashrc, sourced "on top" of (maybe) os.environ
     self.pp.diracInstalled = True
 
   def execute( self ):
@@ -250,30 +250,36 @@ class InstallDIRAC( CommandBase ):
 
 
 class ConfigureBasics( CommandBase ):
-  """ This command completes DIRAC installation, e.g. calls dirac-configure to:
-      - download, by default, the CAs
-      - creates a standard or custom (defined by self.pp.localConfigFile) cfg file
+  """ This command completes DIRAC installation.
+
+  It calls dirac-configure to:
+
+      * download, by default, the CAs
+      * creates a standard or custom (defined by self.pp.localConfigFile) cfg file
         to be used where all the pilot configuration is to be set, e.g.:
-      - adds to it basic info like the version
-      - adds to it the security configuration
+      * adds to it basic info like the version
+      * adds to it the security configuration
 
-      If there is more than one command calling dirac-configure, this one should be always the first one called.
+  If there is more than one command calling dirac-configure, this one should be always the first one called.
 
-      Nota Bene: Further commands should always call dirac-configure using the options -FDMH
-      Nota Bene: If custom cfg file is created further commands should call dirac-configure with
-                 "-O %s %s" % ( self.pp.localConfigFile, self.pp.localConfigFile )
+  .. note:: Further commands should always call dirac-configure using the options -FDMH
+  .. note:: If custom cfg file is created further commands should call dirac-configure with
+             "-O %s %s" % ( self.pp.localConfigFile, self.pp.localConfigFile )
 
-      From here on, we have to pay attention to the paths. Specifically, we need to know where to look for
-      - executables (scripts)
-      - DIRAC python code
-      If the pilot has installed DIRAC (and extensions) in the traditional way, so using the dirac-install.py script,
-      simply the current directory is used, and:
-      - scripts will be in $CWD/scripts.
-      - DIRAC python code will be all sitting in $CWD
-      - the local dirac.cfg file will be found in $CWD/etc
+  From here on, we have to pay attention to the paths. Specifically, we need to know where to look for
 
-      For a more general case of non-traditional installations, we should use the PATH and PYTHONPATH as set by the
-      installation phase. Executables and code will be searched there.
+      * executables (scripts)
+      * DIRAC python code
+
+  If the pilot has installed DIRAC (and extensions) in the traditional way, so using the dirac-install.py script,
+  simply the current directory is used, and:
+
+      * scripts will be in $CWD/scripts.
+      * DIRAC python code will be all sitting in $CWD
+      * the local dirac.cfg file will be found in $CWD/etc
+
+  For a more general case of non-traditional installations, we should use the PATH and PYTHONPATH as set by the
+  installation phase. Executables and code will be searched there.
   """
 
   def __init__( self, pilotParams ):
@@ -979,13 +985,13 @@ class MultiLaunchAgent( CommandBase ):
     for i in xrange(self.pp.processors):
 
       # One JobAgent per processor allocated to this pilot
-      
+
       if self.pp.ceType == 'Sudo':
         # Available within the SudoComputingElement as BaseUsername in the ceParameters
         sudoOpts = '-o /LocalSite/BaseUsername=%s%02dp00' % ( os.environ['USER'], i )
       else:
         sudoOpts = ''
-      
+
       jobAgent = ('%s WorkloadManagement/JobAgent %s %s %s %s'
                   % ( diracAgentScript,
                       " ".join( self.jobAgentOpts ),
@@ -993,7 +999,7 @@ class MultiLaunchAgent( CommandBase ):
                       sudoOpts,
                       " ".join( extraCFG )))
 
-      pid[i] = self.forkAndExecute( jobAgent, 
+      pid[i] = self.forkAndExecute( jobAgent,
                                     os.path.join( self.pp.workingDir, 'jobagent.%02d.log' % i ),
                                     self.pp.installEnv )
 
@@ -1011,7 +1017,7 @@ class MultiLaunchAgent( CommandBase ):
       open( os.path.join( self.pp.workingDir, 'shutdown_message.%02d' % i ), 'w' ).write( shutdownMessage )
       print shutdownMessage
 
-    # FIX ME: this effectively picks one at random. Should be the last one to finish chronologically. 
+    # FIX ME: this effectively picks one at random. Should be the last one to finish chronologically.
     # Not in order of being started.
     open( os.path.join( self.pp.workingDir, 'shutdown_message' ), 'w' ).write( shutdownMessage )
 
@@ -1031,7 +1037,7 @@ class MultiLaunchAgent( CommandBase ):
 
     # Variants of: "100 Shutdown as requested by the VM's host/hypervisor"
     ######################################################################
-    # There are other errors from the TimeLeft handling, but we let those go 
+    # There are other errors from the TimeLeft handling, but we let those go
     # to the 600 Failed default
     ['INFO: JobAgent will stop with message "No time left for slot', '100 No time left for slot'],
 
@@ -1047,7 +1053,7 @@ class MultiLaunchAgent( CommandBase ):
 
     # Variants of: "300 No more work available from task queue"
     ###########################################################
-    # We asked, but nothing more from the matcher. 
+    # We asked, but nothing more from the matcher.
     ['INFO: JobAgent will stop with message "Nothing to do for more than', '300 Nothing to do'],
 
     # Variants of: "400 Site/host/VM is currently banned/disabled from receiving more work"
@@ -1061,10 +1067,10 @@ class MultiLaunchAgent( CommandBase ):
     # Variants of: "600 Grid-wide problem with job agent or application within VM"
     ##############################################################################
     ['ERROR: Pilot version does not match the production version', '600 Cannot match jobs with this pilot version'],
- 
+
     # Variants of: "700 Error related to job agent or application within VM"
     ########################################################################
-    # Some of the ways the JobAgent/Application can stop with errors. 
+    # Some of the ways the JobAgent/Application can stop with errors.
     # Otherwise we just get the default 700 Failed message.
     ['INFO: JobAgent will stop with message "Job Rescheduled', '600 Problem so job rescheduled'],
     ['INFO: JobAgent will stop with message "Matcher Failed', '600 Matcher Failed'],
@@ -1089,7 +1095,7 @@ class MultiLaunchAgent( CommandBase ):
            shutdownMessage = pair[1]
            break
 
-      oneline = f.readline()    
+      oneline = f.readline()
 
     f.close()
 
@@ -1106,13 +1112,13 @@ class MultiLaunchAgent( CommandBase ):
 class NagiosProbes( CommandBase ):
   """ Run one or more Nagios probe scripts that follow the Nagios Plugin API:
        https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/pluginapi.html
-  
+
       Each probe is a script or executable present in the pilot directory, which is
       executed to gather its return code and stdout messages. Probe name = filename.
-      
+
       Probes must not expect any command line arguments but can gather information about
       the current machine from expected environment variables etc.
-  
+
       The results are reported through the Pilot Logger.
   """
 
@@ -1126,7 +1132,7 @@ class NagiosProbes( CommandBase ):
   def _setNagiosOptions( self ):
     """ Setup list of Nagios probes and optional PUT URL from pilot.json
     """
-   
+
     try:
       self.nagiosProbes = [str( pv ).strip() for pv in self.pp.pilotJSON['Setups'][self.pp.setup]['NagiosProbes'].split(',')]
     except KeyError:
@@ -1178,7 +1184,7 @@ class NagiosProbes( CommandBase ):
 
       # report results to pilot logger too. Like this:
       #   "NagiosProbes", probeCmd, retStatus, str(retCode) + ' ' + output.split('\n',1)[0]
-     
+
       if self.nagiosPutURL:
         # Alternate logging of results to HTTPS PUT service too
         hostPort = self.nagiosPutURL.split('/')[2]
@@ -1196,10 +1202,10 @@ class NagiosProbes( CommandBase ):
 
         except Exception as e:
           self.log.error( 'PUT of %s Nagios output fails with %s' % ( probeCmd, str(e) ) )
-         
+
         else:
           result = connection.getresponse()
-         
+
           if result.status / 100 == 2:
             self.log.info( 'PUT of %s Nagios output succeeds with %d %s' % ( probeCmd, result.status, result.reason ) )
           else :
