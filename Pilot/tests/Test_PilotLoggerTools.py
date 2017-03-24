@@ -1,9 +1,12 @@
 """Unit tests for PilotLoggerTools
 """
-import unittest
-import mock
+
+#pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
+
 import json
 import os
+import unittest
+import mock
 from Pilot.PilotLoggerTools import generateDict, encodeMessage
 from Pilot.PilotLoggerTools import decodeMessage, isMessageFormatCorrect
 from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
@@ -16,22 +19,24 @@ class TestPilotLoggerTools( unittest.TestCase ):
 
   def setUp( self ):
     self.msg = {
-      'status': 'info',
-      'phase': 'Installing',
-      'timestamp': '1427121370.7',
-      'messageContent': 'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
-      'pilotUUID': 'eda78924-d169-11e4-bfd2-0800275d1a0a',
-      'source': 'InstallDIRAC'
-       }
+        'status': 'info',
+        'phase': 'Installing',
+        'timestamp': '1427121370.7',
+        'messageContent': 'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
+        'pilotUUID': 'eda78924-d169-11e4-bfd2-0800275d1a0a',
+        'source': 'InstallDIRAC'
+        }
     self.testFile = 'test_file_to_remove'
     self.testFileCfg = 'TestConf.cfg'
     self.badFile = '////'
+
   def tearDown( self ):
-    try:
-      os.remove( self.testFile )
-      os.remove( self.testFileCfg )
-    except OSError:
-      pass
+    for fileProd in [self.testFile, self.testFileCfg, 'PilotAgentUUID']:
+      try:
+        os.remove( fileProd )
+      except OSError:
+        pass
+
 
 class TestPilotLoggerToolsCreatePilotLoggerConfigFile( TestPilotLoggerTools ):
   def test_success( self ):

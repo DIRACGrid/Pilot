@@ -1,5 +1,7 @@
-""" Test class for agents
+""" Test class for Pilot
 """
+
+#pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 
 # imports
 import unittest
@@ -32,12 +34,13 @@ class PilotTestCase( unittest.TestCase ):
     sys.argv[1:] = ['--Name', 'grid1.example.com', '--commandOptions', 'a=1,b=2', '-Z', 'c=3' ]
 
     self.pp = PilotParams()
-    
+
   def tearDown( self ):
-    try:
-      os.remove( 'pilot.json' )
-    except IOError:
-      pass
+    for fileProd in ['pilot.json', 'Nagios1', 'Nagios2', 'PilotAgentUUID', 'dev.tgz', 'pilot.out']:
+      try:
+        os.remove( fileProd )
+      except OSError:
+        pass
 
 class CommandsTestCase( PilotTestCase ):
   """ Test case for each pilot command
