@@ -318,7 +318,13 @@ class ReleaseConfig( object ):
       self.__cfgCache[ urlcfg ] = cfg
       return S_OK( cfg )
     try:
-      md5Data = urlretrieveTimeout( urlcfg[:-4] + ".md5", timeout = 60 )
+      md5path = urlcfg[:-4] + ".md5"
+      if os.path.exists( md5path ):
+        md5File = open( md5path, 'r' )
+        md5Data = md5File.read()
+        md5File.close()
+      else:
+        md5Data = urlretrieveTimeout( md5path, timeout = 60 )
       md5Hex = md5Data.strip()
       #md5File.close()
       if md5Hex != md5.md5( cfgData ).hexdigest():
@@ -1328,7 +1334,7 @@ def createBashrc():
                      'export DIRACSCRIPTS=%s' % os.path.join( "$DIRAC", 'scripts' ),
                      'export DIRACLIB=%s' % os.path.join( "$DIRAC", cliParams.platform, 'lib' ),
                      'export TERMINFO=%s' % __getTerminfoLocations( os.path.join( "$DIRAC", cliParams.platform, 'share', 'terminfo' ) ),
-                     'export RRD_DEFAULT_FONT=%s' % os.path.join( "$DIRAC", cliParams.platform, 'share', 
+                     'export RRD_DEFAULT_FONT=%s' % os.path.join( "$DIRAC", cliParams.platform, 'share',
                                                                   'rrdtool', 'fonts', 'DejaVuSansMono-Roman.ttf' ) ] )
 
       lines.extend( ['# Prepend the PYTHONPATH, the LD_LIBRARY_PATH, and the DYLD_LIBRARY_PATH'] )
