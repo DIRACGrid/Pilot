@@ -479,6 +479,7 @@ class PilotParams( object ):
     self.certsLocation = '%s/etc/grid-security' % self.workingDir
     self.pilotCFGFile = 'pilot.json'
     self.pilotLogging = False
+    self.genericOption = ''
 
     # Set number of allocatable processors from MJF if available
     try:
@@ -617,6 +618,8 @@ class PilotParams( object ):
           self.procesors = int(v)
         except:
           pass
+      elif o in ( '-o', '--option' ):
+        self.genericOption = v
       elif o == '-z' or o == '--pilotLogging':
         self.pilotLogging = True
       elif o in ( '-o', '--option' ):
