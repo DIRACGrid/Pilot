@@ -726,24 +726,24 @@ class PilotParams( object ):
           except KeyError:
             pass
 
-    # Now the other options we handle
-    # FIXME: pilotSynchronizer() should publish this as a comma separated list. We are ready for that.
+    # CommandExtensions
+    # pilotSynchronizer() can publish this as a comma separated list. We are ready for that.
     try:
-      if isinstance(self.pilotJSON['Setups'][self.setup]['CommandExtensions'], basestring):
+      if isinstance(self.pilotJSON['Setups'][self.setup]['CommandExtensions'], basestring): # In the specific setup?
         self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions'].split(',')]
       else:
         self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
     except KeyError:
       try:
-        if isinstance(self.pilotJSON['Setups']['Defaults']['CommandExtensions'], basestring):
+        if isinstance(self.pilotJSON['Setups']['Defaults']['CommandExtensions'], basestring): # Or in the defaults section?
           self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions'].split(',')]
         else:
           self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
       except KeyError:
         pass
 
-    # CS
-    # pilotSynchronizer() should publish this as a comma separated list. We are ready for that
+    # CS URL(s)
+    # pilotSynchronizer() can publish this as a comma separated list. We are ready for that
     try:
       if isinstance(self.pilotJSON['ConfigurationServers'], basestring): # Generic, there may also be setup-specific ones
         self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['ConfigurationServers'].split(',')])
@@ -751,20 +751,21 @@ class PilotParams( object ):
         self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['ConfigurationServers']])
     except KeyError:
       pass
-    try: # now trying to see if theres setup-specific ones
-      if isinstance(self.pilotJSON['ConfigurationServers'], basestring): # In the specific setup?
+    try: # now trying to see if there is setup-specific ones
+      if isinstance(self.pilotJSON['Setups'][self.setup]['ConfigurationServer'], basestring): # In the specific setup?
         self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['ConfigurationServer'].split(',')])
       else: # it's a list, we suppose
         self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['ConfigurationServer']])
-    except KeyError:
+    except KeyError: # and if it doesn't exist
       try:
-        if isinstance(self.pilotJSON['ConfigurationServers'], basestring): # Or in the defaults section?
+        if isinstance(self.pilotJSON['Setups']['Defaults']['ConfigurationServer'], basestring): # Is there one in the defaults section?
           self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups']['Defaults']['ConfigurationServer'].split(',')])
         else: # it's a list, we suppose
           self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups']['Defaults']['ConfigurationServer']])
       except KeyError:
         pass
 
+    # Version
     # There may be a list of versions specified (in a string, comma separated). We just want the first one.
     try:
       dVersion = [dv.strip() for dv in self.pilotJSON['Setups'][self.setup]['Version'].split(',', 1)]
