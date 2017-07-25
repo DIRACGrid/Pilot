@@ -77,7 +77,7 @@ class CommandsTestCase( PilotTestCase ):
     pp = PilotParams()
     cwn = CheckWorkerNode( pp )
     res = cwn.execute()
-    self.assertIsNone(res)
+    self.assertEqual(res, None)
 
   def test_ConfigureSite ( self ):
     """ Test ConfigureSite command
@@ -86,7 +86,7 @@ class CommandsTestCase( PilotTestCase ):
     pp.configureScript = 'echo'
     cs = ConfigureSite( pp )
     res = cs.execute()
-    self.assertIsNone(res)
+    self.assertEqual(res, None)
 
   def test_NagiosProbes ( self ):
     """ Test NagiosProbes command
@@ -119,7 +119,7 @@ class CommandsTestCase( PilotTestCase ):
     pp = PilotParams()
     up = UnpackDev( pp )
     res = up.execute()
-    self.assertIsNone(res)
+    self.assertEqual(res, None)
 
 #############################################################################
 # Test Suite run
