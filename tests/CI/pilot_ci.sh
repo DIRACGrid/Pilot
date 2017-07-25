@@ -86,11 +86,11 @@ function PilotInstall(){
   sed -i s/VAR_JENKINS_CE/$JENKINS_CE/g pilot.json
   sed -i s/VAR_JENKINS_QUEUE/$JENKINS_QUEUE/g pilot.json
   sed -i s/VAR_DIRAC_VERSION/$projectVersion/g pilot.json
-  sed -i s/VAR_CS/$CSURL/g pilot.json
-  sed -i s/VAR_USERDN/$DIRACUSERDN/g pilot.json
+  sed -i "s#VAR_CS#$CSURL#g" pilot.json
+  sed -i "s#VAR_USERDN#$DIRACUSERDN#g" pilot.json
 
   #get the pilot files
-  for file in PilotLogger.py PilotLoggerTools.py PilotTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py
+  for file in PilotLogger.py PilotLoggerTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py
   do
     cp $TESTCODE/Pilot/Pilot/${file} .
   done

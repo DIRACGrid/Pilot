@@ -805,7 +805,7 @@ def urlretrieveTimeout( url, fileName = '', timeout = 0 ):
       remoteFD = urllib2.urlopen( url, context = context ) # pylint: disable=unexpected-keyword-arg
        # the keyword 'context' is present from 2.7.9+
     except AttributeError:
-    remoteFD = urllib2.urlopen( url )
+      remoteFD = urllib2.urlopen( url )
     expectedBytes = 0
     # Sometimes repositories do not return Content-Length parameter
     try:

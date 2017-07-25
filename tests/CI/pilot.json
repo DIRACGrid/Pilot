@@ -51,7 +51,6 @@
         ]
       },
       "ConfigurationServer": "VAR_CS",
-      "Project": "Jenkins",
       "GenericPilotGroup": "dirac_pilot",
       "GenericPilotDN": "VAR_USERDN"
     }
