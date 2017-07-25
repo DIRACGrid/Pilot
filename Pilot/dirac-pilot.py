@@ -30,13 +30,19 @@ if __name__ == "__main__":
 
   pilotStartTime = int( time.time() )
 
-  pythonPathCheck()
-
   log = Logger( 'Pilot' )
 
   pilotParams = PilotParams()
   if pilotParams.debugFlag:
     log.setDebug()
+  if pilotParams.keepPythonPath:
+    pythonPathCheck()
+  else:
+    log.info( "Clearing PYTHONPATH for child processes." )
+    if "PYTHONPATH" in os.environ:
+      os.environ["PYTHONPATH_SAVE"] = os.environ["PYTHONPATH"]
+      os.environ["PYTHONPATH"] = ""
+
 
   pilotParams.pilotStartTime = pilotStartTime
   pilotParams.pilotRootPath = os.getcwd()
