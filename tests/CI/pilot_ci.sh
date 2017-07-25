@@ -85,12 +85,18 @@ function PilotInstall(){
   sed -i s/VAR_JENKINS_SITE/$JENKINS_SITE/g pilot.json
   sed -i s/VAR_JENKINS_CE/$JENKINS_CE/g pilot.json
   sed -i s/VAR_JENKINS_QUEUE/$JENKINS_QUEUE/g pilot.json
-  sed -i s/VAR_DIRAC_VERSION/$DIRAC_VERSION/g pilot.json
+  sed -i s/VAR_DIRAC_VERSION/$projectVersion/g pilot.json
+  sed -i s/VAR_CS/$CSURL/g pilot.json
+  sed -i s/VAR_USERDN/$DIRACUSERDN/g pilot.json
 
-  #get the pilot wrapper and launch it
-  wget https://raw.githubusercontent.com/DIRACGrid/Pilot/master/Pilot/pilot_wrapper.sh
-  chmod +x pilot_wrapper.sh
-  ./pilot_wrapper.sh $PILOT_FILES $JENKINS_CE $JENKINS_QUEUE
+  #get the pilot files
+  for file in PilotLogger.py PilotLoggerTools.py PilotTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py
+  do
+    cp $TESTCODE/Pilot/Pilot/${file} .
+  done
+
+  # launch the pilot script
+  python dirac-pilot.py  -M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs -ddd
   if [ $? -ne 0 ]
   then
     echo 'ERROR: pilot script failed'
