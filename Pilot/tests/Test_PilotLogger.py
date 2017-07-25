@@ -1,6 +1,8 @@
 """ Unit tests for PilotLogger
 """
 
+#pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
+
 import unittest
 import os
 from Pilot.PilotLogger import PilotLogger, getPilotUUIDFromFile
@@ -70,7 +72,7 @@ class TestPilotLoggersendMessage( TestPilotLogger ):
 if __name__ == '__main__':
   suite = unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger )
   suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestGetPilotUUIDFromFile ) )
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_isCorrectFlag ) )
+  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_connect ) )
   suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_isCorrectStatus ) )
   suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_sendMessage ) )
   suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLoggersendMessage ) )

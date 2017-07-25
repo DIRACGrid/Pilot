@@ -1,6 +1,8 @@
 """Unit tests for pilotTools
 """
 
+#pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
+
 import unittest
 import os
 import json

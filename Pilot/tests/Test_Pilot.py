@@ -1,5 +1,7 @@
-""" Test class for agents
+""" Test class for Pilot
 """
+
+#pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 
 # imports
 import unittest
@@ -29,15 +31,12 @@ class PilotTestCase( unittest.TestCase ):
                   'DefaultSetup':'TestSetup'},
                  fp )
 
-    sys.argv[1:] = ['--Name', 'grid1.example.com', '--commandOptions', 'a=1,b=2', '-Z', 'c=3' ]
-
-    self.pp = PilotParams()
-    
   def tearDown( self ):
-    try:
-      os.remove( 'pilot.json' )
-    except IOError:
-      pass
+    for fileProd in ['pilot.json', 'Nagios1', 'Nagios2', 'PilotAgentUUID', 'dev.tgz', 'pilot.out', '123.txt']:
+      try:
+        os.remove( fileProd )
+      except OSError:
+        pass
 
 class CommandsTestCase( PilotTestCase ):
   """ Test case for each pilot command
@@ -46,28 +45,54 @@ class CommandsTestCase( PilotTestCase ):
   def test_InitJSON( self ):
     """ Test the pilot.json and command line parsing
     """
-    self.assertEqual( self.pp.commands, ['x', 'y', 'z'] )
-    self.assertEqual( self.pp.commandExtensions, ['TestExtension1','TestExtension2'] )
+    sys.argv[1:] = ['--Name', 'grid1.example.com', '--commandOptions', 'a=1,b=2', '-Z', 'c=3' ]
+    pp = PilotParams()
 
-    self.assertEqual( self.pp.commandOptions['a'], '1' )
-    self.assertEqual( self.pp.commandOptions['b'], '2' )
-    self.assertEqual( self.pp.commandOptions['c'], '3' )
+    self.assertEqual( pp.commands, ['x', 'y', 'z'] )
+    self.assertEqual( pp.commandExtensions, ['TestExtension1','TestExtension2'] )
+
+    self.assertEqual( pp.commandOptions['a'], '1' )
+    self.assertEqual( pp.commandOptions['b'], '2' )
+    self.assertEqual( pp.commandOptions['c'], '3' )
+
+    sys.argv[1:] = ['--Name', 'grid1.example.com',
+                    '--commandOptions', 'a = 1,  b=2', '-Z', ' c=3' ] #just some spaces
+    pp = PilotParams()
+
+    self.assertEqual( pp.commandOptions['a'], '1' )
+    self.assertEqual( pp.commandOptions['b'], '2' )
+    self.assertEqual( pp.commandOptions['c'], '3' )
+
+    sys.argv[1:] = ['--Name', 'grid1.example.com',
+                    '--commandOptions=a = 1,  b=2', '-Z', ' c=3' ] #spaces and '=''
+    pp = PilotParams()
+
+    self.assertEqual( pp.commandOptions['a'], '1' )
+    self.assertEqual( pp.commandOptions['b'], '2' )
+    self.assertEqual( pp.commandOptions['c'], '3' )
 
   def test_CheckWorkerNode ( self ):
     """ Test CheckWorkerNode command
     """
-    CheckWorkerNode( self.pp )
+    pp = PilotParams()
+    cwn = CheckWorkerNode( pp )
+    res = cwn.execute()
+    self.assertEqual(res, None)
 
   def test_ConfigureSite ( self ):
     """ Test ConfigureSite command
     """
-    self.pp.configureScript = 'echo'
-    ConfigureSite( self.pp )
+    pp = PilotParams()
+    pp.configureScript = 'echo'
+    cs = ConfigureSite( pp )
+    res = cs.execute()
+    self.assertEqual(res, None)
 
   def test_NagiosProbes ( self ):
     """ Test NagiosProbes command
     """
-    nagios = NagiosProbes( self.pp )
+    pp = PilotParams()
+    nagios = NagiosProbes( pp )
 
     with open ( 'Nagios1', 'w') as fp:
       fp.write('#!/bin/sh\necho 123\n')
@@ -91,7 +116,10 @@ class CommandsTestCase( PilotTestCase ):
     os.system( 'echo 123 > 123.txt ; tar zcvf dev.tgz 123.txt ; rm -f 123.txt ' )
 
     # Fails if tar zxvf command fails
-    UnpackDev( self.pp )
+    pp = PilotParams()
+    up = UnpackDev( pp )
+    res = up.execute()
+    self.assertEqual(res, None)
 
 #############################################################################
 # Test Suite run

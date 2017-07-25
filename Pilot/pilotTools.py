@@ -672,7 +672,7 @@ class PilotParams( object ):
 
     The file must contains at least the Defaults section. Missing values are taken from the Defaults setup. """
 
-    with open ( self.pilotCFGFile, 'r' ) as fp:
+    with open( self.pilotCFGFile, 'r' ) as fp:
       # We save the parsed JSON in case pilot commands need it
       # to read their own options
       self.pilotJSON = json.load( fp )
@@ -681,16 +681,15 @@ class PilotParams( object ):
       # Try to get the site name and grid CEType from the CE name
       # GridCEType is like "CREAM" or "HTCondorCE" not "InProcess" etc
       try:
-        self.name = str( self.pilotJSON['CEs'][self.ceName]['Site'] )
+        self.site = str( self.pilotJSON['CEs'][self.ceName]['Site'] )
       except KeyError:
         pass
-      else:
+      try:
         if not self.gridCEType:
           # We don't override a grid CEType given on the command line!
-          try:
-            self.gridCEType = str( self.pilotJSON['CEs'][self.ceName]['GridCEType'] )
-          except KeyError:
-            pass
+          self.gridCEType = str( self.pilotJSON['CEs'][self.ceName]['GridCEType'] )
+      except KeyError:
+        pass
 
     if not self.setup:
       # We don't use the default to override an explicit value from command line!
@@ -727,30 +726,46 @@ class PilotParams( object ):
           except KeyError:
             pass
 
-    # Now the other options we handle
-    # FIXME: pilotSynchronizer() should publish this as a comma separated list. We are ready for that.
+    # CommandExtensions
+    # pilotSynchronizer() can publish this as a comma separated list. We are ready for that.
     try:
-      if isinstance(self.pilotJSON['Setups'][self.setup]['CommandExtensions'], basestring):
+      if isinstance(self.pilotJSON['Setups'][self.setup]['CommandExtensions'], basestring): # In the specific setup?
         self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions'].split(',')]
       else:
         self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
     except KeyError:
       try:
-        if isinstance(self.pilotJSON['Setups']['Defaults']['CommandExtensions'], basestring):
+        if isinstance(self.pilotJSON['Setups']['Defaults']['CommandExtensions'], basestring): # Or in the defaults section?
           self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions'].split(',')]
         else:
           self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
       except KeyError:
         pass
 
+    # CS URL(s)
+    # pilotSynchronizer() can publish this as a comma separated list. We are ready for that
     try:
-      self.configServer = str( self.pilotJSON['Setups'][self.setup]['ConfigurationServer'] )
+      if isinstance(self.pilotJSON['ConfigurationServers'], basestring): # Generic, there may also be setup-specific ones
+        self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['ConfigurationServers'].split(',')])
+      else: # it's a list, we suppose
+        self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['ConfigurationServers']])
     except KeyError:
+      pass
+    try: # now trying to see if there is setup-specific ones
+      if isinstance(self.pilotJSON['Setups'][self.setup]['ConfigurationServer'], basestring): # In the specific setup?
+        self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['ConfigurationServer'].split(',')])
+      else: # it's a list, we suppose
+        self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['ConfigurationServer']])
+    except KeyError: # and if it doesn't exist
       try:
-        self.configServer = str( self.pilotJSON['Setups']['Defaults']['ConfigurationServer'] )
+        if isinstance(self.pilotJSON['Setups']['Defaults']['ConfigurationServer'], basestring): # Is there one in the defaults section?
+          self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups']['Defaults']['ConfigurationServer'].split(',')])
+        else: # it's a list, we suppose
+          self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups']['Defaults']['ConfigurationServer']])
       except KeyError:
         pass
 
+    # Version
     # There may be a list of versions specified (in a string, comma separated). We just want the first one.
     try:
       dVersion = [dv.strip() for dv in self.pilotJSON['Setups'][self.setup]['Version'].split(',', 1)]
@@ -769,3 +784,72 @@ class PilotParams( object ):
         self.releaseProject = str( self.pilotJSON['Setups']['Defaults']['Project'] )
       except KeyError:
         pass
+
+  def __initCommandLine2( self ):
+    """ Parses and interpret options on the command line: second pass (most authoritative)
+    """
+
+    self.optList, __args__ = getopt.getopt( sys.argv[1:],
+                                            "".join( [ opt[0] for opt in self.cmdOpts ] ),
+                                            [ opt[1] for opt in self.cmdOpts ] )
+    for o, v in self.optList:
+      if o == '-E' or o == '--commandExtensions':
+        self.commandExtensions = v.split( ',' )
+      elif o == '-X' or o == '--commands':
+        self.commands = v.split( ',' )
+      elif o == '-Z' or o == '--commandOptions':
+        for opts in v.split(','):
+          self.commandOptions[opts.split('=',1)[0].strip()] = opts.split('=',1)[1].strip()
+      elif o == '-e' or o == '--extraPackages':
+        self.extensions = v.split( ',' )
+      elif o == '-n' or o == '--name':
+        self.site = v
+      elif o == '-y' or o == '--CEType':
+        self.ceType = v
+      elif o == '-Q' or o == '--Queue':
+        self.queueName = v
+      elif o == '-R' or o == '--reference':
+        self.pilotReference = v
+      elif o in ( '-C', '--configurationServer' ):
+        self.configServer = v
+      elif o in ( '-G', '--Group' ):
+        self.userGroup = v
+      elif o in ( '-x', '--execute' ):
+        self.executeCmd = v
+      elif o in ( '-O', '--OwnerDN' ):
+        self.userDN = v
+      elif o in ( '-V', '--installation' ):
+        self.installation = v
+      elif o == '-p' or o == '--platform':
+        self.platform = v
+      elif o == '-D' or o == '--disk':
+        try:
+          self.minDiskSpace = int( v )
+        except ValueError:
+          pass
+      elif o == '-r' or o == '--release':
+        self.releaseVersion = v.split(',',1)[0]
+      elif o in ( '-l', '--project' ):
+        self.releaseProject = v
+      elif o in ( '-W', '--gateway' ):
+        self.gateway = v
+      elif o == '-c' or o == '--cert':
+        self.useServerCertificate = True
+      elif o == '-C' or o == '--certLocation':
+        self.certsLocation = v
+      elif o == '-M' or o == '--MaxCycles':
+        try:
+          self.maxCycles = min( self.MAX_CYCLES, int( v ) )
+        except ValueError:
+          pass
+      elif o in ( '-T', '--CPUTime' ):
+        self.jobCPUReq = v
+      elif o == '-P' or o == '--processors':
+        try:
+          self.procesors = int(v)
+        except:
+          pass
+      elif o == '-z' or o == '--pilotLogging':
+        self.pilotLogging = True
+      elif o in ( '-o', '--option' ):
+        self.genericOption = v

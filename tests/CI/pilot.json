@@ -1,6 +1,6 @@
 {
   "Setups": {
-    "dirac-JenkinsSetup": {
+    "Dirac-Certification": {
       "CheckVersion": "True",
       "Commands": {
         "TEST": [
@@ -16,10 +16,10 @@
         "Vcycle": [
           "CheckWorkerNode",
           "LHCbInstallDIRAC",
-          "LHCbConfigureBasics",
-          "LHCbConfigureSite",
-          "LHCbConfigureArchitecture",
-          "LHCbConfigureCPURequirements",
+          "ConfigureBasics",
+          "ConfigureSite",
+          "ConfigureArchitecture",
+          "ConfigureCPURequirements",
           "MultiLaunchAgent"
         ]
       },
@@ -50,10 +50,9 @@
           "LaunchAgent"
         ]
       },
-      "ConfigurationServer": "dips://localhost:9135/Configuration/Server",
-      "Project": "Jenkins",
+      "ConfigurationServer": "VAR_CS",
       "GenericPilotGroup": "dirac_pilot",
-      "GenericPilotDN": "/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=romanov/CN=427293/CN=Vladimir Romanovskiy"
+      "GenericPilotDN": "VAR_USERDN"
     }
   },
   "CEs": {
@@ -67,5 +66,5 @@
       "GridCEType": "CREAM"
     }
   },
-  "DefaultSetup": "dirac-JenkinsSetup"
+  "DefaultSetup": "Dirac-Certification"
 }
