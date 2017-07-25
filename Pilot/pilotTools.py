@@ -555,8 +555,6 @@ class PilotParams( object ):
       elif o == '-F' or o == '--pilotCFGFile':
         self.pilotCFGFile = v
 
-<<<<<<< HEAD
-=======
   def __initCommandLine2( self ):
     """ Parses and interpret options on the command line: second pass
     """
@@ -628,7 +626,6 @@ class PilotParams( object ):
       elif o in ( '-o', '--option' ):
         self.genericOption = v
 
->>>>>>> upstream/devel
   def __initJSON( self ):
     """Retrieve pilot parameters from the content of json file. The file should be something like:
 
