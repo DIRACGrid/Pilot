@@ -599,7 +599,7 @@ class PilotParams( object ):
 
     The file must contains at least the Defaults section. Missing values are taken from the Defaults setup. """
 
-    with open ( self.pilotCFGFile, 'r' ) as fp:
+    with open( self.pilotCFGFile, 'r' ) as fp:
       # We save the parsed JSON in case pilot commands need it
       # to read their own options
       self.pilotJSON = json.load( fp )
@@ -608,16 +608,15 @@ class PilotParams( object ):
       # Try to get the site name and grid CEType from the CE name
       # GridCEType is like "CREAM" or "HTCondorCE" not "InProcess" etc
       try:
-        self.name = str( self.pilotJSON['CEs'][self.ceName]['Site'] )
+        self.site = str( self.pilotJSON['CEs'][self.ceName]['Site'] )
       except KeyError:
         pass
-      else:
+      try:
         if not self.gridCEType:
           # We don't override a grid CEType given on the command line!
-          try:
-            self.gridCEType = str( self.pilotJSON['CEs'][self.ceName]['GridCEType'] )
-          except KeyError:
-            pass
+          self.gridCEType = str( self.pilotJSON['CEs'][self.ceName]['GridCEType'] )
+      except KeyError:
+        pass
 
     if not self.setup:
       # We don't use the default to override an explicit value from command line!
@@ -671,15 +670,25 @@ class PilotParams( object ):
         pass
 
     # CS
+    # pilotSynchronizer() should publish this as a comma separated list. We are ready for that
     try:
-      self.configServer = str( self.pilotJSON['ConfigurationServers'] ) #generic, if per-setup is not specified
+      if isinstance(self.pilotJSON['ConfigurationServers'], basestring): # Generic, there may also be setup-specific ones
+        self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['ConfigurationServers'].split(',')])
+      else: # it's a list, we suppose
+        self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['ConfigurationServers']])
     except KeyError:
       pass
-    try:
-      self.configServer = str( self.pilotJSON['Setups'][self.setup]['ConfigurationServer'] )
+    try: # now trying to see if theres setup-specific ones
+      if isinstance(self.pilotJSON['ConfigurationServers'], basestring): # In the specific setup?
+        self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['ConfigurationServer'].split(',')])
+      else: # it's a list, we suppose
+        self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['ConfigurationServer']])
     except KeyError:
       try:
-        self.configServer = str( self.pilotJSON['Setups']['Defaults']['ConfigurationServer'] )
+        if isinstance(self.pilotJSON['ConfigurationServers'], basestring): # Or in the defaults section?
+          self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups']['Defaults']['ConfigurationServer'].split(',')])
+        else: # it's a list, we suppose
+          self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups']['Defaults']['ConfigurationServer']])
       except KeyError:
         pass
 
