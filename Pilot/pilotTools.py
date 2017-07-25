@@ -725,6 +725,7 @@ class PilotParams( object ):
               self.commands = [str( pv ).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults']]
           except KeyError:
             pass
+    self.log.debug("Commands from JSON: %s for gridCEType %s" % (self.commands, self.gridCEType))
 
     # CommandExtensions
     # pilotSynchronizer() can publish this as a comma separated list. We are ready for that.
@@ -741,6 +742,7 @@ class PilotParams( object ):
           self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
       except KeyError:
         pass
+    self.log.debug("CommandExtensions from JSON: %s" % self.commandExtensions)
 
     # CS URL(s)
     # pilotSynchronizer() can publish this as a comma separated list. We are ready for that
@@ -764,6 +766,7 @@ class PilotParams( object ):
           self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups']['Defaults']['ConfigurationServer']])
       except KeyError:
         pass
+    self.log.debug("CS URL from JSON: %s" % self.configServer)
 
     # Version
     # There may be a list of versions specified (in a string, comma separated). We just want the first one.
@@ -776,6 +779,7 @@ class PilotParams( object ):
         dVersion = None
     if dVersion:
       self.releaseVersion = str( dVersion[0] )
+    self.log.debug("Release version from JSON: %s" % self.releaseVersion)
 
     try:
       self.releaseProject = str( self.pilotJSON['Setups'][self.setup]['Project'] )
@@ -784,7 +788,7 @@ class PilotParams( object ):
         self.releaseProject = str( self.pilotJSON['Setups']['Defaults']['Project'] )
       except KeyError:
         pass
-
+    self.log.debug("Release project from JSON: %s" % self.releaseProject)
 
   def __initCommandLine2( self ):
     """ Parses and interpret options on the command line: second pass (most authoritative)
