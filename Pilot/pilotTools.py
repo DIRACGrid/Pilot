@@ -432,6 +432,7 @@ class PilotParams( object ):
     self.workingDir = os.getcwd()
 
     self.optList = {}
+    self.keepPythonPath = False
     self.debugFlag = False
     self.local = False
     self.pilotJSON = None
@@ -496,6 +497,7 @@ class PilotParams( object ):
                      ( 'g:', 'grid=', 'lcg tools package version' ),
                      ( 'h', 'help', 'Show this help' ),
                      ( 'i:', 'python=', 'Use python<26|27> interpreter' ),
+                     ( 'k', 'keepPP', 'Do not clear PYTHONPATH on start' ),
                      ( 'l:', 'project=', 'Project to install' ),
                      ( 'p:', 'platform=', 'Use <platform> instead of local one' ),
                      ( 'u:', 'url=', 'Use <url> to download tarballs' ),
@@ -553,6 +555,80 @@ class PilotParams( object ):
       elif o == '-F' or o == '--pilotCFGFile':
         self.pilotCFGFile = v
 
+<<<<<<< HEAD
+=======
+  def __initCommandLine2( self ):
+    """ Parses and interpret options on the command line: second pass
+    """
+
+    self.optList, __args__ = getopt.getopt( sys.argv[1:],
+                                            "".join( [ opt[0] for opt in self.cmdOpts ] ),
+                                            [ opt[1] for opt in self.cmdOpts ] )
+    for o, v in self.optList:
+      if o == '-E' or o == '--commandExtensions':
+        self.commandExtensions = v.split( ',' )
+      elif o == '-X' or o == '--commands':
+        self.commands = v.split( ',' )
+      elif o == '-Z' or o == '--commandOptions':
+        for i in v.split( ',' ):
+          self.commandOptions[i.split( '=' )[0]] = i.split( '=', 1 )[1]
+      elif o == '-e' or o == '--extraPackages':
+        self.extensions = v.split( ',' )
+      elif o == '-n' or o == '--name':
+        self.site = v
+      elif o == '-y' or o == '--CEType':
+        self.ceType = v
+      elif o == '-Q' or o == '--Queue':
+        self.queueName = v
+      elif o == '-R' or o == '--reference':
+        self.pilotReference = v
+      elif o == '-k' or o == '--keepPP':
+        self.keepPythonPath = True
+      elif o in ( '-C', '--configurationServer' ):
+        self.configServer = v
+      elif o in ( '-G', '--Group' ):
+        self.userGroup = v
+      elif o in ( '-x', '--execute' ):
+        self.executeCmd = v
+      elif o in ( '-O', '--OwnerDN' ):
+        self.userDN = v
+      elif o in ( '-V', '--installation' ):
+        self.installation = v
+      elif o == '-p' or o == '--platform':
+        self.platform = v
+      elif o == '-D' or o == '--disk':
+        try:
+          self.minDiskSpace = int( v )
+        except ValueError:
+          pass
+      elif o == '-r' or o == '--release':
+        self.releaseVersion = v.split(',',1)[0]
+      elif o in ( '-l', '--project' ):
+        self.releaseProject = v
+      elif o in ( '-W', '--gateway' ):
+        self.gateway = v
+      elif o == '-c' or o == '--cert':
+        self.useServerCertificate = True
+      elif o == '-C' or o == '--certLocation':
+        self.certsLocation = v
+      elif o == '-M' or o == '--MaxCycles':
+        try:
+          self.maxCycles = min( self.MAX_CYCLES, int( v ) )
+        except ValueError:
+          pass
+      elif o in ( '-T', '--CPUTime' ):
+        self.jobCPUReq = v
+      elif o == '-P' or o == '--processors':
+        try:
+          self.procesors = int(v)
+        except:
+          pass
+      elif o == '-z' or o == '--pilotLogging':
+        self.pilotLogging = True
+      elif o in ( '-o', '--option' ):
+        self.genericOption = v
+
+>>>>>>> upstream/devel
   def __initJSON( self ):
     """Retrieve pilot parameters from the content of json file. The file should be something like:
 
