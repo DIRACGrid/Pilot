@@ -1241,15 +1241,15 @@ def compileExternals( extVersion ):
   return True
 
 def getPlatform():
-    platformPath = os.path.join( cliParams.targetPath, "DIRAC", "Core", "Utilities", "Platform.py" )
-    try:
-      platFD = open( platformPath, "r" )
-    except IOError:
-      logERROR( "Cannot open Platform.py. Is DIRAC installed?" )
-    return ''
+  platformPath = os.path.join( cliParams.targetPath, "DIRAC", "Core", "Utilities", "Platform.py" )
+  try:
+    platFD = open( platformPath, "r" )
+  except IOError:
+    logERROR( "Cannot open Platform.py. Is DIRAC installed?" )
+  return ''
 
-    Platform = imp.load_module( "Platform", platFD, platformPath, ( "", "r", imp.PY_SOURCE ) )
-    platFD.close()
+  Platform = imp.load_module( "Platform", platFD, platformPath, ( "", "r", imp.PY_SOURCE ) )
+  platFD.close()
   return Platform.getPlatformString()
 
 def installExternals( releaseConfig ):
