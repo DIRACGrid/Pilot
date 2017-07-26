@@ -89,14 +89,20 @@ function PilotInstall(){
   sed -i "s#VAR_CS#$CSURL#g" pilot.json
   sed -i "s#VAR_USERDN#$DIRACUSERDN#g" pilot.json
 
-  #get the pilot files
-  for file in PilotLogger.py PilotLoggerTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py
-  do
-    cp $TESTCODE/Pilot/Pilot/${file} .
-  done
+  prepareForPilot
 
   # launch the pilot script
-  python dirac-pilot.py  -M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs -ddd
+  pilotOptions="-M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs"
+  if [ $VO ]
+  then
+    pilotOptions+=" -l $VO -E $VO"
+    pilotOptions+="Pilot"
+  fi
+  if [ $DEBUG ]
+  then
+    pilotOptions+=" -d"
+  fi
+  python dirac-pilot.py $pilotOptions
   if [ $? -ne 0 ]
   then
     echo 'ERROR: pilot script failed'

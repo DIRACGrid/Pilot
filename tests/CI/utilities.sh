@@ -35,3 +35,25 @@ function default(){
 #   cd $PILOTINSTALLDIR
 #   python consumeFromQueue.py
 # }
+
+
+function prepareForPilot(){
+
+  #get the pilot files from the Pilot
+  for file in PilotLogger.py PilotLoggerTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py
+  do
+    cp $TESTCODE/Pilot/Pilot/${file} .
+  done
+
+  #get possible extensions
+  if [ $VO ]
+  then
+    pilotFile="PilotCommands"
+    pilot="Pilot"
+    for file in $VO$pilotFile
+    do
+      cp $TESTCODE/$VO$pilot/$VO$pilot/${file} .
+    done
+  fi
+
+}
