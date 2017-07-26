@@ -48,7 +48,7 @@ function prepareForPilot(){
   #get possible extensions
   if [ $VO ]
   then
-    pilotFile="PilotCommands"
+    pilotFile="PilotCommands.py"
     pilot="Pilot"
     for file in $VO$pilotFile
     do
