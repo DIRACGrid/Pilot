@@ -80,8 +80,10 @@ function PilotInstall(){
     return
   fi
 
-  #get the configuration file, and adapt it
-  cp $TESTCODE/Pilot/tests/CI/pilot.json .
+  #get the configuration file (from an VO extension, if it exists)
+  pilot="Pilot"
+  cp $TESTCODE/$VO$pilot/tests/CI/pilot.json .
+  # and adapt it
   sed -i s/VAR_JENKINS_SITE/$JENKINS_SITE/g pilot.json
   sed -i s/VAR_JENKINS_CE/$JENKINS_CE/g pilot.json
   sed -i s/VAR_JENKINS_QUEUE/$JENKINS_QUEUE/g pilot.json
@@ -89,14 +91,20 @@ function PilotInstall(){
   sed -i "s#VAR_CS#$CSURL#g" pilot.json
   sed -i "s#VAR_USERDN#$DIRACUSERDN#g" pilot.json
 
-  #get the pilot files
-  for file in PilotLogger.py PilotLoggerTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py
-  do
-    cp $TESTCODE/Pilot/Pilot/${file} .
-  done
+  prepareForPilot
 
   # launch the pilot script
-  python dirac-pilot.py  -M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs -ddd
+  pilotOptions="-M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs"
+  if [ $VO ]
+  then
+    pilotOptions+=" -l $VO -E $VO"
+    pilotOptions+="Pilot"
+  fi
+  if [ $DEBUG ]
+  then
+    pilotOptions+=" -d"
+  fi
+  python dirac-pilot.py $pilotOptions
   if [ $? -ne 0 ]
   then
     echo 'ERROR: pilot script failed'
@@ -125,8 +133,23 @@ function fullPilot(){
     return
   fi
 
+  echo -e '\n----PATH:'$PATH'\n----' | tr ":" "\n"
+  echo -e '\n----LD_LIBRARY_PATH:'$LD_LIBRARY_PATH'\n----' | tr ":" "\n"
+  echo -e '\n----DYLD_LIBRARY_PATH:'$DYLD_LIBRARY_PATH'\n----' | tr ":" "\n"
+  echo -e '\n----PYTHONPATH:'$PYTHONPATH'\n----' | tr ":" "\n"
+
+  echo -e '\n----python'
+  echo $(python -V)
+  echo $(which python)
+
+
   #Adding the LocalSE and the CPUTimeLeft, for the subsequent tests
-  dirac-configure -FDMH --UseServerCertificate -L $DIRACSE $DEBUG
+  if [ $PILOTCFG ]
+  then
+    dirac-configure -FDMH --UseServerCertificate -L $DIRACSE -O $PILOTINSTALLDIR/$PILOTCFG $PILOTINSTALLDIR/$PILOTCFG $DEBUG
+  else
+    dirac-configure -FDMH --UseServerCertificate -L $DIRACSE $DEBUG
+  fi
   if [ $? -ne 0 ]
   then
     echo 'ERROR: cannot configure'
@@ -134,7 +157,10 @@ function fullPilot(){
   fi
 
   #Configure for CPUTimeLeft and more
-  python $TESTCODE/DIRAC/tests/Jenkins/dirac-cfg-update.py -o /DIRAC/Security/UseServerCertificate=True $DEBUG
+  if ! [ $PILOTCFG ]
+  then
+    python $TESTCODE/DIRAC/tests/Jenkins/dirac-cfg-update.py -o /DIRAC/Security/UseServerCertificate=True $DEBUG
+  fi
   if [ $? -ne 0 ]
   then
     echo 'ERROR: cannot update the CFG'
@@ -143,8 +169,13 @@ function fullPilot(){
 
   #Getting a user proxy, so that we can run jobs
   downloadProxy
-  #Set not to use the server certificate for running the jobs
-  dirac-configure -FDMH -o /DIRAC/Security/UseServerCertificate=False $DEBUG
+  echo '==> Set not to use the server certificate for running the jobs'
+  if [ $PILOTCFG ]
+  then
+    dirac-configure -FDMH -o /DIRAC/Security/UseServerCertificate=False -O $PILOTINSTALLDIR/$PILOTCFG $PILOTINSTALLDIR/$PILOTCFG $DEBUG
+  else
+    dirac-configure -FDMH -o /DIRAC/Security/UseServerCertificate=False $DEBUG
+  fi
   if [ $? -ne 0 ]
   then
     echo 'ERROR: cannot run dirac-configure'
