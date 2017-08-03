@@ -133,8 +133,23 @@ function fullPilot(){
     return
   fi
 
+  echo -e '\n----PATH:'$PATH'\n----' | tr ":" "\n"
+  echo -e '\n----LD_LIBRARY_PATH:'$LD_LIBRARY_PATH'\n----' | tr ":" "\n"
+  echo -e '\n----DYLD_LIBRARY_PATH:'$DYLD_LIBRARY_PATH'\n----' | tr ":" "\n"
+  echo -e '\n----PYTHONPATH:'$PYTHONPATH'\n----' | tr ":" "\n"
+
+  echo -e '\n----python'
+  echo $(python -V)
+  echo $(which python)
+
+
   #Adding the LocalSE and the CPUTimeLeft, for the subsequent tests
-  dirac-configure -FDMH --UseServerCertificate -L $DIRACSE $DEBUG
+  if [ $PILOTCFG ]
+  then
+    dirac-configure -FDMH --UseServerCertificate -L $DIRACSE -O $PILOTINSTALLDIR/$PILOTCFG $PILOTINSTALLDIR/$PILOTCFG $DEBUG
+  else
+    dirac-configure -FDMH --UseServerCertificate -L $DIRACSE $DEBUG
+  fi
   if [ $? -ne 0 ]
   then
     echo 'ERROR: cannot configure'
@@ -142,7 +157,10 @@ function fullPilot(){
   fi
 
   #Configure for CPUTimeLeft and more
-  python $TESTCODE/DIRAC/tests/Jenkins/dirac-cfg-update.py -o /DIRAC/Security/UseServerCertificate=True $DEBUG
+  if ! [ $PILOTCFG ]
+  then
+    python $TESTCODE/DIRAC/tests/Jenkins/dirac-cfg-update.py -o /DIRAC/Security/UseServerCertificate=True $DEBUG
+  fi
   if [ $? -ne 0 ]
   then
     echo 'ERROR: cannot update the CFG'
@@ -151,8 +169,13 @@ function fullPilot(){
 
   #Getting a user proxy, so that we can run jobs
   downloadProxy
-  #Set not to use the server certificate for running the jobs
-  dirac-configure -FDMH -o /DIRAC/Security/UseServerCertificate=False $DEBUG
+  echo '==> Set not to use the server certificate for running the jobs'
+  if [ $PILOTCFG ]
+  then
+    dirac-configure -FDMH -o /DIRAC/Security/UseServerCertificate=False -O $PILOTINSTALLDIR/$PILOTCFG $PILOTINSTALLDIR/$PILOTCFG $DEBUG
+  else
+    dirac-configure -FDMH -o /DIRAC/Security/UseServerCertificate=False $DEBUG
+  fi
   if [ $? -ne 0 ]
   then
     echo 'ERROR: cannot run dirac-configure'
