@@ -307,7 +307,7 @@ else
 fi
 
 if [ '##user_data_option_dirac_tag##' != '' ] ; then
-  TAGS="-o '/Resources/Computing/CEDefaults/Tag=##user_data_option_dirac_tag##'"
+  TAGS='-o /Resources/Computing/CEDefaults/Tag=##user_data_option_dirac_tag##'
 fi
 
 # Now run the pilot script
