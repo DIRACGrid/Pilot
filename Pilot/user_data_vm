@@ -55,10 +55,12 @@ Content-Disposition: attachment; filename="user_data_script"
 
 mkdir -p /var/spool/joboutputs
 (
-
 # Set the hostname if available; display otherwise
 hostname ##user_data_vm_hostname##
 date --utc +"%Y-%m-%d %H:%M:%S %Z user_data_script Start user_data on `hostname`"
+
+echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6
+date --utc +"%Y-%m-%d %H:%M:%S %Z Disable IPv6"
 
 # Record MJFJO if substituted here by VM lifecycle manager
 export MACHINEFEATURES='##user_data_machinefeatures_url##'
@@ -69,27 +71,25 @@ export JOBOUTPUTS='##user_data_joboutputs_url##'
 /bin/echo -e "export MACHINEFEATURES=$MACHINEFEATURES\nexport JOBFEATURES=$JOBFEATURES\nexport JOBOUTPUTS=$JOBOUTPUTS" > /etc/profile.d/mjf.sh
 /bin/echo -e "setenv MACHINEFEATURES $MACHINEFEATURES\nsetenv JOBFEATURES $JOBFEATURES\nsetenv JOBOUTPUTS $JOBOUTPUTS" > /etc/profile.d/mjf.csh
 
-cat <<X5_EOF >/root/hostkey.pem
-##user_data_file_hostkey##
-##user_data_file_hostcert##
-##user_data_option_x509_proxy##
-X5_EOF
-
 export CE_NAME='##user_data_space##'
 export VM_UUID='##user_data_uuid##'
 
+if [ "$VM_UUID" = "" -a "$JOBFEATURES" != "" ] ; then
+  export VM_UUID=`python -c "import urllib ; print urllib.urlopen('$JOBFEATURES/job_id').read().strip()"`
+fi
+
 if [ "$VM_UUID" = "" ] ; then
-  # Try getting it from OpenStack metadata instead
-  export VM_UUID=`python -c 'import requests ; print requests.get("http://169.254.169.254/openstack/2013-10-17/meta_data.json").json()["uuid"]'`
+  # If still unset then just use the hostname from the VM lifecycle manager
+  export VM_UUID=`date +'%s.##user_data_vm_hostname##'`
 fi
 
 # Create a shutdown_message if ACPI shutdown signal received
 /bin/echo -e 'echo "100 VM received ACPI shutdown signal from hypervisor" > /var/spool/joboutputs/shutdown_message\n/sbin/shutdown -h now' >/etc/acpi/actions/power.sh
 chmod +x /etc/acpi/actions/power.sh
 
-# Disable TCP offloading etc - left on by default
-if [ "##user_data_option_network_offload##" == "off" ] ; then
-  ethtool -K eth0 gso off gro off tso off
+# Disable TCP offloading etc - done by default
+if [ "##user_data_option_network_offload##" != "on" ] ; then
+  ethtool -K eth0 tso off gso off gro off
 fi
 
 # We never let VMs send emails (likely to be annoying errors from root)
@@ -111,6 +111,10 @@ if [ -b /dev/vdb1 -a -b /dev/vdb2 ] ; then
   # vda1 is boot image, vdb1 is root partition, vdb2 is unformatted
   mkfs -q -t ext4 /dev/vdb2
   mount /dev/vdb2 /scratch 
+elif [ -b /dev/sda1 -a -b /dev/sda2 -a -b /dev/sda3 ] ; then
+  # GCE: sda1 is boot image, sda2 is root partition, sda3 is unformatted
+  mkfs -q -t ext4 /dev/sda3
+  mount /dev/sda3 /scratch
 elif [ -b /dev/vdb1 ] ; then
   # Openstack at CERN with hep* flavor?
   # vda1 is boot image, vdb1 is root partition, and no vdb2
@@ -145,9 +149,11 @@ else
   sleep 1234567890
 fi  
 
-# We rely on the hypervisor's disk I/O scheduling
-echo 'noop' > /sys/block/vda/queue/scheduler
-echo 'noop' > /sys/block/vdb/queue/scheduler
+if [ -b /dev/vda ] ; then
+  # We rely on the hypervisor's disk I/O scheduling
+  echo 'noop' > /sys/block/vda/queue/scheduler
+  echo 'noop' > /sys/block/vdb/queue/scheduler
+fi
 
 # anyone can create directories there
 chmod ugo+rwxt /scratch
@@ -155,6 +161,38 @@ chmod ugo+rwxt /scratch
 # Scratch tmp for TMPDIR
 mkdir -p /scratch/tmp
 chmod ugo+rwxt /scratch/tmp
+
+mkdir -p /scratch/plt/etc/grid-security
+export X509_USER_PROXY=/scratch/plt/etc/grid-security/x509proxy.pem
+
+if [ ! -z "##user_data_option_x509_proxy##" ] ; then
+  # Simple if we are given an X.509 Proxy
+  cat <<X5_EOF > $X509_USER_PROXY
+##user_data_option_x509_proxy##
+X5_EOF
+
+  cp $X509_USER_PROXY /scratch/plt/etc/grid-security/hostkey.pem
+  cp $X509_USER_PROXY /scratch/plt/etc/grid-security/hostcert.pem
+
+elif [ ! -z "##user_data_file_hostkey##" -a ! -z "##user_data_file_hostcert##" ] ; then
+  # Given full host cert/key pair
+  # Old versions of Vac/Vcycle call this user_data_file_ rather than user_data_option_
+
+  cat <<X5_EOF > /scratch/plt/etc/grid-security/hostkey.pem
+##user_data_file_hostkey##
+X5_EOF
+
+  cat <<X5_EOF > /scratch/plt/etc/grid-security/hostcert.pem
+##user_data_file_hostcert##
+X5_EOF
+q
+  cat /scratch/plt/etc/grid-security/hostkey.pem /scratch/plt/etc/grid-security/hostcert.pem > $X509_USER_PROXY
+else
+  date --utc +"%Y-%m-%d %H:%M:%S %Z Neither user_data_option_x509_proxy or user_data_option_hostkey/_hostcert defined!"
+fi
+
+cp $X509_USER_PROXY /root/x509proxy.pem # Save a copy which will stay owned by root, for root to use
+chmod 0400 /scratch/plt/etc/grid-security/*.pem /root/x509proxy.pem
 
 # Get CA certs from cvmfs
 rm -Rf /etc/grid-security
@@ -167,11 +205,11 @@ ln -sf /cvmfs/grid.cern.ch/emi3wn-latest/etc/profile.d/a1_grid_env.sh \
 
 # make a first heartbeat
 echo 0.0 0.0 0.0 0.0 0.0 > /var/spool/joboutputs/heartbeat
-/usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/heartbeat"
-/usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/vm-heartbeat"
+/usr/bin/curl --capath $X509_CERT_DIR --cert /root/x509proxy.pem --cacert /root/x509proxy.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/heartbeat"
+/usr/bin/curl --capath $X509_CERT_DIR --cert /root/x509proxy.pem --cacert /root/x509proxy.pem --location --upload-file /var/spool/joboutputs/heartbeat "$JOBOUTPUTS/vm-heartbeat"
 
 # put heartbeat on MJF server every 5 minutes with a random offset
-echo -e "*/5 * * * * root sleep `expr $RANDOM / 110` ; echo \`cut -f1-3 -d' ' /proc/loadavg\` \`cat /proc/uptime\` >/var/spool/joboutputs/heartbeat ; /usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/vm-heartbeat ; /usr/bin/curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/heartbeat >/var/log/heartbeat.log 2>&1" >/etc/cron.d/heartbeat
+echo -e "*/5 * * * * root sleep `expr $RANDOM / 110` ; echo \`cut -f1-3 -d' ' /proc/loadavg\` \`cat /proc/uptime\` >/var/spool/joboutputs/heartbeat ; /usr/bin/curl --capath $X509_CERT_DIR --cert /root/x509proxy.pem --cacert /root/x509proxy.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/vm-heartbeat ; /usr/bin/curl --capath $X509_CERT_DIR --cert /root/x509proxy.pem --cacert /root/x509proxy.pem --location --upload-file /var/spool/joboutputs/heartbeat $JOBOUTPUTS/heartbeat >/var/log/heartbeat.log 2>&1" >/etc/cron.d/heartbeat
 
 # We swap on the logical partition (cannot on CernVM 3 aufs filesystem)
 # Since ext4 we can use fallocate:
@@ -188,7 +226,10 @@ rm -f /etc/cron.daily/mlocate.cron
 
 # Log proxies used for cvmfs
 attr -g proxy /mnt/.ro
-attr -g proxy /cvmfs/lhcb.cern.ch/
+for i in /cvmfs/*
+do
+  attr -g proxy $i
+done
 
 # Avoid age-old sudo problem
 echo 'Defaults !requiretty' >>/etc/sudoers
@@ -199,11 +240,6 @@ echo 'Defaults visiblepw'   >>/etc/sudoers
 
 chown plt.plt /var/spool/joboutputs
 chmod 0755 /var/spool/joboutputs
-
-mkdir -p /scratch/plt/etc/grid-security
-cp /root/hostkey.pem /scratch/plt/etc/grid-security/hostkey.pem
-cp /root/hostkey.pem /scratch/plt/etc/grid-security/hostcert.pem
-chmod 0600 /scratch/plt/etc/grid-security/host*.pem
 
 # Add plt0102 etc accounts for the payloads that plt can sudo to
 
@@ -261,20 +297,32 @@ fi
 chown -R plt.plt /scratch/plt
 chmod 1775 /scratch/plt
 
+# Uncomment for testing with dev.tgz
+#DEVOPTS='--commandExtensions dev,LHCbPilot --commands NagiosProbes,CheckWorkerNode,InstallDIRAC,UnpackDevDev,LHCbConfigureBasics,LHCbConfigureSite,LHCbConfigureArchitecture,LHCbConfigureCPURequirements,MultiLaunchAgent'
+
+if [ '##user_data_option_dirac_queue##' != '' ] ; then
+  QUEUE='##user_data_option_dirac_queue##'
+else
+  QUEUE=default
+fi
+
+if [ '##user_data_option_dirac_tag##' != '' ] ; then
+  TAGS="-o '/Resources/Computing/CEDefaults/Tag=##user_data_option_dirac_tag##'"
+fi
+
 # Now run the pilot script
 /usr/bin/sudo -i -n -u plt \
- X509_USER_PROXY=/scratch/plt/etc/grid-security/hostkey.pem \
+ X509_USER_PROXY=$X509_USER_PROXY \
  JOB_ID="##user_data_space##:$VM_UUID:##user_data_machinetype##" \
  MACHINEFEATURES="$MACHINEFEATURES" JOBFEATURES="$JOBFEATURES" \
  python /scratch/plt/dirac-pilot.py \
- --debug \
+ --debug $DEVOPTS $TAGS \
  -o '/LocalSite/SubmitPool=Test' \
  --Name '##user_data_space##' \
- --Queue default \
+ --Queue $QUEUE \
  --MaxCycles 1 \
  --CEType Sudo \
- --cert \
- --certLocation=/scratch/plt/etc/grid-security \
+ --cert --certLocation=/scratch/plt/etc/grid-security \
  >/var/spool/joboutputs/dirac-pilot.log 2>&1
 
 # Save JobAgent and System logs
@@ -286,11 +334,11 @@ cp -f /scratch/plt/jobagent.*.log /scratch/plt/shutdown_message* /var/log/boot.l
   for i in *
   do
    if [ -f $i ] ; then 
-    curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file "$i" \
+    curl --capath $X509_CERT_DIR --cert /root/x509proxy.pem --cacert /root/x509proxy.pem --location --upload-file "$i" \
      "$JOBOUTPUTS/"
 
     # This will be replaced by extended pilot logging??
-    curl --capath $X509_CERT_DIR --cert /root/hostkey.pem --cacert /root/hostkey.pem --location --upload-file "$i" \
+    curl --capath $X509_CERT_DIR --cert /root/x509proxy.pem --cacert /root/x509proxy.pem --location --upload-file "$i" \
      "https://lhcb-depo.cern.ch:9132/hosts/##user_data_space##/##user_data_machinetype##/##user_data_machine_hostname##/##user_data_uuid##/"
    fi
   done
