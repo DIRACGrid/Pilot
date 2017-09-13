@@ -25,7 +25,7 @@ import socket
 import tarfile
 import httplib
 
-from pilotTools import CommandBase, retrieveUrlTimeout
+from pilotTools import CommandBase
 
 __RCSID__ = "$Id$"
 
@@ -103,7 +103,7 @@ class CheckWorkerNode( CommandBase ):
       self.log.info( 'Memory (kB)    = %s' % totalMem )
       self.log.info( 'FreeMem. (kB)  = %s' % freeMem )
 
-    ##############################################################################################################################
+    ###########################################################################
     # Disk space check
 
     # fs = os.statvfs( rootPath )
@@ -337,7 +337,7 @@ class ConfigureBasics( CommandBase ):
       self.cfg.append( "-o /DIRAC/Security/KeyFile=%s/hostkey.pem" % self.pp.certsLocation )
 
 class CheckCECapabilities( CommandBase ):
-  """ Used to get  CE tags.
+  """ Used to get CE tags and other relevant parameters.
   """
   def __init__( self, pilotParams ):
     """ c'tor
@@ -348,7 +348,7 @@ class CheckCECapabilities( CommandBase ):
     self.cfg = []
 
   def execute( self ):
-    """ Setup CE/Queue Tags
+    """ Setup CE/Queue Tags and other relevant parameters.
     """
 
     if self.pp.useServerCertificate:
@@ -371,27 +371,45 @@ class CheckCECapabilities( CommandBase ):
     except ValueError:
       self.log.error( "The pilot command output is not json compatible." )
       sys.exit( 1 )
+
+    self.pp.queueParameters = resourceDict
+
+    cfg = []
+
+    # Pick up all the relevant resource parameters that will be used in the job matching
+    for ceParam in [ "WholeNode", "NumberOfProcessors", "RequiredTag" ]:
+      if ceParam in resourceDict:
+        cfg.append( '-o /Resources/Computing/CEDefaults/%s=%s' % ( ceParam, resourceDict[ ceParam ] ) )
+
+     # Tags must be added to already defined tags if any
     if resourceDict.get( 'Tag' ):
       self.pp.tags += resourceDict['Tag']
-      self.cfg.append( '-FDMH' )
 
-      if self.pp.useServerCertificate:
-        self.cfg.append( '-o  /DIRAC/Security/UseServerCertificate=yes' )
+    if self.pp.tags:
+      cfg.append( '-o "/Resources/Computing/CEDefaults/Tag=%s"' % ','.join( ( str( x ) for x in self.pp.tags ) ) )
 
-      if self.pp.localConfigFile:
-        self.cfg.append( '-O %s' % self.pp.localConfigFile )  # this file is as output
-        self.cfg.append( self.pp.localConfigFile )  # this file is as input
+    if self.pp.useServerCertificate:
+      cfg.append( '-o /DIRAC/Security/UseServerCertificate=yes' )
+
+    if self.pp.localConfigFile:
+      cfg.append( '-O %s' % self.pp.localConfigFile )  # this file is as output
+      cfg.append( self.pp.localConfigFile )  # this file is as input
+
+
+    if self.cfg:
+      cfg.append( '-FDMH' )
 
       if self.debugFlag:
-        self.cfg.append( '-ddd' )
+        cfg.append( '-ddd' )
 
-      self.cfg.append( '-o "/Resources/Computing/CEDefaults/Tag=%s"' % ','.join( ( str( x ) for x in self.pp.tags ) ) )
-
-      configureCmd = "%s %s" % ( self.pp.configureScript, " ".join( self.cfg ) )
+      configureCmd = "%s %s" % ( self.pp.configureScript, " ".join( cfg ) )
       retCode, _configureOutData = self.executeAndGetOutput( configureCmd, self.pp.installEnv )
       if retCode:
         self.log.error( "Could not configure DIRAC [ERROR %d]" % retCode )
         self.exitWithError( retCode )
+
+    else:
+      self.log.debug("No CE parameters (tags) defined for %s/%s" % (self.pp.ceName, self.pp.queueName))
 
 class CheckWNCapabilities( CommandBase ):
   """ Used to get capabilities specific to the Worker Node.
@@ -404,7 +422,7 @@ class CheckWNCapabilities( CommandBase ):
     self.cfg = []
 
   def execute( self ):
-    """ Discover #Processors and memory
+    """ Discover NumberOfProcessors and RAM
     """
 
     if self.pp.useServerCertificate:
@@ -420,32 +438,38 @@ class CheckWNCapabilities( CommandBase ):
       self.exitWithError( retCode )
     try:
       result = result.split( ' ' )
-      numberOfProcessor = int( result[0] )
+      numberOfProcessors = int( result[0] )
       maxRAM = int( result[1] )
     except ValueError:
       self.log.error( "Wrong Command output %s" % result )
       sys.exit( 1 )
-    if numberOfProcessor or maxRAM:
-      self.cfg.append( '-FDMH' )
+
+    cfg = []
+    # If NumberOfProcessors or MaxRAM are defined in the resource configuration, these
+    # values are preferred
+    if numberOfProcessors and "NumberOfProcessors" not in self.pp.queueParameters:
+      cfg.append( '-o "/Resources/Computing/CEDefaults/NumberOfProcessors=%d"' % numberOfProcessors )
+    else:
+      self.log.warn( "Could not retrieve number of processors" )
+    if maxRAM and "MaxRAM" not in self.pp.queueParameters:
+      cfg.append( '-o "/Resources/Computing/CEDefaults/MaxRAM=%d"' % maxRAM )
+    else:
+      self.log.warn( "Could not retrieve MaxRAM" )
+
+
+    if cfg:
+      cfg.append( '-FDMH' )
 
       if self.pp.useServerCertificate:
-        self.cfg.append( '-o /DIRAC/Security/UseServerCertificate=yes' )
+        cfg.append( '-o /DIRAC/Security/UseServerCertificate=yes' )
       if self.pp.localConfigFile:
-        self.cfg.append( '-O %s' % self.pp.localConfigFile )  # this file is as output
-        self.cfg.append( self.pp.localConfigFile )  # this file is as input
+        cfg.append( '-O %s' % self.pp.localConfigFile )  # this file is as output
+        cfg.append( self.pp.localConfigFile )  # this file is as input
 
       if self.debugFlag:
-        self.cfg.append( '-ddd' )
+        cfg.append( '-ddd' )
 
-      if numberOfProcessor:
-        self.cfg.append( '-o "/Resources/Computing/CEDefaults/NumberOfProcessors=%d"' % numberOfProcessor )
-      else:
-        self.log.warn( "Could not retrieve number of processors" )
-      if maxRAM:
-        self.cfg.append( '-o "/Resources/Computing/CEDefaults/MaxRAM=%d"' % maxRAM )
-      else:
-        self.log.warn( "Could not retrieve MaxRAM" )
-      configureCmd = "%s %s" % ( self.pp.configureScript, " ".join( self.cfg ) )
+      configureCmd = "%s %s" % ( self.pp.configureScript, " ".join( cfg ) )
       retCode, _configureOutData = self.executeAndGetOutput( configureCmd, self.pp.installEnv )
       if retCode:
         self.log.error( "Could not configure DIRAC [ERROR %d]" % retCode )
@@ -1039,49 +1063,49 @@ class MultiLaunchAgent( CommandBase ):
     # log file patterns to look for and corresponding messages
     messageMappings = [
 
-    # Variants of: "100 Shutdown as requested by the VM's host/hypervisor"
-    ######################################################################
-    # There are other errors from the TimeLeft handling, but we let those go
-    # to the 600 Failed default
-    ['INFO: JobAgent will stop with message "No time left for slot', '100 No time left for slot'],
+        # Variants of: "100 Shutdown as requested by the VM's host/hypervisor"
+        ######################################################################
+        # There are other errors from the TimeLeft handling, but we let those go
+        # to the 600 Failed default
+        ['INFO: JobAgent will stop with message "No time left for slot', '100 No time left for slot'],
 
-    # Variants of: "200 Intended work completed ok"
-    ###############################################
-    # Our work is done. More work available in the queue? Who knows!
-    ['INFO: JobAgent will stop with message "Filling Mode is Disabled', '200 Filling Mode is Disabled'],
-    ['NOTICE:  Cycle was successful', '200 Success'],
+        # Variants of: "200 Intended work completed ok"
+        ###############################################
+        # Our work is done. More work available in the queue? Who knows!
+        ['INFO: JobAgent will stop with message "Filling Mode is Disabled', '200 Filling Mode is Disabled'],
+        ['NOTICE:  Cycle was successful', '200 Success'],
 
-    #
-    # !!! Codes 300-699 trigger Vac/Vcycle backoff procedure !!!
-    #
+        #
+        # !!! Codes 300-699 trigger Vac/Vcycle backoff procedure !!!
+        #
 
-    # Variants of: "300 No more work available from task queue"
-    ###########################################################
-    # We asked, but nothing more from the matcher.
-    ['INFO: JobAgent will stop with message "Nothing to do for more than', '300 Nothing to do'],
+        # Variants of: "300 No more work available from task queue"
+        ###########################################################
+        # We asked, but nothing more from the matcher.
+        ['INFO: JobAgent will stop with message "Nothing to do for more than', '300 Nothing to do'],
 
-    # Variants of: "400 Site/host/VM is currently banned/disabled from receiving more work"
-    #######################################################################################
+        # Variants of: "400 Site/host/VM is currently banned/disabled from receiving more work"
+        #######################################################################################
 
-    # Variants of: "500 Problem detected with environment/VM/contextualization provided by the site"
-    ################################################################################################
-    # This detects using an RFC proxy to talk to legacy-only DIRAC
-    ['Error while handshaking [("Remote certificate hasn', '500 Certificate/proxy not acceptable'],
+        # Variants of: "500 Problem detected with environment/VM/contextualization provided by the site"
+        ################################################################################################
+        # This detects using an RFC proxy to talk to legacy-only DIRAC
+        ['Error while handshaking [("Remote certificate hasn', '500 Certificate/proxy not acceptable'],
 
-    # Variants of: "600 Grid-wide problem with job agent or application within VM"
-    ##############################################################################
-    ['ERROR: Pilot version does not match the production version', '600 Cannot match jobs with this pilot version'],
+        # Variants of: "600 Grid-wide problem with job agent or application within VM"
+        ##############################################################################
+        ['ERROR: Pilot version does not match the production version', '600 Cannot match jobs with this pilot version'],
 
-    # Variants of: "700 Error related to job agent or application within VM"
-    ########################################################################
-    # Some of the ways the JobAgent/Application can stop with errors.
-    # Otherwise we just get the default 700 Failed message.
-    ['INFO: JobAgent will stop with message "Job Rescheduled', '600 Problem so job rescheduled'],
-    ['INFO: JobAgent will stop with message "Matcher Failed', '600 Matcher Failed'],
-    ['INFO: JobAgent will stop with message "JDL Problem', '600 JDL Problem'],
-    ['INFO: JobAgent will stop with message "Payload Proxy Not Found', '600 Payload Proxy Not Found'],
-    ['INFO: JobAgent will stop with message "Problem Rescheduling Job', '600 Problem Rescheduling Job'],
-    ['INFO: JobAgent will stop with message "Payload execution failed with error code', '600 Payload execution failed with error'],
+        # Variants of: "700 Error related to job agent or application within VM"
+        ########################################################################
+        # Some of the ways the JobAgent/Application can stop with errors.
+        # Otherwise we just get the default 700 Failed message.
+        ['INFO: JobAgent will stop with message "Job Rescheduled', '600 Problem so job rescheduled'],
+        ['INFO: JobAgent will stop with message "Matcher Failed', '600 Matcher Failed'],
+        ['INFO: JobAgent will stop with message "JDL Problem', '600 JDL Problem'],
+        ['INFO: JobAgent will stop with message "Payload Proxy Not Found', '600 Payload Proxy Not Found'],
+        ['INFO: JobAgent will stop with message "Problem Rescheduling Job', '600 Problem Rescheduling Job'],
+        ['INFO: JobAgent will stop with message "Payload execution failed with error code', '600 Payload execution failed with error'],
 
     ]
 
