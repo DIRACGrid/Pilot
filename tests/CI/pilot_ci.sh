@@ -100,6 +100,10 @@ function PilotInstall(){
     pilotOptions+=" -l $VO -E $VO"
     pilotOptions+="Pilot"
   fi
+  if [ $lcgVersion ]
+  then
+    pilotOptions+="-g "$lcgVersion
+  fi
   if [ $DEBUG ]
   then
     pilotOptions+=" -d"
