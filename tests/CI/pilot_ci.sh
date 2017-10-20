@@ -102,7 +102,7 @@ function PilotInstall(){
   fi
   if [ $lcgVersion ]
   then
-    pilotOptions+="-g "$lcgVersion
+    pilotOptions+=" -g "$lcgVersion
   fi
   if [ $DEBUG ]
   then
