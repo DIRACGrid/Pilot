@@ -289,7 +289,7 @@ class ExtendedLogger( Logger ):
       #the import here was suggest F.S cause PilotLogger imports stomp
       #which is not yet in the DIRAC externals
       #so up to now we want to turn it off
-      from Pilot.PilotLogger import PilotLogger
+      from PilotLogger import PilotLogger
       self.pilotLogger = PilotLogger()
     else:
       self.pilotLogger = None
