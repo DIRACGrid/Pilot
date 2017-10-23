@@ -288,8 +288,10 @@ class ReplaceDIRACCode( CommandBase ):
 
     # Add the ReplacementCode directory to the Python path
     self.pp.installEnv['PYTHONPATH'] = os.getcwd() + os.path.sep + 'ReplacementCode' + ':' + self.pp.installEnv['PYTHONPATH']
+    self.pp.installEnv['PATH'] = os.getcwd() + os.path.sep + 'ReplacementCode' + os.path.sep + 'scripts:' + self.pp.installEnv['PATH']
 
-    self.log.info( "TGZ file %s unpacked. PYTHONPATH updated to be %s" % ( self.pp.replaceDIRACCode, self.pp.installEnv['PYTHONPATH'] ) )
+    self.log.info( "TGZ file %s unpacked. PYTHONPATH updated to be %s and PATH updated to be %s" % 
+                         ( self.pp.replaceDIRACCode, self.pp.installEnv['PYTHONPATH'], self.pp.installEnv['PATH'] ) )
 
 class ConfigureBasics( CommandBase ):
   """ This command completes DIRAC installation.
