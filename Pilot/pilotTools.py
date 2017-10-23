@@ -479,6 +479,7 @@ class PilotParams( object ):
     self.architectureScript = 'dirac-platform'
     self.certsLocation = '%s/etc/grid-security' % self.workingDir
     self.pilotCFGFile = 'pilot.json'
+    self.replaceDIRACCode = ''
     self.pilotLogging = False
 
     # Set number of allocatable processors from MJF if available
@@ -488,43 +489,44 @@ class PilotParams( object ):
       self.processors = 1
 
     # Pilot command options
-    self.cmdOpts = ( ( 'b', 'build', 'Force local compilation' ),
-                     ( 'd', 'debug', 'Set debug flag' ),
+    self.cmdOpts = ( ( 'a:', 'gridCEType=', 'Grid CE Type (CREAM etc)' ),
+                     ( 'b',  'build', 'Force local compilation' ),
+                     ( 'c',  'cert', 'Use server certificate instead of proxy' ),
+                     ( 'd',  'debug', 'Set debug flag' ),
                      ( 'e:', 'extraPackages=', 'Extra packages to install (comma separated)' ),
-                     ( 'E:', 'commandExtensions=', 'Python modules with extra commands' ),
-                     ( 'X:', 'commands=', 'Pilot commands to execute' ),
-                     ( 'Z:', 'commandOptions=', 'Options parsed by command modules' ),
                      ( 'g:', 'grid=', 'lcg tools package version' ),
-                     ( 'h', 'help', 'Show this help' ),
+                     ( 'h',  'help', 'Show this help' ),
                      ( 'i:', 'python=', 'Use python<26|27> interpreter' ),
-                     ( 'k', 'keepPP', 'Do not clear PYTHONPATH on start' ),
+                     ( 'k',  'keepPP', 'Do not clear PYTHONPATH on start' ),
                      ( 'l:', 'project=', 'Project to install' ),
-                     ( 'p:', 'platform=', 'Use <platform> instead of local one' ),
-                     ( 'u:', 'url=', 'Use <url> to download tarballs' ),
-                     ( 'r:', 'release=', 'DIRAC release to install' ),
                      ( 'n:', 'name=', 'Set <Site> as Site Name' ),
+                     ( 'o:', 'option=', 'Option=value to add' ),
+                     ( 'p:', 'platform=', 'Use <platform> instead of local one' ),
+                     ( 'r:', 'release=', 'DIRAC release to install' ),
+                     ( 's:', 'section=', 'Set base section for relative parsed options' ),
+                     ( 'u:', 'url=', 'Use <url> to download tarballs' ),
+                     ( 'x:', 'execute=', 'Execute instead of JobAgent' ),
+                     ( 'y:', 'CEType=', 'CE Type (normally InProcess)' ),
+                     ( 'z',  'pilotLogging', 'Activate pilot logging system' ),
+                     ( 'C:', 'configurationServer=', 'Configuration servers to use' ), # FIXME: -C is used twice! Which one to keep?
+                     ( 'C:', 'certLocation=', 'Specify server certificate location' ), # FIXME: -C is used twice! Which one to keep?
+                     ( 'G:', 'Group=', 'DIRAC Group to use' ),
                      ( 'D:', 'disk=', 'Require at least <space> MB available' ),
+                     ( 'E:', 'commandExtensions=', 'Python modules with extra commands' ),
+                     ( 'F:', 'pilotCFGFile=', 'Specify pilot CFG file' ),
                      ( 'M:', 'MaxCycles=', 'Maximum Number of JobAgent cycles to run' ),
                      ( 'N:', 'Name=', 'CE Name' ),
+                     ( 'O:', 'OwnerDN=', 'Pilot OwnerDN (for private pilots)' ),
                      ( 'Q:', 'Queue=', 'Queue name' ),
-                     ( 'y:', 'CEType=', 'CE Type (normally InProcess)' ),
-                     ( 'a:', 'gridCEType=', 'Grid CE Type (CREAM etc)' ),
+                     ( 'R:', 'reference=', 'Use this pilot reference' ),
                      ( 'S:', 'setup=', 'DIRAC Setup to use' ),
-                     ( 'C:', 'configurationServer=', 'Configuration servers to use' ),
-                     ( 'T:', 'CPUTime', 'Requested CPU Time' ),
-                     ( 'G:', 'Group=', 'DIRAC Group to use' ),
-                     ( 'O:', 'OwnerDN', 'Pilot OwnerDN (for private pilots)' ),
+                     ( 'T:', 'CPUTime=', 'Requested CPU Time' ),
                      ( 'U',  'Upload', 'Upload compiled distribution (if built)' ),
                      ( 'V:', 'installation=', 'Installation configuration file' ),
                      ( 'W:', 'gateway=', 'Configure <gateway> as DIRAC Gateway during installation' ),
-                     ( 's:', 'section=', 'Set base section for relative parsed options' ),
-                     ( 'o:', 'option=', 'Option=value to add' ),
-                     ( 'c', 'cert', 'Use server certificate instead of proxy' ),
-                     ( 'C:', 'certLocation=', 'Specify server certificate location' ),
-                     ( 'F:', 'pilotCFGFile=', 'Specify pilot CFG file' ),
-                     ( 'R:', 'reference=', 'Use this pilot reference' ),
-                     ( 'x:', 'execute=', 'Execute instead of JobAgent' ),
-                     ( 'z:', 'pilotLogging', 'Activate pilot logging system' ),
+                     ( 'X:', 'commands=', 'Pilot commands to execute' ),
+                     ( 'Y:', 'replaceDIRACCode=', 'URL of replacement DIRAC TGZ archive' ),
+                     ( 'Z:', 'commandOptions=', 'Options parsed by command modules' )
                    )
 
     # Possibly get Setup and JSON URL/filename from command line
@@ -569,7 +571,7 @@ class PilotParams( object ):
         self.commands = v.split( ',' )
       elif o == '-Z' or o == '--commandOptions':
         for i in v.split( ',' ):
-          self.commandOptions[i.split( '=' )[0]] = i.split( '=', 1 )[1]
+          self.commandOptions[ i.split( '=', 1 )[0] ] = i.split( '=', 1 )[1]
       elif o == '-e' or o == '--extraPackages':
         self.extensions = v.split( ',' )
       elif o == '-n' or o == '--name':
@@ -621,6 +623,8 @@ class PilotParams( object ):
           self.procesors = int(v)
         except:
           pass
+      elif o == '-Y' or o == '--replaceDIRACCode':
+        self.replaceDIRACCode = v
       elif o == '-z' or o == '--pilotLogging':
         self.pilotLogging = True
       elif o in ( '-o', '--option' ):
@@ -784,72 +788,3 @@ class PilotParams( object ):
         self.releaseProject = str( self.pilotJSON['Setups']['Defaults']['Project'] )
       except KeyError:
         pass
-
-  def __initCommandLine2( self ):
-    """ Parses and interpret options on the command line: second pass (most authoritative)
-    """
-
-    self.optList, __args__ = getopt.getopt( sys.argv[1:],
-                                            "".join( [ opt[0] for opt in self.cmdOpts ] ),
-                                            [ opt[1] for opt in self.cmdOpts ] )
-    for o, v in self.optList:
-      if o == '-E' or o == '--commandExtensions':
-        self.commandExtensions = v.split( ',' )
-      elif o == '-X' or o == '--commands':
-        self.commands = v.split( ',' )
-      elif o == '-Z' or o == '--commandOptions':
-        for opts in v.split(','):
-          self.commandOptions[opts.split('=',1)[0].strip()] = opts.split('=',1)[1].strip()
-      elif o == '-e' or o == '--extraPackages':
-        self.extensions = v.split( ',' )
-      elif o == '-n' or o == '--name':
-        self.site = v
-      elif o == '-y' or o == '--CEType':
-        self.ceType = v
-      elif o == '-Q' or o == '--Queue':
-        self.queueName = v
-      elif o == '-R' or o == '--reference':
-        self.pilotReference = v
-      elif o in ( '-C', '--configurationServer' ):
-        self.configServer = v
-      elif o in ( '-G', '--Group' ):
-        self.userGroup = v
-      elif o in ( '-x', '--execute' ):
-        self.executeCmd = v
-      elif o in ( '-O', '--OwnerDN' ):
-        self.userDN = v
-      elif o in ( '-V', '--installation' ):
-        self.installation = v
-      elif o == '-p' or o == '--platform':
-        self.platform = v
-      elif o == '-D' or o == '--disk':
-        try:
-          self.minDiskSpace = int( v )
-        except ValueError:
-          pass
-      elif o == '-r' or o == '--release':
-        self.releaseVersion = v.split(',',1)[0]
-      elif o in ( '-l', '--project' ):
-        self.releaseProject = v
-      elif o in ( '-W', '--gateway' ):
-        self.gateway = v
-      elif o == '-c' or o == '--cert':
-        self.useServerCertificate = True
-      elif o == '-C' or o == '--certLocation':
-        self.certsLocation = v
-      elif o == '-M' or o == '--MaxCycles':
-        try:
-          self.maxCycles = min( self.MAX_CYCLES, int( v ) )
-        except ValueError:
-          pass
-      elif o in ( '-T', '--CPUTime' ):
-        self.jobCPUReq = v
-      elif o == '-P' or o == '--processors':
-        try:
-          self.procesors = int(v)
-        except:
-          pass
-      elif o == '-z' or o == '--pilotLogging':
-        self.pilotLogging = True
-      elif o in ( '-o', '--option' ):
-        self.genericOption = v

@@ -297,17 +297,10 @@ fi
 chown -R plt.plt /scratch/plt
 chmod 1775 /scratch/plt
 
-# Uncomment for testing with dev.tgz
-#DEVOPTS='--commandExtensions dev,LHCbPilot --commands NagiosProbes,CheckWorkerNode,InstallDIRAC,UnpackDevDev,LHCbConfigureBasics,LHCbConfigureSite,LHCbConfigureArchitecture,LHCbConfigureCPURequirements,MultiLaunchAgent'
-
 if [ '##user_data_option_dirac_queue##' != '' ] ; then
   QUEUE='##user_data_option_dirac_queue##'
 else
   QUEUE=default
-fi
-
-if [ '##user_data_option_dirac_tag##' != '' ] ; then
-  TAGS="-o '/Resources/Computing/CEDefaults/Tag=##user_data_option_dirac_tag##'"
 fi
 
 # Now run the pilot script
@@ -316,13 +309,14 @@ fi
  JOB_ID="##user_data_space##:$VM_UUID:##user_data_machinetype##" \
  MACHINEFEATURES="$MACHINEFEATURES" JOBFEATURES="$JOBFEATURES" \
  python /scratch/plt/dirac-pilot.py \
- --debug $DEVOPTS $TAGS \
+ --debug \
  -o '/LocalSite/SubmitPool=Test' \
  --Name '##user_data_space##' \
  --Queue $QUEUE \
  --MaxCycles 1 \
  --CEType Sudo \
- --cert --certLocation=/scratch/plt/etc/grid-security \
+ --cert --certLocation /scratch/plt/etc/grid-security \
+ ##user_data_option_dirac_opts## \
  >/var/spool/joboutputs/dirac-pilot.log 2>&1
 
 # Save JobAgent and System logs
