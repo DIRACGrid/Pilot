@@ -92,6 +92,8 @@ function PilotInstall(){
   sed -i "s#VAR_USERDN#$DIRACUSERDN#g" pilot.json
 
   prepareForPilot
+  installStompIfNecessary
+
 
   # launch the pilot script
   pilotOptions="-M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs --pilotLogging"
@@ -185,4 +187,22 @@ function fullPilot(){
     echo 'ERROR: cannot run dirac-configure'
     return
   fi
+}
+
+        
+
+function installStompIfNecessary()
+{
+  #checking if stomp is installed
+  if ! python -c 'import stomp' > /dev/null 2>&1; then
+      #checking if pip is installed
+      if ! type pip > /dev/null 2>&1; then
+          type yum > /dev/null 2>&1 || { echo >&2 "yum installer is required. Aborting"; exit 1; }
+          yum -y install python-pip
+      fi
+      pip install --user 'stomp.py=4.1.11'
+  fi
+  #stomp should be installed now
+  python -c 'import stomp' > /dev/null 2>&1 ||{ echo >&2 "stomp installation failure. Aborting"; exit 1; }
+
 }
