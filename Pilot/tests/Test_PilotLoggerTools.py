@@ -13,29 +13,76 @@ from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
 from Pilot.PilotLoggerTools import createPilotLoggerConfigFile
 from Pilot.PilotLoggerTools import readPilotLoggerConfigFile
 from Pilot.PilotLoggerTools import getUniqueIDFromOS
-
+from Pilot.PilotLoggerTools import readPilotJSONConfigFile
 
 class TestPilotLoggerTools( unittest.TestCase ):
 
   def setUp( self ):
     self.msg = {
-        'status': 'info',
-        'phase': 'Installing',
-        'timestamp': '1427121370.7',
-        'messageContent': 'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
-        'pilotUUID': 'eda78924-d169-11e4-bfd2-0800275d1a0a',
-        'source': 'InstallDIRAC'
-        }
+      'status': 'info',
+      'phase': 'Installing',
+      'timestamp': '1427121370.7',
+      'messageContent': 'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
+      'pilotUUID': 'eda78924-d169-11e4-bfd2-0800275d1a0a',
+      'source': 'InstallDIRAC'
+      }
     self.testFile = 'test_file_to_remove'
     self.testFileCfg = 'TestConf.cfg'
     self.badFile = '////'
+    self.pilotJSONConfigFile = 'pilotTest.json'
 
   def tearDown( self ):
-    for fileProd in [self.testFile, self.testFileCfg, 'PilotAgentUUID']:
+    for fileProd in [self.testFile, self.testFileCfg, 'PilotAgentUUID', self.pilotJSONConfigFile]:
       try:
         os.remove( fileProd )
       except OSError:
         pass
+
+class TestPilotLoggerToolsreadPilotJSONConfigFile  ( TestPilotLoggerTools ):
+  def test_success( self ):
+    jsonContent ="""
+			{
+				"Setups": {
+					"Dirac-Certification": {
+						"Logging": {
+							"Queue": {
+								"test": {
+								"Persistent": "False",
+								"Acknowledgement": "False"
+								}
+							},
+							"Host": "testMachineMQ.cern.ch",
+							"Port": "61614",
+							"HostKey": "/path/to/certs/hostkey.pem",
+							"HostCertificate": "/path/to/certs/hostcert.pem",
+							"CACertificate": "/path/to/certs/ca-bundle.crt"
+						}
+					}
+				},
+				"DefaultSetup": "Dirac-Certification"
+			}
+			"""
+    with open(self.pilotJSONConfigFile, 'w') as myF:
+      myF.write(jsonContent)
+    config = readPilotJSONConfigFile(self.pilotJSONConfigFile)
+    host = 'testMachineMQ.cern.ch'
+    port = 61614
+    queuePath = '/queue/test'
+    key_file  = '/path/to/certs/hostkey.pem'
+    cert_file = '/path/to/certs/hostcert.pem'
+    ca_certs = '/path/to/certs/ca-bundle.crt'
+    config = readPilotJSONConfigFile(self.pilotJSONConfigFile)
+    self.assertEqual(int(config['port']), port)
+    self.assertEqual(config['host'], host)
+    self.assertEqual(config['queuePath'], queuePath)
+    self.assertEqual(config['key_file'], key_file)
+    self.assertEqual(config['cert_file'], cert_file)
+    self.assertEqual(config['ca_certs'], ca_certs)
+
+    #self.assertEqual(config['fileWithID'], fileWithID)
+
+  def test_failure( self ):
+    pass
 
 
 class TestPilotLoggerToolsCreatePilotLoggerConfigFile( TestPilotLoggerTools ):

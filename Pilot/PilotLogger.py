@@ -11,6 +11,7 @@ import argparse
 from PilotLoggerTools import generateDict, encodeMessage
 from PilotLoggerTools import generateTimeStamp
 from PilotLoggerTools import isMessageFormatCorrect
+from PilotLoggerTools import readPilotJSONConfigFile 
 from PilotLoggerTools import readPilotLoggerConfigFile
 from PilotLoggerTools import getUniqueIDAndSaveToFile
 
@@ -106,7 +107,7 @@ class PilotLogger( object ):
 
   STATUSES = ['info', 'warning', 'error', 'debug']
 
-  def __init__( self, configFile = 'PilotLogger.cfg'):
+  def __init__( self, configFile = 'pilot.json'):
     """ ctr loads the configuration parameters from the file
         or if the file does not exists, loads the default set
         of values. Next, if self.fileWithUUID is not set (this
@@ -136,7 +137,8 @@ class PilotLogger( object ):
   def _loadConfigurationFromFile( self, filename ):
     """ Add comment
     """
-    config = readPilotLoggerConfigFile (filename)
+    #config = readPilotLoggerConfigFile (filename)
+    config = readPilotJSONConfigFile(filename)
     if not config:
       logging.warning('Could not open or load configuration File! Pilot Logger will use some default values!!!')
       return False

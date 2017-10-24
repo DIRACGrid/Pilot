@@ -23,27 +23,67 @@ def createPilotLoggerConfigFile( filename = 'PilotLogger.cfg',
      The format is json encoded file with the following options included
   """
   keys = [
-      'host',
-      'port',
-      'queuePath',
-      'key_file',
-      'cert_file',
-      'ca_certs',
-      'fileWithID'
-      ]
+    'host',
+    'port',
+    'queuePath',
+    'key_file',
+    'cert_file',
+    'ca_certs',
+    'fileWithID'
+    ]
   values = [
-      host,
-      port,
-      queuePath,
-      key_file,
-      cert_file,
-      ca_certs,
-      fileWithID
-      ]
+    host,
+    port,
+    queuePath,
+    key_file,
+    cert_file,
+    ca_certs,
+    fileWithID
+    ]
   config = dict( zip( keys, values ) )
   config = json.dumps(config)
   with open(filename, 'w') as myFile:
     myFile.write(config)
+
+def readPilotJSONConfigFile ( filename ):
+  """Helper function that loads general configuration file from a pilot JSON.
+  Returns:
+    dict:
+  """
+  pilotJSON = None
+  setup = 'Dirac-Certification'
+  try:
+    with open(filename, 'r') as myFile:
+      pilotJSON = json.load(myFile)
+      #setup = pilotJSON['DefaultSetup']
+      #config = transform_to_config(pilotJSON)
+      #pilotJSON['Setups'][setup]['Logging']
+      #config = json.loads(config)
+  except (IOError, ValueError):
+    return None
+  fileWithID= 'PilotUUID'
+  partial = pilotJSON['Setups'][setup]['Logging']
+  print partial
+  keys = [
+    'host',
+    'port',
+    'queuePath',
+    'key_file',
+    'cert_file',
+    'ca_certs',
+    'fileWithID'
+    ]
+  values = [
+    partial['Host'],
+    partial['Port'],
+    '/queue/'+ next(iter(partial['Queue'])),
+    partial['HostKey'],
+    partial['HostCertificate'],
+    partial['CACertificate'],
+    fileWithID
+    ]
+  config = dict( zip( keys, values ) )
+  return config
 
 def readPilotLoggerConfigFile ( filename ):
   """Helper function that loads configuration file.
