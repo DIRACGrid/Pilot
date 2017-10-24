@@ -206,7 +206,7 @@ def generateUniqueID():
   """
   return str( uuid1() )
 
-def getUniqueIDAndSaveToFile( filename = 'PilotAgentUUID' ):
+def getUniqueIDAndSaveToFile( filename = 'PilotUUID' ):
   """Generates the unique id and writes it to a file
      of given name.
      First, we try to receive the UUID from the OS, if that fails

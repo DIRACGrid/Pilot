@@ -32,7 +32,7 @@ class TestPilotLoggerTools( unittest.TestCase ):
     self.pilotJSONConfigFile = 'pilotTest.json'
 
   def tearDown( self ):
-    for fileProd in [self.testFile, self.testFileCfg, 'PilotAgentUUID', self.pilotJSONConfigFile]:
+    for fileProd in [self.testFile, self.testFileCfg, 'PilotUUID', self.pilotJSONConfigFile]:
       try:
         os.remove( fileProd )
       except OSError:
@@ -93,7 +93,7 @@ class TestPilotLoggerToolsCreatePilotLoggerConfigFile( TestPilotLoggerTools ):
     key_file  = 'certificates/client/key.pem'
     cert_file = 'certificates/client/cert.pem'
     ca_certs = 'certificates/testca/cacert.pem'
-    fileWithID = 'PilotAgentUUID_test'
+    fileWithID = 'PilotUUID_test'
 
     createPilotLoggerConfigFile( self.testFileCfg,
                                  host,
@@ -125,7 +125,7 @@ class TestPilotLoggerToolsReadPilotLoggerConfigFile ( TestPilotLoggerTools ):
     key_file  = ' certificates/client/key.pem'
     cert_file = 'certificates/client/cert.pem'
     ca_certs = 'certificates/testca/cacert.pem'
-    fileWithID = 'PilotAgentUUID_test'
+    fileWithID = 'PilotUUID_test'
 
     createPilotLoggerConfigFile( self.testFileCfg,
                                  host,

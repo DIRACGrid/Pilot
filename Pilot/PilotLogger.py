@@ -57,7 +57,7 @@ def disconnect(connect_handler):
   connect_handler.disconnect()
 
 
-def getPilotUUIDFromFile( filename = 'PilotAgentUUID' ):
+def getPilotUUIDFromFile( filename = 'PilotUUID' ):
   """ Retrives Pilot UUID from the file of given name.
   Returns:
     str: empty string in case of errors.
@@ -125,7 +125,7 @@ class PilotLogger( object ):
     self._loadConfigurationFromFile(configFile)
 
     if not self.fileWithUUID:
-      self.fileWithUUID = 'PilotAgentUUID'
+      self.fileWithUUID = 'PilotUUID'
       logging.warning('No pilot logger id file name was specified. The default file name will be used:'+self.fileWithUUID)
       if os.path.isfile(self.fileWithUUID):
         logging.warning('The default file: '+self.fileWithUUID + ' already exists. The content will be used to get UUID.')
