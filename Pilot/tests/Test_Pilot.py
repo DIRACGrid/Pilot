@@ -118,6 +118,8 @@ class CommandsTestCase( PilotTestCase ):
     # Fails if tar zxvf command fails
     pp = PilotParams()
     pp.replaceDIRACCode = 'testing.tgz'
+    pp.installEnv['PYTHONPATH'] = '/some/where'
+    pp.installEnv['PATH'] = '/some/where/else'
     up = ReplaceDIRACCode( pp )
     res = up.execute()
     self.assertEqual(res, None)
