@@ -571,7 +571,7 @@ class PilotParams( object ):
         self.commands = v.split( ',' )
       elif o == '-Z' or o == '--commandOptions':
         for i in v.split( ',' ):
-          self.commandOptions[ i.split( '=', 1 )[0] ] = i.split( '=', 1 )[1]
+          self.commandOptions[ i.split( '=', 1 )[0].strip() ] = i.split( '=', 1 )[1].strip()
       elif o == '-e' or o == '--extraPackages':
         self.extensions = v.split( ',' )
       elif o == '-n' or o == '--name':
