@@ -1,5 +1,29 @@
 #!/bin/sh
-
+#
+# Generic DIRAC pilot script for use with Singularity and Docker containers, 
+# containing the following ##user_data___## substitutions:
+#
+# user_data_jobfeatures_url
+# user_data_joboutputs_url
+# user_data_machine_hostname
+# user_data_machinefeatures_url
+# user_data_machinetype
+# user_data_option_dirac_opts
+# user_data_option_dirac_pilot_url
+# user_data_option_dirac_queue
+# user_data_option_hostcert
+# user_data_option_hostkey
+# user_data_option_x509_proxy
+# user_data_space
+# user_data_url
+# user_data_uuid
+#
+# Each substitution pattern may occur more than once in this template. If you
+# are reading a processed file, then these substitutions will already have 
+# been made below.
+#
+# Andrew.McNab@cern.ch October 2017
+#
 (
 date --utc +"%Y-%m-%d %H:%M:%S %Z user_data_sc Start user_data_sc on `hostname`"
 
@@ -10,7 +34,6 @@ export MACHINEFEATURES='##user_data_machinefeatures_url##'
 export JOBFEATURES='##user_data_jobfeatures_url##'
 export JOBOUTPUTS='##user_data_joboutputs_url##'
 
-export CE_NAME='##user_data_space##'
 export VM_UUID='##user_data_uuid##'
 
 if [ "$VM_UUID" = "" -a "$JOBFEATURES" != "" ] ; then
@@ -23,6 +46,7 @@ if [ "$VM_UUID" = "" ] ; then
 fi
 
 export JOB_ID="##user_data_space##:$VM_UUID:##user_data_machinetype##"
+export PILOT_UUID="sc://##user_data_space##/$JOB_ID"
 
 mkdir -p $HOME/grid-security
 export X509_USER_PROXY=$HOME/grid-security/x509proxy.pem

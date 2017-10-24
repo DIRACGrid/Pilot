@@ -598,11 +598,12 @@ class ConfigureSite( CommandBase ):
   def __setFlavour( self ):
 
     pilotRef = 'Unknown'
+    self.pp.flavour = 'Generic'
 
-    # Pilot reference is specified at submission
+    # If pilot reference is specified at submission, then set flavour to DIRAC
+    # unless overridden by presence of batch system environment variables
     if self.pp.pilotReference:
       self.pp.flavour = 'DIRAC'
-      pilotRef = self.pp.pilotReference
 
     # Take the reference from the Torque batch system
     if 'PBS_JOBID' in os.environ:
@@ -620,7 +621,6 @@ class ConfigureSite( CommandBase ):
       pilotRef = 'sshge://' + self.pp.ceName + '/' + os.environ['JOB_ID']
     # Generic JOB_ID
     elif 'JOB_ID' in os.environ:
-      self.pp.flavour = 'Generic'
       pilotRef = 'generic://' + self.pp.ceName + '/' + os.environ['JOB_ID']
 
     # Condor
@@ -696,6 +696,14 @@ class ConfigureSite( CommandBase ):
         self.boincHostPlatform = os.environ['BOINC_HOST_PLATFORM']
       if 'BOINC_HOST_NAME' in os.environ:
         self.boincHostName = os.environ['BOINC_HOST_NAME']
+
+    # Pilot reference is given explicitly in environment
+    if 'PILOT_UUID' in os.environ:
+      pilotRef = os.environ['PILOT_UUID']
+
+    # Pilot reference is specified at submission
+    if self.pp.pilotReference:
+      pilotRef = self.pp.pilotReference
 
     self.log.debug( "Flavour: %s; pilot reference: %s " % ( self.pp.flavour, pilotRef ) )
 

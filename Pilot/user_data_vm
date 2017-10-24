@@ -56,7 +56,7 @@ Content-Disposition: attachment; filename="user_data_script"
 mkdir -p /var/spool/joboutputs
 (
 # Set the hostname if available; display otherwise
-hostname ##user_data_vm_hostname##
+hostname ##user_data_machine_hostname##
 date --utc +"%Y-%m-%d %H:%M:%S %Z user_data_script Start user_data on `hostname`"
 
 echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6
@@ -71,7 +71,6 @@ export JOBOUTPUTS='##user_data_joboutputs_url##'
 /bin/echo -e "export MACHINEFEATURES=$MACHINEFEATURES\nexport JOBFEATURES=$JOBFEATURES\nexport JOBOUTPUTS=$JOBOUTPUTS" > /etc/profile.d/mjf.sh
 /bin/echo -e "setenv MACHINEFEATURES $MACHINEFEATURES\nsetenv JOBFEATURES $JOBFEATURES\nsetenv JOBOUTPUTS $JOBOUTPUTS" > /etc/profile.d/mjf.csh
 
-export CE_NAME='##user_data_space##'
 export VM_UUID='##user_data_uuid##'
 
 if [ "$VM_UUID" = "" -a "$JOBFEATURES" != "" ] ; then
@@ -79,9 +78,12 @@ if [ "$VM_UUID" = "" -a "$JOBFEATURES" != "" ] ; then
 fi
 
 if [ "$VM_UUID" = "" ] ; then
-  # If still unset then just use the hostname from the VM lifecycle manager
-  export VM_UUID=`date +'%s.##user_data_vm_hostname##'`
+  # If still unset then just use date and hostname from the VM lifecycle manager
+  export VM_UUID=`date +'%s.##user_data_machine_hostname##'`
 fi
+
+export JOB_ID="##user_data_space##:$VM_UUID:##user_data_machinetype##"
+export PILOT_UUID="vm://##user_data_space##/$JOB_ID"
 
 # Create a shutdown_message if ACPI shutdown signal received
 /bin/echo -e 'echo "100 VM received ACPI shutdown signal from hypervisor" > /var/spool/joboutputs/shutdown_message\n/sbin/shutdown -h now' >/etc/acpi/actions/power.sh
@@ -306,8 +308,8 @@ fi
 # Now run the pilot script
 /usr/bin/sudo -i -n -u plt \
  X509_USER_PROXY=$X509_USER_PROXY \
- JOB_ID="##user_data_space##:$VM_UUID:##user_data_machinetype##" \
  MACHINEFEATURES="$MACHINEFEATURES" JOBFEATURES="$JOBFEATURES" \
+ JOB_ID="$JOB_ID" PILOT_UUID="$PILOT_UUID" \
  python /scratch/plt/dirac-pilot.py \
  --debug \
  -o '/LocalSite/SubmitPool=Test' \
