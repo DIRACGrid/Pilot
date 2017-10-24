@@ -509,11 +509,11 @@ class PilotParams( object ):
                      ( 'y:', 'CEType=', 'CE Type (normally InProcess)' ),
                      ( 'z',  'pilotLogging', 'Activate pilot logging system' ),
                      ( 'C:', 'configurationServer=', 'Configuration servers to use' ), # FIXME: -C is used twice! Which one to keep?
-                     ( 'C:', 'certLocation=', 'Specify server certificate location' ), # FIXME: -C is used twice! Which one to keep?
-                     ( 'G:', 'Group=', 'DIRAC Group to use' ),
                      ( 'D:', 'disk=', 'Require at least <space> MB available' ),
                      ( 'E:', 'commandExtensions=', 'Python modules with extra commands' ),
                      ( 'F:', 'pilotCFGFile=', 'Specify pilot CFG file' ),
+                     ( 'G:', 'Group=', 'DIRAC Group to use' ),
+                     ( 'K:', 'certLocation=', 'Specify server certificate location' ), # FIXME: -C is used twice! Which one to keep?
                      ( 'M:', 'MaxCycles=', 'Maximum Number of JobAgent cycles to run' ),
                      ( 'N:', 'Name=', 'CE Name' ),
                      ( 'O:', 'OwnerDN=', 'Pilot OwnerDN (for private pilots)' ),
