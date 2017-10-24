@@ -93,7 +93,9 @@ function PilotInstall(){
 
   prepareForPilot
   installStompIfNecessary
-
+  python PilotLoggerTools.py PilotUUID
+  python PilotLogger.py "Hello I am THE best pilot"
+  python PilotLogger.py "Getting DIRAC Pilot 2.0 code from lhcbproject for now... babla"
 
   # launch the pilot script
   pilotOptions="-M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs --pilotLogging"
