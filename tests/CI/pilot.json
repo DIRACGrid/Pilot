@@ -23,6 +23,19 @@
           "MultiLaunchAgent"
         ]
       },
+      "Logging": {
+        "Queue": {
+          "test": {
+            "Persistent": "False",
+            "Acknowledgement": "False"
+            }
+        },
+        "Host": "lbvobox50.cern.ch",
+        "Port": "61614",
+        "HostKey": "/home/dirac/certs/hostkey.pem",
+        "HostCertificate": "/home/dirac/certs/hostcert.pem",
+        "CACertificate": "/home/dirac/certs/ca-bundle.crt"
+      },
       "NagiosProbes": "WN-mjf, WN-sft-csh, WN-sft-voms, WN-sft-vo-swdir",
       "Version": "VAR_DIRAC_VERSION",
       "NagiosPutURL": "https://lbvobox06.cern.ch:9132/sam/"
