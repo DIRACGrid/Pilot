@@ -22,6 +22,7 @@ import os
 import time
 import stat
 import socket
+import urllib
 import tarfile
 import httplib
 
@@ -248,7 +249,49 @@ class InstallDIRAC( CommandBase ):
     self._locateInstallationScript()
     self._installDIRAC()
 
+class ReplaceDIRACCode( CommandBase ):
+  """ This command will replace DIRAC code with the one taken from a different location.
+      This command is mostly for testing purposes, and should NOT be added in default configurations.
 
+      It uses -Y/--replaceDIRACCode option for specifying a TGZ archive with a URL which can be opened by
+      urllib.urlopen (on a webserver or a local .tgz file downloaded with the pilot directory.)
+      
+      The TGZ file should be created by something equivalent to this
+        cd /cvmfs/lhcb.cern.ch/lib/lhcb/DIRAC/DIRAC_v6r17p33
+        tar zcvf /tmp/DIRACdev.tgz *
+      so the DIRAC directory itself AND the scripts directory at the same level are included and will be 
+      unpacked in the ReplacementCode directory, which itself is added to PYTHONPATH. You must ensure that
+      the executable bits for scripts are retained when making the TGZ archive (they should be by default.)
+
+      You can include other packages (eg LHCbDIRAC) which should be found by Python, by including them at
+      that same top level when making the TGZ file.
+  """
+
+  def __init__( self, pilotParams ):
+    """ c'tor
+    """
+    super( ReplaceDIRACCode, self ).__init__( pilotParams )
+
+  def execute(self):
+    """ Download/untar a TGZ archive file
+    """
+    if not self.pp.replaceDIRACCode:
+      self.log.warn( "No -Y/--replaceDIRACCode given so no action by ReplaceDIRACCode pilot command!" )
+      return
+
+    os.mkdir( os.getcwd() + os.path.sep + 'ReplacementCode' )
+    
+    # Fetch and unpack the TGZ file
+    tar = tarfile.open( mode = "r|gz", fileobj = urllib.urlopen( self.pp.replaceDIRACCode ) )
+    tar.extractall( os.getcwd() + os.path.sep + 'ReplacementCode' )
+    tar.close()
+
+    # Add the ReplacementCode directory to the Python path
+    self.pp.installEnv['PYTHONPATH'] = os.getcwd() + os.path.sep + 'ReplacementCode' + ':' + self.pp.installEnv['PYTHONPATH']
+    self.pp.installEnv['PATH'] = os.getcwd() + os.path.sep + 'ReplacementCode' + os.path.sep + 'scripts:' + self.pp.installEnv['PATH']
+
+    self.log.info( "TGZ file %s unpacked. PYTHONPATH updated to be %s and PATH updated to be %s" % 
+                         ( self.pp.replaceDIRACCode, self.pp.installEnv['PYTHONPATH'], self.pp.installEnv['PATH'] ) )
 
 class ConfigureBasics( CommandBase ):
   """ This command completes DIRAC installation.
@@ -319,6 +362,7 @@ class ConfigureBasics( CommandBase ):
     if self.pp.configServer:
       self.cfg.append( '-C "%s"' % self.pp.configServer )
     if self.pp.releaseProject:
+      self.cfg.append( '-e "%s"' % self.pp.releaseProject )
       self.cfg.append( '-o /LocalSite/ReleaseProject=%s' % self.pp.releaseProject )
     if self.pp.gateway:
       self.cfg.append( '-W "%s"' % self.pp.gateway )
@@ -555,11 +599,12 @@ class ConfigureSite( CommandBase ):
   def __setFlavour( self ):
 
     pilotRef = 'Unknown'
+    self.pp.flavour = 'Generic'
 
-    # Pilot reference is specified at submission
+    # If pilot reference is specified at submission, then set flavour to DIRAC
+    # unless overridden by presence of batch system environment variables
     if self.pp.pilotReference:
       self.pp.flavour = 'DIRAC'
-      pilotRef = self.pp.pilotReference
 
     # Take the reference from the Torque batch system
     if 'PBS_JOBID' in os.environ:
@@ -577,7 +622,6 @@ class ConfigureSite( CommandBase ):
       pilotRef = 'sshge://' + self.pp.ceName + '/' + os.environ['JOB_ID']
     # Generic JOB_ID
     elif 'JOB_ID' in os.environ:
-      self.pp.flavour = 'Generic'
       pilotRef = 'generic://' + self.pp.ceName + '/' + os.environ['JOB_ID']
 
     # Condor
@@ -653,6 +697,14 @@ class ConfigureSite( CommandBase ):
         self.boincHostPlatform = os.environ['BOINC_HOST_PLATFORM']
       if 'BOINC_HOST_NAME' in os.environ:
         self.boincHostName = os.environ['BOINC_HOST_NAME']
+
+    # Pilot reference is given explicitly in environment
+    if 'PILOT_UUID' in os.environ:
+      pilotRef = os.environ['PILOT_UUID']
+
+    # Pilot reference is specified at submission
+    if self.pp.pilotReference:
+      pilotRef = self.pp.pilotReference
 
     self.log.debug( "Flavour: %s; pilot reference: %s " % ( self.pp.flavour, pilotRef ) )
 
@@ -1245,34 +1297,3 @@ class NagiosProbes( CommandBase ):
     self._setNagiosOptions()
     self._runNagiosProbes()
 
-class UnpackDev( CommandBase ):
-  """ Unpack dev.tgz from the pilot directory into the pilot directory
-      Put dev.tgz in the remote pilot directory to have it fetched along
-      with the rest of the pilot scripts. The UnpackDev pilot command
-      needs to be listed after InstallDIRAC if it contains dev versions
-      of DIRAC modules.
-  """
-
-  def __init__( self, pilotParams ):
-    """ c'tor
-    """
-    super( UnpackDev, self ).__init__( pilotParams )
-    self.devFile = 'dev.tgz'
-
-  def execute( self ):
-    """ Standard entry point to a pilot command
-    """
-    self.log.info( 'Unpacking ' + self.devFile )
-    try:
-      tar = tarfile.open( self.devFile )
-    except Exception as e:
-      raise Exception( "Could not open %s (%s)" % ( self.devFile, str( e ) ) )
-
-    try:
-      tar.extractall()
-    except Exception as e:
-      raise Exception( "Could not unpack %s (%s)" % ( self.devFile, str( e ) ) )
-    finally:
-      tar.close()
-
-    self.log.info( "%s unpacked successfully" % self.devFile )

@@ -11,7 +11,7 @@ import sys
 import os
 
 from Pilot.pilotTools import PilotParams
-from Pilot.pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes, UnpackDev
+from Pilot.pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes, ReplaceDIRACCode
 
 class PilotTestCase( unittest.TestCase ):
   """ Base class for the Agents test cases
@@ -109,15 +109,18 @@ class CommandsTestCase( PilotTestCase ):
     self.assertEqual( nagios.nagiosProbes, ['Nagios1', 'Nagios2'] )
     self.assertEqual( nagios.nagiosPutURL, 'https://127.0.0.2/' )
 
-  def test_UnpackDev ( self ):
+  def test_ReplaceDIRACCode ( self ):
     """ Test UnpackDev command
     """
     # Set up the dev.tgz file
-    os.system( 'echo 123 > 123.txt ; tar zcvf dev.tgz 123.txt ; rm -f 123.txt ' )
+    os.system( 'echo 123 > 123.txt ; tar zcvf testing.tgz 123.txt ; rm -f 123.txt ' )
 
     # Fails if tar zxvf command fails
     pp = PilotParams()
-    up = UnpackDev( pp )
+    pp.replaceDIRACCode = 'testing.tgz'
+    pp.installEnv['PYTHONPATH'] = '/some/where'
+    pp.installEnv['PATH'] = '/some/where/else'
+    up = ReplaceDIRACCode( pp )
     res = up.execute()
     self.assertEqual(res, None)
 
