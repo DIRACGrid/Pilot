@@ -25,16 +25,16 @@
       },
       "Logging": {
         "Queue": {
-          "test": {
+          "lhcb.test.*": {
             "Persistent": "False",
             "Acknowledgement": "False"
             }
         },
-        "Host": "lbvobox50.cern.ch",
-        "Port": "61614",
-        "HostKey": "/home/dirac/certs/hostkey.pem",
-        "HostCertificate": "/home/dirac/certs/hostcert.pem",
-        "CACertificate": "/home/dirac/certs/ca-bundle.crt"
+        "Host": "lhcb-test-mb.cern.ch",
+        "Port": "61723",
+        "HostKey": "/home/dirac/WojtekTests/etc/grid-security/hostkey.pem",
+        "HostCertificate": "/home/dirac/WojtekTests/etc/grid-security/hostcert.pem",
+        "CACertificate": "/home/dirac/WojtekTests/etc/grid-security/allCAs.pem"
       },
       "NagiosProbes": "WN-mjf, WN-sft-csh, WN-sft-voms, WN-sft-vo-swdir",
       "Version": "VAR_DIRAC_VERSION",
