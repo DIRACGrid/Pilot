@@ -55,10 +55,6 @@ def readPilotJSONConfigFile ( filename ):
   try:
     with open(filename, 'r') as myFile:
       pilotJSON = json.load(myFile)
-      #setup = pilotJSON['DefaultSetup']
-      #config = transform_to_config(pilotJSON)
-      #pilotJSON['Setups'][setup]['Logging']
-      #config = json.loads(config)
   except (IOError, ValueError):
     return None
   fileWithID= 'PilotUUID'

@@ -6,8 +6,9 @@
 import os
 import Queue
 import logging
-import stomp
 import argparse
+import stomp
+import requests
 from PilotLoggerTools import generateDict, encodeMessage
 from PilotLoggerTools import generateTimeStamp
 from PilotLoggerTools import isMessageFormatCorrect
@@ -81,7 +82,6 @@ def eraseFileContent( filename ):
 def saveMessageToFile( msg, filename = 'myLocalQueueOfMessages' ):
   """ Adds the message to a file appended as a next line.
   """
-
   with open(filename, 'a+') as myFile:
     myFile.write(msg+'\n')
 
@@ -107,6 +107,8 @@ class PilotLogger( object ):
 
   STATUSES = ['info', 'warning', 'error', 'debug']
 
+  DESTINATION_TYPES = ['MQ', 'LOCAL_FILE', 'REST_API']
+
   def __init__( self, configFile = 'pilot.json'):
     """ ctr loads the configuration parameters from the file
         or if the file does not exists, loads the default set
@@ -118,6 +120,7 @@ class PilotLogger( object ):
       configFile(str): File with the configuration parameters.
     """
     self.STATUSES = PilotLogger.STATUSES
+    self.DESTINATION_TYPES = PilotLogger.DESTINATION_TYPES
     self.fileWithUUID = ''
     self.networkCfg= None
     self.queuePath = ''
@@ -137,7 +140,6 @@ class PilotLogger( object ):
   def _loadConfigurationFromFile( self, filename ):
     """ Add comment
     """
-    #config = readPilotLoggerConfigFile (filename)
     config = readPilotJSONConfigFile(filename)
     if not config:
       logging.warning('Could not open or load configuration File! Pilot Logger will use some default values!!!')
@@ -154,8 +156,13 @@ class PilotLogger( object ):
     """ Checks if the flag corresponds to one of the predefined
         STATUSES, check constructor for current set.
     """
-
     return status in self.STATUSES
+
+  def _isCorrectDestinationType(self, destType):
+    """ Checks if the destType corresponds to one of the predefined
+        DESTINATION_TYPES, check constructor for current set.
+    """
+    return destType in self.DESTINATION_TYPES
 
   def _sendAllLocalMessages(self, connect_handler, flag = 'info' ):
     """ Retrives all messages from the local storage
@@ -165,7 +172,6 @@ class PilotLogger( object ):
     while not queue.empty():
       msg = queue.get()
       send(msg, self.queuePath, connect_handler)
-
 
   def _sendMessage( self, msg, flag ):
     """ Method first copies the message content to the
@@ -188,7 +194,19 @@ class PilotLogger( object ):
     disconnect(connection)
     return True
 
-  def sendMessage( self, messageContent, source = 'unspecified', phase = 'unspecified' , status='info',  localOutputFile = None ):
+  def _sendMessageToREST( self, msg, flag ):
+    #r = requests.post('https://localhost:8888/my', json=msg, cert=('/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostcert.pem', '/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostkey.pem'), verify='/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/allCAs.pem')
+    r = requests.post('https://localhost:8888/my', json=msg, cert=('/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostcert.pem', '/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostkey.pem'), verify=False)
+    r.text
+    return True 
+
+  def sendMessage(self,
+                  messageContent,
+                  source = 'unspecified',
+                  phase = 'unspecified',
+                  status='info',
+                  destinationType = 'MQ',
+                  localOutputFile = None):
     """ Sends the message after
         creating the correct format:
         including content, timestamp, status, source, phase and the uuid
@@ -200,23 +218,34 @@ class PilotLogger( object ):
     if not self._isCorrectStatus( status ):
       logging.error('status: ' + str(status) + ' is not correct')
       return False
+    if not self._isCorrectDestinationType( destinationType ):
+      logging.error('destination type: ' + str(destinationType ) + ' is not correct')
+      return False
     myUUID = getPilotUUIDFromFile(self.fileWithUUID)
     message = generateDict(
-        myUUID,
-        generateTimeStamp(),
-        source,
-        phase,
-        status,
-        messageContent
-        )
+      myUUID,
+      generateTimeStamp(),
+      source,
+      phase,
+      status,
+      messageContent
+      )
     if not isMessageFormatCorrect( message ):
       logging.warning("Message format is not correct.")
       return False
     encodedMsg = encodeMessage( message )
-    if localOutputFile:
-      return saveMessageToFile(msg = encodedMsg, filename = localOutputFile)
-    else:
+    if destinationType == 'MQ':
       return self._sendMessage( encodedMsg, flag = status )
+    elif destinationType == 'REST_API':
+      return self._sendMessageToREST( encodedMsg, flag = status )
+    elif destinationType == 'LOCAL_FILE':
+      if localOutputFile:
+        saveMessageToFile(msg = encodedMsg, filename = localOutputFile)
+        return True;
+      else:
+        logging.error('no local output file given')
+        return False
+    return False 
 
 def main():
   """ main() function  is used to send a message

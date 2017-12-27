@@ -60,14 +60,16 @@ class TestPilotLogger_sendMessage( TestPilotLogger ):
   def test_failure( self ):
     pass
 
-class TestPilotLoggersendMessage( TestPilotLogger ):
-
-  # here some mocks needed
-  def test_success( self ):
-    pass
-
   def test_NotCorrectFlag( self ):
     self.assertFalse( self.logger.sendMessage( '', 'badFlag' ) )
+
+class TestPilotLogger_sendMessageToREST( TestPilotLogger ):
+
+  def test_success( self ):
+    self.logger._sendMessageToREST('wowow', 'badFlag')
+  def test_failure( self ):
+    pass
+
 
 if __name__ == '__main__':
   suite = unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger )
@@ -75,5 +77,5 @@ if __name__ == '__main__':
   suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_connect ) )
   suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_isCorrectStatus ) )
   suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_sendMessage ) )
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLoggersendMessage ) )
+  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_sendMessageToREST ) )
   testResult = unittest.TextTestRunner( verbosity = 2 ).run( suite )
