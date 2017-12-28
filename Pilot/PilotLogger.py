@@ -241,11 +241,11 @@ class PilotLogger( object ):
     elif destinationType == 'LOCAL_FILE':
       if localOutputFile:
         saveMessageToFile(msg = encodedMsg, filename = localOutputFile)
-        return True;
+        return True
       else:
         logging.error('no local output file given')
         return False
-    return False 
+    return False
 
 def main():
   """ main() function  is used to send a message
@@ -261,26 +261,26 @@ def main():
     return arg
 
   parser = argparse.ArgumentParser(description="command line interface to send logs to MQ system.",
-                                  formatter_class=argparse.RawTextHelpFormatter,
-                                  epilog=
-                                    'examples:\n'
-                                    +'                   python PilotLogger.py InstallDIRAC installing info My message\n'
-                                    +'                   python PilotLogger.py InstallDIRAC installing debug Debug message\n'
-                                    +'                   python PilotLogger.py "My message"\n'
-                                    +'                   python PilotLogger.py "My message" --output myFileName\n'
+                                   formatter_class=argparse.RawTextHelpFormatter,
+                                   epilog=
+                                   'examples:\n'
+                                   +'                   python PilotLogger.py InstallDIRAC installing info My message\n'
+                                   +'                   python PilotLogger.py InstallDIRAC installing debug Debug message\n'
+                                   +'                   python PilotLogger.py "My message"\n'
+                                   +'                   python PilotLogger.py "My message" --output myFileName\n'
                                   )
   parser.add_argument('source',
                       type = singleWord,
                       nargs='?',
                       default ='unspecified',
                       help='Source of the message e.g. "InstallDIRAC". It must be one word. '
-                           +'If not specified it is set to "unspecified".')
+                      +'If not specified it is set to "unspecified".')
   parser.add_argument('phase',
                       type = singleWord,
                       nargs='?',
                       default ='unspecified',
                       help='Phase of the process e.g. "fetching". It must be one word. '
-                            +'If not specified it is set to "unspecified".')
+                      +'If not specified it is set to "unspecified".')
   parser.add_argument('status',
                       nargs = '?',
                       choices = PilotLogger.STATUSES,
@@ -293,7 +293,7 @@ def main():
                       help='Human readable content of the message. ')
   parser.add_argument('--output',
                       help = 'Log the content to the specified file'
-                             +' instead of sending it to the Message Queue server.')
+                      +' instead of sending it to the Message Queue server.')
   args = parser.parse_args()
 
   if len(" ".join(args.message)) >= 200:
