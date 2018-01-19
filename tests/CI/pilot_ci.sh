@@ -61,6 +61,7 @@ mkdir -p $WORKSPACE/ServerInstallDIR # Where servers are installed
 SERVERINSTALLDIR=$_
 mkdir -p $WORKSPACE/PilotInstallDIR # Where pilots are installed
 PILOTINSTALLDIR=$_
+CLIENTINSTALLDIR=$PILOTINSTALLDIR
 
 # Sourcing utility file
 source $TESTCODE/Pilot/tests/CI/utilities.sh
