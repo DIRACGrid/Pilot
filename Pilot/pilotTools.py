@@ -443,6 +443,7 @@ class PilotParams( object ):
     self.commandOptions = {}
     self.extensions = []
     self.tags = []
+    self.reqtags = []
     self.site = ""
     self.setup = ""
     self.configServer = ""

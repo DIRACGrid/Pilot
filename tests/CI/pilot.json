@@ -13,6 +13,17 @@
           "ConfigureArchitecture",
           "ConfigureCPURequirements"
         ],
+        "TEST-FULL": [
+          "CheckWorkerNode",
+          "InstallDIRAC",
+          "ConfigureBasics",
+          "CheckCECapabilities",
+          "CheckWNCapabilities",
+          "ConfigureSite",
+          "ConfigureArchitecture",
+          "ConfigureCPURequirements",
+          "LaunchAgent"
+        ],
         "Vcycle": [
           "CheckWorkerNode",
           "LHCbInstallDIRAC",
@@ -73,6 +84,11 @@
       "Site": "VAR_JENKINS_SITE",
       "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST"
+    },
+    "jenkins-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST-FULL"
     },
     "cygnus.grid.rug.nl": {
       "Site": "LCG.RUG.nl",

@@ -61,6 +61,7 @@ mkdir -p $WORKSPACE/ServerInstallDIR # Where servers are installed
 SERVERINSTALLDIR=$_
 mkdir -p $WORKSPACE/PilotInstallDIR # Where pilots are installed
 PILOTINSTALLDIR=$_
+CLIENTINSTALLDIR=$PILOTINSTALLDIR
 
 # Sourcing utility file
 source $TESTCODE/Pilot/tests/CI/utilities.sh
@@ -192,7 +193,6 @@ function fullPilot(){
 }
 
         
-
 function installStompIfNecessary()
 {
   #checking if stomp is installed
@@ -207,5 +207,29 @@ function installStompIfNecessary()
   fi
   #stomp should be installed now
   python -c 'import stomp' > /dev/null 2>&1 ||{ echo >&2 "stomp installation failure. Aborting"; exit 1; }
+}
 
+####################################################################################
+# submitAndMatch
+#
+# This installs a DIRAC client, then use it to submit jobs to DIRAC.Jenkins.ch,
+# then we run a pilot that should hopefully match those jobs
+
+function submitAndMatch(){
+
+  # Here we submit the jobs (to DIRAC.Jenkins.ch)
+  installDIRAC # This installs the DIRAC client
+  submitJob # This submits the jobs
+
+  # Then we run the full pilot, including the JobAgent, which should match the jobs we just submitted
+  cd $PILOTINSTALLDIR
+  if [ $? -ne 0 ]
+  then
+    echo 'ERROR: cannot change to ' $PILOTINSTALLDIR
+    return
+  fi
+  prepareForPilot
+  default
+
+  PilotInstall
 }
