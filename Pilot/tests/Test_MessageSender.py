@@ -5,18 +5,23 @@
 
 import unittest
 import os
-from Pilot.MessageSender import MessageSender, LocalFileSender
+from mock import MagicMock
+from Pilot.MessageSender import LocalFileSender, StompSender, RESTSender
+import Pilot.MessageSender as module
 
 class TestMessageSender( unittest.TestCase ):
 
   def setUp( self ):
     self.testFile = 'myLocalQueueOfMessages'
     self.testMessage= 'my test message'
-    #self.testCfgFile = 'TestMessageSender.cfg'
-    #getUniqueIDAndSaveToFile( self.testFile )
-    #self.logger = MessageSender(self.testCfgFile)
-    #self.badFile = '////'
-    #self.nonExistentFile = 'abrakadabraToCzaryIMagia'
+    self.networkCfg= ('host', 123)
+    self.sslCfg = {'key_file':'a', 'cert_file':'b', 'ca_certs':'c'}
+
+    module.stomp = MagicMock()
+    module.stomp.Connection = MagicMock()
+    connectionMock = MagicMock()
+    connectionMock.is_connected.return_value = True
+    module.stomp.Connection.return_value = connectionMock
   def tearDown( self ):
     try:
       os.remove( self.testFile )
@@ -33,66 +38,28 @@ class TestLocalFileSender( TestMessageSender ):
       lineFromFile = next(myFile)
     self.assertEqual(self.testMessage+'\n', lineFromFile)
 
-class TestLocalFileSender( TestMessageSender ):
+class TestStompSender( TestMessageSender ):
+
   def test_success( self ):
-    msgSender = LocalFileSender()
+    msgSender = StompSender(self.networkCfg, self.sslCfg)
     res = msgSender.sendMessage(self.testMessage, 'info')
     self.assertTrue(res)
-    lineFromFile =''
-    with open( self.testFile, 'r') as myFile:
-      lineFromFile = next(myFile)
-    self.assertEqual(self.testMessage+'\n', lineFromFile)
 
-#class TestLocalFileSender( MessageSender ):
+  def test_failure_no_connectionParams( self ):
+    msgSender = StompSender(self.networkCfg, None)
+    res = msgSender.sendMessage(self.testMessage, 'info')
+    self.assertFalse(res)
 
-  #def test_success( self ):
-    #uuid = getPilotUUIDFromFile( self.testFile )
-    #self.assertTrue( uuid )
+class TestRESTSender(TestMessageSender):
 
-  #def test_failureBadFile( self ):
-    #uuid = getPilotUUIDFromFile( self.badFile )
-    #self.assertFalse( uuid )
-
-  #def test_failureNonExistent( self ):
-    #uuid = getPilotUUIDFromFile( self.nonExistentFile )
-    #self.assertFalse( uuid )
-
-#class TestMessageSender_isCorrectStatus( TestMessageSender ):
-
-  #def test_success( self ):
-    #for status in self.logger.STATUSES:
-      #self.assertTrue( self.logger._isCorrectStatus( status ) )
-
-  #def test_failure( self ):
-    #self.assertFalse( self.logger._isCorrectStatus( 'mamma Mia' ) )
-
-  #def test_failureEmpty( self ):
-    #self.assertFalse( self.logger._isCorrectStatus( '' ) )
-
-#class TestMessageSender_connect( TestMessageSender ):
-  #pass
-#class TestMessageSender_sendMessage( TestMessageSender ):
-
-  ## here some mocks needed
-  #def test_success( self ):
-    #pass
-  #def test_failure( self ):
-    #pass
-
-  #def test_NotCorrectFlag( self ):
-    #self.assertFalse( self.logger.sendMessage( '', 'badFlag' ) )
-
-#class TestMessageSender_sendMessageToREST( TestMessageSender ):
-
-  #def test_success( self ):
-    #self.logger._sendMessageToREST('wowow', 'badFlag')
-  #def test_failure( self ):
-    #pass
-
+  def test_success( self ):
+    msgSender = RESTSender()
+    res = msgSender.sendMessage(self.testMessage, 'info')
+    self.assertTrue(res)
 
 if __name__ == '__main__':
   suite = unittest.defaultTestLoader.loadTestsFromTestCase( TestMessageSender )
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestLocalFileSender) )
-  #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestGetPilotUUIDFromFile ) )
-
+  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestLocalFileSender))
+  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestStompSender))
+  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestRESTSender))
   testResult = unittest.TextTestRunner( verbosity = 2 ).run( suite )

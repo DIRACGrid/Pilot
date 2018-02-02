@@ -1,7 +1,7 @@
 """ Message sender module for the remote loggin system.
     It provides the general interface of the message sender and
     several implementations that e.g. allows to send the message
-    to a REST interface or to a MQ server using the STOMP protocol.
+    to a REST interface or to a MQ server using the Stomp protocol.
 """
 
 import Queue
@@ -17,12 +17,13 @@ class MessageSender( object ):
 
 
 
-#class RESTSender( MessageSender ):
-  #""" Message sender to a REST interface.
-  #"""
+class RESTSender( MessageSender ):
+  """ Message sender to a REST interface.
+  """
 
-  #def sendMessage( self, msg, flag ):
-    ##r = requests.post('https://localhost:8888/my', json=msg, cert=('/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostcert.pem', '/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostkey.pem'), verify='/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/allCAs.pem')
+  def sendMessage( self, msg, flag ):
+    return False
+    #r = requests.post('https://localhost:8888/my', json=msg, cert=('/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostcert.pem', '/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostkey.pem'), verify='/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/allCAs.pem')
     #r = requests.post('https://localhost:8888/my', json=msg, cert=('/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostcert.pem', '/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostkey.pem'), verify=False)
     #r.text
     #return True 
@@ -70,6 +71,16 @@ def connect(host_and_port, ssl_cfg):
       handler or None in case of connection down.
       Stomp-depended function.
   """
+  if not ssl_cfg:
+    logging.error("ssl_cfg argument is None")
+    return None
+  if not host_and_port:
+    logging.error("host_and_port argument is None")
+    return None
+  if not all(key in ssl_cfg for key in ['key_file', 'cert_file', 'ca_certs']):
+    logging.error("Missing ssl_cfg keys")
+    return None
+
   try:
     connection = stomp.Connection(host_and_ports=host_and_port, use_ssl = True)
     connection.set_ssl(for_hosts=host_and_port,
@@ -103,25 +114,20 @@ def disconnect(connect_handler):
   """
   connect_handler.disconnect()
 
-class STOMPSender( MessageSender ):
+class StompSender(MessageSender):
   """ Stomp message sender.
   """
-  def __init__( self):
+  def __init__(self, networkCfg, sslConfig):
     self.fileWithUUID = ''
     self.networkCfg= None
     self.queuePath = ''
     self.sslCfg = None
+    #maybe directly from json
+    #for a moment from args
+    self.networkCfg = networkCfg
+    self.sslCfg = sslConfig
 
-  def _sendAllLocalMessages(self, connect_handler, flag = 'info' ):
-    """ Retrives all messages from the local storage
-        and sends it.
-    """
-    queue = readMessagesFromFileAndEraseFileContent()
-    while not queue.empty():
-      msg = queue.get()
-      send(msg, self.queuePath, connect_handler)
-
-  def sendMessage( self, msg, flag ):
+  def sendMessage(self, msg, flag):
     """ Method first copies the message content to the
         local storage, then it checks if the connection
         to RabbitMQ server is up,
@@ -141,3 +147,12 @@ class STOMPSender( MessageSender ):
     self._sendAllLocalMessages(connection, flag)
     disconnect(connection)
     return True
+
+  def _sendAllLocalMessages(self, connect_handler, flag = 'info' ):
+    """ Retrives all messages from the local storage
+        and sends it.
+    """
+    queue = readMessagesFromFileAndEraseFileContent()
+    while not queue.empty():
+      msg = queue.get()
+      send(msg, self.queuePath, connect_handler)
