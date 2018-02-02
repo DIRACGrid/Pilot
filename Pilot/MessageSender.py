@@ -19,23 +19,23 @@ class MessageSender(object):
     raise NotImplementedError
 
 
-def createMessageSender(senderType):
+def createMessageSender(senderType, **kwargs):
   """
   Function creates MessageSender according to sender type.
   Args:
-    senderType(str):sender type to be created. 
-                    The allowed types are 'MQ', 'REST_API', 'LOCAL_FILE' 
+    senderType(str):sender type to be created.
+                    The allowed types are 'MQ', 'REST_API', 'LOCAL_FILE'
   Returns:
     MessageSender or None if senderType is unknown
 
   """
 
   if senderType == 'MQ':
-    return StompSender
+    return StompSender(kwargs)
   elif senderType == 'REST_API':
-    return RESTSender
+    return RESTSender(kwargs)
   elif senderType == 'LOCAL_FILE':
-    return LocalFileSender
+    return LocalFileSender()
   logging.error("Unknown message sender type")
   return None
 
@@ -55,7 +55,6 @@ class RESTSender(MessageSender):
 def eraseFileContent(filename):
   """ Erases the content of a given file.
   """
-
   with open(filename, 'w+') as myFile:
     myFile.truncate()
 
@@ -86,6 +85,9 @@ def readMessagesFromFileAndEraseFileContent(filename='myLocalQueueOfMessages'):
 class LocalFileSender(MessageSender):
   """ Message sender to a local file.
   """
+
+  def __init__(self):
+    pass
 
   def sendMessage(self, msg, flag):
     # to change
@@ -148,7 +150,7 @@ class StompSender(MessageSender):
   """ Stomp message sender.
   """
 
-  def __init__(self, networkCfg, sslConfig):
+  def __init__(self, networkCfg=None, sslConfig=None):
     self.fileWithUUID = ''
     self.networkCfg = None
     self.queuePath = ''
