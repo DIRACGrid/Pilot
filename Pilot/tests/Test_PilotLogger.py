@@ -50,32 +50,32 @@ class TestPilotLogger_isCorrectStatus( TestPilotLogger ):
   def test_failureEmpty( self ):
     self.assertFalse( self.logger._isCorrectStatus( '' ) )
 
-class TestPilotLogger_connect( TestPilotLogger ):
-  pass
-class TestPilotLogger_sendMessage( TestPilotLogger ):
+#class TestPilotLogger_connect( TestPilotLogger ):
+  #pass
+#class TestPilotLogger_sendMessage( TestPilotLogger ):
 
-  # here some mocks needed
-  def test_success( self ):
-    pass
-  def test_failure( self ):
-    pass
+  ## here some mocks needed
+  #def test_success( self ):
+    #pass
+  #def test_failure( self ):
+    #pass
 
-  def test_NotCorrectFlag( self ):
-    self.assertFalse( self.logger.sendMessage( '', 'badFlag' ) )
+  #def test_NotCorrectFlag( self ):
+    #self.assertFalse( self.logger.sendMessage( '', 'badFlag' ) )
 
-class TestPilotLogger_sendMessageToREST( TestPilotLogger ):
+#class TestPilotLogger_sendMessageToREST( TestPilotLogger ):
 
-  def test_success( self ):
-    self.logger._sendMessageToREST('wowow', 'badFlag')
-  def test_failure( self ):
-    pass
+  #def test_success( self ):
+    #self.logger._sendMessageToREST('wowow', 'badFlag')
+  #def test_failure( self ):
+    #pass
 
 
 if __name__ == '__main__':
   suite = unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger )
   suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestGetPilotUUIDFromFile ) )
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_connect ) )
+  #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_connect ) )
   suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_isCorrectStatus ) )
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_sendMessage ) )
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_sendMessageToREST ) )
+  #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_sendMessage ) )
+  #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLogger_sendMessageToREST ) )
   testResult = unittest.TextTestRunner( verbosity = 2 ).run( suite )
