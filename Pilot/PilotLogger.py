@@ -1,6 +1,4 @@
-""" Pilot logger module for the remote loggin system
-    Only functions send and connect are depended on the client library used.
-    The current implementation uses stomp.
+""" Pilot logger module for the remote loggin system.
 """
 
 import os
@@ -37,9 +35,8 @@ class PilotLogger(object):
 
   STATUSES = ['info', 'warning', 'error', 'debug']
 
-  DESTINATION_TYPES = ['MQ', 'LOCAL_FILE', 'REST_API']
 
-  def __init__(self, configFile='pilot.json', messageSenderType='LOCAL_FILE', localOutputFile='myLocalQueueOfMessages'):
+  def __init__(self, configFile='pilot.json', localOutputFile='myLocalQueueOfMessages'):
     """ ctr loads the configuration parameters from the file
         or if the file does not exists, loads the default set
         of values. Next, if self.fileWithUUID is not set (this
@@ -47,20 +44,19 @@ class PilotLogger(object):
         Agent ID) the default value is used, and if the file does
         not exist, the Pilot ID is created and saved in this file.
     Args:
-      configFile(str): File with the configuration parameters.
+      configFile(str): Name of the file with the configuration parameters.
+      localOutputFile(str): Name of the file that can be used to store the log messages locally.
     """
     self.STATUSES = PilotLogger.STATUSES
-    self.DESTINATION_TYPES = PilotLogger.DESTINATION_TYPES
-    self.messageSenderType = messageSenderType
-    self.messageSender = None
-    self.fileWithUUID = ''
-    self.networkCfg = None
-    self.queuePath = ''
-    self.sslCfg = None
     self.localOutputFile = localOutputFile
-    self._loadConfigurationFromFile(configFile)
 
-    if not self.fileWithUUID:
+    config = readPilotJSONConfigFile(configFile)
+    try:
+      self.messageSenderType = config.get('LoggingType', 'LOCAL_FILE')
+      self.localOutputFile = config.get('LocalFileName')
+      self.fileWithUUID = config.get('FileWithID')
+    except (KeyError, AttributeError):
+      logging.warning('Errors in the data loaded from configuration file, default values will be used')
       self.fileWithUUID = 'PilotUUID'
       logging.warning(
         'No pilot logger id file name was specified. The default file name will be used:'+self.fileWithUUID)
@@ -72,34 +68,15 @@ class PilotLogger(object):
         if not res:
           logging.error('Error while generating pilot logger id.')
 
-    if not self.localOutputFile:
       self.localOutputFile = 'myLocalQueueOfMessages'
       logging.warning(
         'No local output file name was specified. The default file name will be used:'+self.localOutputFile)
-
-    if not self.messageSenderType:
-      self.messagaSenderType = 'MQ'
+      self.messageSenderType = 'LOCAL_FILE'
       logging.warning(
-        'No message sender type was specified. The default sender will be used:'+self.messageSenderType)
+        'No message sender type was specified. The default value will be used:'+self.messageSenderType)
+
     self.messageSender = createMessageSender(senderType=self.messageSenderType)
 
-  def _loadConfigurationFromFile(self, filename):
-    """ Add comment
-    """
-    config = readPilotJSONConfigFile(filename)
-    if not config:
-      logging.warning(
-        'Could not open or load configuration File! Pilot Logger will use some default values!!!')
-      return False
-    else:
-      self.fileWithUUID = config['fileWithID']
-      self.networkCfg = [(config['host'], int(config['port']))]
-      self.queuePath = config['queuePath']
-      self.sslCfg = dict((k, config[k])
-                         for k in ('key_file', 'cert_file', 'ca_certs'))
-      self.localOutputFile = config.get('outputFile', '')
-      self.messageSenderType = config.get('messageSender', 'LOCAL_FILE')
-      return True
 
   def _isCorrectStatus(self, status):
     """ Checks if the flag corresponds to one of the predefined
@@ -107,11 +84,11 @@ class PilotLogger(object):
     """
     return status in self.STATUSES
 
-  def _isCorrectDestinationType(self, destType):
-    """ Checks if the destType corresponds to one of the predefined
-        DESTINATION_TYPES, check constructor for current set.
-    """
-    return destType in self.DESTINATION_TYPES
+  #def _isCorrectDestinationType(self, destType):
+    #""" Checks if the destType corresponds to one of the predefined
+        #DESTINATION_TYPES, check constructor for current set.
+    #"""
+    #return destType in self.DESTINATION_TYPES
 
   def sendMessage(self,
                   messageContent,
@@ -128,9 +105,6 @@ class PilotLogger(object):
     if not self._isCorrectStatus(status):
       logging.error('status: ' + str(status) + ' is not correct')
       return False
-    # if not self._isCorrectDestinationType( destinationType ):
-      #logging.error('destination type: ' + str(destinationType ) + ' is not correct')
-      # return False
     myUUID = getPilotUUIDFromFile(self.fileWithUUID)
     message = generateDict(
       myUUID,
