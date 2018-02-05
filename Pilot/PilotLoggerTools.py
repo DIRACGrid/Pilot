@@ -11,14 +11,15 @@ import logging
 
 __RCSID__ = "$Id$"
 
-def createPilotLoggerConfigFile( filename = 'PilotLogger.cfg',
-                                 host = '',
-                                 port = '',
-                                 queuePath = '',
-                                 key_file  = '',
-                                 cert_file = '',
-                                 ca_certs = '',
-                                 fileWithID = ''):
+
+def createPilotLoggerConfigFile(filename='PilotLogger.cfg',
+                                host='',
+                                port='',
+                                queuePath='',
+                                key_file='',
+                                cert_file='',
+                                ca_certs='',
+                                fileWithID=''):
   """Helper function that creates proper configuration file.
      The format is json encoded file with the following options included
   """
@@ -30,7 +31,7 @@ def createPilotLoggerConfigFile( filename = 'PilotLogger.cfg',
     'cert_file',
     'ca_certs',
     'fileWithID'
-    ]
+  ]
   values = [
     host,
     port,
@@ -39,16 +40,33 @@ def createPilotLoggerConfigFile( filename = 'PilotLogger.cfg',
     cert_file,
     ca_certs,
     fileWithID
-    ]
-  config = dict( zip( keys, values ) )
+  ]
+  config = dict(zip(keys, values))
   config = json.dumps(config)
   with open(filename, 'w') as myFile:
     myFile.write(config)
 
-def readPilotJSONConfigFile ( filename ):
-  """Helper function that loads general configuration file from a pilot JSON.
+
+def readPilotJSONConfigFile(filename):
+  """Helper function that loads configuration settings from a pilot json file.
+     It is assumed that the json file contains the section "Logging" embedded in
+     the following form:
+      {
+        "Setups": {
+          "Dirac-Certification": {
+            "Logging": {
+            }
+          }
+        }
+      }
+      Only information from Logging section are considered. If any of the
+      corresponding key is missing, then the None is a assigned
+  Args:
+    str(filename):
   Returns:
-    dict:
+    dict: with the following keys:
+      'LoggingType', 'LocalFileName', 'Host','Port','QueuePath','HostKey','HostCertificate','CACertificate','FileWithID'
+      or None in case of errors.
   """
   pilotJSON = None
   setup = 'Dirac-Certification'
@@ -56,32 +74,33 @@ def readPilotJSONConfigFile ( filename ):
     with open(filename, 'r') as myFile:
       pilotJSON = json.load(myFile)
   except (IOError, ValueError):
+    logging.error('Could not open or load the configuration file:' + filename)
     return None
-  fileWithID= 'PilotUUID'
-  partial = pilotJSON['Setups'][setup]['Logging']
-  print partial
+  try:
+    partial = pilotJSON['Setups'][setup]['Logging']
+  except KeyError:
+    logging.error('Loaded data does not have the correct section format')
+    return None
   keys = [
-    'host',
-    'port',
-    'queuePath',
-    'key_file',
-    'cert_file',
-    'ca_certs',
-    'fileWithID'
-    ]
-  values = [
-    partial['Host'],
-    partial['Port'],
-    '/queue/'+ next(iter(partial['Queue'])),
-    partial['HostKey'],
-    partial['HostCertificate'],
-    partial['CACertificate'],
-    fileWithID
-    ]
-  config = dict( zip( keys, values ) )
+    "LoggingType",
+    "LocalFileName",
+    'Host',
+    'Port',
+    'HostKey',
+    'HostCertificate',
+    'CACertificate'
+  ]
+  config = dict((k, partial.get(k)) for k in keys)
+  # two special cases:
+  try:
+    config['QueuePath'] = '/queue/' + next(iter(partial.get('Queue')))
+  except TypeError:
+    config['QueuePath'] = None
+  config['FileWithID'] = 'PilotUUID'
   return config
 
-def readPilotLoggerConfigFile ( filename ):
+
+def readPilotLoggerConfigFile(filename):
   """Helper function that loads configuration file.
   Returns:
     dict:
@@ -94,7 +113,8 @@ def readPilotLoggerConfigFile ( filename ):
   except (IOError, ValueError):
     return None
 
-def generateDict( pilotUUID, timestamp, source, phase,  status, messageContent ):
+
+def generateDict(pilotUUID, timestamp, source, phase,  status, messageContent):
   """Helper function that returs a dictionnary based on the
      set of input values.
   Returns
@@ -102,24 +122,25 @@ def generateDict( pilotUUID, timestamp, source, phase,  status, messageContent )
   """
 
   keys = [
-      'pilotUUID',
-      'timestamp',
-      'source',
-      'phase',
-      'status',
-      'messageContent'
-      ]
+    'pilotUUID',
+    'timestamp',
+    'source',
+    'phase',
+    'status',
+    'messageContent'
+  ]
   values = [
-      pilotUUID,
-      timestamp,
-      source,
-      phase,
-      status,
-      messageContent
-      ]
-  return dict( zip( keys, values ) )
+    pilotUUID,
+    timestamp,
+    source,
+    phase,
+    status,
+    messageContent
+  ]
+  return dict(zip(keys, values))
 
-def encodeMessage( content ):
+
+def encodeMessage(content):
   """Method encodes the message in form of the serialized JSON string
      see https://docs.python.org/2/library/json.html#py-to-json-table
   Args:
@@ -129,9 +150,10 @@ def encodeMessage( content ):
   Raises:
     TypeError:if cannont encode json properly
   """
-  return json.dumps( content )
+  return json.dumps(content)
 
-def decodeMessage( msgJSON ):
+
+def decodeMessage(msgJSON):
   """Decodes the message from the serialized JSON string
      See https://docs.python.org/2/library/json.html#py-to-json-table.
   Args:
@@ -141,9 +163,10 @@ def decodeMessage( msgJSON ):
   Raises:
     TypeError: if cannot decode JSON properly.
   """
-  return json.loads( msgJSON )
+  return json.loads(msgJSON)
 
-def isMessageFormatCorrect( content ):
+
+def isMessageFormatCorrect(content):
   """Checks if input format is correct.
      Function checks if the input format is a dictionnary
      in the following format:
@@ -164,16 +187,16 @@ def isMessageFormatCorrect( content ):
       "source": "InstallDIRAC"
       }
   """
-  if not isinstance( content, dict ):
+  if not isinstance(content, dict):
     return False
   refKeys = [
-      'pilotUUID',
-      'status',
-      'messageContent',
-      'timestamp',
-      'phase',
-      'source'
-      ]
+    'pilotUUID',
+    'status',
+    'messageContent',
+    'timestamp',
+    'phase',
+    'source'
+  ]
   refKeys.sort()
   keys = content.keys()
   keys.sort()
@@ -181,28 +204,31 @@ def isMessageFormatCorrect( content ):
     return False
   values = content.values()
   # if any value is not of basestring type
-  if any( not isinstance( val, basestring ) for val in values ):
+  if any(not isinstance(val, basestring) for val in values):
     return False
-  #checking if all elements are not empty
-  if any( not val for val in values ):
+  # checking if all elements are not empty
+  if any(not val for val in values):
     return False
   return True
+
 
 def generateTimeStamp():
   """Generates the current timestamp in Epoch format.
   Returns:
     str: with number of seconds since the Epoch.
   """
-  return str( time.time() )
+  return str(time.time())
+
 
 def generateUniqueID():
   """Generates a unique identifier based on uuid1 function
   Returns:
     str: containing uuid
   """
-  return str( uuid1() )
+  return str(uuid1())
 
-def getUniqueIDAndSaveToFile( filename = 'PilotUUID' ):
+
+def getUniqueIDAndSaveToFile(filename='PilotUUID'):
   """Generates the unique id and writes it to a file
      of given name.
      First, we try to receive the UUID from the OS, if that fails
@@ -216,12 +242,13 @@ def getUniqueIDAndSaveToFile( filename = 'PilotUUID' ):
   if not myId:
     myId = generateUniqueID()
   try:
-    with open ( filename, 'w' ) as myFile:
-      myFile.write( myId )
+    with open(filename, 'w') as myFile:
+      myFile.write(myId)
     return True
   except IOError:
     logging.error('could not open file')
     return False
+
 
 def getUniqueIDFromOS():
   """Retrieves unique identifier based on specific OS.
@@ -234,27 +261,29 @@ def getUniqueIDFromOS():
           string is returned if all checks fails. If there are more than one
           valid identifier, only the first one is returned.
   """
-  #VM case: vm://$CE_NAME/$CE_NAME:$VMTYPE:$VM_UUID
+  # VM case: vm://$CE_NAME/$CE_NAME:$VMTYPE:$VM_UUID
   vmEnvVars = ['CE_NAME', 'VMTYPE', 'VM_UUID']
-  if all ( var in os.environ for var in vmEnvVars):
+  if all(var in os.environ for var in vmEnvVars):
     ce_name = os.environ.get('CE_NAME')
     partial_id = ':'.join((os.environ.get(var) for var in vmEnvVars))
-    return  'vm://'+ ce_name + '/' + partial_id
-  #Other cases: $envVar
+    return 'vm://' + ce_name + '/' + partial_id
+  # Other cases: $envVar
   envVars = ['CREAM_JOBID', 'GRID_GLOBAL_JOBID']
-  ids = ( os.environ.get(var) for var in envVars if var in os.environ)
+  ids = (os.environ.get(var) for var in envVars if var in os.environ)
   return next(ids, '')
+
 
 def main():
   """Is used to generate the pilot uuid
      and save it to a file even
      before any DIRAC related part is installed.
   """
-  filename = ' '.join( sys.argv[1:] )
+  filename = ' '.join(sys.argv[1:])
   if not filename:
     getUniqueIDAndSaveToFile()
   else:
-    getUniqueIDAndSaveToFile( filename )
+    getUniqueIDAndSaveToFile(filename)
+
 
 if __name__ == '__main__':
   main()

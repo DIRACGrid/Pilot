@@ -29,18 +29,17 @@ class TestPilotLoggerTools( unittest.TestCase ):
     self.testFile = 'test_file_to_remove'
     self.testFileCfg = 'TestConf.cfg'
     self.badFile = '////'
-    self.pilotJSONConfigFile = 'pilotTest.json'
 
   def tearDown( self ):
-    for fileProd in [self.testFile, self.testFileCfg, 'PilotUUID', self.pilotJSONConfigFile]:
+    for fileProd in [self.testFile, self.testFileCfg, 'PilotUUID']:
       try:
         os.remove( fileProd )
       except OSError:
         pass
 
 class TestPilotLoggerToolsreadPilotJSONConfigFile  ( TestPilotLoggerTools ):
-  def test_success( self ):
-    jsonContent ="""
+  def setUp( self ):
+    jsonContent_MQ ="""
 			{
 				"Setups": {
 					"Dirac-Certification": {
@@ -51,6 +50,8 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  ( TestPilotLoggerTools ):
 								"Acknowledgement": "False"
 								}
 							},
+              "LoggingType":"MQ", 
+              "LocalFileName":"myLocalQueueOfMessages", 
 							"Host": "testMachineMQ.cern.ch",
 							"Port": "61614",
 							"HostKey": "/path/to/certs/hostkey.pem",
@@ -62,24 +63,111 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  ( TestPilotLoggerTools ):
 				"DefaultSetup": "Dirac-Certification"
 			}
 			"""
-    with open(self.pilotJSONConfigFile, 'w') as myF:
-      myF.write(jsonContent)
-    config = readPilotJSONConfigFile(self.pilotJSONConfigFile)
+    self.pilotJSON_MQ = 'pilotMQ.json'
+    with open(self.pilotJSON_MQ, 'w') as myF:
+      myF.write(jsonContent_MQ)
+
+    jsonContent_REST ="""
+			{
+				"Setups": {
+					"Dirac-Certification": {
+						"Logging": {
+              "LoggingType":"REST_API", 
+              "LocalFileName":"myLocalQueueOfMessages", 
+							"Host": "testMachineREST.cern.ch",
+							"Port": "666",
+							"HostKey": "/path/to/certs/hostkey.pem",
+							"HostCertificate": "/path/to/certs/hostcert.pem",
+							"CACertificate": "/path/to/certs/ca-bundle.crt"
+						}
+					}
+				},
+				"DefaultSetup": "Dirac-Certification"
+			}
+			"""
+    self.pilotJSON_REST = 'pilottREST.json'
+    with open(self.pilotJSON_REST, 'w') as myF:
+      myF.write(jsonContent_REST)
+
+    jsonContent_LOCAL ="""
+			{
+				"Setups": {
+					"Dirac-Certification": {
+						"Logging": {
+              "LoggingType":"LOCAL_FILE", 
+              "LocalFileName":"myLocalQueueOfMessages"
+						}
+					}
+				},
+				"DefaultSetup": "Dirac-Certification"
+			}
+			"""
+    self.pilotJSON_LOCAL = 'pilotLOCAL.json'
+    with open(self.pilotJSON_LOCAL, 'w') as myF:
+      myF.write(jsonContent_LOCAL)
+
+  def tearDown( self ):
+    for fileProd in [self.pilotJSON_MQ, self.pilotJSON_REST, self.pilotJSON_LOCAL]:
+      try:
+        os.remove( fileProd )
+      except OSError:
+        pass
+
+  def test_success_MQ( self ):
+    config = readPilotJSONConfigFile(self.pilotJSON_MQ)
     host = 'testMachineMQ.cern.ch'
     port = 61614
     queuePath = '/queue/test'
     key_file  = '/path/to/certs/hostkey.pem'
     cert_file = '/path/to/certs/hostcert.pem'
     ca_certs = '/path/to/certs/ca-bundle.crt'
-    config = readPilotJSONConfigFile(self.pilotJSONConfigFile)
-    self.assertEqual(int(config['port']), port)
-    self.assertEqual(config['host'], host)
-    self.assertEqual(config['queuePath'], queuePath)
-    self.assertEqual(config['key_file'], key_file)
-    self.assertEqual(config['cert_file'], cert_file)
-    self.assertEqual(config['ca_certs'], ca_certs)
+    config = readPilotJSONConfigFile(self.pilotJSON_MQ)
+
+    self.assertEqual(config['LoggingType'], 'MQ')
+    self.assertEqual(config['LocalFileName'], 'myLocalQueueOfMessages')
+    self.assertEqual(int(config['Port']), port)
+    self.assertEqual(config['Host'], host)
+    self.assertEqual(config['QueuePath'], queuePath)
+    self.assertEqual(config['HostKey'], key_file)
+    self.assertEqual(config['HostCertificate'], cert_file)
+    self.assertEqual(config['CACertificate'], ca_certs)
+    self.assertEqual(config['FileWithID'], 'PilotUUID')
 
     #self.assertEqual(config['fileWithID'], fileWithID)
+
+  def test_success_REST( self ):
+    config = readPilotJSONConfigFile(self.pilotJSON_REST)
+    host = 'testMachineREST.cern.ch'
+    port = 666
+    key_file  = '/path/to/certs/hostkey.pem'
+    cert_file = '/path/to/certs/hostcert.pem'
+    ca_certs = '/path/to/certs/ca-bundle.crt'
+    config = readPilotJSONConfigFile(self.pilotJSON_REST)
+    self.assertEqual(config['LoggingType'], 'REST_API')
+    self.assertEqual(config['LocalFileName'], 'myLocalQueueOfMessages')
+    self.assertEqual(int(config['Port']), port)
+    self.assertEqual(config['Host'], host)
+    self.assertEqual(config['HostKey'], key_file)
+    self.assertEqual(config['HostCertificate'], cert_file)
+    self.assertEqual(config['CACertificate'], ca_certs)
+    self.assertEqual(config['FileWithID'], 'PilotUUID')
+
+    self.assertFalse(config['QueuePath'])
+
+    #self.assertEqual(config['fileWithID'], fileWithID)
+
+  def test_success_LOCAL( self ):
+    config = readPilotJSONConfigFile(self.pilotJSON_LOCAL)
+    self.assertEqual(config['LoggingType'], 'LOCAL_FILE')
+    self.assertEqual(config['LocalFileName'], 'myLocalQueueOfMessages')
+    self.assertEqual(config['FileWithID'], 'PilotUUID')
+
+    self.assertFalse(config['QueuePath'])
+    self.assertFalse(config['Port'])
+    self.assertFalse(config['Host'])
+    self.assertFalse(config['HostKey'])
+    self.assertFalse(config['HostCertificate'])
+    self.assertFalse(config['CACertificate'])
 
   def test_failure( self ):
     pass
@@ -151,24 +239,24 @@ class TestPilotLoggerToolsGenerateDict( TestPilotLoggerTools ):
 
   def test_success( self ):
     result = generateDict(
-        pilotUUID = 'eda78924-d169-11e4-bfd2-0800275d1a0a',
-        timestamp = '1427121370.7',
-        source = 'InstallDIRAC',
-        phase = 'Installing',
-        status = 'info',
-        messageContent = 'Uname = Linux localhost 3.10.64-85.cernvm.x86_64'
-        )
+      pilotUUID = 'eda78924-d169-11e4-bfd2-0800275d1a0a',
+      timestamp = '1427121370.7',
+      source = 'InstallDIRAC',
+      phase = 'Installing',
+      status = 'info',
+      messageContent = 'Uname = Linux localhost 3.10.64-85.cernvm.x86_64'
+      )
 
     self.assertEqual( result, self.msg )
   def test_failure( self ):
     result = generateDict(
-        'eda78924-d169-11e4-bfd2-0800275d1a0a',
-        '1427121370.7',
-        'InstallDIRAC',
-        'AAA Installation',
-        'info',
-        'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
-        )
+      'eda78924-d169-11e4-bfd2-0800275d1a0a',
+      '1427121370.7',
+      'InstallDIRAC',
+      'AAA Installation',
+      'info',
+      'Uname = Linux localhost 3.10.64-85.cernvm.x86_64',
+      )
     self.assertNotEqual( result, self.msg )
 
 
@@ -273,12 +361,13 @@ class TestPilotLoggerGetUniqueIDFromOS( TestPilotLoggerTools ):
 if __name__ == '__main__':
   suite = unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLoggerTools )
 
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLoggerToolsReadPilotLoggerConfigFile ))
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLoggerToolsCreatePilotLoggerConfigFile ) )
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLoggerToolsGenerateDict ) )
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLoggerToolsEncodeMessage ) )
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLoggerToolsDecodeMessage ) )
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLoggerIsMessageFormatCorrect ) )
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLoggerGetUniqueIDAndSaveToFile ) )
-  suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLoggerGetUniqueIDFromOS ) )
-  testResult = unittest.TextTestRunner( verbosity = 2 ).run( suite )
+  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerToolsreadPilotJSONConfigFile))
+  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerToolsReadPilotLoggerConfigFile))
+  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerToolsCreatePilotLoggerConfigFile))
+  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerToolsGenerateDict))
+  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerToolsEncodeMessage))
+  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerToolsDecodeMessage))
+  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerIsMessageFormatCorrect))
+  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerGetUniqueIDAndSaveToFile))
+  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerGetUniqueIDFromOS))
+  testResult = unittest.TextTestRunner(verbosity = 2).run(suite)
