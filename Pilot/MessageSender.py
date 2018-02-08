@@ -7,6 +7,7 @@
 import Queue
 import logging
 import stomp
+import requests
 
 
 class MessageSender(object):
@@ -19,37 +20,80 @@ class MessageSender(object):
     raise NotImplementedError
 
 
-def createMessageSender(senderType, **kwargs):
+def createMessageSender(senderType, params):
   """
   Function creates MessageSender according to sender type.
   Args:
-    senderType(str):sender type to be created.
-                    The allowed types are 'MQ', 'REST_API', 'LOCAL_FILE'
-  Returns:
+    senderType(str): sender type to be created.
+                    The allowed types are 'LOCAL_FILE', 'MQ', 'REST_API',
+    params(dict): additional parameters passed to init
+  Returnst
     MessageSender or None if senderType is unknown
 
   """
 
-  if senderType == 'MQ':
-    return StompSender(kwargs)
+  if senderType == 'LOCAL_FILE':
+    return LocalFileSender(params)
+  elif senderType == 'MQ':
+    return StompSender(params)
   elif senderType == 'REST_API':
-    return RESTSender(kwargs)
-  elif senderType == 'LOCAL_FILE':
-    return LocalFileSender()
+    return RESTSender(params)
   logging.error("Unknown message sender type")
   return None
 
+def createParamChecker(required_keys):
+  """ Function returns a function that can be used to check
+      if the parameters in form of the dictionnary (tuple) contain
+      the required set of keys. Also it checks if the parameters
+      are not empty.
+    Args:
+      required_keys(list)
+    Return:
+      function: or None if required_keys is None
+  """
+  if not required_keys:
+    return None
+  def areParamsCorrect(params):
+    """
+      Args:
+        params(dict):
+      Return:
+        bool:
+    """
+    if not params:
+      return False
+    if not all(k in params for k in required_keys):
+      return False
+    return True
+  return areParamsCorrect
 
 class RESTSender(MessageSender):
   """ Message sender to a REST interface.
   """
+  REQUIRED_KEYS=['HostKey', 'HostCertififcate', 'CACertificate', 'Destination', 'LocalOutputFile']
+
+  def __init__(self, params):
+    self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
+    self.params = params
+    if not self._areParamsCorrect(params):
+      logging.error("Incorrect parameters")
 
   def sendMessage(self, msg, flag):
-    return False
-    #r = requests.post('https://localhost:8888/my', json=msg, cert=('/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostcert.pem', '/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostkey.pem'), verify='/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/allCAs.pem')
-    #r = requests.post('https://localhost:8888/my', json=msg, cert=('/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostcert.pem', '/home/krzemien/workdir/lhcb/dirac_development/etc/grid-security/hostkey.pem'), verify=False)
-    # r.text
-    # return True
+    if not self._areParamsCorrect(self.params):
+      logging.error("Parameters missing needed to send message")
+      return False
+
+    url = self.params.get('Destination')
+    hostKey = self.params.get('HostKey')
+    hostCertificate = self.params.get('HostCertificate')
+    CACertificate = self.params.get('CACertificate')
+
+    try:
+      requests.post(url, json=msg, cert=(hostCertificate, hostKey), verify=CACertificate)
+    except requests.exceptions.RequestException as e:
+      logging.error(e)
+      return False
+    return True
 
 
 def eraseFileContent(filename):
@@ -86,12 +130,18 @@ class LocalFileSender(MessageSender):
   """ Message sender to a local file.
   """
 
-  def __init__(self):
-    pass
+  REQUIRED_KEYS=['LocalOutputFile']
+
+  def __init__(self, params):
+    self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
+    self.params = params
 
   def sendMessage(self, msg, flag):
-    # to change
-    saveMessageToFile(msg, filename='myLocalQueueOfMessages')
+    if not self._areParamsCorrect(self.params):
+      logging.error("Parameters missing needed to send message")
+      return False
+    filename = self.params.get('LocalOutputFile')
+    saveMessageToFile(msg, filename=filename)
     return True
 
 
@@ -150,15 +200,12 @@ class StompSender(MessageSender):
   """ Stomp message sender.
   """
 
-  def __init__(self, networkCfg=None, sslConfig=None):
-    self.fileWithUUID = ''
-    self.networkCfg = None
-    self.queuePath = ''
-    self.sslCfg = None
-    # maybe directly from json
-    # for a moment from args
-    self.networkCfg = networkCfg
-    self.sslCfg = sslConfig
+  REQUIRED_KEYS=['HostKey', 'HostCertififcate', 'CACertificate', 'Destination', 'LocalOutputFile']
+
+  def __init__(self, params):
+
+    self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
+    self.params = params
 
   def sendMessage(self, msg, flag):
     """ Method first copies the message content to the
@@ -172,20 +219,31 @@ class StompSender(MessageSender):
     Returns:
       bool: False in case of any errors, True otherwise
     """
+    if not self._areParamsCorrect(self.params):
+      logging.error("Parameters missing needed to send message")
+      return False
 
-    saveMessageToFile(msg)
-    connection = connect(self.networkCfg, self.sslCfg)
+    queue = self.params.get('QueuePath')
+    host = self.params.get('Host')
+    port = int(self.params.get('Port'))
+    hostKey = self.params.get('HostKey')
+    hostCertificate = self.params.get('HostCertificate')
+    CACertificate = self.params.get('CACertificate')
+    filename = self.params.get('LocalOutputFile')
+
+    saveMessageToFile(msg, filename)
+    connection = connect((host,port), {'key_file':hostKey, 'cert_file':hostCertificate, 'ca_certs':CACertificate})
     if not connection:
       return False
-    self._sendAllLocalMessages(connection, flag)
+    self._sendAllLocalMessages(connection, queue, filename)
     disconnect(connection)
     return True
 
-  def _sendAllLocalMessages(self, connect_handler, flag='info'):
+  def _sendAllLocalMessages(self, connect_handler, destination, filename):
     """ Retrives all messages from the local storage
         and sends it.
     """
-    queue = readMessagesFromFileAndEraseFileContent()
+    queue = readMessagesFromFileAndEraseFileContent(filename)
     while not queue.empty():
       msg = queue.get()
-      send(msg, self.queuePath, connect_handler)
+      send(msg, destination, connect_handler)
