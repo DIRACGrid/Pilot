@@ -23,7 +23,7 @@ class TestMessageSender(unittest.TestCase):
     self.testMessage = 'my test message'
     self.networkCfg = ('host', 123)
     self.sslCfg = {'key_file': 'a', 'cert_file': 'b', 'ca_certs': 'c'}
-    
+
     removeFile(self.testFile)
 
     module.stomp = MagicMock()
@@ -57,12 +57,12 @@ class TestLocalFileSender(unittest.TestCase):
 class TestStompSender(TestMessageSender):
 
   def test_success(self):
-    msgSender = StompSender(self.networkCfg, self.sslCfg)
+    msgSender = StompSender({})
     res = msgSender.sendMessage(self.testMessage, 'info')
     self.assertTrue(res)
 
   def test_failure_no_connectionParams(self):
-    msgSender = StompSender(self.networkCfg, None)
+    msgSender = StompSender({})
     res = msgSender.sendMessage(self.testMessage, 'info')
     self.assertFalse(res)
 

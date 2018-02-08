@@ -64,7 +64,8 @@ class PilotLogger(object):
       if not res:
         logging.error('Error while generating pilot logger id.')
 
-    self.messageSender = createMessageSender(senderType=self.messageSenderType)
+    self.messageSender = createMessageSender(senderType=self.messageSenderType,
+                                             params=config)
 
   def _loadConfiguration(self, config):
     """ Loads configuration from the dictionnary config into the
