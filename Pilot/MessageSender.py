@@ -41,6 +41,7 @@ def createMessageSender(senderType, params):
   logging.error("Unknown message sender type")
   return None
 
+
 def createParamChecker(required_keys):
   """ Function returns a function that can be used to check
       if the parameters in form of the dictionnary (tuple) contain
@@ -53,6 +54,7 @@ def createParamChecker(required_keys):
   """
   if not required_keys:
     return None
+
   def areParamsCorrect(params):
     """
       Args:
@@ -67,30 +69,34 @@ def createParamChecker(required_keys):
     return True
   return areParamsCorrect
 
+
 class RESTSender(MessageSender):
   """ Message sender to a REST interface.
   """
-  REQUIRED_KEYS=['HostKey', 'HostCertififcate', 'CACertificate', 'Destination', 'LocalOutputFile']
+
+  REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
+                   'CACertificate', 'Destination', 'LocalOutputFile']
 
   def __init__(self, params):
+    """
+      Raises:
+        ValueError: If params are not correct.
+    """
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
     self.params = params
-    if not self._areParamsCorrect(params):
-      logging.error("Incorrect parameters")
+    if not self._areParamsCorrect(self.params):
+      raise ValueError("Parameters missing needed to send messages")
 
   def sendMessage(self, msg, flag):
-    if not self._areParamsCorrect(self.params):
-      logging.error("Parameters missing needed to send message")
-      return False
-
     url = self.params.get('Destination')
     hostKey = self.params.get('HostKey')
     hostCertificate = self.params.get('HostCertificate')
     CACertificate = self.params.get('CACertificate')
 
     try:
-      requests.post(url, json=msg, cert=(hostCertificate, hostKey), verify=CACertificate)
-    except requests.exceptions.RequestException as e:
+      requests.post(url, json=msg, cert=(
+        hostCertificate, hostKey), verify=CACertificate)
+    except (requests.exceptions.RequestException, IOError) as e:
       logging.error(e)
       return False
     return True
@@ -130,16 +136,19 @@ class LocalFileSender(MessageSender):
   """ Message sender to a local file.
   """
 
-  REQUIRED_KEYS=['LocalOutputFile']
+  REQUIRED_KEYS = ['LocalOutputFile']
 
   def __init__(self, params):
+    """
+      Raises:
+        ValueError: If params are not correct.
+    """
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
     self.params = params
+    if not self._areParamsCorrect(self.params):
+      raise ValueError("Parameters missing needed to send messages")
 
   def sendMessage(self, msg, flag):
-    if not self._areParamsCorrect(self.params):
-      logging.error("Parameters missing needed to send message")
-      return False
     filename = self.params.get('LocalOutputFile')
     saveMessageToFile(msg, filename=filename)
     return True
@@ -195,17 +204,32 @@ def disconnect(connect_handler):
   """
   connect_handler.disconnect()
 
+def sendAllLocalMessages(connect_handler, destination, filename):
+  """ Retrives all messages from the local storage
+      and sends it.
+  """
+  queue = readMessagesFromFileAndEraseFileContent(filename)
+  while not queue.empty():
+    msg = queue.get()
+    send(msg, destination, connect_handler)
 
 class StompSender(MessageSender):
   """ Stomp message sender.
   """
 
-  REQUIRED_KEYS=['HostKey', 'HostCertififcate', 'CACertificate', 'Destination', 'LocalOutputFile']
+  REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
+                   'CACertificate', 'QueuePath', 'LocalOutputFile']
 
   def __init__(self, params):
+    """
+      Raises:
+        ValueError: If params are not correct.
+    """
 
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
     self.params = params
+    if not self._areParamsCorrect(self.params):
+      raise ValueError("Parameters missing needed to send messages")
 
   def sendMessage(self, msg, flag):
     """ Method first copies the message content to the
@@ -219,9 +243,6 @@ class StompSender(MessageSender):
     Returns:
       bool: False in case of any errors, True otherwise
     """
-    if not self._areParamsCorrect(self.params):
-      logging.error("Parameters missing needed to send message")
-      return False
 
     queue = self.params.get('QueuePath')
     host = self.params.get('Host')
@@ -232,18 +253,10 @@ class StompSender(MessageSender):
     filename = self.params.get('LocalOutputFile')
 
     saveMessageToFile(msg, filename)
-    connection = connect((host,port), {'key_file':hostKey, 'cert_file':hostCertificate, 'ca_certs':CACertificate})
+    connection = connect((host, port), {
+      'key_file': hostKey, 'cert_file': hostCertificate, 'ca_certs': CACertificate})
     if not connection:
       return False
-    self._sendAllLocalMessages(connection, queue, filename)
+    sendAllLocalMessages(connection, queue, filename)
     disconnect(connection)
     return True
-
-  def _sendAllLocalMessages(self, connect_handler, destination, filename):
-    """ Retrives all messages from the local storage
-        and sends it.
-    """
-    queue = readMessagesFromFileAndEraseFileContent(filename)
-    while not queue.empty():
-      msg = queue.get()
-      send(msg, destination, connect_handler)
