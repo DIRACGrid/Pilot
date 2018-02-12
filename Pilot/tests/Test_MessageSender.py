@@ -74,7 +74,7 @@ class TestRESTSender(unittest.TestCase):
 
   def test_success(self):
     params = {'HostKey': 'key', 'HostCertififcate': 'cert', 'CACertificate': 'caCert',
-              'Destination': 'https://some.host.ch/messages', 'LocalOutputFile': self.testFile}
+              'Url': 'https://some.host.ch/messages', 'LocalOutputFile': self.testFile}
     msgSender = RESTSender(params)
     res = msgSender.sendMessage(self.testMessage, 'info')
     self.assertTrue(res)

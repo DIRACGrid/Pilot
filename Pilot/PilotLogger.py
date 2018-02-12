@@ -51,8 +51,8 @@ class PilotLogger(object):
     self.STATUSES = PilotLogger.STATUSES
 
     self.messageSenderType = messageSenderType
-    self.localOutputFile = localOutputFile
     self.fileWithUUID = fileWithUUID
+    self.localOutputFile = localOutputFile
 
     config = readPilotJSONConfigFile(configFile)
     self._loadConfiguration(config)
@@ -64,8 +64,7 @@ class PilotLogger(object):
       if not res:
         logging.error('Error while generating pilot logger id.')
 
-    self.messageSender = createMessageSender(senderType=self.messageSenderType,
-                                             params=config)
+    self.messageSender = createMessageSender(senderType=self.messageSenderType, params = config)
 
   def _loadConfiguration(self, config):
     """ Loads configuration from the dictionnary config into the
@@ -78,7 +77,7 @@ class PilotLogger(object):
     if not config or not isinstance(config, dict):
       return None
     self.messageSenderType = config.get('LoggingType', 'LOCAL_FILE')
-    self.localOutputFile = config.get('LocalFileName', 'myLocalQueueOfMessages')
+    self.localOutputFile = config.get('LocalOutputFile', 'myLocalQueueOfMessages')
     self.fileWithUUID = config.get('FileWithID', 'PilotUUID')
 
   def _isCorrectStatus(self, status):

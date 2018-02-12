@@ -27,18 +27,22 @@ def createMessageSender(senderType, params):
     senderType(str): sender type to be created.
                     The allowed types are 'LOCAL_FILE', 'MQ', 'REST_API',
     params(dict): additional parameters passed to init
-  Returnst
-    MessageSender or None if senderType is unknown
+  Return:
+    MessageSender or None in case of errors
 
   """
 
-  if senderType == 'LOCAL_FILE':
-    return LocalFileSender(params)
-  elif senderType == 'MQ':
-    return StompSender(params)
-  elif senderType == 'REST_API':
-    return RESTSender(params)
-  logging.error("Unknown message sender type")
+  try:
+    if senderType == 'LOCAL_FILE':
+      return LocalFileSender(params)
+    elif senderType == 'MQ':
+      return StompSender(params)
+    elif senderType == 'REST_API':
+      return RESTSender(params)
+    else:
+      logging.error("Unknown message sender type")
+  except ValueError:
+    logging.error("Error initializing the message sender")
   return None
 
 
@@ -75,7 +79,7 @@ class RESTSender(MessageSender):
   """
 
   REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
-                   'CACertificate', 'Destination', 'LocalOutputFile']
+                   'CACertificate', 'Url', 'LocalOutputFile']
 
   def __init__(self, params):
     """
@@ -88,7 +92,7 @@ class RESTSender(MessageSender):
       raise ValueError("Parameters missing needed to send messages")
 
   def sendMessage(self, msg, flag):
-    url = self.params.get('Destination')
+    url = self.params.get('Url')
     hostKey = self.params.get('HostKey')
     hostCertificate = self.params.get('HostCertificate')
     CACertificate = self.params.get('CACertificate')

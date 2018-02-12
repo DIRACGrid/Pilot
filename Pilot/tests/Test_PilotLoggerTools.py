@@ -51,7 +51,7 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  ( TestPilotLoggerTools ):
 								}
 							},
               "LoggingType":"MQ", 
-              "LocalFileName":"myLocalQueueOfMessages", 
+              "LocalOutputFile":"myLocalQueueOfMessages", 
 							"Host": "testMachineMQ.cern.ch",
 							"Port": "61614",
 							"HostKey": "/path/to/certs/hostkey.pem",
@@ -73,9 +73,8 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  ( TestPilotLoggerTools ):
 					"Dirac-Certification": {
 						"Logging": {
               "LoggingType":"REST_API", 
-              "LocalFileName":"myLocalQueueOfMessages", 
-							"Host": "testMachineREST.cern.ch",
-							"Port": "666",
+              "LocalOutputFile":"myLocalQueueOfMessages", 
+              "Url": "https://testMachineREST.cern.ch:666/msg",
 							"HostKey": "/path/to/certs/hostkey.pem",
 							"HostCertificate": "/path/to/certs/hostcert.pem",
 							"CACertificate": "/path/to/certs/ca-bundle.crt"
@@ -85,7 +84,7 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  ( TestPilotLoggerTools ):
 				"DefaultSetup": "Dirac-Certification"
 			}
 			"""
-    self.pilotJSON_REST = 'pilottREST.json'
+    self.pilotJSON_REST = 'pilotREST.json'
     with open(self.pilotJSON_REST, 'w') as myF:
       myF.write(jsonContent_REST)
 
@@ -95,7 +94,7 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  ( TestPilotLoggerTools ):
 					"Dirac-Certification": {
 						"Logging": {
               "LoggingType":"LOCAL_FILE", 
-              "LocalFileName":"myLocalQueueOfMessages"
+              "LocalOutputFile":"myLocalQueueOfMessages"
 						}
 					}
 				},
@@ -124,7 +123,7 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  ( TestPilotLoggerTools ):
     config = readPilotJSONConfigFile(self.pilotJSON_MQ)
 
     self.assertEqual(config['LoggingType'], 'MQ')
-    self.assertEqual(config['LocalFileName'], 'myLocalQueueOfMessages')
+    self.assertEqual(config['LocalOutputFile'], 'myLocalQueueOfMessages')
     self.assertEqual(int(config['Port']), port)
     self.assertEqual(config['Host'], host)
     self.assertEqual(config['QueuePath'], queuePath)
@@ -137,16 +136,14 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  ( TestPilotLoggerTools ):
 
   def test_success_REST( self ):
     config = readPilotJSONConfigFile(self.pilotJSON_REST)
-    host = 'testMachineREST.cern.ch'
-    port = 666
+    url = 'https://testMachineREST.cern.ch:666/msg'
     key_file  = '/path/to/certs/hostkey.pem'
     cert_file = '/path/to/certs/hostcert.pem'
     ca_certs = '/path/to/certs/ca-bundle.crt'
     config = readPilotJSONConfigFile(self.pilotJSON_REST)
     self.assertEqual(config['LoggingType'], 'REST_API')
-    self.assertEqual(config['LocalFileName'], 'myLocalQueueOfMessages')
-    self.assertEqual(int(config['Port']), port)
-    self.assertEqual(config['Host'], host)
+    self.assertEqual(config['LocalOutputFile'], 'myLocalQueueOfMessages')
+    self.assertEqual(config['Url'], url)
     self.assertEqual(config['HostKey'], key_file)
     self.assertEqual(config['HostCertificate'], cert_file)
     self.assertEqual(config['CACertificate'], ca_certs)
@@ -159,7 +156,7 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  ( TestPilotLoggerTools ):
   def test_success_LOCAL( self ):
     config = readPilotJSONConfigFile(self.pilotJSON_LOCAL)
     self.assertEqual(config['LoggingType'], 'LOCAL_FILE')
-    self.assertEqual(config['LocalFileName'], 'myLocalQueueOfMessages')
+    self.assertEqual(config['LocalOutputFile'], 'myLocalQueueOfMessages')
     self.assertEqual(config['FileWithID'], 'PilotUUID')
 
     self.assertFalse(config['QueuePath'])

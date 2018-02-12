@@ -65,7 +65,7 @@ def readPilotJSONConfigFile(filename):
     str(filename):
   Returns:
     dict: with the following keys:
-      'LoggingType', 'LocalFileName', 'Host','Port','QueuePath','HostKey','HostCertificate','CACertificate','FileWithID'
+      'LoggingType', 'LocalOutputFile', 'Host','Port','QueuePath','HostKey','HostCertificate','Url','CACertificate','FileWithID'
       or None in case of errors.
   """
   pilotJSON = None
@@ -83,9 +83,10 @@ def readPilotJSONConfigFile(filename):
     return None
   keys = [
     "LoggingType",
-    "LocalFileName",
+    "LocalOutputFile",
     'Host',
     'Port',
+    'Url',
     'HostKey',
     'HostCertificate',
     'CACertificate'
