@@ -41,11 +41,11 @@
             "Acknowledgement": "False"
             }
         },
-        "Host": "lhcb-test-mb.cern.ch",
-        "Port": "61723",
-        "HostKey": "/home/dirac/WojtekTests/etc/grid-security/hostkey.pem",
-        "HostCertificate": "/home/dirac/WojtekTests/etc/grid-security/hostcert.pem",
-        "CACertificate": "/home/dirac/WojtekTests/etc/grid-security/allCAs.pem"
+        "Host": "test.cern.ch",
+        "Port": "66666",
+        "HostKey": "/test/hostkey.pem",
+        "HostCertificate": "/test/hostcert.pem",
+        "CACertificate": "/test/allCAs.pem"
       },
       "NagiosProbes": "WN-mjf, WN-sft-csh, WN-sft-voms, WN-sft-vo-swdir",
       "Version": "VAR_DIRAC_VERSION",
