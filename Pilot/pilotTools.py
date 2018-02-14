@@ -317,15 +317,15 @@ class ExtendedLogger( Logger ):
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status = "info")
 
-  def sendMessage( self, msg,  source, phase, status ='info',localFile = None, sendPilotLog = False ):
+  def sendMessage( self, msg, source, phase, status ='info', sendPilotLog = False ):
     pass
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage( messageContent = msg,
-                                      source=source,
+                                      source = source,
                                       phase = phase,
-                                      status=status,
-                                      localOutputFile = localFile)
+                                      status = status)
+
 class CommandBase( object ):
   """ CommandBase is the base class for every command in the pilot commands toolbox
   """
