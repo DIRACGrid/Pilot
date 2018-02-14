@@ -5,7 +5,7 @@
 
 import unittest
 import os
-from Pilot.PilotLogger import PilotLogger, getPilotUUIDFromFile
+from Pilot.PilotLogger import PilotLogger, getPilotUUIDFromFile, addMissingConfiguration
 from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
 
 class TestGetPilotUUIDFromFile(unittest.TestCase):
@@ -74,11 +74,10 @@ class TestPilotLogger_init(unittest.TestCase):
     self.assertEqual(logger.params['LocalOutputFile'], 'myLocalQueueOfMessages')
     self.assertEqual(logger.params['FileWithID'], 'PilotUUID')
 
-class TestPilotLogger_loadConfiguration(unittest.TestCase):
+class TestPilotLogger_addMissingConfiguration(unittest.TestCase):
 
   def setUp(self):
     self.uuidFile = 'PilotUUID'
-    self.logger = PilotLogger()
 
   def tearDown(self):
     try:
@@ -89,11 +88,11 @@ class TestPilotLogger_loadConfiguration(unittest.TestCase):
   def test_success(self):
     config = {'LoggingType': 'MQ',
               'LocalOutputFile': 'blabla', 'FileWithID': 'myUUUID'}
-    res = self.logger._loadConfiguration(config)
+    res = addMissingConfiguration(config)
     self.assertEqual(res, config)
 
   def test_emptyConfig(self):
-    self.assertEqual(self.logger._loadConfiguration(None), {'LoggingType':'LOCAL_FILE','LocalOutputFile': 'myLocalQueueOfMessages', 'FileWithID': 'PilotUUID'})
+    self.assertEqual(addMissingConfiguration(None), {'LoggingType':'LOCAL_FILE','LocalOutputFile': 'myLocalQueueOfMessages', 'FileWithID': 'PilotUUID'})
 
 
 class TestPilotLogger_sendMessage(unittest.TestCase):
@@ -105,6 +104,6 @@ if __name__ == '__main__':
   suite = unittest.defaultTestLoader.loadTestsFromTestCase(TestGetPilotUUIDFromFile)
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLogger_isCorrectStatus))
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLogger_init))
-  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLogger_loadConfiguration))
+  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLogger_addMissingConfiguration))
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLogger_sendMessage))
   testResult = unittest.TextTestRunner(verbosity=2).run(suite)

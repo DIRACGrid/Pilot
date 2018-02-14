@@ -28,6 +28,33 @@ def getPilotUUIDFromFile(filename='PilotUUID'):
     return ""
 
 
+def addMissingConfiguration(config, defaultConfig = None):
+  """ Creates new dict which contains content of config with added missing keys
+      and values  defined in defaultConfig.
+      If a key from defaultConfig is absent in config set, the value,key pair is added.
+      If a key is present but the value is None, then the value from defaultConfig is assigned.
+      The default config contains the following structure:
+      {'LoggingType':'LOCAL_FILE','LocalOutputFile': 'myLocalQueueOfMessages', 'FileWithID': 'PilotUUID'}
+    Args:
+      config(dict):
+      defaultConfig(dict):
+    Returns:
+      dict:
+  """
+  if defaultConfig is None:
+    defaultConfig = {'LoggingType':'LOCAL_FILE','LocalOutputFile': 'myLocalQueueOfMessages', 'FileWithID': 'PilotUUID'}
+  if not config or not isinstance(config, dict):
+    return defaultConfig
+
+  currConfig = config.copy()
+  for k,v in defaultConfig.iteritems():
+    if k not in currConfig:
+      currConfig[k] = v
+    else:
+      if currConfig[k] is None:
+        currConfig[k] = v
+  return currConfig
+
 class PilotLogger(object):
   """ Base pilot logger class.
   """
@@ -50,47 +77,21 @@ class PilotLogger(object):
     """
     self.STATUSES = PilotLogger.STATUSES
 
-    self.params = None
-
-    config = readPilotJSONConfigFile(configFile)
-    self.params = self._loadConfiguration(config = config, defaultConfig = {'LoggingType':messageSenderType,'LocalOutputFile':localOutputFile , 'FileWithID': fileWithUUID})
+    self.params = addMissingConfiguration(config = readPilotJSONConfigFile(configFile),
+                                          defaultConfig = {'LoggingType':messageSenderType,'LocalOutputFile':localOutputFile , 'FileWithID': fileWithUUID})
 
     fileWithID = self.params['FileWithID']
     if os.path.isfile(fileWithID):
       logging.warning('The file: '+ fileWithID +
                       ' already exists. The content will be used to get UUID.')
     else:
-      res = getUniqueIDAndSaveToFile(filename = fileWithID)
-      if not res:
+      result = getUniqueIDAndSaveToFile(filename = fileWithID)
+      if not result:
         logging.error('Error while generating pilot logger id.')
-
     self.messageSender = createMessageSender(senderType = self.params['LoggingType'], params = self.params)
     if not self.messageSender:
       print 'something is wrong - no messageSender created'
 
-  def _loadConfiguration(self, config , defaultConfig = None):
-    """ Loads configuration from the dictionnary config into the
-        PilotLogger attributes messageSenderType,localOutputType and fileWithUUID.
-        If corresponding keys are missing in the dict, default values are assigned.
-      Args:
-        config(dict):
-        defaultConfig(dict):
-      Returns:
-        dict
-    """
-    if defaultConfig is None:
-      defaultConfig = {'LoggingType':'LOCAL_FILE','LocalOutputFile': 'myLocalQueueOfMessages', 'FileWithID': 'PilotUUID'}
-    if not config or not isinstance(config, dict):
-      return defaultConfig
-
-    currConfig = config.copy()
-    for k,v in defaultConfig.iteritems():
-      if k not in currConfig:
-        currConfig[k] = v
-      else:
-        if currConfig[k] is None:
-          currConfig[k] = v
-    return currConfig
 
   def _isCorrectStatus(self, status):
     """ Checks if the flag corresponds to one of the predefined
