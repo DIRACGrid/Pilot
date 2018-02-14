@@ -70,9 +70,9 @@ class TestPilotLogger_init(unittest.TestCase):
 
   def test_DefaultCtrNonJsonFile(self):
     logger = PilotLogger()
-    self.assertEqual(logger.messageSenderType, 'LOCAL_FILE')
-    self.assertEqual(logger.localOutputFile, 'myLocalQueueOfMessages')
-    self.assertEqual(logger.fileWithUUID, 'PilotUUID')
+    self.assertEqual(logger.params['LoggingType'], 'LOCAL_FILE')
+    self.assertEqual(logger.params['LocalOutputFile'], 'myLocalQueueOfMessages')
+    self.assertEqual(logger.params['FileWithID'], 'PilotUUID')
 
 class TestPilotLogger_loadConfiguration(unittest.TestCase):
 
@@ -91,9 +91,6 @@ class TestPilotLogger_loadConfiguration(unittest.TestCase):
               'LocalOutputFile': 'blabla', 'FileWithID': 'myUUUID'}
     res = self.logger._loadConfiguration(config)
     self.assertEqual(res, config)
-    self.assertEqual(self.logger.messageSenderType, 'MQ')
-    self.assertEqual(self.logger.localOutputFile, 'blabla')
-    self.assertEqual(self.logger.fileWithUUID, 'myUUUID')
 
   def test_emptyConfig(self):
     self.assertEqual(self.logger._loadConfiguration(None), {'LoggingType':'LOCAL_FILE','LocalOutputFile': 'myLocalQueueOfMessages', 'FileWithID': 'PilotUUID'})

@@ -50,21 +50,21 @@ class PilotLogger(object):
     """
     self.STATUSES = PilotLogger.STATUSES
 
-    self.messageSenderType = messageSenderType
-    self.fileWithUUID = fileWithUUID
-    self.localOutputFile = localOutputFile
+    self.params = None
 
     config = readPilotJSONConfigFile(configFile)
-    config = self._loadConfiguration(config = config, defaultConfig = {'LoggingType':self.messageSenderType,'LocalOutputFile':self.localOutputFile , 'FileWithID': self.fileWithUUID})
-    if os.path.isfile(self.fileWithUUID):
-      logging.warning('The file: '+self.fileWithUUID +
+    self.params = self._loadConfiguration(config = config, defaultConfig = {'LoggingType':messageSenderType,'LocalOutputFile':localOutputFile , 'FileWithID': fileWithUUID})
+
+    fileWithID = self.params['FileWithID']
+    if os.path.isfile(fileWithID):
+      logging.warning('The file: '+ fileWithID +
                       ' already exists. The content will be used to get UUID.')
     else:
-      res = getUniqueIDAndSaveToFile(filename=self.fileWithUUID)
+      res = getUniqueIDAndSaveToFile(filename = fileWithID)
       if not res:
         logging.error('Error while generating pilot logger id.')
 
-    self.messageSender = createMessageSender(senderType=self.messageSenderType, params = config)
+    self.messageSender = createMessageSender(senderType = self.params['LoggingType'], params = self.params)
     if not self.messageSender:
       print 'something is wrong - no messageSender created'
 
@@ -81,9 +81,6 @@ class PilotLogger(object):
     if defaultConfig is None:
       defaultConfig = {'LoggingType':'LOCAL_FILE','LocalOutputFile': 'myLocalQueueOfMessages', 'FileWithID': 'PilotUUID'}
     if not config or not isinstance(config, dict):
-      self.messageSenderType = defaultConfig.get('LoggingType')
-      self.localOutputFile = defaultConfig.get('LocalOutputFile')
-      self.fileWithUUID = defaultConfig.get('FileWithID')
       return defaultConfig
 
     currConfig = config.copy()
@@ -93,9 +90,6 @@ class PilotLogger(object):
       else:
         if currConfig[k] is None:
           currConfig[k] = v
-    self.messageSenderType = currConfig.get('LoggingType')
-    self.localOutputFile = currConfig.get('LocalOutputFile')
-    self.fileWithUUID = currConfig.get('FileWithID')
     return currConfig
 
   def _isCorrectStatus(self, status):
@@ -119,7 +113,7 @@ class PilotLogger(object):
     if not self._isCorrectStatus(status):
       logging.error('status: ' + str(status) + ' is not correct')
       return False
-    myUUID = getPilotUUIDFromFile(self.fileWithUUID)
+    myUUID = getPilotUUIDFromFile(self.params['FileWithID'])
     message = generateDict(
       myUUID,
       generateTimeStamp(),
