@@ -11,7 +11,6 @@ from Pilot.PilotLoggerTools import generateDict, encodeMessage
 from Pilot.PilotLoggerTools import decodeMessage, isMessageFormatCorrect
 from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
 from Pilot.PilotLoggerTools import createPilotLoggerConfigFile
-from Pilot.PilotLoggerTools import readPilotLoggerConfigFile
 from Pilot.PilotLoggerTools import getUniqueIDFromOS
 from Pilot.PilotLoggerTools import readPilotJSONConfigFile
 
@@ -202,36 +201,6 @@ class TestPilotLoggerToolsCreatePilotLoggerConfigFile( TestPilotLoggerTools ):
   def test_failure( self ):
     pass
 
-class TestPilotLoggerToolsReadPilotLoggerConfigFile ( TestPilotLoggerTools ):
-  def test_success( self ):
-    host = '127.0.0.1'
-    port = 61614
-    queuePath = '/queue/test_queue'
-    key_file  = ' certificates/client/key.pem'
-    cert_file = 'certificates/client/cert.pem'
-    ca_certs = 'certificates/testca/cacert.pem'
-    fileWithID = 'PilotUUID_test'
-
-    createPilotLoggerConfigFile( self.testFileCfg,
-                                 host,
-                                 port,
-                                 queuePath,
-                                 key_file,
-                                 cert_file,
-                                 ca_certs,
-                                 fileWithID)
-    config = readPilotLoggerConfigFile(self.testFileCfg)
-    self.assertEqual(int(config['port']), port)
-    self.assertEqual(config['host'], host)
-    self.assertEqual(config['queuePath'], queuePath)
-    self.assertEqual(config['key_file'], key_file)
-    self.assertEqual(config['cert_file'], cert_file)
-    self.assertEqual(config['ca_certs'], ca_certs)
-    self.assertEqual(config['fileWithID'], fileWithID)
-
-  def test_failure( self ):
-    pass
-
 class TestPilotLoggerToolsGenerateDict( TestPilotLoggerTools ):
 
   def test_success( self ):
@@ -359,7 +328,6 @@ if __name__ == '__main__':
   suite = unittest.defaultTestLoader.loadTestsFromTestCase( TestPilotLoggerTools )
 
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerToolsreadPilotJSONConfigFile))
-  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerToolsReadPilotLoggerConfigFile))
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerToolsCreatePilotLoggerConfigFile))
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerToolsGenerateDict))
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerToolsEncodeMessage))

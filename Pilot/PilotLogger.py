@@ -8,7 +8,6 @@ from PilotLoggerTools import generateDict, encodeMessage
 from PilotLoggerTools import generateTimeStamp
 from PilotLoggerTools import isMessageFormatCorrect
 from PilotLoggerTools import readPilotJSONConfigFile
-from PilotLoggerTools import readPilotLoggerConfigFile
 from PilotLoggerTools import getUniqueIDAndSaveToFile
 from MessageSender import createMessageSender
 

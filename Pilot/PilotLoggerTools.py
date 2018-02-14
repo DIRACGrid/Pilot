@@ -64,9 +64,9 @@ def readPilotJSONConfigFile(filename):
   Args:
     str(filename):
   Returns:
-    dict: with the following keys:
-      'LoggingType', 'LocalOutputFile', 'Host','Port','QueuePath','HostKey','HostCertificate','Url','CACertificate','FileWithID'
-      or None in case of errors.
+    dict: with the following keys (not all are obligatory):
+      'LoggingType', 'LocalOutputFile', 'Host','Port','QueuePath','HostKey','HostCertificate','Url',
+      'CACertificate','FileWithID' or None in case of errors.
   """
   pilotJSON = None
   setup = 'Dirac-Certification'
@@ -99,21 +99,6 @@ def readPilotJSONConfigFile(filename):
     config['QueuePath'] = None
   config['FileWithID'] = 'PilotUUID'
   return config
-
-
-def readPilotLoggerConfigFile(filename):
-  """Helper function that loads configuration file.
-  Returns:
-    dict:
-  """
-  try:
-    with open(filename, 'r') as myFile:
-      config = myFile.read()
-      config = json.loads(config)
-      return config
-  except (IOError, ValueError):
-    return None
-
 
 def generateDict(pilotUUID, timestamp, source, phase,  status, messageContent):
   """Helper function that returs a dictionnary based on the
