@@ -40,15 +40,15 @@ class TestPilotToolsExtendedLogger( TestPilotTools ):
 
   def test_sendMessageToLocalFile( self ):
     msg_pattern = {
-        'status': 'error',
-        'phase': 'testing',
-        'messageContent': 'test message',
-        'pilotUUID': 'eda78924-d169-11e4-bfd2-0800275d1a0a',
-        'source': 'testSource'
-        }
-    logger = ExtendedLogger(name='Pilot', debugFlag = True, pilotOutput = 'pilot.out', isPilotLoggerOn = True)
-    logger.sendMessage(msg = "test message", source = "testSource", phase = "testing",status ='error',
-                       localFile =self.testOutputFile, sendPilotLog = True)
+      'status': 'error',
+      'phase': 'testing',
+      'messageContent': 'test message',
+      'pilotUUID': 'eda78924-d169-11e4-bfd2-0800275d1a0a',
+      'source': 'testSource'
+      }
+    logger = ExtendedLogger(name='Pilot', debugFlag = True, pilotOutput = 'pilot.out', localMessageQueue = self.testOutputFile,  isPilotLoggerOn = True)
+    logger.sendMessage(msg = "test message", source = "testSource", phase = "testing", status ='error', sendPilotLog = True)
+
     queue = readMessagesFromFileQueue(self.testOutputFile)
     msg_result = json.loads(queue.get())
     msg_result = removeTimeStampAndPilotUUID (msg_result)

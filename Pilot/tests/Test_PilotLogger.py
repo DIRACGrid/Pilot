@@ -89,13 +89,14 @@ class TestPilotLogger_loadConfiguration(unittest.TestCase):
   def test_success(self):
     config = {'LoggingType': 'MQ',
               'LocalOutputFile': 'blabla', 'FileWithID': 'myUUUID'}
-    self.logger._loadConfiguration(config)
+    res = self.logger._loadConfiguration(config)
+    self.assertEqual(res, config)
     self.assertEqual(self.logger.messageSenderType, 'MQ')
     self.assertEqual(self.logger.localOutputFile, 'blabla')
     self.assertEqual(self.logger.fileWithUUID, 'myUUUID')
 
   def test_emptyConfig(self):
-    self.assertFalse(self.logger._loadConfiguration(None))
+    self.assertEqual(self.logger._loadConfiguration(None), {'LoggingType':'LOCAL_FILE','LocalOutputFile': 'myLocalQueueOfMessages', 'FileWithID': 'PilotUUID'})
 
 
 class TestPilotLogger_sendMessage(unittest.TestCase):

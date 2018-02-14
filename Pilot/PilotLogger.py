@@ -55,7 +55,7 @@ class PilotLogger(object):
     self.localOutputFile = localOutputFile
 
     config = readPilotJSONConfigFile(configFile)
-    self._loadConfiguration(config)
+    config = self._loadConfiguration(config = config, defaultConfig = {'LoggingType':self.messageSenderType,'LocalOutputFile':self.localOutputFile , 'FileWithID': self.fileWithUUID})
     if os.path.isfile(self.fileWithUUID):
       logging.warning('The file: '+self.fileWithUUID +
                       ' already exists. The content will be used to get UUID.')
@@ -65,20 +65,38 @@ class PilotLogger(object):
         logging.error('Error while generating pilot logger id.')
 
     self.messageSender = createMessageSender(senderType=self.messageSenderType, params = config)
+    if not self.messageSender:
+      print 'something is wrong - no messageSender created'
 
-  def _loadConfiguration(self, config):
+  def _loadConfiguration(self, config , defaultConfig = None):
     """ Loads configuration from the dictionnary config into the
         PilotLogger attributes messageSenderType,localOutputType and fileWithUUID.
         If corresponding keys are missing in the dict, default values are assigned.
-        Those are: 'LOCAL_FILE', 'myLocalQueueOfMessages' and 'PilotUUID', respectively.
       Args:
         config(dict):
+        defaultConfig(dict):
+      Returns:
+        dict
     """
+    if defaultConfig is None:
+      defaultConfig = {'LoggingType':'LOCAL_FILE','LocalOutputFile': 'myLocalQueueOfMessages', 'FileWithID': 'PilotUUID'}
     if not config or not isinstance(config, dict):
-      return None
-    self.messageSenderType = config.get('LoggingType', 'LOCAL_FILE')
-    self.localOutputFile = config.get('LocalOutputFile', 'myLocalQueueOfMessages')
-    self.fileWithUUID = config.get('FileWithID', 'PilotUUID')
+      self.messageSenderType = defaultConfig.get('LoggingType')
+      self.localOutputFile = defaultConfig.get('LocalOutputFile')
+      self.fileWithUUID = defaultConfig.get('FileWithID')
+      return defaultConfig
+
+    currConfig = config.copy()
+    for k,v in defaultConfig.iteritems():
+      if k not in currConfig:
+        currConfig[k] = v
+      else:
+        if currConfig[k] is None:
+          currConfig[k] = v
+    self.messageSenderType = currConfig.get('LoggingType')
+    self.localOutputFile = currConfig.get('LocalOutputFile')
+    self.fileWithUUID = currConfig.get('FileWithID')
+    return currConfig
 
   def _isCorrectStatus(self, status):
     """ Checks if the flag corresponds to one of the predefined

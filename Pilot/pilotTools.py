@@ -281,14 +281,14 @@ class ExtendedLogger( Logger ):
   """ The logger object, for use inside the pilot. It prints messages.
       But can be also used to send messages to the queue
   """
-  def __init__( self, name = 'Pilot', debugFlag = False, pilotOutput = 'pilot.out', isPilotLoggerOn = False ):
+  def __init__( self, name = 'Pilot', debugFlag = False, pilotOutput = 'pilot.out', localMessageQueue = 'myLocalQueueOfMessages' ,  isPilotLoggerOn = False):
     """ c'tor
     If flag PilotLoggerOn is not set, the logger will behave just like
     the original Logger object, that means it will just print logs locally on the screen
     """
     super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
     if isPilotLoggerOn:
-      self.pilotLogger = PilotLogger(localOutputFile = pilotOutput)
+      self.pilotLogger = PilotLogger(localOutputFile = localMessageQueue)
     else:
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
