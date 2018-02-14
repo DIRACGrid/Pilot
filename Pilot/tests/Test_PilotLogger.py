@@ -8,11 +8,7 @@ import os
 from Pilot.PilotLogger import PilotLogger, getPilotUUIDFromFile
 from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
 
-class TestPilotLogger(unittest.TestCase):
-  pass
-
-
-class TestGetPilotUUIDFromFile(TestPilotLogger):
+class TestGetPilotUUIDFromFile(unittest.TestCase):
 
   def setUp(self):
     self.testFile = 'UUID_to_store'
@@ -38,7 +34,7 @@ class TestGetPilotUUIDFromFile(TestPilotLogger):
     uuid = getPilotUUIDFromFile(self.nonExistentFile)
     self.assertFalse(uuid)
 
-class TestPilotLogger_isCorrectStatus(TestPilotLogger):
+class TestPilotLogger_isCorrectStatus(unittest.TestCase):
 
   def setUp(self):
     self.uuidFile = 'PilotUUID'
@@ -61,7 +57,7 @@ class TestPilotLogger_isCorrectStatus(TestPilotLogger):
     self.assertFalse(self.logger._isCorrectStatus(''))
 
 
-class TestPilotLogger_init(TestPilotLogger):
+class TestPilotLogger_init(unittest.TestCase):
 
   def setUp(self):
     self.uuidFile = 'PilotUUID'
@@ -78,7 +74,7 @@ class TestPilotLogger_init(TestPilotLogger):
     self.assertEqual(logger.localOutputFile, 'myLocalQueueOfMessages')
     self.assertEqual(logger.fileWithUUID, 'PilotUUID')
 
-class TestPilotLogger_loadConfiguration(TestPilotLogger):
+class TestPilotLogger_loadConfiguration(unittest.TestCase):
 
   def setUp(self):
     self.uuidFile = 'PilotUUID'
@@ -102,14 +98,13 @@ class TestPilotLogger_loadConfiguration(TestPilotLogger):
     self.assertFalse(self.logger._loadConfiguration(None))
 
 
-class TestPilotLogger_sendMessage(TestPilotLogger):
+class TestPilotLogger_sendMessage(unittest.TestCase):
   pass
   # here some mocks needed
 
 
 if __name__ == '__main__':
-  suite = unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLogger)
-  suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestGetPilotUUIDFromFile))
+  suite = unittest.defaultTestLoader.loadTestsFromTestCase(TestGetPilotUUIDFromFile)
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLogger_isCorrectStatus))
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLogger_init))
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLogger_loadConfiguration))
