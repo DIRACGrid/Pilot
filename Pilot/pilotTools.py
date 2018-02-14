@@ -288,7 +288,7 @@ class ExtendedLogger( Logger ):
     """
     super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
     if isPilotLoggerOn:
-      self.pilotLogger = PilotLogger()
+      self.pilotLogger = PilotLogger(localOutputFile = pilotOutput)
     else:
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
