@@ -92,7 +92,7 @@ class TestPilotLogger_loadConfiguration(TestPilotLogger):
 
   def test_success(self):
     config = {'LoggingType': 'MQ',
-              'LocalFileName': 'blabla', 'FileWithID': 'myUUUID'}
+              'LocalOutputFile': 'blabla', 'FileWithID': 'myUUUID'}
     self.logger._loadConfiguration(config)
     self.assertEqual(self.logger.messageSenderType, 'MQ')
     self.assertEqual(self.logger.localOutputFile, 'blabla')
