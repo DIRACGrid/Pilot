@@ -26,11 +26,12 @@ class TestPilotLoggerTools( unittest.TestCase ):
       'source': 'InstallDIRAC'
       }
     self.testFile = 'test_file_to_remove'
-    self.testFileCfg = 'TestConf.cfg'
+    self.testFileCfg = 'TestConf.json'
     self.badFile = '////'
 
   def tearDown( self ):
-    for fileProd in [self.testFile, self.testFileCfg, 'PilotUUID']:
+    #for fileProd in [self.testFile, self.testFileCfg, 'PilotUUID']:
+    for fileProd in [self.testFile, 'PilotUUID']:
       try:
         os.remove( fileProd )
       except OSError:
@@ -170,33 +171,41 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  ( TestPilotLoggerTools ):
 
 
 class TestPilotLoggerToolsCreatePilotLoggerConfigFile( TestPilotLoggerTools ):
+
   def test_success( self ):
+    loggingType='MQ'
     host = '127.0.0.1'
-    port = 61614
-    queuePath = '/queue/test_queue'
+    port = '61614'
+    url=''
     key_file  = 'certificates/client/key.pem'
     cert_file = 'certificates/client/cert.pem'
     ca_certs = 'certificates/testca/cacert.pem'
     fileWithID = 'PilotUUID_test'
+    queue = {'test.cern.ch':{}}
 
-    createPilotLoggerConfigFile( self.testFileCfg,
-                                 host,
-                                 port,
-                                 queuePath,
-                                 key_file,
-                                 cert_file,
-                                 ca_certs,
-                                 fileWithID)
+    createPilotLoggerConfigFile( filename =self.testFileCfg,
+                                 loggingType = loggingType,
+                                 host = host,
+                                 port =port,
+                                 url =url,
+                                 key_file = key_file,
+                                 cert_file =cert_file,
+                                 ca_certs = ca_certs,
+                                 fileWithID= fileWithID,
+                                 queue = queue)
     with open(self.testFileCfg, 'r') as myFile:
       config = myFile.read()
     config = json.loads(config)
-    self.assertEqual(int(config['port']), port)
-    self.assertEqual(config['host'], host)
-    self.assertEqual(config['queuePath'], queuePath)
-    self.assertEqual(config['key_file'], key_file)
-    self.assertEqual(config['cert_file'], cert_file)
-    self.assertEqual(config['ca_certs'], ca_certs)
-    self.assertEqual(config['fileWithID'], fileWithID)
+    partial = config['Setups']['Dirac-Certification']['Logging']
+    self.assertEqual(partial['LoggingType'], 'MQ')
+    self.assertEqual(partial['Port'], port)
+    self.assertEqual(partial['Host'], host)
+    self.assertEqual(partial['Url'],url)
+    self.assertEqual(partial['HostKey'], key_file)
+    self.assertEqual(partial['HostCertificate'], cert_file)
+    self.assertEqual(partial['CACertificate'], ca_certs)
+    self.assertEqual(partial['FileWithID'], fileWithID)
+    self.assertEqual(partial['Queue'], queue)
 
   def test_failure( self ):
     pass
