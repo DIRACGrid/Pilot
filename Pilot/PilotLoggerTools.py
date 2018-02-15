@@ -12,37 +12,55 @@ import logging
 __RCSID__ = "$Id$"
 
 
-def createPilotLoggerConfigFile(filename='PilotLogger.cfg',
+def createPilotLoggerConfigFile(filename='PilotLogger.json',
+                                loggingType='',
+                                localOutputFile='',
                                 host='',
                                 port='',
-                                queuePath='',
+                                url='',
                                 key_file='',
                                 cert_file='',
                                 ca_certs='',
-                                fileWithID=''):
-  """Helper function that creates proper configuration file.
-     The format is json encoded file with the following options included
+                                fileWithID='',
+                                queue=None,
+                                setup = 'Dirac-Certification'):
+  """Helper function that creates a proper configuration file.
+     The format is json encoded file with the following options included.
+     Arguments:
+      queue(dict): e.g. {"lhcb.test.*":{"Persitent":"False", "Ackonwledgement":"False"}}
   """
+  if queue is None:
+    queue = {}
   keys = [
-    'host',
-    'port',
-    'queuePath',
-    'key_file',
-    'cert_file',
-    'ca_certs',
-    'fileWithID'
+    'LoggingType',
+    'LocalOutputFile',
+    'Host',
+    'Port',
+    'Url',
+    'HostKey',
+    'HostCertificate',
+    'CACertificate',
+    'FileWithID',
+    'Queue'
   ]
   values = [
+    loggingType,
+    localOutputFile,
     host,
     port,
-    queuePath,
+    url,
     key_file,
     cert_file,
     ca_certs,
-    fileWithID
+    fileWithID,
+    queue
   ]
   config = dict(zip(keys, values))
-  config = json.dumps(config)
+  content = dict()
+  content['Setups']={}
+  content['Setups'][setup]={}
+  content['Setups'][setup]['Logging']=config
+  config = json.dumps(content)
   with open(filename, 'w') as myFile:
     myFile.write(config)
 
@@ -74,7 +92,7 @@ def readPilotJSONConfigFile(filename):
     with open(filename, 'r') as myFile:
       pilotJSON = json.load(myFile)
   except (IOError, ValueError):
-    logging.error('Could not open or load the configuration file:' + filename)
+    logging.warning('Could not open or load the configuration file:' + filename)
     return None
   try:
     partial = pilotJSON['Setups'][setup]['Logging']
@@ -89,7 +107,9 @@ def readPilotJSONConfigFile(filename):
     'Url',
     'HostKey',
     'HostCertificate',
-    'CACertificate'
+    'CACertificate',
+    'FileWithID'
+
   ]
   config = dict((k, partial.get(k)) for k in keys)
   # two special cases:
@@ -97,7 +117,10 @@ def readPilotJSONConfigFile(filename):
     config['QueuePath'] = '/queue/' + next(iter(partial.get('Queue')))
   except TypeError:
     config['QueuePath'] = None
-  config['FileWithID'] = 'PilotUUID'
+
+  if config['FileWithID'] is None:
+    config['FileWithID'] = 'PilotUUID'
+
   return config
 
 def generateDict(pilotUUID, timestamp, source, phase,  status, messageContent):
