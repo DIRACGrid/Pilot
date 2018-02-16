@@ -24,8 +24,11 @@ def createPilotLoggerConfigFile(filename='PilotLogger.json',
                                 fileWithID='',
                                 queue=None,
                                 setup = 'Dirac-Certification'):
-  """Helper function that creates a proper configuration file.
-     The format is json encoded file with the following options included.
+  """Helper function that creates a test configuration file.
+     The format is json encoded file.
+     The created file can be mainy used for testing of PilotLogger setups, since
+     the included parameters are related only to communication settings, and  many
+     other parameters are not present.
      Arguments:
       queue(dict): e.g. {"lhcb.test.*":{"Persitent":"False", "Ackonwledgement":"False"}}
   """
