@@ -89,7 +89,7 @@ class PilotLogger(object):
         logging.error('Error while generating pilot logger id.')
     self.messageSender = createMessageSender(senderType = self.params['LoggingType'], params = self.params)
     if not self.messageSender:
-      print 'something is wrong - no messageSender created'
+      logging.error('Something went wrong - no messageSender created.')
 
 
   def _isCorrectStatus(self, status):
