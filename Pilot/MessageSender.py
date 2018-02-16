@@ -46,17 +46,17 @@ def createMessageSender(senderType, params):
   return None
 
 
-def createParamChecker(required_keys):
+def createParamChecker(requiredKeys):
   """ Function returns a function that can be used to check
-      if the parameters in form of the dictionnary (tuple) contain
+      if the parameters in form of a dictionnary contain
       the required set of keys. Also it checks if the parameters
       are not empty.
     Args:
-      required_keys(list)
+      requiredKeys(list)
     Return:
-      function: or None if required_keys is None
+      function: or None if requiredKeys is None
   """
-  if not required_keys:
+  if not requiredKeys:
     return None
 
   def areParamsCorrect(params):
@@ -68,7 +68,7 @@ def createParamChecker(required_keys):
     """
     if not params:
       return False
-    if not all(k in params for k in required_keys):
+    if not all(k in params for k in requiredKeys):
       return False
     return True
   return areParamsCorrect
@@ -158,27 +158,27 @@ class LocalFileSender(MessageSender):
     return True
 
 
-def connect(host_and_port, ssl_cfg):
+def connect(hostAndPort, sslCfg):
   """ Connects to RabbitMQ and returns connection
       handler or None in case of connection down.
       Stomp-depended function.
   """
-  if not ssl_cfg:
-    logging.error("ssl_cfg argument is None")
+  if not sslCfg:
+    logging.error("sslCfg argument is None")
     return None
-  if not host_and_port:
-    logging.error("host_and_port argument is None")
+  if not hostAndPort:
+    logging.error("hostAndPort argument is None")
     return None
-  if not all(key in ssl_cfg for key in ['key_file', 'cert_file', 'ca_certs']):
+  if not all(key in sslCfg for key in ['key_file', 'cert_file', 'ca_certs']):
     logging.error("Missing ssl_cfg keys")
     return None
 
   try:
-    connection = stomp.Connection(host_and_ports=host_and_port, use_ssl=True)
-    connection.set_ssl(for_hosts=host_and_port,
-                       key_file=ssl_cfg['key_file'],
-                       cert_file=ssl_cfg['cert_file'],
-                       ca_certs=ssl_cfg['ca_certs'])
+    connection = stomp.Connection(host_and_ports=hostAndPort, use_ssl=True)
+    connection.set_ssl(for_hosts=hostAndPort,
+                       key_file=sslCfg['key_file'],
+                       cert_file=sslCfg['cert_file'],
+                       ca_certs=sslCfg['ca_certs'])
     connection.start()
     connection.connect()
     return connection
@@ -190,32 +190,32 @@ def connect(host_and_port, ssl_cfg):
     return None
 
 
-def send(msg, destination, connect_handler):
+def send(msg, destination, connectHandler):
   """Sends a message and logs info.
      Stomp-depended function.
   """
-  if not connect_handler:
+  if not connectHandler:
     return False
-  connect_handler.send(destination=destination,
-                       body=msg)
+  connectHandler.send(destination=destination,
+                      body=msg)
   logging.info(" [x] Sent %r ", msg)
   return True
 
 
-def disconnect(connect_handler):
+def disconnect(connectHandler):
   """Disconnects.
      Stomp-depended function.
   """
-  connect_handler.disconnect()
+  connectHandler.disconnect()
 
-def sendAllLocalMessages(connect_handler, destination, filename):
+def sendAllLocalMessages(connectHandler, destination, filename):
   """ Retrives all messages from the local storage
       and sends it.
   """
   queue = readMessagesFromFileAndEraseFileContent(filename)
   while not queue.empty():
     msg = queue.get()
-    send(msg, destination, connect_handler)
+    send(msg, destination, connectHandler)
 
 class StompSender(MessageSender):
   """ Stomp message sender.
