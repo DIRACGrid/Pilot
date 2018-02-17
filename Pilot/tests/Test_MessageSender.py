@@ -6,9 +6,8 @@
 import unittest
 import os
 from mock import MagicMock
-from Pilot.MessageSender import LocalFileSender, StompSender, RESTSender
+from Pilot.MessageSender import LocalFileSender, StompSender, RESTSender, eraseFileContent
 import Pilot.MessageSender as module
-
 
 def removeFile(filename):
   try:
@@ -16,6 +15,20 @@ def removeFile(filename):
   except OSError:
     pass
 
+class TestMessageSenderEraseFileContent(unittest.TestCase):
+  def setUp(self):
+    self.testFile = 'someStrangeFile'
+    with open(self.testFile, 'a'):
+      os.utime(self.testFile, None)
+
+  def tearDown(self):
+    removeFile(self.testFile)
+
+  def test_success(self):
+    try:
+      eraseFileContent(self.testFile)
+    except:
+      self.fail("eraseFileContent() raised ExceptionType!")
 
 class TestLocalFileSender(unittest.TestCase):
   def setUp(self):
@@ -88,4 +101,6 @@ if __name__ == '__main__':
     unittest.defaultTestLoader.loadTestsFromTestCase(TestStompSender))
   suite.addTest(
     unittest.defaultTestLoader.loadTestsFromTestCase(TestRESTSender))
+  suite.addTest(
+    unittest.defaultTestLoader.loadTestsFromTestCase(TestMessageSenderEraseFileContent))
   testResult = unittest.TextTestRunner(verbosity=2).run(suite)
