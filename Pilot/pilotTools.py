@@ -87,8 +87,7 @@ def retrieveUrlTimeout( url, fileName, log, timeout = 0 ):
       signal.alarm( 0 )
     if fileName:
       return True
-    else:
-      return urlData
+    return urlData
 
   except urllib2.HTTPError as x:
     if x.code == 404:
@@ -135,8 +134,7 @@ class ObjectLoader( object ):
       if module is None:
         return None, None
       #Huge success!
-      else:
-        return module, parentPath
+      return module, parentPath
       #Nothing found, continue
     #Return nothing found
     return None, None
@@ -452,6 +450,7 @@ class PilotParams( object ):
     self.ceName = ""
     self.ceType = ""
     self.queueName = ""
+    self.gridCEType = ""
     self.platform = ""
     # in case users want to specify the max number of processors requested, per pilot
     self.maxNumberOfProcessors = 0
