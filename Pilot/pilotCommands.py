@@ -400,7 +400,7 @@ class CheckCECapabilities( CommandBase ):
     if self.pp.localConfigFile:
       self.cfg.append( self.pp.localConfigFile )  # this file is as input
 
-
+    # Get the resource description as defined in its configuration
     checkCmd = 'dirac-resource-get-parameters -S %s -N %s -Q %s %s' % ( self.pp.site,
                                                                         self.pp.ceName,
                                                                         self.pp.queueName,
@@ -437,8 +437,10 @@ class CheckCECapabilities( CommandBase ):
       self.pp.reqtags += resourceDict['RequiredTag']
 
     if self.pp.reqtags:
-      cfg.append( '-o "/Resources/Computing/CEDefaults/RequiredTag=%s"' % ','.join( ( str( x ) for x in self.pp.reqtags ) ) )
+      cfg.append('-o "/Resources/Computing/CEDefaults/RequiredTag=%s"' %
+                      ','.join((str(x) for x in self.pp.reqtags)))
 
+    # If there is anything to be added to the local configuration, let's do it
     if self.pp.useServerCertificate:
       cfg.append( '-o /DIRAC/Security/UseServerCertificate=yes' )
 
@@ -447,13 +449,13 @@ class CheckCECapabilities( CommandBase ):
       cfg.append( self.pp.localConfigFile )  # this file is as input
 
 
-    if self.cfg:
+    if cfg:
       cfg.append( '-FDMH' )
 
       if self.debugFlag:
         cfg.append( '-ddd' )
 
-      configureCmd = "%s %s" % ( self.pp.configureScript, " ".join( cfg ) )
+      configureCmd = "%s %s" % (self.pp.configureScript, " ".join(cfg))
       retCode, _configureOutData = self.executeAndGetOutput( configureCmd, self.pp.installEnv )
       if retCode:
         self.log.error( "Could not configure DIRAC [ERROR %d]" % retCode )
@@ -463,7 +465,8 @@ class CheckCECapabilities( CommandBase ):
       self.log.debug("No CE parameters (tags) defined for %s/%s" % (self.pp.ceName, self.pp.queueName))
 
 class CheckWNCapabilities( CommandBase ):
-  """ Used to get capabilities specific to the Worker Node.
+  """ Used to get capabilities specific to the Worker Node. This command must be called
+      after the CheckCECapabilities command
   """
 
   def __init__( self, pilotParams ):
@@ -480,13 +483,16 @@ class CheckWNCapabilities( CommandBase ):
       self.cfg.append( '-o /DIRAC/Security/UseServerCertificate=yes' )
     if self.pp.localConfigFile:
       self.cfg.append( self.pp.localConfigFile )  # this file is as input
-
-    checkCmd = 'dirac-wms-get-wn-parameters -S %s -N %s -Q %s %s' % ( self.pp.site, self.pp.ceName, self.pp.queueName,
+    # Get the worker node parameters
+    checkCmd = 'dirac-wms-get-wn-parameters -S %s -N %s -Q %s %s' % (self.pp.site,
+                                                                     self.pp.ceName,
+                                                                     self.pp.queueName,
                                                                       " ".join( self.cfg ) )
     retCode, result = self.executeAndGetOutput( checkCmd, self.pp.installEnv )
     if retCode:
       self.log.error( "Could not get resource parameters [ERROR %d]" % retCode )
       self.exitWithError( retCode )
+    numberOfProcessors = 0
     try:
       result = result.split( ' ' )
       numberOfProcessors = int( result[0] )
@@ -498,15 +504,29 @@ class CheckWNCapabilities( CommandBase ):
     cfg = []
     # If NumberOfProcessors or MaxRAM are defined in the resource configuration, these
     # values are preferred
-    if numberOfProcessors and "NumberOfProcessors" not in self.pp.queueParameters:
-      cfg.append( '-o "/Resources/Computing/CEDefaults/NumberOfProcessors=%d"' % numberOfProcessors )
-    else:
-      self.log.warn( "Could not retrieve number of processors" )
-    if maxRAM and "MaxRAM" not in self.pp.queueParameters:
-      cfg.append( '-o "/Resources/Computing/CEDefaults/MaxRAM=%d"' % maxRAM )
-    else:
-      self.log.warn( "Could not retrieve MaxRAM" )
+    numberOfProcessors = self.pp.queueParameters.get(
+        'NumberOfProcessors', numberOfProcessors)
+    # if maxNumberOfProcessors is asked in pilotWrapper
+    if self.pp.maxNumberOfProcessors:
+      self.log.debug("Overriding with a requested number of processors")
+      numberOfProcessors = self.pp.maxNumberOfProcessors
 
+    if not numberOfProcessors:
+      self.log.warn("Could not retrieve number of processors, assuming 1")
+      numberOfProcessors = 1
+    self.cfg.append(
+        '-o "/Resources/Computing/CEDefaults/NumberOfProcessors=%d"' % int(numberOfProcessors))
+
+    maxRAM = self.pp.queueParameters.get('MaxRAM', maxRAM)
+    if maxRAM:
+      try:
+        self.cfg.append(
+            '-o "/Resources/Computing/CEDefaults/MaxRAM=%d"' % int(maxRAM))
+      except ValueError:
+        self.log.warn("MaxRAM is not an integer, will not fill it")
+    else:
+      self.log.warn(
+          "Could not retrieve MaxRAM, this parameter won't be filled")
 
     if cfg:
       cfg.append( '-FDMH' )
@@ -518,9 +538,9 @@ class CheckWNCapabilities( CommandBase ):
         cfg.append( self.pp.localConfigFile )  # this file is as input
 
       if self.debugFlag:
-        cfg.append( '-ddd' )
+        cfg.append('-ddd')
 
-      configureCmd = "%s %s" % ( self.pp.configureScript, " ".join( cfg ) )
+      configureCmd = "%s %s" % (self.pp.configureScript, " ".join(cfg))
       retCode, _configureOutData = self.executeAndGetOutput( configureCmd, self.pp.installEnv )
       if retCode:
         self.log.error( "Could not configure DIRAC [ERROR %d]" % retCode )
@@ -612,6 +632,7 @@ class ConfigureSite( CommandBase ):
     # unless overridden by presence of batch system environment variables
     if self.pp.pilotReference:
       self.pp.flavour = 'DIRAC'
+      pilotRef = self.pp.pilotReference
 
     # Take the reference from the Torque batch system
     if 'PBS_JOBID' in os.environ:
@@ -629,6 +650,7 @@ class ConfigureSite( CommandBase ):
       pilotRef = 'sshge://' + self.pp.ceName + '/' + os.environ['JOB_ID']
     # Generic JOB_ID
     elif 'JOB_ID' in os.environ:
+      self.pp.flavour = 'Generic'
       pilotRef = 'generic://' + self.pp.ceName + '/' + os.environ['JOB_ID']
 
     # Condor
@@ -655,17 +677,6 @@ class ConfigureSite( CommandBase ):
     if 'CREAM_JOBID' in os.environ:
       self.pp.flavour = 'CREAM'
       pilotRef = os.environ['CREAM_JOBID']
-
-    # If we still have the GLITE_WMS_JOBID, it means that the submission
-    # was through the WMS, take this reference then
-    if 'EDG_WL_JOBID' in os.environ:
-      self.pp.flavour = 'LCG'
-      pilotRef = os.environ['EDG_WL_JOBID']
-
-    if 'GLITE_WMS_JOBID' in os.environ:
-      if os.environ['GLITE_WMS_JOBID'] != 'N/A':
-        self.pp.flavour = 'gLite'
-        pilotRef = os.environ['GLITE_WMS_JOBID']
 
     if 'OSG_WN_TMP' in os.environ:
       self.pp.flavour = 'OSG'
@@ -721,7 +732,7 @@ class ConfigureSite( CommandBase ):
     """ Try to get the CE name
     """
     # FIXME: this should not be part of the standard configuration (flavours discriminations should stay out)
-    if self.pp.flavour in ['LCG', 'gLite', 'OSG']:
+    if self.pp.flavour in ['LCG', 'OSG']:
       retCode, CEName = self.executeAndGetOutput( 'glite-brokerinfo getCE',
                                                   self.pp.installEnv )
       if retCode:
@@ -838,8 +849,8 @@ class ConfigureCPURequirements( CommandBase ):
       configFileArg = '-o /DIRAC/Security/UseServerCertificate=yes'
     if self.pp.localConfigFile:
       configFileArg = '%s -R %s %s' % ( configFileArg, self.pp.localConfigFile, self.pp.localConfigFile )
-    retCode, cpuNormalizationFactorOutput = self.executeAndGetOutput( 'dirac-wms-cpu-normalization -U %s' % configFileArg,
-                                                                      self.pp.installEnv )
+    retCode, cpuNormalizationFactorOutput = self.executeAndGetOutput(
+        'dirac-wms-cpu-normalization -U %s' % configFileArg, self.pp.installEnv)
     if retCode:
       self.log.error( "Failed to determine cpu normalization [ERROR %d]" % retCode )
       self.exitWithError( retCode )
@@ -848,7 +859,9 @@ class ConfigureCPURequirements( CommandBase ):
     # FIXME: this is a (necessary) hack!
     cpuNormalizationFactor = float( cpuNormalizationFactorOutput.split( '\n' )[0].replace( "Estimated CPU power is ",
                                                                                            '' ).replace( " HS06", '' ) )
-    self.log.info( "Current normalized CPU as determined by 'dirac-wms-cpu-normalization' is %f" % cpuNormalizationFactor )
+    self.log.info(
+        "Current normalized CPU as determined by 'dirac-wms-cpu-normalization' is %f" %
+        cpuNormalizationFactor)
 
     configFileArg = ''
     if self.pp.useServerCertificate:
@@ -863,11 +876,13 @@ class ConfigureCPURequirements( CommandBase ):
 
     for line in cpuTimeOutput.split( '\n' ):
       if "CPU time left determined as" in line:
+        # FIXME: this is horrible
         cpuTime = int(line.replace("CPU time left determined as", '').strip())
     self.log.info( "CPUTime left (in seconds) is %s" % cpuTime )
 
     # HS06s = seconds * HS06
     try:
+      # determining the CPU time left (in HS06s)
       self.pp.jobCPUReq = float( cpuTime ) * float( cpuNormalizationFactor )
       self.log.info( "Queue length (which is also set as CPUTimeLeft) is %f" % self.pp.jobCPUReq )
     except ValueError:

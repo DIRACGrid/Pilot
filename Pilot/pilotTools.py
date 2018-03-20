@@ -1,6 +1,8 @@
 """ A set of common tools to be used in pilot commands
 """
 
+__RCSID__ = '$Id$'
+
 import sys
 import time
 import os
@@ -14,7 +16,6 @@ import urllib2
 import signal
 import subprocess
 
-__RCSID__ = '$Id$'
 
 def printVersion( log ):
 
@@ -86,8 +87,7 @@ def retrieveUrlTimeout( url, fileName, log, timeout = 0 ):
       signal.alarm( 0 )
     if fileName:
       return True
-    else:
-      return urlData
+    return urlData
 
   except urllib2.HTTPError as x:
     if x.code == 404:
@@ -134,8 +134,7 @@ class ObjectLoader( object ):
       if module is None:
         return None, None
       #Huge success!
-      else:
-        return module, parentPath
+      return module, parentPath
       #Nothing found, continue
     #Return nothing found
     return None, None
@@ -144,7 +143,7 @@ class ObjectLoader( object ):
   def __recurseImport( self, modName, parentModule = None, hideExceptions = False ):
     """ Internal function to load modules
     """
-    if type( modName ) in types.StringTypes:
+    if isinstance(modName, basestring):
       modName = modName.split( '.' )
     try:
       if parentModule:
@@ -450,11 +449,12 @@ class PilotParams( object ):
     self.installation = ""
     self.ceName = ""
     self.ceType = ""
-    self.gridCEType = ""
     self.queueName = ""
+    self.gridCEType = ""
     self.platform = ""
+    # in case users want to specify the max number of processors requested, per pilot
+    self.maxNumberOfProcessors = 0
     self.minDiskSpace = 2560 #MB
-    self.jobCPUReq = 900
     self.pythonVersion = '27'
     self.userGroup = ""
     self.userDN = ""
@@ -483,6 +483,10 @@ class PilotParams( object ):
     self.replaceDIRACCode = ''
     self.pilotLogging = False
 
+    # Parameters that can be determined at runtime only
+    self.queueParameters = {}  # from CE description
+    self.jobCPUReq = 900  # HS06s, here just a random value
+
     # Set number of allocatable processors from MJF if available
     try:
       self.processors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
@@ -503,6 +507,8 @@ class PilotParams( object ):
                      ( 'n:', 'name=', 'Set <Site> as Site Name' ),
                      ( 'o:', 'option=', 'Option=value to add' ),
                      ( 'p:', 'platform=', 'Use <platform> instead of local one' ),
+                     ('m:', 'maxNumberOfProcessors=',
+                      'specify a max number of processors to use'),
                      ( 'r:', 'release=', 'DIRAC release to install' ),
                      ( 's:', 'section=', 'Set base section for relative parsed options' ),
                      ( 'u:', 'url=', 'Use <url> to download tarballs' ),
@@ -597,6 +603,8 @@ class PilotParams( object ):
         self.installation = v
       elif o == '-p' or o == '--platform':
         self.platform = v
+      elif o == '-m' or o == '--maxNumberOfProcessors':
+        self.maxNumberOfProcessors = v
       elif o == '-D' or o == '--disk':
         try:
           self.minDiskSpace = int( v )
