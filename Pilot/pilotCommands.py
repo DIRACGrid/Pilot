@@ -1157,6 +1157,7 @@ class MultiLaunchAgent( CommandBase ):
         ###########################################################
         # We asked, but nothing more from the matcher.
         ['INFO: JobAgent will stop with message "Nothing to do for more than', '300 Nothing to do'],
+        ['Job request OK: No match found', '300 Nothing to do'],
 
         # Variants of: "400 Site/host/VM is currently banned/disabled from receiving more work"
         #######################################################################################
