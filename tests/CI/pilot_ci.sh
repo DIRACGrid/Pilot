@@ -93,7 +93,7 @@ function PilotInstall(){
   sed -i "s#VAR_USERDN#$DIRACUSERDN#g" pilot.json
 
   prepareForPilot
-  installStompIfNecessary
+  #installStompIfNecessary
   python PilotLoggerTools.py PilotUUID
   python PilotLogger.py "Hello I am THE best pilot"
   python PilotLogger.py "Getting DIRAC Pilot 2.0 code from lhcbproject for now... babla"
