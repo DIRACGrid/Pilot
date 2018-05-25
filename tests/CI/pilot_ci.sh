@@ -207,9 +207,11 @@ function installStompIfNecessary()
           type yum > /dev/null 2>&1 || { echo >&2 "yum installer is required. Aborting"; exit 1; }
           yum -y install python-pip
       fi
-      #pip install --user --upgrade pip 
-      pip install --user stomp 
-      #~/.local/bin/pip2.7 install --user 'stomp.py==4.1.11'
+      mkdir myLocal
+      export PYTHONUSERBASE=${PWD}/myLocal
+      python -m ensurepip --user
+      python -m pip install --user --upgrade pip
+      python -m pip install --user 'stomp.py==4.1.11'
   fi
   #stomp should be installed now
   python -c 'import stomp' > /dev/null 2>&1 ||{ echo >&2 "stomp installation failure. Aborting"; exit 1; }
