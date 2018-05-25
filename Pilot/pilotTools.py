@@ -317,7 +317,6 @@ class ExtendedLogger( Logger ):
         self.pilotLogger.sendMessage(msg, status = "info")
 
   def sendMessage( self, msg, source, phase, status ='info', sendPilotLog = False ):
-    pass
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage( messageContent = msg,
