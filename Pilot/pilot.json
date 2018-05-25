@@ -35,14 +35,8 @@
         ]
       },
       "Logging": {
-        "LoggingType":"REST_API", 
-        "LocalOutputFile":"myFile",
-        "Url":"https://127.0.0.1:8888/"
-        "Host": "127.0.0.1",
-        "Port": "8888",
-        "HostKey": "/home/dirac/WojtekTests/etc/grid-security/hostkey.pem",
-        "HostCertificate": "/home/dirac/WojtekTests/etc/grid-security/hostcert.pem",
-        "CACertificate": "/home/dirac/WojtekTests/etc/grid-security/allCAs.pem"
+        "LoggingType":"LOCAL_FILE", 
+        "LocalOutputFile":"myFile"
       },
       "NagiosProbes": "WN-mjf, WN-sft-csh, WN-sft-voms, WN-sft-vo-swdir",
       "Version": "VAR_DIRAC_VERSION",
