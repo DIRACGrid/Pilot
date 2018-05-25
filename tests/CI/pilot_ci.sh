@@ -83,7 +83,6 @@ function PilotInstall(){
 
   #get the configuration file (from an VO extension, if it exists)
   pilot="Pilot"
-  #cp $TESTCODE/$VO$pilot/tests/CI/pilot.json .
   cp $TESTCODE/$VO$pilot/tests/CI/pilot.json .
   # and adapt it
   sed -i s/VAR_JENKINS_SITE/$JENKINS_SITE/g pilot.json
