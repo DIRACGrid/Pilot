@@ -169,7 +169,7 @@
       "Logging": {
         "LoggingType":"REST_API", 
         "LocalOutputFile":"myFile",
-        "Url":"https://127.0.0.1:8888/"
+        "Url":"https://127.0.0.1:8888/",
         "HostKey": "/home/dirac/WojtekTests/etc/grid-security/hostkey.pem",
         "HostCertificate": "/home/dirac/WojtekTests/etc/grid-security/hostcert.pem",
         "CACertificate": "/home/dirac/WojtekTests/etc/grid-security/allCAs.pem"

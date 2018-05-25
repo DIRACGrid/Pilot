@@ -35,17 +35,8 @@
         ]
       },
       "Logging": {
-        "Queue": {
-          "lhcb.test.*": {
-            "Persistent": "False",
-            "Acknowledgement": "False"
-            }
-        },
-        "Host": "test.cern.ch",
-        "Port": "66666",
-        "HostKey": "/test/hostkey.pem",
-        "HostCertificate": "/test/hostcert.pem",
-        "CACertificate": "/test/allCAs.pem"
+        "LoggingType":"LOCAL_FILE", 
+        "LocalOutputFile":"myFile"
       },
       "NagiosProbes": "WN-mjf, WN-sft-csh, WN-sft-voms, WN-sft-vo-swdir",
       "Version": "VAR_DIRAC_VERSION",
