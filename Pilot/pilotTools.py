@@ -280,7 +280,7 @@ class ExtendedLogger( Logger ):
   """ The logger object, for use inside the pilot. It prints messages.
       But can be also used to send messages to the queue
   """
-  def __init__( self, name = 'Pilot', debugFlag = False, pilotOutput = 'pilot.out', localMessageQueue = 'myLocalQueueOfMessages' ,  isPilotLoggerOn = False):
+  def __init__( self, name = 'Pilot', debugFlag = False, pilotOutput = 'pilot.out', localMessageQueue = 'myLocalQueueOfMessages' ,  isPilotLoggerOn = True):
     """ c'tor
     If flag PilotLoggerOn is not set, the logger will behave just like
     the original Logger object, that means it will just print logs locally on the screen
@@ -292,31 +292,31 @@ class ExtendedLogger( Logger ):
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
 
-  def debug( self, msg, header = True, sendPilotLog = False ):
+  def debug( self, msg, header = True, sendPilotLog = True ):
     super(ExtendedLogger, self).debug(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status = "debug")
 
-  def error( self, msg, header = True, sendPilotLog = False ):
+  def error( self, msg, header = True, sendPilotLog = True ):
     super(ExtendedLogger, self).error(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status = "error")
 
-  def warn( self, msg, header = True, sendPilotLog = False):
+  def warn( self, msg, header = True, sendPilotLog = True):
     super(ExtendedLogger, self).warn(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status ="warning")
 
-  def info( self, msg, header = True, sendPilotLog = False ):
+  def info( self, msg, header = True, sendPilotLog = True ):
     super(ExtendedLogger, self).info(msg,header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status = "info")
 
-  def sendMessage( self, msg, source, phase, status ='info', sendPilotLog = False ):
+  def sendMessage( self, msg, source, phase, status ='info', sendPilotLog = True ):
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage( messageContent = msg,
