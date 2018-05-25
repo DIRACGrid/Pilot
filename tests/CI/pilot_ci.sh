@@ -210,11 +210,12 @@ function installStompIfNecessary()
       mkdir myLocal
       export PYTHONUSERBASE=${PWD}/myLocal
       if ! type python -m ensurepip --user > /dev/null 2>&1; then
-        curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-        python get-pip.py --user  
+        curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py > /dev/null 2>&1 #this does not work with python 2.6, there is another get-pip.py for 2.6
+        python get-pip.py --user  > /dev/null 2>&1
       fi 
       python -m pip install --user --upgrade pip
       python -m pip install --user 'stomp.py==4.1.11'
+      python -c 'import site' # crazy hack to setup sys.path with the local directories 
   fi
   #stomp should be installed now
   python -c 'import stomp' > /dev/null 2>&1 ||{ echo >&2 "stomp installation failure. Aborting"; exit 1; }
