@@ -209,7 +209,10 @@ function installStompIfNecessary()
       fi
       mkdir myLocal
       export PYTHONUSERBASE=${PWD}/myLocal
-      python -m ensurepip --user
+      if ! type python -m ensurepip --user > /dev/null 2>&1; then
+        curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        python get-pip.py --user  
+      fi 
       python -m pip install --user --upgrade pip
       python -m pip install --user 'stomp.py==4.1.11'
   fi
