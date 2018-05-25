@@ -93,7 +93,7 @@ function PilotInstall(){
   sed -i "s#VAR_USERDN#$DIRACUSERDN#g" pilot.json
 
   prepareForPilot
-  installStompIfNecessary
+  installStompRequestsIfNecessary
   python PilotLoggerTools.py PilotUUID
   python PilotLogger.py "Hello I am THE best pilot"
   python PilotLogger.py "Getting DIRAC Pilot 2.0 code from lhcbproject for now... babla"
@@ -198,7 +198,7 @@ function fullPilot(){
 }
 
         
-function installStompIfNecessary()
+function installStompRequestsIfNecessary()
 {
   #checking if stomp is installed
   if ! python -c 'import stomp' > /dev/null 2>&1; then
@@ -215,10 +215,13 @@ function installStompIfNecessary()
       fi 
       python -m pip install --user --upgrade pip
       python -m pip install --user 'stomp.py==4.1.11'
+      python -m pip install --user 'requests'
       python -c 'import site' # crazy hack to setup sys.path with the local directories 
   fi
   #stomp should be installed now
   python -c 'import stomp' > /dev/null 2>&1 ||{ echo >&2 "stomp installation failure. Aborting"; exit 1; }
+  #requests should be installed now
+  python -c 'import requests' > /dev/null 2>&1 ||{ echo >&2 "requests installation failure. Aborting"; exit 1; }
 }
 
 ####################################################################################
