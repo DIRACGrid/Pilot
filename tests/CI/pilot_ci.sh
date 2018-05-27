@@ -37,7 +37,7 @@
 
 # Def of environment variables:
 
-if [ ! -z "$DEBUG" ]
+if [ ! -z "${DEBUG}" ]
 then
   echo '==> Running in DEBUG mode'
   DEBUG='-ddd'
@@ -45,7 +45,7 @@ else
   echo '==> Running in non-DEBUG mode'
 fi
 
-if [ ! -z "$WORKSPACE" ]
+if [ ! -z "${WORKSPACE}" ]
 then
   echo '==> We are in Jenkins I guess'
 else
