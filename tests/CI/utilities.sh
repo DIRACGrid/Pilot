@@ -10,7 +10,7 @@ source $TESTCODE/DIRAC/tests/Jenkins/utilities.sh
 # function that override the default one in $TESTCODE/DIRAC/tests/Jenkins/utilities.sh
 # 
 function prepareForPilot(){
-
+  
   #get the pilot files from the Pilot
   for file in PilotLogger.py PilotLoggerTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py MessageSender.py
   do
@@ -31,14 +31,14 @@ function prepareForPilot(){
 }
 
 
- function preparePythonEnvironment()
- {
-   cd $PILOTINSTALLDIR
-   USER_SITE_PACKAGE_BASE=$(python -m site --user-base)
-   wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py --user --upgrade
-   INSTALL_COMMAND="$USER_SITE_PACKAGE_BASE/bin/pip install --upgrade --user -r $TESTCODE/Pilot/requirements.txt"
-   eval $INSTALL_COMMAND
- }
+function preparePythonEnvironment()
+{
+ cd $PILOTINSTALLDIR
+ USER_SITE_PACKAGE_BASE=$(python -m site --user-base)
+ wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py --user --upgrade
+ INSTALL_COMMAND="$USER_SITE_PACKAGE_BASE/bin/pip install --upgrade --user -r $TESTCODE/Pilot/requirements.txt"
+ eval $INSTALL_COMMAND
+}
 
 #consume all messages from the queue, leaving it empty
 # function RabbitServerCleanup()
