@@ -204,21 +204,27 @@ function installStompRequestsIfNecessary()
   #checking if stomp is installed
   if ! python -c 'import stomp' > /dev/null 2>&1; then
       #checking if pip is installed
+      echo 'here'
       if ! type python -m pip > /dev/null 2>&1; then
           type yum > /dev/null 2>&1 || { echo >&2 "yum installer is required. Aborting"; exit 1; }
+          echo 'there'
           yum -y install python-pip
       fi
+      echo 'there2'
       mkdir myLocal
       export PYTHONUSERBASE=${PWD}/myLocal
       if ! type python -m ensurepip --user > /dev/null 2>&1; then
         curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py > /dev/null 2>&1 #this does not work with python 2.6, there is another get-pip.py for 2.6
         python get-pip.py --user  > /dev/null 2>&1
       fi 
+      echo 'there3'
       python -m pip install --user --upgrade pip
       python -m pip install --user 'stomp.py==4.1.11'
       python -m pip install --user 'requests'
       python -c 'import site' # crazy hack to setup sys.path with the local directories 
+      echo 'there4'
   fi
+  echo 'there5'
   #stomp should be installed now
   python -c 'import stomp' > /dev/null 2>&1 ||{ echo >&2 "stomp installation failure. Aborting"; exit 1; }
   #requests should be installed now
