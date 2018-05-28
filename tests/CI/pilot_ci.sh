@@ -204,7 +204,7 @@ function installStompRequestsIfNecessary()
   #checking if stomp is installed
   if ! python -c 'import stomp' > /dev/null 2>&1; then
       #checking if pip is installed
-      if ! type pip > /dev/null 2>&1; then
+      if ! type python -m pip > /dev/null 2>&1; then
           type yum > /dev/null 2>&1 || { echo >&2 "yum installer is required. Aborting"; exit 1; }
           yum -y install python-pip
       fi
