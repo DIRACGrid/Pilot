@@ -1,4 +1,4 @@
-""" Pilot logger module for the remote loggin system.
+""" Pilot logger module for the remote logging system.
 """
 
 import os
@@ -13,7 +13,7 @@ from MessageSender import createMessageSender
 
 
 def getPilotUUIDFromFile(filename='PilotUUID'):
-  """ Retrives Pilot UUID from the file of given name.
+  """ Retrieves Pilot UUID from the file of given name.
   Returns:
     str: empty string in case of errors.
   """
