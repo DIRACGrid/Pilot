@@ -1,4 +1,4 @@
-""" Message sender module for the remote loggin system.
+""" Message sender module for the remote logging system.
     It provides the general interface of the message sender and
     several implementations that e.g. allows to send the message
     to a REST interface or to a MQ server using the Stomp protocol.
@@ -20,7 +20,7 @@ class MessageSender(object):
     raise NotImplementedError
 
 
-def createMessageSender(senderType, params):
+def messageSenderFactory(senderType, params):
   """
   Function creates MessageSender according to sender type.
   Args:
@@ -48,7 +48,7 @@ def createMessageSender(senderType, params):
 
 def createParamChecker(requiredKeys):
   """ Function returns a function that can be used to check
-      if the parameters in form of a dictionnary contain
+      if the parameters in form of a dictionary contain
       the required set of keys. Also it checks if the parameters
       are not empty.
     Args:
@@ -124,7 +124,7 @@ def readMessagesFromFileAndEraseFileContent(filename='myLocalQueueOfMessages'):
   """ Generates the queue FIFO and fills it
       with values from the file, assuming that one line
       corresponds to one message.
-      Finallym the file content is erased.
+      Finally the file content is erased.
   Returns:
     Queue:
   """
@@ -159,7 +159,7 @@ class LocalFileSender(MessageSender):
 
 
 def connect(hostAndPort, sslCfg):
-  """ Connects to RabbitMQ and returns connection
+  """ Connects to MQ server and returns connection
       handler or None in case of connection down.
       Stomp-depended function.
   """
@@ -209,7 +209,7 @@ def disconnect(connectHandler):
   connectHandler.disconnect()
 
 def sendAllLocalMessages(connectHandler, destination, filename):
-  """ Retrives all messages from the local storage
+  """ Retrieves all messages from the local storage
       and sends it.
   """
   queue = readMessagesFromFileAndEraseFileContent(filename)
@@ -238,7 +238,7 @@ class StompSender(MessageSender):
   def sendMessage(self, msg, flag):
     """ Method first copies the message content to the
         local storage, then it checks if the connection
-        to RabbitMQ server is up,
+        to the MQ server is up,
         If it is the case it sends all messages stored
         locally.  The string flag can be used as routing_key,
         it can contain:  'info', 'warning', 'error',

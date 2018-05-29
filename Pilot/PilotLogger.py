@@ -9,7 +9,7 @@ from PilotLoggerTools import generateTimeStamp
 from PilotLoggerTools import isMessageFormatCorrect
 from PilotLoggerTools import readPilotJSONConfigFile
 from PilotLoggerTools import getUniqueIDAndSaveToFile
-from MessageSender import createMessageSender
+from MessageSender import messageSenderFactory
 
 
 def getPilotUUIDFromFile(filename='PilotUUID'):
@@ -87,7 +87,7 @@ class PilotLogger(object):
       result = getUniqueIDAndSaveToFile(filename = fileWithID)
       if not result:
         logging.error('Error while generating pilot logger id.')
-    self.messageSender = createMessageSender(senderType = self.params['LoggingType'], params = self.params)
+    self.messageSender = messageSenderFactory(senderType = self.params['LoggingType'], params = self.params)
     if not self.messageSender:
       logging.error('Something went wrong - no messageSender created.')
 
