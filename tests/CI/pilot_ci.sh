@@ -213,7 +213,8 @@ function installStompRequestsIfNecessary()
       mkdir myLocal
       export PYTHONUSERBASE=${PWD}/myLocal
       python -c 'import site' # crazy hack to setup sys.path with the local directories 
-      PIP_LOC=$USER_SITE_PACKAGE_BASE/bin/pip
+      local USER_SITE_PACKAGE_BASE=$(python -m site --user-base)
+      local PIP_LOC=$USER_SITE_PACKAGE_BASE/bin/pip
       echo "PIP_LOC: $PIP_LOC"
       if [ "$PYTHON_VERSION" = '2.6' ]; then
         curl https://bootstrap.pypa.io/2.6/get-pip.py -o get-pip.py
