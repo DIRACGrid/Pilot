@@ -19,7 +19,6 @@ import importlib
 import stomp
 import requests
 
-
 def loadAndCreateObject(moduleName, className, params):
   """
   Function loads the class from the module and creates
@@ -30,12 +29,19 @@ def loadAndCreateObject(moduleName, className, params):
     className(str):
     params: arguments passed to init.
   Return:
-    Created instance of the class.
+    obj: Created instance of the class or None in case of errors.
   """
-  module = importlib.import_module(moduleName)
-  myClass = getattr(module, className)
-  myInstance = myClass(params)
-  return myInstance
+  myObj = None
+  try:
+    module = importlib.import_module(moduleName)
+    try:
+      myClass = getattr(module, className)
+      myObj = myClass(params)
+    except AttributeError:
+      logging.error('Class not found')
+  except ImportError:
+    logging.error('Module not found')
+  return myObj
 
 
 class MessageSender(object):
