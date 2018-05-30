@@ -9,6 +9,13 @@ import logging
 import stomp
 import requests
 
+import importlib
+
+def objectLoader(moduleName, className, params):
+  module = importlib.import_module(moduleName)
+  my_class = getattr(module, className)
+  my_instance = my_class(params)
+  return my_instance
 
 class MessageSender(object):
   """ General interface of message sender.
@@ -18,7 +25,6 @@ class MessageSender(object):
     """ Must be implemented by children classes.
     """
     raise NotImplementedError
-
 
 def messageSenderFactory(senderType, params):
   """
@@ -31,20 +37,12 @@ def messageSenderFactory(senderType, params):
     MessageSender or None in case of errors
 
   """
-
+  senderTypeToClassName={'LOCAL_FILE':'LocalFileSender','MQ':'StompSender', 'REST_API':'RESTSender'}
   try:
-    if senderType == 'LOCAL_FILE':
-      return LocalFileSender(params)
-    elif senderType == 'MQ':
-      return StompSender(params)
-    elif senderType == 'REST_API':
-      return RESTSender(params)
-    else:
-      logging.error("Unknown message sender type")
+    return objectLoader('Pilot.MessageSender', senderTypeToClassName[senderType], params)
   except ValueError:
     logging.error("Error initializing the message sender")
   return None
-
 
 def createParamChecker(requiredKeys):
   """ Function returns a function that can be used to check
