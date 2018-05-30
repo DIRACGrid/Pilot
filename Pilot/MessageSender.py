@@ -6,16 +6,28 @@
 
 import Queue
 import logging
+import importlib
 import stomp
 import requests
 
-import importlib
 
-def objectLoader(moduleName, className, params):
+def loadAndCreateObject(moduleName, className, params):
+  """
+  Function loads the class from the module and creates
+  the instance of this class by using params arguments
+  example usage: myObj = loadAndCreateObject('Pilot.MessageSender', 'StompSender',params)
+  Args:
+    moduleName(str):
+    className(str):
+    params: arguments passed to init.
+  Return:
+    Created instance of the class.
+  """
   module = importlib.import_module(moduleName)
-  my_class = getattr(module, className)
-  my_instance = my_class(params)
-  return my_instance
+  myClass = getattr(module, className)
+  myInstance = myClass(params)
+  return myInstance
+
 
 class MessageSender(object):
   """ General interface of message sender.
@@ -25,6 +37,7 @@ class MessageSender(object):
     """ Must be implemented by children classes.
     """
     raise NotImplementedError
+
 
 def messageSenderFactory(senderType, params):
   """
@@ -37,12 +50,19 @@ def messageSenderFactory(senderType, params):
     MessageSender or None in case of errors
 
   """
-  senderTypeToClassName={'LOCAL_FILE':'LocalFileSender','MQ':'StompSender', 'REST_API':'RESTSender'}
+  typeToModuleAndClassName = {
+    'LOCAL_FILE': {'module': 'Pilot.MessageSender', 'class': 'LocalFileSender'},
+    'MQ': {'module': 'Pilot.MessageSender', 'class': 'StompSender'},
+    'REST_API': {'module': 'Pilot.MessageSender', 'class': 'RESTSender'}
+  }
   try:
-    return objectLoader('Pilot.MessageSender', senderTypeToClassName[senderType], params)
+    moduleName = typeToModuleAndClassName[senderType]['module']
+    className = typeToModuleAndClassName[senderType]['class']
+    return loadAndCreateObject(moduleName, className, params)
   except ValueError:
     logging.error("Error initializing the message sender")
   return None
+
 
 def createParamChecker(requiredKeys):
   """ Function returns a function that can be used to check
@@ -97,7 +117,7 @@ class RESTSender(MessageSender):
 
     try:
       requests.post(url, json=msg, cert=(
-        hostCertificate, hostKey), verify=CACertificate)
+          hostCertificate, hostKey), verify=CACertificate)
     except (requests.exceptions.RequestException, IOError) as e:
       logging.error(e)
       return False
@@ -206,6 +226,7 @@ def disconnect(connectHandler):
   """
   connectHandler.disconnect()
 
+
 def sendAllLocalMessages(connectHandler, destination, filename):
   """ Retrieves all messages from the local storage
       and sends it.
@@ -214,6 +235,7 @@ def sendAllLocalMessages(connectHandler, destination, filename):
   while not queue.empty():
     msg = queue.get()
     send(msg, destination, connectHandler)
+
 
 class StompSender(MessageSender):
   """ Stomp message sender.
@@ -256,7 +278,7 @@ class StompSender(MessageSender):
 
     saveMessageToFile(msg, filename)
     connection = connect((host, port), {
-      'key_file': hostKey, 'cert_file': hostCertificate, 'ca_certs': CACertificate})
+        'key_file': hostKey, 'cert_file': hostCertificate, 'ca_certs': CACertificate})
     if not connection:
       return False
     sendAllLocalMessages(connection, queue, filename)
