@@ -10,14 +10,12 @@ import pickle
 import getopt
 import imp
 import json
-import types
 import urllib
 import urllib2
 import signal
 import subprocess
 
 from PilotLogger import PilotLogger
-
 
 def printVersion( log ):
 
@@ -175,7 +173,6 @@ class ObjectLoader( object ):
     module, parentPath = self.loadModule( loadModuleName )
     if module is None:
       return None, None
-
     try:
       commandObj = getattr( module, command )
       return commandObj, os.path.join( parentPath, moduleName )
