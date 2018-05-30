@@ -2,7 +2,16 @@
     It provides the general interface of the message sender and
     several implementations that e.g. allows to send the message
     to a REST interface or to a MQ server using the Stomp protocol.
-"""
+    The instances of message senders should be created by using
+    messageSenderFactory() that takes one string argument corresponding
+    to message sender type we want to create (see messageSenderFactory docstring for details)
+    and the optional parameters params that will be passed to sender message instance.
+    For parameter details see given sender message implementation.
+    e.g to create a message sender that will send messages to a local file 'myFile':
+    myLocalSender = messageSenderFactory('LOCAL_FILE', params ={'LocalOutputFile': 'myFile'})
+    myLocalSender.sendMessage("blabla", "myFlag")
+
+    """
 
 import Queue
 import logging
