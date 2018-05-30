@@ -116,8 +116,10 @@ class RESTSender(MessageSender):
     CACertificate = self.params.get('CACertificate')
 
     try:
-      requests.post(url, json=msg, cert=(
-          hostCertificate, hostKey), verify=CACertificate)
+      requests.post(url,
+                    json=msg,
+                    cert=(hostCertificate, hostKey),
+                    verify=CACertificate)
     except (requests.exceptions.RequestException, IOError) as e:
       logging.error(e)
       return False
@@ -175,68 +177,6 @@ class LocalFileSender(MessageSender):
     saveMessageToFile(msg, filename=filename)
     return True
 
-
-def connect(hostAndPort, sslCfg):
-  """ Connects to MQ server and returns connection
-      handler or None in case of connection down.
-      Stomp-depended function.
-  """
-  if not sslCfg:
-    logging.error("sslCfg argument is None")
-    return None
-  if not hostAndPort:
-    logging.error("hostAndPort argument is None")
-    return None
-  if not all(key in sslCfg for key in ['key_file', 'cert_file', 'ca_certs']):
-    logging.error("Missing ssl_cfg keys")
-    return None
-
-  try:
-    connection = stomp.Connection(host_and_ports=hostAndPort, use_ssl=True)
-    connection.set_ssl(for_hosts=hostAndPort,
-                       key_file=sslCfg['key_file'],
-                       cert_file=sslCfg['cert_file'],
-                       ca_certs=sslCfg['ca_certs'])
-    connection.start()
-    connection.connect()
-    return connection
-  except stomp.exception.ConnectFailedException:
-    logging.error('Connection error')
-    return None
-  except IOError:
-    logging.error('Could not find files with ssl certificates')
-    return None
-
-
-def send(msg, destination, connectHandler):
-  """Sends a message and logs info.
-     Stomp-depended function.
-  """
-  if not connectHandler:
-    return False
-  connectHandler.send(destination=destination,
-                      body=msg)
-  logging.info(" [x] Sent %r ", msg)
-  return True
-
-
-def disconnect(connectHandler):
-  """Disconnects.
-     Stomp-depended function.
-  """
-  connectHandler.disconnect()
-
-
-def sendAllLocalMessages(connectHandler, destination, filename):
-  """ Retrieves all messages from the local storage
-      and sends it.
-  """
-  queue = readMessagesFromFileAndEraseFileContent(filename)
-  while not queue.empty():
-    msg = queue.get()
-    send(msg, destination, connectHandler)
-
-
 class StompSender(MessageSender):
   """ Stomp message sender.
   """
@@ -277,10 +217,70 @@ class StompSender(MessageSender):
     filename = self.params.get('LocalOutputFile')
 
     saveMessageToFile(msg, filename)
-    connection = connect((host, port), {
-        'key_file': hostKey, 'cert_file': hostCertificate, 'ca_certs': CACertificate})
+    connection = self._connect((host, port), {
+      'key_file': hostKey, 'cert_file': hostCertificate, 'ca_certs': CACertificate})
     if not connection:
       return False
-    sendAllLocalMessages(connection, queue, filename)
-    disconnect(connection)
+    self._sendAllLocalMessages(connection, queue, filename)
+    self._disconnect(connection)
     return True
+
+  def _connect(self, hostAndPort, sslCfg):
+    """ Connects to MQ server and returns connection
+        handler or None in case of connection down.
+        Stomp-depended function.
+    """
+    if not sslCfg:
+      logging.error("sslCfg argument is None")
+      return None
+    if not hostAndPort:
+      logging.error("hostAndPort argument is None")
+      return None
+    if not all(key in sslCfg for key in ['key_file', 'cert_file', 'ca_certs']):
+      logging.error("Missing ssl_cfg keys")
+      return None
+
+    try:
+      connection = stomp.Connection(host_and_ports=hostAndPort, use_ssl=True)
+      connection.set_ssl(for_hosts=hostAndPort,
+                         key_file=sslCfg['key_file'],
+                         cert_file=sslCfg['cert_file'],
+                         ca_certs=sslCfg['ca_certs'])
+      connection.start()
+      connection.connect()
+      return connection
+    except stomp.exception.ConnectFailedException:
+      logging.error('Connection error')
+      return None
+    except IOError:
+      logging.error('Could not find files with ssl certificates')
+      return None
+
+
+  def _send(self, msg, destination, connectHandler):
+    """Sends a message and logs info.
+       Stomp-depended function.
+    """
+    if not connectHandler:
+      return False
+    connectHandler.send(destination=destination,
+                        body=msg)
+    logging.info(" [x] Sent %r ", msg)
+    return True
+
+
+  def _disconnect(self, connectHandler):
+    """Disconnects.
+       Stomp-depended function.
+    """
+    connectHandler.disconnect()
+
+
+  def _sendAllLocalMessages(self, connectHandler, destination, filename):
+    """ Retrieves all messages from the local storage
+        and sends it.
+    """
+    queue = readMessagesFromFileAndEraseFileContent(filename)
+    while not queue.empty():
+      msg = queue.get()
+      self._send(msg, destination, connectHandler)
