@@ -252,7 +252,7 @@ class StompSender(MessageSender):
       logging.error("hostAndPort argument is None")
       return None
     if not all(key in sslCfg for key in ['key_file', 'cert_file', 'ca_certs']):
-      logging.error("Missing ssl_cfg keys")
+      logging.error("Missing sslCfg keys")
       return None
 
     try:
