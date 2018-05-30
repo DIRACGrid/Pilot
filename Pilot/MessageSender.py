@@ -244,6 +244,13 @@ class StompSender(MessageSender):
     """ Connects to MQ server and returns connection
         handler or None in case of connection down.
         Stomp-depended function.
+    Args:
+      hostAndPort(list): of tuples, containing ip address and the port 
+                         where the message broker is listening for stomp 
+                         connections. e.g. [(127.0.0.1,6555)]
+      sslCfg(dict): with three keys 'key_file', 'cert_file', and 'ca_certs'. 
+    Return:
+      stomp.Connection: or None in case of errors. 
     """
     if not sslCfg:
       logging.error("sslCfg argument is None")
