@@ -15,7 +15,6 @@
 
 import Queue
 import logging
-import importlib
 import stomp
 import requests
 
@@ -25,22 +24,33 @@ def loadAndCreateObject(moduleName, className, params):
   the instance of this class by using params arguments
   example usage: myObj = loadAndCreateObject('Pilot.MessageSender', 'StompSender',params)
   Args:
-    moduleName(str):
-    className(str):
-    params: arguments passed to init.
+    moduleName(str): e.g. 'Pilot.MessageSender' or 'MessageSender'
+    className(str): e.g. 'StompSender'
+    params: arguments passed to __init__ of the class.
   Return:
     obj: Created instance of the class or None in case of errors.
   """
   myObj = None
   try:
-    module = importlib.import_module(moduleName)
+    # In case of moduleName in the format of X.Y.Z, we have
+    # mods =['X','Y','Z']. We are really interested in loading
+    # 'Z' submodule.
+    mods = moduleName.split( '.' )
+    # The __import__ call with
+    # fromlist option set to mods[-1]  will load Z submodule as expected.
+    # Simpler X format will be also covered.
+    module = __import__(moduleName,globals(), locals(),mods[-1])
     try:
       myClass = getattr(module, className)
-      myObj = myClass(params)
+      if params:
+        myObj = myClass(params)
+      else:
+        myObj = myClass()
+
     except AttributeError:
-      logging.error('Class not found')
+      logging.error('Class %s  not found', className)
   except ImportError:
-    logging.error('Module not found')
+    logging.error('Module %s not found', moduleName)
   return myObj
 
 

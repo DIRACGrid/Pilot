@@ -6,7 +6,7 @@
 import unittest
 import os
 from mock import MagicMock
-from Pilot.MessageSender import LocalFileSender, StompSender, RESTSender, eraseFileContent
+from Pilot.MessageSender import LocalFileSender, StompSender, RESTSender, eraseFileContent, loadAndCreateObject
 import Pilot.MessageSender as module
 
 def removeFile(filename):
@@ -29,6 +29,23 @@ class TestMessageSenderEraseFileContent(unittest.TestCase):
       eraseFileContent(self.testFile)
     except:
       self.fail("eraseFileContent() raised ExceptionType!")
+
+class TestLoadAndCreateObject(unittest.TestCase):
+  def setUp(self):
+    pass
+  def tearDown(self):
+    pass
+  def test_success(self):
+    res = loadAndCreateObject('MessageSender',  'LocalFileSender', {'LocalOutputFile':'blabla'})
+    self.assertIsNotNone(res)
+
+  def test_fail(self):
+    res = loadAndCreateObject( 'MessageSender',  'NonExistingClass', '')
+    self.assertIsNone(res)
+
+  def test_fail2(self):
+    res = loadAndCreateObject( 'Bla.Bla',  'NonExistingClass', '')
+    self.assertIsNone(res)
 
 class TestLocalFileSender(unittest.TestCase):
   def setUp(self):
