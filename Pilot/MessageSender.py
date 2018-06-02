@@ -76,9 +76,9 @@ def messageSenderFactory(senderType, params):
 
   """
   typeToModuleAndClassName = {
-    'LOCAL_FILE': {'module': 'Pilot.MessageSender', 'class': 'LocalFileSender'},
-    'MQ': {'module': 'Pilot.MessageSender', 'class': 'StompSender'},
-    'REST_API': {'module': 'Pilot.MessageSender', 'class': 'RESTSender'}
+    'LOCAL_FILE': {'module': 'MessageSender', 'class': 'LocalFileSender'},
+    'MQ': {'module': 'MessageSender', 'class': 'StompSender'},
+    'REST_API': {'module': 'MessageSender', 'class': 'RESTSender'}
   }
   try:
     moduleName = typeToModuleAndClassName[senderType]['module']
