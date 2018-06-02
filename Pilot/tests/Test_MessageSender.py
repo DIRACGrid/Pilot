@@ -37,15 +37,15 @@ class TestLoadAndCreateObject(unittest.TestCase):
     pass
   def test_success(self):
     res = loadAndCreateObject('MessageSender',  'LocalFileSender', {'LocalOutputFile':'blabla'})
-    self.assertIsNotNone(res)
+    self.assertTrue(res)
 
   def test_fail(self):
     res = loadAndCreateObject( 'MessageSender',  'NonExistingClass', '')
-    self.assertIsNone(res)
+    self.assertFalse(res)
 
   def test_fail2(self):
     res = loadAndCreateObject( 'Bla.Bla',  'NonExistingClass', '')
-    self.assertIsNone(res)
+    self.assertFalse(res)
 
 class TestLocalFileSender(unittest.TestCase):
   def setUp(self):
