@@ -222,8 +222,9 @@ function installStompRequestsIfNecessary()
         curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
       fi
       python get-pip.py --user --upgrade
-      `$PIP_LOC install --user 'stomp.py==4.1.11'`
-      `$PIP_LOC install --user 'requests'`
+      echo "$PIP_LOC install --user 'stomp.py==4.1.11'"
+      `${PIP_LOC} install --user 'stomp.py==4.1.11'`
+      `${PIP_LOC} install --user 'requests'`
   fi
   #stomp should be installed now
   python -c 'import stomp' > /dev/null 2>&1 ||{ echo >&2 "stomp installation failure. Aborting"; exit 1; }
