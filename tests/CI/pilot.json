@@ -34,6 +34,10 @@
           "MultiLaunchAgent"
         ]
       },
+      "Logging": {
+        "LoggingType":"LOCAL_FILE", 
+        "LocalOutputFile":"myFile"
+      },
       "NagiosProbes": "WN-mjf, WN-sft-csh, WN-sft-voms, WN-sft-vo-swdir",
       "Version": "VAR_DIRAC_VERSION",
       "NagiosPutURL": "https://lbvobox06.cern.ch:9132/sam/"
