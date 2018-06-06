@@ -117,7 +117,7 @@ def createParamChecker(requiredKeys):
 
 class RESTSender(MessageSender):
   """ Message sender to a REST interface.
-      It depens on requests module.
+      It depends on requests module.
   """
   import requests
 
