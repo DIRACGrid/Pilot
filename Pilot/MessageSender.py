@@ -15,8 +15,6 @@
 
 import Queue
 import logging
-import stomp
-import requests
 
 def loadAndCreateObject(moduleName, className, params):
   """
@@ -119,7 +117,9 @@ def createParamChecker(requiredKeys):
 
 class RESTSender(MessageSender):
   """ Message sender to a REST interface.
+      It depends on requests module.
   """
+  import requests
 
   REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
                    'CACertificate', 'Url', 'LocalOutputFile']
@@ -204,8 +204,9 @@ class LocalFileSender(MessageSender):
 
 class StompSender(MessageSender):
   """ Stomp message sender.
+      It depends on stomp module.
   """
-
+  import stomp
   REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
                    'CACertificate', 'QueuePath', 'LocalOutputFile']
 
