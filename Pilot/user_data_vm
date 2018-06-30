@@ -71,8 +71,12 @@ export JOBOUTPUTS='##user_data_joboutputs_url##'
 /bin/echo -e "export MACHINEFEATURES=$MACHINEFEATURES\nexport JOBFEATURES=$JOBFEATURES\nexport JOBOUTPUTS=$JOBOUTPUTS" > /etc/profile.d/mjf.sh
 /bin/echo -e "setenv MACHINEFEATURES $MACHINEFEATURES\nsetenv JOBFEATURES $JOBFEATURES\nsetenv JOBOUTPUTS $JOBOUTPUTS" > /etc/profile.d/mjf.csh
 
-export VM_UUID='##user_data_uuid##'
+export VO='##user_data_option_vo##'
+if [ "$VO" == "" ] ; then
+  VO=lhcb
+fi
 
+export VM_UUID='##user_data_uuid##'
 if [ "$VM_UUID" = "" -a "$JOBFEATURES" != "" ] ; then
   export VM_UUID=`python -c "import urllib ; print urllib.urlopen('$JOBFEATURES/job_id').read().strip()"`
 fi
@@ -201,9 +205,11 @@ rm -Rf /etc/grid-security
 ln -sf /cvmfs/grid.cern.ch/etc/grid-security /etc/grid-security
 export X509_CERT_DIR=/etc/grid-security/certificates
 
-# Use grid WN configuration from cvmfs
-ln -sf /cvmfs/grid.cern.ch/emi3wn-latest/etc/profile.d/a1_grid_env.sh \
-       /cvmfs/grid.cern.ch/emi3wn-latest/etc/profile.d/setup-wn-example.sh /etc/profile.d
+# These will be picked up by login etc shells
+cat <<EOF > /etc/profile.d/grid-paths.sh
+export X509_CERT_DIR=/etc/grid-security/certificates
+export X509_VOMS_DIR=/etc/grid-security/vomsdir
+EOF
 
 # make a first heartbeat
 echo 0.0 0.0 0.0 0.0 0.0 > /var/spool/joboutputs/heartbeat
@@ -299,6 +305,16 @@ fi
 chown -R plt.plt /scratch/plt
 chmod 1775 /scratch/plt
 
+SUBMIT_POOL_OPTS="-o '/LocalSite/SubmitPool=Test'"
+
+# Source any include scripts we fetched
+for i in include_vm_*.sh
+do
+ if [ -r "$i" ] ; then
+   . ./$i
+ fi
+done
+
 if [ '##user_data_option_dirac_queue##' != '' ] ; then
   QUEUE='##user_data_option_dirac_queue##'
 else
@@ -312,7 +328,7 @@ fi
  JOB_ID="$JOB_ID" PILOT_UUID="$PILOT_UUID" \
  python /scratch/plt/dirac-pilot.py \
  --debug \
- -o '/LocalSite/SubmitPool=Test' \
+ $SUBMIT_POOL_OPTS \
  --Name '##user_data_space##' \
  --Queue $QUEUE \
  --MaxCycles 1 \
@@ -322,7 +338,7 @@ fi
  >/var/spool/joboutputs/dirac-pilot.log 2>&1
 
 # Save JobAgent and System logs
-cp -f /scratch/plt/jobagent.*.log /scratch/plt/shutdown_message* /var/log/boot.log /var/log/dmesg /var/log/secure /var/log/messages* /etc/cvmfs/default.* \
+cp -f /scratch/plt/bashrc /scratch/plt/jobagent.*.log /scratch/plt/shutdown_message* /var/log/boot.log /var/log/dmesg /var/log/secure /var/log/messages* /etc/cvmfs/default.* \
   /var/spool/joboutputs/
 
 (
@@ -333,9 +349,11 @@ cp -f /scratch/plt/jobagent.*.log /scratch/plt/shutdown_message* /var/log/boot.l
     curl --capath $X509_CERT_DIR --cert /root/x509proxy.pem --cacert /root/x509proxy.pem --location --upload-file "$i" \
      "$JOBOUTPUTS/"
 
-    # This will be replaced by extended pilot logging??
-    curl --capath $X509_CERT_DIR --cert /root/x509proxy.pem --cacert /root/x509proxy.pem --location --upload-file "$i" \
-     "https://lhcb-depo.cern.ch:9132/hosts/##user_data_space##/##user_data_machinetype##/##user_data_machine_hostname##/##user_data_uuid##/"
+    if [ "$DEPO_BASE_URL" != ""] ; then
+      # This will be replaced by extended pilot logging??
+      curl --capath $X509_CERT_DIR --cert /root/x509proxy.pem --cacert /root/x509proxy.pem --location --upload-file "$i" \
+        "$DEPO_BASE_URL/##user_data_space##/##user_data_machinetype##/##user_data_machine_hostname##/##user_data_uuid##/"
+    fi
    fi
   done
 )
