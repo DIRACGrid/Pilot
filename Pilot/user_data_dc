@@ -105,6 +105,16 @@ else
   wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' --ca-directory=$X509_CERT_DIR https://lhcb-portal-dirac.cern.ch/pilot/
 fi    
 
+SUBMIT_POOL_OPTS="-o '/LocalSite/SubmitPool=Test'"
+
+# Source any include scripts we fetched
+for i in include_dc_*.sh
+do
+ if [ -r "$i" ] ; then
+   . ./$i
+ fi
+done
+
 if [ '##user_data_option_dirac_queue##' != '' ] ; then
   QUEUE='##user_data_option_dirac_queue##'
 else
@@ -114,28 +124,30 @@ fi
 # Now run the pilot script
 python $HOME/dirac-pilot.py \
  --debug \
- -o '/LocalSite/SubmitPool=Test' \
  --Name '##user_data_space##' \
  --Queue $QUEUE \
+ $SUBMIT_POOL_OPTS \
  --MaxCycles 1 \
  --cert --certLocation $HOME/grid-security \
  ##user_data_option_dirac_opts## \
   >##user_data_joboutputs_url##/dirac-pilot.log 2>&1
 
-# Save JobAgent and System logs
+# Save JobAgent and System logs to the $JOBOUTPUTS volume
 cp -f $HOME/jobagent.*.log $HOME/shutdown_message* ##user_data_joboutputs_url##
 
+if [ "$DEPO_BASE_URL" != ""] ; then
+# This will be replaced by extended pilot logging??
 (
   cd ##user_data_joboutputs_url##
   for i in *
   do
    if [ -f $i ] ; then 
-    # This will be replaced by extended pilot logging??
-    curl --capath $X509_CERT_DIR --cert $HOME/grid-security/x509proxy.pem --cacert $HOME/grid-security/x509proxy.pem --location --upload-file "$i" \
-     "https://lhcb-depo.cern.ch:9132/hosts/##user_data_space##/##user_data_machinetype##/##user_data_machine_hostname##/##user_data_uuid##/"
+      curl --capath $X509_CERT_DIR --cert /root/x509proxy.pem --cacert /root/x509proxy.pem --location --upload-file "$i" \
+        "$DEPO_BASE_URL/##user_data_space##/##user_data_machinetype##/##user_data_machine_hostname##/##user_data_uuid##/"
    fi
   done
 )
+fi
 
 sleep 30
 
