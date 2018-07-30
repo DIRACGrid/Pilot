@@ -7,4 +7,6 @@ pytest
 pytest-cov
 coverage
 stomp.py
+requests
 python-coveralls
+autopep8
