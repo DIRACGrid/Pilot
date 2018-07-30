@@ -9,6 +9,7 @@ import json
 import stat
 import sys
 import os
+import shutil
 
 from Pilot.pilotTools import PilotParams
 from Pilot.pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes, ReplaceDIRACCode
@@ -32,9 +33,14 @@ class PilotTestCase( unittest.TestCase ):
                  fp )
 
   def tearDown( self ):
-    for fileProd in ['pilot.json', 'Nagios1', 'Nagios2', 'PilotAgentUUID', 'dev.tgz', 'pilot.out', '123.txt']:
+   
+    for fileProd in ['pilot.json', 'Nagios1', 'Nagios2', 'PilotAgentUUID', 'dev.tgz', 'pilot.out', '123.txt', 'testing.tgz']:
       try:
         os.remove( fileProd )
+      except OSError:
+        pass
+      try:
+        shutil.rmtree('ReplacementCode')
       except OSError:
         pass
 

@@ -10,103 +10,105 @@ import pickle
 import getopt
 import imp
 import json
-import types
 import urllib
 import urllib2
 import signal
 import subprocess
 
 
-def printVersion( log ):
+def printVersion(log):
 
-  log.info( "Running %s" % " ".join( sys.argv ) )
+  log.info("Running %s" % " ".join(sys.argv))
   try:
-    with open( "%s.run" % sys.argv[0], "w" ) as fd:
-      pickle.dump( sys.argv[1:], fd )
+    with open("%s.run" % sys.argv[0], "w") as fd:
+      pickle.dump(sys.argv[1:], fd)
   except OSError:
     pass
-  log.info( "Version %s" % __RCSID__ )
+  log.info("Version %s" % __RCSID__)
+
 
 def pythonPathCheck():
 
   try:
-    os.umask( 18 ) # 022
-    pythonpath = os.getenv( 'PYTHONPATH', '' ).split( ':' )
+    os.umask(18)  # 022
+    pythonpath = os.getenv('PYTHONPATH', '').split(':')
     print 'Directories in PYTHONPATH:', pythonpath
     for p in pythonpath:
       if p == '':
         continue
       try:
-        if os.path.normpath( p ) in sys.path:
+        if os.path.normpath(p) in sys.path:
           # In case a given directory is twice in PYTHONPATH it has to removed only once
-          sys.path.remove( os.path.normpath( p ) )
-      except Exception, x:
+          sys.path.remove(os.path.normpath(p))
+      except Exception as x:
         print x
-        print "[EXCEPTION-info] Failing path:", p, os.path.normpath( p )
+        print "[EXCEPTION-info] Failing path:", p, os.path.normpath(p)
         print "[EXCEPTION-info] sys.path:", sys.path
         raise x
-  except Exception, x:
+  except Exception as x:
     print x
     print "[EXCEPTION-info] sys.executable:", sys.executable
     print "[EXCEPTION-info] sys.version:", sys.version
     print "[EXCEPTION-info] os.uname():", os.uname()
     raise x
 
-def alarmTimeoutHandler( *args ):
-  raise Exception( 'Timeout' )
 
-def retrieveUrlTimeout( url, fileName, log, timeout = 0 ):
+def alarmTimeoutHandler(*args):
+  raise Exception('Timeout')
+
+
+def retrieveUrlTimeout(url, fileName, log, timeout=0):
   """
    Retrieve remote url to local file, with timeout wrapper
   """
   urlData = ''
   if timeout:
-    signal.signal( signal.SIGALRM, alarmTimeoutHandler )
+    signal.signal(signal.SIGALRM, alarmTimeoutHandler)
     # set timeout alarm
-    signal.alarm( timeout + 5 )
+    signal.alarm(timeout + 5)
   try:
-    remoteFD = urllib2.urlopen( url )
+    remoteFD = urllib2.urlopen(url)
     expectedBytes = 0
     # Sometimes repositories do not return Content-Length parameter
     try:
-      expectedBytes = long( remoteFD.info()[ 'Content-Length' ] )
+      expectedBytes = long(remoteFD.info()['Content-Length'])
     except Exception as x:
       expectedBytes = 0
     data = remoteFD.read()
     if fileName:
-      with open( fileName + '-local', "wb" ) as localFD:
-        localFD.write( data )
+      with open(fileName + '-local', "wb") as localFD:
+        localFD.write(data)
     else:
       urlData += data
     remoteFD.close()
-    if len( data ) != expectedBytes and expectedBytes > 0:
-      log.error( 'URL retrieve: expected size does not match the received one' )
+    if len(data) != expectedBytes and expectedBytes > 0:
+      log.error('URL retrieve: expected size does not match the received one')
       return False
 
     if timeout:
-      signal.alarm( 0 )
+      signal.alarm(0)
     if fileName:
       return True
     return urlData
 
   except urllib2.HTTPError as x:
     if x.code == 404:
-      log.error( "URL retrieve: %s does not exist" % url )
+      log.error("URL retrieve: %s does not exist" % url)
       if timeout:
-        signal.alarm( 0 )
+        signal.alarm(0)
       return False
   except urllib2.URLError:
-    log.error( 'Timeout after %s seconds on transfer request for "%s"' % ( str( timeout ), url ) )
+    log.error('Timeout after %s seconds on transfer request for "%s"' % (str(timeout), url))
     return False
   except Exception as x:
     if x == 'Timeout':
-      log.error( 'Timeout after %s seconds on transfer request for "%s"' % ( str( timeout ), url ) )
+      log.error('Timeout after %s seconds on transfer request for "%s"' % (str(timeout), url))
     if timeout:
-      signal.alarm( 0 )
+      signal.alarm(0)
     raise x
 
 
-class ObjectLoader( object ):
+class ObjectLoader(object):
   """ Simplified class for loading objects from a DIRAC installation.
 
       Example:
@@ -115,73 +117,72 @@ class ObjectLoader( object ):
       object, modulePath = ol.loadObject( 'pilot', 'LaunchAgent' )
   """
 
-  def __init__( self, baseModules, log ):
+  def __init__(self, baseModules, log):
     """ init
     """
     self.__rootModules = baseModules
     self.log = log
 
-  def loadModule( self, modName, hideExceptions = False ):
+  def loadModule(self, modName, hideExceptions=False):
     """ Auto search which root module has to be used
     """
     for rootModule in self.__rootModules:
       impName = modName
       if rootModule:
-        impName = "%s.%s" % ( rootModule, impName )
-      self.log.debug( "Trying to load %s" % impName )
-      module, parentPath = self.__recurseImport( impName, hideExceptions = hideExceptions )
-      #Error. Something cannot be imported. Return error
+        impName = "%s.%s" % (rootModule, impName)
+      self.log.debug("Trying to load %s" % impName)
+      module, parentPath = self.__recurseImport(impName, hideExceptions=hideExceptions)
+      # Error. Something cannot be imported. Return error
       if module is None:
         return None, None
-      #Huge success!
+      # Huge success!
       return module, parentPath
-      #Nothing found, continue
-    #Return nothing found
+      # Nothing found, continue
+    # Return nothing found
     return None, None
 
-
-  def __recurseImport( self, modName, parentModule = None, hideExceptions = False ):
+  def __recurseImport(self, modName, parentModule=None, hideExceptions=False):
     """ Internal function to load modules
     """
     if isinstance(modName, basestring):
-      modName = modName.split( '.' )
+      modName = modName.split('.')
     try:
       if parentModule:
-        impData = imp.find_module( modName[0], parentModule.__path__ )
+        impData = imp.find_module(modName[0], parentModule.__path__)
       else:
-        impData = imp.find_module( modName[0] )
-      impModule = imp.load_module( modName[0], *impData )
+        impData = imp.find_module(modName[0])
+      impModule = imp.load_module(modName[0], *impData)
       if impData[0]:
         impData[0].close()
-    except ImportError, excp:
-      if str( excp ).find( "No module named %s" % modName[0] ) == 0:
+    except ImportError as excp:
+      if str(excp).find("No module named %s" % modName[0]) == 0:
         return None, None
-      errMsg = "Can't load %s in %s" % ( ".".join( modName ), parentModule.__path__[0] )
+      errMsg = "Can't load %s in %s" % (".".join(modName), parentModule.__path__[0])
       if not hideExceptions:
-        self.log.exception( errMsg )
+        self.log.exception(errMsg)
       return None, None
-    if len( modName ) == 1:
+    if len(modName) == 1:
       return impModule, parentModule.__path__[0]
-    return self.__recurseImport( modName[1:], impModule,
-                                 hideExceptions = hideExceptions )
+    return self.__recurseImport(modName[1:], impModule,
+                                hideExceptions=hideExceptions)
 
-
-  def loadObject( self, package, moduleName, command ):
+  def loadObject(self, package, moduleName, command):
     """ Load an object from inside a module
     """
-    loadModuleName = '%s.%s' % ( package, moduleName )
-    module, parentPath = self.loadModule( loadModuleName )
+    loadModuleName = '%s.%s' % (package, moduleName)
+    module, parentPath = self.loadModule(loadModuleName)
     if module is None:
       return None, None
 
     try:
-      commandObj = getattr( module, command )
-      return commandObj, os.path.join( parentPath, moduleName )
-    except AttributeError, e:
-      self.log.error( 'Exception: %s' % str(e) )
+      commandObj = getattr(module, command)
+      return commandObj, os.path.join(parentPath, moduleName)
+    except AttributeError as e:
+      self.log.error('Exception: %s' % str(e))
       return None, None
 
-def getCommand( params, commandName, log ):
+
+def getCommand(params, commandName, log):
   """ Get an instantiated command object for execution.
       Commands are looked in the following modules in the order:
 
@@ -197,202 +198,207 @@ def getCommand( params, commandName, log ):
       of the pilot script.
   """
   extensions = params.commandExtensions
-  modules = [ m + 'Commands' for m in extensions + ['pilot'] ]
+  modules = [m + 'Commands' for m in extensions + ['pilot']]
   commandObject = None
 
   # Look for commands in the modules in the current directory first
   for module in modules:
     try:
-      impData = imp.find_module( module )
-      commandModule = imp.load_module( module, *impData )
-      commandObject = getattr( commandModule, commandName )
-    except Exception, _e:
+      impData = imp.find_module(module)
+      commandModule = imp.load_module(module, *impData)
+      commandObject = getattr(commandModule, commandName)
+    except Exception as _e:
       pass
     if commandObject:
-      return commandObject( params ), module
+      return commandObject(params), module
 
   if params.diracInstalled:
     diracExtensions = []
     for ext in params.extensions:
-      if not ext.endswith( 'DIRAC' ):
-        diracExtensions.append( ext + 'DIRAC' )
+      if not ext.endswith('DIRAC'):
+        diracExtensions.append(ext + 'DIRAC')
       else:
-        diracExtensions.append( ext )
+        diracExtensions.append(ext)
     diracExtensions += ['DIRAC']
-    ol = ObjectLoader( diracExtensions, log )
+    ol = ObjectLoader(diracExtensions, log)
     for module in modules:
-      commandObject, modulePath = ol.loadObject( 'WorkloadManagementSystem.PilotAgent',
-                                                 module,
-                                                 commandName )
+      commandObject, modulePath = ol.loadObject('WorkloadManagementSystem.PilotAgent',
+                                                module,
+                                                commandName)
       if commandObject:
-        return commandObject( params ), modulePath
+        return commandObject(params), modulePath
 
   # No command could be instantitated
   return None, None
 
-class Logger( object ):
+
+class Logger(object):
   """ Basic logger object, for use inside the pilot. Just using print.
   """
 
-  def __init__( self, name = 'Pilot', debugFlag = False, pilotOutput = 'pilot.out' ):
+  def __init__(self, name='Pilot', debugFlag=False, pilotOutput='pilot.out'):
     self.debugFlag = debugFlag
     self.name = name
     self.out = pilotOutput
 
-  def __outputMessage( self, msg, level, header ):
+  def __outputMessage(self, msg, level, header):
     if self.out:
-      with open( self.out, 'a' ) as outputFile:
-        for _line in msg.split( "\n" ):
+      with open(self.out, 'a') as outputFile:
+        for _line in msg.split("\n"):
           if header:
-            outLine = "%s UTC %s [%s] %s" % ( time.strftime( '%Y-%m-%d %H:%M:%S', time.gmtime() ),
-                                              level,
-                                              self.name,
-                                              _line )
+            outLine = "%s UTC %s [%s] %s" % (time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime()),
+                                             level,
+                                             self.name,
+                                             _line)
             print outLine
             if self.out:
-              outputFile.write( outLine + '\n' )
+              outputFile.write(outLine + '\n')
           else:
             print _line
-            outputFile.write( _line + '\n' )
+            outputFile.write(_line + '\n')
 
     sys.stdout.flush()
 
-  def setDebug( self ):
+  def setDebug(self):
     self.debugFlag = True
 
-  def debug( self, msg, header = True ):
+  def debug(self, msg, header=True):
     if self.debugFlag:
-      self.__outputMessage( msg, "DEBUG", header )
+      self.__outputMessage(msg, "DEBUG", header)
 
-  def error( self, msg, header = True ):
-    self.__outputMessage( msg, "ERROR", header )
+  def error(self, msg, header=True):
+    self.__outputMessage(msg, "ERROR", header)
 
-  def warn( self, msg, header = True ):
-    self.__outputMessage( msg, "WARN", header )
+  def warn(self, msg, header=True):
+    self.__outputMessage(msg, "WARN", header)
 
-  def info( self, msg, header = True ):
-    self.__outputMessage( msg, "INFO", header )
+  def info(self, msg, header=True):
+    self.__outputMessage(msg, "INFO", header)
 
 
-class ExtendedLogger( Logger ):
+class ExtendedLogger(Logger):
   """ The logger object, for use inside the pilot. It prints messages.
       But can be also used to send messages to the queue
   """
-  def __init__( self, name = 'Pilot', debugFlag = False, pilotOutput = 'pilot.out', isPilotLoggerOn = False ):
+
+  def __init__(self, name='Pilot', debugFlag=False, pilotOutput='pilot.out', isPilotLoggerOn=False):
     """ c'tor
     If flag PilotLoggerOn is not set, the logger will behave just like
     the original Logger object, that means it will just print logs locally on the screen
     """
     super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
     if isPilotLoggerOn:
-      #the import here was suggest F.S cause PilotLogger imports stomp
-      #which is not yet in the DIRAC externals
-      #so up to now we want to turn it off
+      # the import here was suggest F.S cause PilotLogger imports stomp
+      # which is not yet in the DIRAC externals
+      # so up to now we want to turn it off
       from Pilot.PilotLogger import PilotLogger
       self.pilotLogger = PilotLogger()
     else:
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
 
-  def debug( self, msg, header = True, sendPilotLog = False ):
-    super(ExtendedLogger, self).debug(msg,header)
+  def debug(self, msg, header=True, sendPilotLog=False):
+    super(ExtendedLogger, self).debug(msg, header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
-        self.pilotLogger.sendMessage(msg, status = "debug")
+        self.pilotLogger.sendMessage(msg, status="debug")
 
-  def error( self, msg, header = True, sendPilotLog = False ):
-    super(ExtendedLogger, self).error(msg,header)
+  def error(self, msg, header=True, sendPilotLog=False):
+    super(ExtendedLogger, self).error(msg, header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
-        self.pilotLogger.sendMessage(msg, status = "error")
+        self.pilotLogger.sendMessage(msg, status="error")
 
-  def warn( self, msg, header = True, sendPilotLog = False):
-    super(ExtendedLogger, self).warn(msg,header)
+  def warn(self, msg, header=True, sendPilotLog=False):
+    super(ExtendedLogger, self).warn(msg, header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
-        self.pilotLogger.sendMessage(msg, status ="warning")
+        self.pilotLogger.sendMessage(msg, status="warning")
 
-  def info( self, msg, header = True, sendPilotLog = False ):
-    super(ExtendedLogger, self).info(msg,header)
+  def info(self, msg, header=True, sendPilotLog=False):
+    super(ExtendedLogger, self).info(msg, header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
-        self.pilotLogger.sendMessage(msg, status = "info")
+        self.pilotLogger.sendMessage(msg, status="info")
 
-  def sendMessage( self, msg,  source, phase, status ='info',localFile = None, sendPilotLog = False ):
+  def sendMessage(self, msg, source, phase, status='info', localFile=None, sendPilotLog=False):
     pass
     if self.isPilotLoggerOn:
       if sendPilotLog:
-        self.pilotLogger.sendMessage( messageContent = msg,
-                                      source=source,
-                                      phase = phase,
-                                      status=status,
-                                      localOutputFile = localFile)
-class CommandBase( object ):
+        self.pilotLogger.sendMessage(messageContent=msg,
+                                     source=source,
+                                     phase=phase,
+                                     status=status,
+                                     localOutputFile=localFile)
+
+
+class CommandBase(object):
   """ CommandBase is the base class for every command in the pilot commands toolbox
   """
 
-  def __init__( self, pilotParams, dummy='' ):
+  def __init__(self, pilotParams, dummy=''):
     """ c'tor
 
         Defines the logger and the pilot parameters
     """
     self.pp = pilotParams
     self.log = ExtendedLogger(
-        name = self.__class__.__name__,
-        debugFlag = False,
-        pilotOutput = 'pilot.out',
-        isPilotLoggerOn = self.pp.pilotLogging
-        )
+        name=self.__class__.__name__,
+        debugFlag=False,
+        pilotOutput='pilot.out',
+        isPilotLoggerOn=self.pp.pilotLogging
+    )
     #self.log = Logger( self.__class__.__name__ )
     self.debugFlag = False
     for o, _ in self.pp.optList:
       if o == '-d' or o == '--debug':
         self.log.setDebug()
         self.debugFlag = True
-    self.log.debug( "\n\n Initialized command %s" % self.__class__ )
+    self.log.debug("\n\n Initialized command %s" % self.__class__)
 
-  def executeAndGetOutput( self, cmd, environDict = None ):
+  def executeAndGetOutput(self, cmd, environDict=None):
     """ Execute a command on the worker node and get the output
     """
 
-    self.log.info( "Executing command %s" % cmd )
+    self.log.info("Executing command %s" % cmd)
     try:
-      import subprocess  # spawn new processes, connect to their input/output/error pipes, and obtain their return codes.
-      _p = subprocess.Popen( "%s" % cmd, shell = True, env=environDict, stdout = subprocess.PIPE,
-                             stderr = subprocess.PIPE, close_fds = False )
+      # spawn new processes, connect to their input/output/error pipes, and obtain their return codes.
+      import subprocess
+      _p = subprocess.Popen("%s" % cmd, shell=True, env=environDict, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, close_fds=False)
 
       # standard output
       outData = _p.stdout.read().strip()
       for line in outData:
-        sys.stdout.write( line )
-      sys.stdout.write( '\n' )
+        sys.stdout.write(line)
+      sys.stdout.write('\n')
 
       for line in _p.stderr:
-        sys.stdout.write( line )
-      sys.stdout.write( '\n' )
+        sys.stdout.write(line)
+      sys.stdout.write('\n')
 
       # return code
       returnCode = _p.wait()
-      self.log.debug( "Return code of %s: %d" % ( cmd, returnCode ) )
+      self.log.debug("Return code of %s: %d" % (cmd, returnCode))
 
       return (returnCode, outData)
     except ImportError:
-      self.log.error( "Error importing subprocess" )
+      self.log.error("Error importing subprocess")
 
-  def exitWithError( self, errorCode ):
+  def exitWithError(self, errorCode):
     """ Wrapper around sys.exit()
     """
-    self.log.info( "List of child processes of current PID:" )
-    retCode, _outData = self.executeAndGetOutput( "ps --forest -o pid,%%cpu,%%mem,tty,stat,time,cmd -g %d" % os.getpid() )
+    self.log.info("List of child processes of current PID:")
+    retCode, _outData = self.executeAndGetOutput("ps --forest -o pid,%%cpu,%%mem,tty,stat,time,cmd -g %d" % os.getpid())
     if retCode:
-      self.log.error( "Failed to issue ps [ERROR %d] " % retCode )
-    sys.exit( errorCode )
+      self.log.error("Failed to issue ps [ERROR %d] " % retCode)
+    sys.exit(errorCode)
 
-  def forkAndExecute( self, cmd, logFile, environDict = None ):
+  def forkAndExecute(self, cmd, logFile, environDict=None):
     """ Fork and execute a command on the worker node
     """
 
-    self.log.info( "Fork and execute command %s" % cmd )
+    self.log.info("Fork and execute command %s" % cmd)
     pid = os.fork()
 
     if pid != 0:
@@ -403,28 +409,36 @@ class CommandBase( object ):
     with open(logFile, 'a+', 0) as fpLogFile:
 
       try:
-        _p = subprocess.Popen( "%s" % cmd, shell = True, env=environDict, close_fds = False, stdout = fpLogFile, stderr = fpLogFile )
+        _p = subprocess.Popen(
+            "%s" %
+            cmd,
+            shell=True,
+            env=environDict,
+            close_fds=False,
+            stdout=fpLogFile,
+            stderr=fpLogFile)
 
         # return code
         returnCode = _p.wait()
-        self.log.debug( "Return code of %s: %d" % ( cmd, returnCode ) )
-      except:
+        self.log.debug("Return code of %s: %d" % (cmd, returnCode))
+      except BaseException:
         returnCode = 99
 
     sys.exit(returnCode)
 
-class PilotParams( object ):
+
+class PilotParams(object):
   """ Class that holds the structure with all the parameters to be used across all the commands
   """
 
   MAX_CYCLES = 10
 
-  def __init__( self ):
+  def __init__(self):
     """ c'tor
 
         param names and defaults are defined here
     """
-    self.log = Logger( self.__class__.__name__ )
+    self.log = Logger(self.__class__.__name__)
     self.rootPath = os.getcwd()
     self.originalRootPath = os.getcwd()
     self.pilotRootPath = os.getcwd()
@@ -454,7 +468,7 @@ class PilotParams( object ):
     self.platform = ""
     # in case users want to specify the max number of processors requested, per pilot
     self.maxNumberOfProcessors = 0
-    self.minDiskSpace = 2560 #MB
+    self.minDiskSpace = 2560  # MB
     self.pythonVersion = '27'
     self.userGroup = ""
     self.userDN = ""
@@ -490,51 +504,53 @@ class PilotParams( object ):
     # Set number of allocatable processors from MJF if available
     try:
       self.processors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
-    except:
+    except BaseException:
       self.processors = 1
 
     # Pilot command options
-    self.cmdOpts = ( ( 'a:', 'gridCEType=', 'Grid CE Type (CREAM etc)' ),
-                     ( 'b',  'build', 'Force local compilation' ),
-                     ( 'c',  'cert', 'Use server certificate instead of proxy' ),
-                     ( 'd',  'debug', 'Set debug flag' ),
-                     ( 'e:', 'extraPackages=', 'Extra packages to install (comma separated)' ),
-                     ( 'g:', 'grid=', 'lcg tools package version' ),
-                     ( 'h',  'help', 'Show this help' ),
-                     ( 'i:', 'python=', 'Use python<26|27> interpreter' ),
-                     ( 'k',  'keepPP', 'Do not clear PYTHONPATH on start' ),
-                     ( 'l:', 'project=', 'Project to install' ),
-                     ( 'n:', 'name=', 'Set <Site> as Site Name' ),
-                     ( 'o:', 'option=', 'Option=value to add' ),
-                     ( 'p:', 'platform=', 'Use <platform> instead of local one' ),
-                     ('m:', 'maxNumberOfProcessors=',
-                      'specify a max number of processors to use'),
-                     ( 'r:', 'release=', 'DIRAC release to install' ),
-                     ( 's:', 'section=', 'Set base section for relative parsed options' ),
-                     ( 'u:', 'url=', 'Use <url> to download tarballs' ),
-                     ( 'x:', 'execute=', 'Execute instead of JobAgent' ),
-                     ( 'y:', 'CEType=', 'CE Type (normally InProcess)' ),
-                     ( 'z',  'pilotLogging', 'Activate pilot logging system' ),
-                     ( 'C:', 'configurationServer=', 'Configuration servers to use' ),
-                     ( 'D:', 'disk=', 'Require at least <space> MB available' ),
-                     ( 'E:', 'commandExtensions=', 'Python modules with extra commands' ),
-                     ( 'F:', 'pilotCFGFile=', 'Specify pilot CFG file' ),
-                     ( 'G:', 'Group=', 'DIRAC Group to use' ),
-                     ( 'K:', 'certLocation=', 'Specify server certificate location' ),
-                     ( 'M:', 'MaxCycles=', 'Maximum Number of JobAgent cycles to run' ),
-                     ( 'N:', 'Name=', 'CE Name' ),
-                     ( 'O:', 'OwnerDN=', 'Pilot OwnerDN (for private pilots)' ),
-                     ( 'Q:', 'Queue=', 'Queue name' ),
-                     ( 'R:', 'reference=', 'Use this pilot reference' ),
-                     ( 'S:', 'setup=', 'DIRAC Setup to use' ),
-                     ( 'T:', 'CPUTime=', 'Requested CPU Time' ),
-                     ( 'U',  'Upload', 'Upload compiled distribution (if built)' ),
-                     ( 'V:', 'installation=', 'Installation configuration file' ),
-                     ( 'W:', 'gateway=', 'Configure <gateway> as DIRAC Gateway during installation' ),
-                     ( 'X:', 'commands=', 'Pilot commands to execute' ),
-                     ( 'Y:', 'replaceDIRACCode=', 'URL of replacement DIRAC TGZ archive' ),
-                     ( 'Z:', 'commandOptions=', 'Options parsed by command modules' )
-                   )
+    self.cmdOpts = (('', 'requiredTag=', 'extra required tags for resource description'),
+                    ('a:', 'gridCEType=', 'Grid CE Type (CREAM etc)'),
+                    ('b', 'build', 'Force local compilation'),
+                    ('c', 'cert', 'Use server certificate instead of proxy'),
+                    ('d', 'debug', 'Set debug flag'),
+                    ('e:', 'extraPackages=', 'Extra packages to install (comma separated)'),
+                    ('g:', 'grid=', 'lcg tools package version'),
+                    ('h', 'help', 'Show this help'),
+                    ('i:', 'python=', 'Use python<26|27> interpreter'),
+                    ('k', 'keepPP', 'Do not clear PYTHONPATH on start'),
+                    ('l:', 'project=', 'Project to install'),
+                    ('n:', 'name=', 'Set <Site> as Site Name'),
+                    ('o:', 'option=', 'Option=value to add'),
+                    ('p:', 'platform=', 'Use <platform> instead of local one'),
+                    ('m:', 'maxNumberOfProcessors=',
+                     'specify a max number of processors to use'),
+                    ('r:', 'release=', 'DIRAC release to install'),
+                    ('s:', 'section=', 'Set base section for relative parsed options'),
+                    ('t:', 'tag=', 'extra tags for resource description'),
+                    ('u:', 'url=', 'Use <url> to download tarballs'),
+                    ('x:', 'execute=', 'Execute instead of JobAgent'),
+                    ('y:', 'CEType=', 'CE Type (normally InProcess)'),
+                    ('z', 'pilotLogging', 'Activate pilot logging system'),
+                    ('C:', 'configurationServer=', 'Configuration servers to use'),
+                    ('D:', 'disk=', 'Require at least <space> MB available'),
+                    ('E:', 'commandExtensions=', 'Python modules with extra commands'),
+                    ('F:', 'pilotCFGFile=', 'Specify pilot CFG file'),
+                    ('G:', 'Group=', 'DIRAC Group to use'),
+                    ('K:', 'certLocation=', 'Specify server certificate location'),
+                    ('M:', 'MaxCycles=', 'Maximum Number of JobAgent cycles to run'),
+                    ('N:', 'Name=', 'CE Name'),
+                    ('O:', 'OwnerDN=', 'Pilot OwnerDN (for private pilots)'),
+                    ('Q:', 'Queue=', 'Queue name'),
+                    ('R:', 'reference=', 'Use this pilot reference'),
+                    ('S:', 'setup=', 'DIRAC Setup to use'),
+                    ('T:', 'CPUTime=', 'Requested CPU Time'),
+                    ('U', 'Upload', 'Upload compiled distribution (if built)'),
+                    ('V:', 'installation=', 'Installation configuration file'),
+                    ('W:', 'gateway=', 'Configure <gateway> as DIRAC Gateway during installation'),
+                    ('X:', 'commands=', 'Pilot commands to execute'),
+                    ('Y:', 'replaceDIRACCode=', 'URL of replacement DIRAC TGZ archive'),
+                    ('Z:', 'commandOptions=', 'Options parsed by command modules')
+                    )
 
     # Possibly get Setup and JSON URL/filename from command line
     self.__initCommandLine1()
@@ -545,13 +561,13 @@ class PilotParams( object ):
     # Command line can override options from JSON
     self.__initCommandLine2()
 
-  def __initCommandLine1( self ):
+  def __initCommandLine1(self):
     """ Parses and interpret options on the command line: first pass
     """
 
-    self.optList, __args__ = getopt.getopt( sys.argv[1:],
-                                            "".join( [ opt[0] for opt in self.cmdOpts ] ),
-                                            [ opt[1] for opt in self.cmdOpts ] )
+    self.optList, __args__ = getopt.getopt(sys.argv[1:],
+                                           "".join([opt[0] for opt in self.cmdOpts]),
+                                           [opt[1] for opt in self.cmdOpts])
     for o, v in self.optList:
       if o == '-N' or o == '--Name':
         self.ceName = v
@@ -559,28 +575,28 @@ class PilotParams( object ):
         self.gridCEType = v
       elif o == '-d' or o == '--debug':
         self.debugFlag = True
-      elif o in ( '-S', '--setup' ):
+      elif o in ('-S', '--setup'):
         self.setup = v
       elif o == '-F' or o == '--pilotCFGFile':
         self.pilotCFGFile = v
 
-  def __initCommandLine2( self ):
+  def __initCommandLine2(self):
     """ Parses and interpret options on the command line: second pass
     """
 
-    self.optList, __args__ = getopt.getopt( sys.argv[1:],
-                                            "".join( [ opt[0] for opt in self.cmdOpts ] ),
-                                            [ opt[1] for opt in self.cmdOpts ] )
+    self.optList, __args__ = getopt.getopt(sys.argv[1:],
+                                           "".join([opt[0] for opt in self.cmdOpts]),
+                                           [opt[1] for opt in self.cmdOpts])
     for o, v in self.optList:
       if o == '-E' or o == '--commandExtensions':
-        self.commandExtensions = v.split( ',' )
+        self.commandExtensions = v.split(',')
       elif o == '-X' or o == '--commands':
-        self.commands = v.split( ',' )
+        self.commands = v.split(',')
       elif o == '-Z' or o == '--commandOptions':
-        for i in v.split( ',' ):
-          self.commandOptions[ i.split( '=', 1 )[0].strip() ] = i.split( '=', 1 )[1].strip()
+        for i in v.split(','):
+          self.commandOptions[i.split('=', 1)[0].strip()] = i.split('=', 1)[1].strip()
       elif o == '-e' or o == '--extraPackages':
-        self.extensions = v.split( ',' )
+        self.extensions = v.split(',')
       elif o == '-n' or o == '--name':
         self.site = v
       elif o == '-y' or o == '--CEType':
@@ -591,15 +607,15 @@ class PilotParams( object ):
         self.pilotReference = v
       elif o == '-k' or o == '--keepPP':
         self.keepPythonPath = True
-      elif o in ( '-C', '--configurationServer' ):
+      elif o in ('-C', '--configurationServer'):
         self.configServer = v
-      elif o in ( '-G', '--Group' ):
+      elif o in ('-G', '--Group'):
         self.userGroup = v
-      elif o in ( '-x', '--execute' ):
+      elif o in ('-x', '--execute'):
         self.executeCmd = v
-      elif o in ( '-O', '--OwnerDN' ):
+      elif o in ('-O', '--OwnerDN'):
         self.userDN = v
-      elif o in ( '-V', '--installation' ):
+      elif o in ('-V', '--installation'):
         self.installation = v
       elif o == '-p' or o == '--platform':
         self.platform = v
@@ -607,14 +623,14 @@ class PilotParams( object ):
         self.maxNumberOfProcessors = v
       elif o == '-D' or o == '--disk':
         try:
-          self.minDiskSpace = int( v )
+          self.minDiskSpace = int(v)
         except ValueError:
           pass
       elif o == '-r' or o == '--release':
-        self.releaseVersion = v.split(',',1)[0]
-      elif o in ( '-l', '--project' ):
+        self.releaseVersion = v.split(',', 1)[0]
+      elif o in ('-l', '--project'):
         self.releaseProject = v
-      elif o in ( '-W', '--gateway' ):
+      elif o in ('-W', '--gateway'):
         self.gateway = v
       elif o == '-c' or o == '--cert':
         self.useServerCertificate = True
@@ -622,24 +638,28 @@ class PilotParams( object ):
         self.certsLocation = v
       elif o == '-M' or o == '--MaxCycles':
         try:
-          self.maxCycles = min( self.MAX_CYCLES, int( v ) )
+          self.maxCycles = min(self.MAX_CYCLES, int(v))
         except ValueError:
           pass
-      elif o in ( '-T', '--CPUTime' ):
+      elif o in ('-T', '--CPUTime'):
         self.jobCPUReq = v
       elif o == '-P' or o == '--processors':
         try:
           self.procesors = int(v)
-        except:
+        except BaseException:
           pass
       elif o == '-Y' or o == '--replaceDIRACCode':
         self.replaceDIRACCode = v
       elif o == '-z' or o == '--pilotLogging':
         self.pilotLogging = True
-      elif o in ( '-o', '--option' ):
+      elif o in ('-o', '--option'):
         self.genericOption = v
+      elif o in ('-t', '--tag'):
+        self.tags.append(v)
+      elif o == '--requiredTag':
+        self.reqtags.append(v)
 
-  def __initJSON( self ):
+  def __initJSON(self):
     """Retrieve pilot parameters from the content of json file. The file should be something like:
 
     {
@@ -685,29 +705,29 @@ class PilotParams( object ):
 
     The file must contains at least the Defaults section. Missing values are taken from the Defaults setup. """
 
-    with open( self.pilotCFGFile, 'r' ) as fp:
+    with open(self.pilotCFGFile, 'r') as fp:
       # We save the parsed JSON in case pilot commands need it
       # to read their own options
-      self.pilotJSON = json.load( fp )
+      self.pilotJSON = json.load(fp)
 
     if self.ceName:
       # Try to get the site name and grid CEType from the CE name
       # GridCEType is like "CREAM" or "HTCondorCE" not "InProcess" etc
       try:
-        self.site = str( self.pilotJSON['CEs'][self.ceName]['Site'] )
+        self.site = str(self.pilotJSON['CEs'][self.ceName]['Site'])
       except KeyError:
         pass
       try:
         if not self.gridCEType:
           # We don't override a grid CEType given on the command line!
-          self.gridCEType = str( self.pilotJSON['CEs'][self.ceName]['GridCEType'] )
+          self.gridCEType = str(self.pilotJSON['CEs'][self.ceName]['GridCEType'])
       except KeyError:
         pass
 
     if not self.setup:
       # We don't use the default to override an explicit value from command line!
       try:
-        self.setup = str( self.pilotJSON['DefaultSetup'] )
+        self.setup = str(self.pilotJSON['DefaultSetup'])
       except KeyError:
         pass
 
@@ -715,66 +735,80 @@ class PilotParams( object ):
     # FIXME: pilotSynchronizer() should publish these as comma-separated lists. We are ready for that.
     try:
       if isinstance(self.pilotJSON['Setups'][self.setup]['Commands'][self.gridCEType], basestring):
-        self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands'][self.gridCEType].split(',')]
+        self.commands = [str(pv).strip() for pv in self.pilotJSON['Setups']
+                         [self.setup]['Commands'][self.gridCEType].split(',')]
       else:
-        self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands'][self.gridCEType]]
+        self.commands = [str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands'][self.gridCEType]]
     except KeyError:
       try:
         if isinstance(self.pilotJSON['Setups'][self.setup]['Commands']['Defaults'], basestring):
-          self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands']['Defaults'].split(',')]
+          self.commands = [str(pv).strip() for pv in self.pilotJSON['Setups']
+                           [self.setup]['Commands']['Defaults'].split(',')]
         else:
-          self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands']['Defaults']]
+          self.commands = [str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['Commands']['Defaults']]
       except KeyError:
         try:
           if isinstance(self.pilotJSON['Setups']['Defaults']['Commands'][self.gridCEType], basestring):
-            self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['Commands'][self.gridCEType].split(',')]
+            self.commands = [str(pv).strip() for pv in self.pilotJSON['Setups']
+                             ['Defaults']['Commands'][self.gridCEType].split(',')]
           else:
-            self.commands = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['Commands'][self.gridCEType]]
+            self.commands = [str(pv).strip() for pv in self.pilotJSON['Setups']
+                             ['Defaults']['Commands'][self.gridCEType]]
         except KeyError:
           try:
             if isinstance(self.pilotJSON['Defaults']['Commands']['Defaults'], basestring):
-              self.commands = [str( pv ).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults'].split(',')]
+              self.commands = [str(pv).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults'].split(',')]
             else:
-              self.commands = [str( pv ).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults']]
+              self.commands = [str(pv).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults']]
           except KeyError:
             pass
 
     # CommandExtensions
     # pilotSynchronizer() can publish this as a comma separated list. We are ready for that.
     try:
-      if isinstance(self.pilotJSON['Setups'][self.setup]['CommandExtensions'], basestring): # In the specific setup?
-        self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions'].split(',')]
+      if isinstance(self.pilotJSON['Setups'][self.setup]['CommandExtensions'], basestring):  # In the specific setup?
+        self.commandExtensions = [str(pv).strip() for pv in self.pilotJSON['Setups']
+                                  [self.setup]['CommandExtensions'].split(',')]
       else:
-        self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
+        self.commandExtensions = [str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
     except KeyError:
       try:
-        if isinstance(self.pilotJSON['Setups']['Defaults']['CommandExtensions'], basestring): # Or in the defaults section?
-          self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions'].split(',')]
+        if isinstance(
+                self.pilotJSON['Setups']['Defaults']['CommandExtensions'],
+                basestring):  # Or in the defaults section?
+          self.commandExtensions = [str(pv).strip() for pv in self.pilotJSON['Setups']
+                                    ['Defaults']['CommandExtensions'].split(',')]
         else:
-          self.commandExtensions = [str( pv ).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
+          self.commandExtensions = [str(pv).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
       except KeyError:
         pass
 
     # CS URL(s)
     # pilotSynchronizer() can publish this as a comma separated list. We are ready for that
     try:
-      if isinstance(self.pilotJSON['ConfigurationServers'], basestring): # Generic, there may also be setup-specific ones
+      if isinstance(self.pilotJSON['ConfigurationServers'],
+                    basestring):  # Generic, there may also be setup-specific ones
         self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['ConfigurationServers'].split(',')])
-      else: # it's a list, we suppose
+      else:  # it's a list, we suppose
         self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['ConfigurationServers']])
     except KeyError:
       pass
-    try: # now trying to see if there is setup-specific ones
-      if isinstance(self.pilotJSON['Setups'][self.setup]['ConfigurationServer'], basestring): # In the specific setup?
-        self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['ConfigurationServer'].split(',')])
-      else: # it's a list, we suppose
-        self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['ConfigurationServer']])
-    except KeyError: # and if it doesn't exist
+    try:  # now trying to see if there is setup-specific ones
+      if isinstance(self.pilotJSON['Setups'][self.setup]['ConfigurationServer'], basestring):  # In the specific setup?
+        self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups']
+                                      [self.setup]['ConfigurationServer'].split(',')])
+      else:  # it's a list, we suppose
+        self.configServer = ','.join([str(pv).strip()
+                                      for pv in self.pilotJSON['Setups'][self.setup]['ConfigurationServer']])
+    except KeyError:  # and if it doesn't exist
       try:
-        if isinstance(self.pilotJSON['Setups']['Defaults']['ConfigurationServer'], basestring): # Is there one in the defaults section?
-          self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups']['Defaults']['ConfigurationServer'].split(',')])
-        else: # it's a list, we suppose
-          self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups']['Defaults']['ConfigurationServer']])
+        if isinstance(self.pilotJSON['Setups']['Defaults']['ConfigurationServer'],
+                      basestring):  # Is there one in the defaults section?
+          self.configServer = ','.join([str(pv).strip() for pv in self.pilotJSON['Setups']
+                                        ['Defaults']['ConfigurationServer'].split(',')])
+        else:  # it's a list, we suppose
+          self.configServer = ','.join([str(pv).strip()
+                                        for pv in self.pilotJSON['Setups']['Defaults']['ConfigurationServer']])
       except KeyError:
         pass
 
@@ -788,12 +822,12 @@ class PilotParams( object ):
       except KeyError:
         dVersion = None
     if dVersion:
-      self.releaseVersion = str( dVersion[0] )
+      self.releaseVersion = str(dVersion[0])
 
     try:
-      self.releaseProject = str( self.pilotJSON['Setups'][self.setup]['Project'] )
+      self.releaseProject = str(self.pilotJSON['Setups'][self.setup]['Project'])
     except KeyError:
       try:
-        self.releaseProject = str( self.pilotJSON['Setups']['Defaults']['Project'] )
+        self.releaseProject = str(self.pilotJSON['Setups']['Defaults']['Project'])
       except KeyError:
         pass
