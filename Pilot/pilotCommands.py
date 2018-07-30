@@ -440,6 +440,7 @@ class CheckCECapabilities( CommandBase ):
     if resourceDict.get( 'RequiredTag' ):
       self.pp.reqtags += resourceDict['RequiredTag']
 
+    self.pp.reqtags = list(set(self.pp.reqtags))
     if self.pp.reqtags:
       cfg.append('-o "/Resources/Computing/CEDefaults/RequiredTag=%s"' %
                       ','.join((str(x) for x in self.pp.reqtags)))
