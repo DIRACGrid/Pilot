@@ -10,7 +10,6 @@ import pickle
 import getopt
 import imp
 import json
-import types
 import urllib
 import urllib2
 import signal
@@ -494,7 +493,8 @@ class PilotParams( object ):
       self.processors = 1
 
     # Pilot command options
-    self.cmdOpts = ( ( 'a:', 'gridCEType=', 'Grid CE Type (CREAM etc)' ),
+    self.cmdOpts = ( ( '', 'requiredTag=', 'extra required tags for resource description'),
+                     ( 'a:', 'gridCEType=', 'Grid CE Type (CREAM etc)' ),
                      ( 'b',  'build', 'Force local compilation' ),
                      ( 'c',  'cert', 'Use server certificate instead of proxy' ),
                      ( 'd',  'debug', 'Set debug flag' ),
@@ -511,6 +511,7 @@ class PilotParams( object ):
                       'specify a max number of processors to use'),
                      ( 'r:', 'release=', 'DIRAC release to install' ),
                      ( 's:', 'section=', 'Set base section for relative parsed options' ),
+                     ( 't:', 'tag=', 'extra tags for resource description' ),
                      ( 'u:', 'url=', 'Use <url> to download tarballs' ),
                      ( 'x:', 'execute=', 'Execute instead of JobAgent' ),
                      ( 'y:', 'CEType=', 'CE Type (normally InProcess)' ),
@@ -638,6 +639,10 @@ class PilotParams( object ):
         self.pilotLogging = True
       elif o in ( '-o', '--option' ):
         self.genericOption = v
+      elif o in ( '-t', '--tag' ):
+        self.tags.append(v)
+      elif o == '--requiredTag':
+        self.reqtags.append(v)
 
   def __initJSON( self ):
     """Retrieve pilot parameters from the content of json file. The file should be something like:
