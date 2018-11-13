@@ -438,7 +438,7 @@ class PilotParams(object):
 
         param names and defaults are defined here
     """
-    self.log = Logger(self.__class__.__name__)
+    self.log = Logger(self.__class__.__name__, debugFlag=True)
     self.rootPath = os.getcwd()
     self.originalRootPath = os.getcwd()
     self.pilotRootPath = os.getcwd()
@@ -568,6 +568,7 @@ class PilotParams(object):
     self.optList, __args__ = getopt.getopt(sys.argv[1:],
                                            "".join([opt[0] for opt in self.cmdOpts]),
                                            [opt[1] for opt in self.cmdOpts])
+    self.log.debug("Options list: %s" % self.optList)
     for o, v in self.optList:
       if o == '-N' or o == '--Name':
         self.ceName = v
@@ -704,12 +705,13 @@ class PilotParams(object):
     }
 
     The file must contains at least the Defaults section. Missing values are taken from the Defaults setup. """
-
+    self.log.debug("JSON file loaded: %s" % self.pilotCFGFile)
     with open(self.pilotCFGFile, 'r') as fp:
       # We save the parsed JSON in case pilot commands need it
       # to read their own options
       self.pilotJSON = json.load(fp)
 
+    self.log.debug("CE name: %s" % self.ceName)
     if self.ceName:
       # Try to get the site name and grid CEType from the CE name
       # GridCEType is like "CREAM" or "HTCondorCE" not "InProcess" etc
@@ -724,6 +726,7 @@ class PilotParams(object):
       except KeyError:
         pass
 
+    self.log.debug("Setup: %s" % self.setup)
     if not self.setup:
       # We don't use the default to override an explicit value from command line!
       try:
@@ -762,6 +765,7 @@ class PilotParams(object):
               self.commands = [str(pv).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults']]
           except KeyError:
             pass
+    self.log.debug("Commands: %s" % self.commands)
 
     # CommandExtensions
     # pilotSynchronizer() can publish this as a comma separated list. We are ready for that.
@@ -782,6 +786,7 @@ class PilotParams(object):
           self.commandExtensions = [str(pv).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
       except KeyError:
         pass
+    self.log.debug("Commands extesions: %s" % self.commandExtensions)
 
     # CS URL(s)
     # pilotSynchronizer() can publish this as a comma separated list. We are ready for that
@@ -811,6 +816,7 @@ class PilotParams(object):
                                         for pv in self.pilotJSON['Setups']['Defaults']['ConfigurationServer']])
       except KeyError:
         pass
+    self.log.debug("CS list: %s" % self.configServer)
 
     # Version
     # There may be a list of versions specified (in a string, comma separated). We just want the first one.
@@ -823,6 +829,7 @@ class PilotParams(object):
         dVersion = None
     if dVersion:
       self.releaseVersion = str(dVersion[0])
+    self.log.debug("Version: %s -> %s" % (dVersion, self.releaseVersion))
 
     try:
       self.releaseProject = str(self.pilotJSON['Setups'][self.setup]['Project'])
@@ -831,3 +838,4 @@ class PilotParams(object):
         self.releaseProject = str(self.pilotJSON['Setups']['Defaults']['Project'])
       except KeyError:
         pass
+    self.log.debug("Release project: %s" % self.releaseProject)
