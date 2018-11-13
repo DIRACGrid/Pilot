@@ -107,7 +107,7 @@ function PilotInstall(){
   fi
   if [ $DEBUG ]
   then
-    pilotOptions+=" -d"
+    pilotOptions+=" --debug"
   fi
 
   echo -e 'Running dirac-pilot.py ' $pilotOptions
