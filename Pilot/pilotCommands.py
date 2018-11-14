@@ -602,8 +602,6 @@ class ConfigureSite(CommandBase):
     self.cfg.append('-n "%s"' % self.pp.site)
     self.cfg.append('-S "%s"' % self.pp.setup)
 
-    if not self.pp.ceName or not self.pp.queueName:
-      self.__getCEName()
     self.cfg.append('-N "%s"' % self.pp.ceName)
     self.cfg.append('-o /LocalSite/GridCE=%s' % self.pp.ceName)
     self.cfg.append('-o /LocalSite/CEQueue=%s' % self.pp.queueName)
@@ -753,57 +751,6 @@ class ConfigureSite(CommandBase):
     self.log.debug("Flavour: %s; pilot reference: %s " % (self.pp.flavour, pilotRef))
 
     self.pp.pilotReference = pilotRef
-
-  def __getCEName(self):
-    """ Try to get the CE name
-    """
-    # FIXME: this should not be part of the standard configuration (flavours discriminations should stay out)
-    if self.pp.flavour in ['LCG', 'OSG']:
-      retCode, CEName = self.executeAndGetOutput('glite-brokerinfo getCE',
-                                                 self.pp.installEnv)
-      if retCode:
-        self.log.warn("Could not get CE name with 'glite-brokerinfo getCE' command [ERROR %d]" % retCode)
-        if 'OSG_JOB_CONTACT' in os.environ:
-          # OSG_JOB_CONTACT String specifying the endpoint to use within the job submission
-          #                 for reaching the site (e.g. manager.mycluster.edu/jobmanager-pbs )
-          CE = os.environ['OSG_JOB_CONTACT']
-          self.pp.ceName = CE.split('/')[0]
-          if len(CE.split('/')) > 1:
-            self.pp.queueName = CE.split('/')[1]
-          else:
-            self.log.error("CE Name %s not accepted" % CE)
-            self.exitWithError(retCode)
-        else:
-          self.log.info("Looking if queue name is already present in local cfg")
-          from DIRAC import gConfig
-          ceName = gConfig.getValue('LocalSite/GridCE', '')
-          ceQueue = gConfig.getValue('LocalSite/CEQueue', '')
-          if ceName and ceQueue:
-            self.log.debug("Found CE %s, queue %s" % (ceName, ceQueue))
-            self.pp.ceName = ceName
-            self.pp.queueName = ceQueue
-          else:
-            self.log.error("Can't find ceName nor queue... have to fail!")
-            sys.exit(1)
-      else:
-        self.log.debug("Found CE %s" % CEName)
-        self.pp.ceName = CEName.split(':')[0]
-        if len(CEName.split('/')) > 1:
-          self.pp.queueName = CEName.split('/')[1]
-      # configureOpts.append( '-N "%s"' % cliParams.ceName )
-
-    elif self.pp.flavour == "CREAM":
-      if 'CE_ID' in os.environ:
-        self.log.debug("Found CE %s" % os.environ['CE_ID'])
-        self.pp.ceName = os.environ['CE_ID'].split(':')[0]
-        if os.environ['CE_ID'].count("/"):
-          self.pp.queueName = os.environ['CE_ID'].split('/')[1]
-        else:
-          self.log.error("Can't find queue name")
-          sys.exit(1)
-      else:
-        self.log.error("Can't find CE name")
-        sys.exit(1)
 
 
 class ConfigureArchitecture(CommandBase):
