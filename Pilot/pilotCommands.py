@@ -588,11 +588,6 @@ class ConfigureSite(CommandBase):
     # this variable contains the options that are passed to dirac-configure, and that will fill the local dirac.cfg file
     self.cfg = []
 
-    self.boincUserID = ''
-    self.boincHostID = ''
-    self.boincHostPlatform = ''
-    self.boincHostName = ''
-
   def execute(self):
     """ Setup configuration parameters
     """
@@ -614,16 +609,6 @@ class ConfigureSite(CommandBase):
 
     if self.pp.pilotReference != 'Unknown':
       self.cfg.append('-o /LocalSite/PilotReference=%s' % self.pp.pilotReference)
-    # add options for BOINc
-    # FIXME: this should not be part of the standard configuration
-    if self.boincUserID:
-      self.cfg.append('-o /LocalSite/BoincUserID=%s' % self.boincUserID)
-    if self.boincHostID:
-      self.cfg.append('-o /LocalSite/BoincHostID=%s' % self.boincHostID)
-    if self.boincHostPlatform:
-      self.cfg.append('-o /LocalSite/BoincHostPlatform=%s' % self.boincHostPlatform)
-    if self.boincHostName:
-      self.cfg.append('-o /LocalSite/BoincHostName=%s' % self.boincHostName)
 
     if self.pp.useServerCertificate:
       self.cfg.append('--UseServerCertificate')
@@ -724,21 +709,6 @@ class ConfigureSite(CommandBase):
     if 'VMDIRAC_VERSION' in os.environ:
       self.pp.flavour = 'VMDIRAC'
       pilotRef = 'vm://' + self.pp.ceName + '/' + os.environ['JOB_ID']
-
-    # This is for BOINC case
-    if 'BOINC_JOB_ID' in os.environ:
-      self.pp.flavour = 'BOINC'
-      pilotRef = os.environ['BOINC_JOB_ID']
-
-    if self.pp.flavour == 'BOINC':
-      if 'BOINC_USER_ID' in os.environ:
-        self.boincUserID = os.environ['BOINC_USER_ID']
-      if 'BOINC_HOST_ID' in os.environ:
-        self.boincHostID = os.environ['BOINC_HOST_ID']
-      if 'BOINC_HOST_PLATFORM' in os.environ:
-        self.boincHostPlatform = os.environ['BOINC_HOST_PLATFORM']
-      if 'BOINC_HOST_NAME' in os.environ:
-        self.boincHostName = os.environ['BOINC_HOST_NAME']
 
     # Pilot reference is given explicitly in environment
     if 'PILOT_UUID' in os.environ:
