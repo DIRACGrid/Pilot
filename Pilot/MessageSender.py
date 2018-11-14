@@ -15,6 +15,8 @@
 
 import Queue
 import logging
+import requests
+import stomp
 
 def loadAndCreateObject(moduleName, className, params):
   """

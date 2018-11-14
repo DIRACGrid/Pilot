@@ -42,67 +42,67 @@ class TestPilotLoggerTools(unittest.TestCase):
 class TestPilotLoggerToolsreadPilotJSONConfigFile  (TestPilotLoggerTools):
   def setUp(self):
     jsonContent_MQ = """
-			{
-				"Setups": {
-					"Dirac-Certification": {
-						"Logging": {
-							"Queue": {
-								"test": {
-								"Persistent": "False",
-								"Acknowledgement": "False"
-								}
-							},
+      {
+        "Setups": {
+          "Dirac-Certification": {
+            "Logging": {
+              "Queue": {
+                "test": {
+                "Persistent": "False",
+                "Acknowledgement": "False"
+                }
+              },
               "LoggingType":"MQ",
               "LocalOutputFile":"myLocalQueueOfMessages",
-							"Host": "testMachineMQ.cern.ch",
-							"Port": "61614",
-							"HostKey": "/path/to/certs/hostkey.pem",
-							"HostCertificate": "/path/to/certs/hostcert.pem",
-							"CACertificate": "/path/to/certs/ca-bundle.crt"
-						}
-					}
-				},
-				"DefaultSetup": "Dirac-Certification"
-			}
-			"""
+              "Host": "testMachineMQ.cern.ch",
+              "Port": "61614",
+              "HostKey": "/path/to/certs/hostkey.pem",
+              "HostCertificate": "/path/to/certs/hostcert.pem",
+              "CACertificate": "/path/to/certs/ca-bundle.crt"
+            }
+          }
+        },
+        "DefaultSetup": "Dirac-Certification"
+      }
+      """
     self.pilotJSON_MQ = 'pilotMQ.json'
     with open(self.pilotJSON_MQ, 'w') as myF:
       myF.write(jsonContent_MQ)
 
     jsonContent_REST = """
-			{
-				"Setups": {
-					"Dirac-Certification": {
-						"Logging": {
+      {
+        "Setups": {
+          "Dirac-Certification": {
+            "Logging": {
               "LoggingType":"REST_API",
               "LocalOutputFile":"myLocalQueueOfMessages",
               "Url": "https://testMachineREST.cern.ch:666/msg",
-							"HostKey": "/path/to/certs/hostkey.pem",
-							"HostCertificate": "/path/to/certs/hostcert.pem",
-							"CACertificate": "/path/to/certs/ca-bundle.crt"
-						}
-					}
-				},
-				"DefaultSetup": "Dirac-Certification"
-			}
-			"""
+              "HostKey": "/path/to/certs/hostkey.pem",
+              "HostCertificate": "/path/to/certs/hostcert.pem",
+              "CACertificate": "/path/to/certs/ca-bundle.crt"
+            }
+          }
+        },
+        "DefaultSetup": "Dirac-Certification"
+      }
+      """
     self.pilotJSON_REST = 'pilotREST.json'
     with open(self.pilotJSON_REST, 'w') as myF:
       myF.write(jsonContent_REST)
 
     jsonContent_LOCAL = """
-			{
-				"Setups": {
-					"Dirac-Certification": {
-						"Logging": {
+      {
+        "Setups": {
+          "Dirac-Certification": {
+            "Logging": {
               "LoggingType":"LOCAL_FILE",
               "LocalOutputFile":"myLocalQueueOfMessages"
-						}
-					}
-				},
-				"DefaultSetup": "Dirac-Certification"
-			}
-			"""
+            }
+          }
+        },
+        "DefaultSetup": "Dirac-Certification"
+      }
+      """
     self.pilotJSON_LOCAL = 'pilotLOCAL.json'
     with open(self.pilotJSON_LOCAL, 'w') as myF:
       myF.write(jsonContent_LOCAL)
@@ -134,7 +134,7 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  (TestPilotLoggerTools):
     self.assertEqual(config['CACertificate'], ca_certs)
     self.assertEqual(config['FileWithID'], 'PilotUUID')
 
-    #self.assertEqual(config['fileWithID'], fileWithID)
+    # self.assertEqual(config['fileWithID'], fileWithID)
 
   def test_success_REST(self):
     config = readPilotJSONConfigFile(self.pilotJSON_REST)
@@ -153,7 +153,7 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  (TestPilotLoggerTools):
 
     self.assertFalse(config['QueuePath'])
 
-    #self.assertEqual(config['fileWithID'], fileWithID)
+    # self.assertEqual(config['fileWithID'], fileWithID)
 
   def test_success_LOCAL(self):
     config = readPilotJSONConfigFile(self.pilotJSON_LOCAL)
