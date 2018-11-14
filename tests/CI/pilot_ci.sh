@@ -53,7 +53,7 @@ else
 fi
 
 echo `pwd`
-echo $WORKSPACE
+echo -e $WORKSPACE
 # Creating default structure
 mkdir -p $WORKSPACE/TestCode # Where the test code resides
 TESTCODE=$_
@@ -77,7 +77,7 @@ function PilotInstall(){
   cd $PILOTINSTALLDIR
   if [ $? -ne 0 ]
   then
-    echo 'ERROR: cannot change to ' $PILOTINSTALLDIR
+    echo -e 'ERROR: cannot change to ' $PILOTINSTALLDIR
     return
   fi
 
@@ -107,8 +107,10 @@ function PilotInstall(){
   fi
   if [ $DEBUG ]
   then
-    pilotOptions+=" -d"
+    pilotOptions+=" --debug"
   fi
+
+  echo -e 'Running dirac-pilot.py ' $pilotOptions
   python dirac-pilot.py $pilotOptions
   if [ $? -ne 0 ]
   then
@@ -119,7 +121,7 @@ function PilotInstall(){
   cd $cwd
   if [ $? -ne 0 ]
   then
-    echo 'ERROR: cannot change to ' $cwd
+    echo -e 'ERROR: cannot change to ' $cwd
     return
   fi
 }
@@ -221,7 +223,7 @@ function submitAndMatch(){
   cd $PILOTINSTALLDIR
   if [ $? -ne 0 ]
   then
-    echo 'ERROR: cannot change to ' $PILOTINSTALLDIR
+    echo -e 'ERROR: cannot change to ' $PILOTINSTALLDIR
     return
   fi
   prepareForPilot
