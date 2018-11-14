@@ -59,10 +59,10 @@ class CheckWorkerNode(CommandBase):
     """ Get host and local user info, and other basic checks, e.g. space available
     """
 
-    self.log.info( 'Uname      = %s' % " ".join( os.uname() ))
-    self.log.info( 'Host Name  = %s' % socket.gethostname())
-    self.log.info( 'Host FQDN  = %s' % socket.getfqdn())
-    self.log.info( 'WorkingDir = %s' % self.pp.workingDir)  # this could be different than rootPath
+    self.log.info('Uname      = %s' % " ".join(os.uname()))
+    self.log.info('Host Name  = %s' % socket.gethostname())
+    self.log.info('Host FQDN  = %s' % socket.getfqdn())
+    self.log.info('WorkingDir = %s' % self.pp.workingDir)  # this could be different than rootPath
 
     fileName = '/etc/redhat-release'
     if os.path.exists(fileName):
