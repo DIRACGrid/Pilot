@@ -18,19 +18,19 @@
     But, as said, all the actions are actually configurable.
 """
 
+__RCSID__ = "$Id$"
+
 import os
 import sys
 import time
 
 from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
 
-__RCSID__ = "$Id$"
-
 if __name__ == "__main__":
 
-  pilotStartTime = int( time.time() )
+  pilotStartTime = int(time.time())
 
-  log = Logger( 'Pilot' )
+  log = Logger('Pilot', debugFlag=True)
 
   pilotParams = PilotParams()
   if pilotParams.debugFlag:
@@ -38,28 +38,27 @@ if __name__ == "__main__":
   if pilotParams.keepPythonPath:
     pythonPathCheck()
   else:
-    log.info( "Clearing PYTHONPATH for child processes." )
+    log.info("Clearing PYTHONPATH for child processes.")
     if "PYTHONPATH" in os.environ:
       os.environ["PYTHONPATH_SAVE"] = os.environ["PYTHONPATH"]
       os.environ["PYTHONPATH"] = ""
 
-
   pilotParams.pilotStartTime = pilotStartTime
   pilotParams.pilotRootPath = os.getcwd()
-  pilotParams.pilotScript = os.path.realpath( sys.argv[0] )
-  pilotParams.pilotScriptName = os.path.basename( pilotParams.pilotScript )
-  log.debug( 'PARAMETER [%s]' % ', '.join( map( str, pilotParams.optList ) ) )
+  pilotParams.pilotScript = os.path.realpath(sys.argv[0])
+  pilotParams.pilotScriptName = os.path.basename(pilotParams.pilotScript)
+  log.debug('PARAMETER [%s]' % ', '.join(map(str, pilotParams.optList)))
 
   if pilotParams.commandExtensions:
-    log.info( "Requested command extensions: %s" % str( pilotParams.commandExtensions ) )
+    log.info("Requested command extensions: %s" % str(pilotParams.commandExtensions))
 
-  log.info( "Executing commands: %s" % str( pilotParams.commands ) )
+  log.info("Executing commands: %s" % str(pilotParams.commands))
 
   for commandName in pilotParams.commands:
-    command, module = getCommand( pilotParams, commandName, log )
+    command, module = getCommand(pilotParams, commandName, log)
     if command is not None:
-      log.info( "Command %s instantiated from %s" % ( commandName, module ) )
+      log.info("Command %s instantiated from %s" % (commandName, module))
       command.execute()
     else:
-      log.error( "Command %s could not be instantiated" % commandName )
-      sys.exit( -1 )
+      log.error("Command %s could not be instantiated" % commandName)
+      sys.exit(-1)

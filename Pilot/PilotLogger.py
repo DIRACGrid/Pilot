@@ -1,6 +1,8 @@
 """ Pilot logger module for the remote logging system.
 """
 
+__RCSID__ = "$Id$"
+
 import os
 import logging
 import argparse
@@ -27,7 +29,7 @@ def getPilotUUIDFromFile(filename='PilotUUID'):
     return ""
 
 
-def addMissingConfiguration(config, defaultConfig = None):
+def addMissingConfiguration(config, defaultConfig=None):
   """ Creates new dict which contains content of config with added missing keys
       and values  defined in defaultConfig.
       If a key from defaultConfig is absent in config set, the value,key pair is added.
@@ -41,12 +43,14 @@ def addMissingConfiguration(config, defaultConfig = None):
       dict:
   """
   if defaultConfig is None:
-    defaultConfig = {'LoggingType':'LOCAL_FILE','LocalOutputFile': 'myLocalQueueOfMessages', 'FileWithID': 'PilotUUID'}
+    defaultConfig = {'LoggingType': 'LOCAL_FILE',
+                     'LocalOutputFile': 'myLocalQueueOfMessages',
+                     'FileWithID': 'PilotUUID'}
   if not config or not isinstance(config, dict):
     return defaultConfig
 
   currConfig = config.copy()
-  for k,v in defaultConfig.iteritems():
+  for k, v in defaultConfig.iteritems():
     if k not in currConfig:
       currConfig[k] = v
     else:
@@ -54,13 +58,18 @@ def addMissingConfiguration(config, defaultConfig = None):
         currConfig[k] = v
   return currConfig
 
+
 class PilotLogger(object):
   """ Base pilot logger class.
   """
 
   STATUSES = ['info', 'warning', 'error', 'debug']
 
-  def __init__(self, configFile='pilot.json', messageSenderType='LOCAL_FILE', localOutputFile='myLocalQueueOfMessages', fileWithUUID='PilotUUID'):
+  def __init__(self,
+               configFile='pilot.json',
+               messageSenderType='LOCAL_FILE',
+               localOutputFile='myLocalQueueOfMessages',
+               fileWithUUID='PilotUUID'):
     """ ctr loads the configuration parameters from the json file
         or if the file does not exists, loads the default set
         of values. Next, if self.fileWithUUID is not set (this
@@ -76,21 +85,21 @@ class PilotLogger(object):
     """
     self.STATUSES = PilotLogger.STATUSES
 
-    self.params = addMissingConfiguration(config = readPilotJSONConfigFile(configFile),
-                                          defaultConfig = {'LoggingType':messageSenderType,'LocalOutputFile':localOutputFile , 'FileWithID': fileWithUUID})
+    self.params = addMissingConfiguration(config=readPilotJSONConfigFile(configFile),
+                                          defaultConfig={'LoggingType': messageSenderType,
+                                                         'LocalOutputFile': localOutputFile,
+                                                         'FileWithID': fileWithUUID})
 
     fileWithID = self.params['FileWithID']
     if os.path.isfile(fileWithID):
-      logging.warning('The file: '+ fileWithID +
-                      ' already exists. The content will be used to get UUID.')
+      logging.warning('The file: ' + fileWithID + ' already exists. The content will be used to get UUID.')
     else:
-      result = getUniqueIDAndSaveToFile(filename = fileWithID)
+      result = getUniqueIDAndSaveToFile(filename=fileWithID)
       if not result:
         logging.error('Error while generating pilot logger id.')
-    self.messageSender = messageSenderFactory(senderType = self.params['LoggingType'], params = self.params)
+    self.messageSender = messageSenderFactory(senderType=self.params['LoggingType'], params=self.params)
     if not self.messageSender:
       logging.error('Something went wrong - no messageSender created.')
-
 
   def _isCorrectStatus(self, status):
     """ Checks if the flag corresponds to one of the predefined
@@ -115,12 +124,12 @@ class PilotLogger(object):
       return False
     myUUID = getPilotUUIDFromFile(self.params['FileWithID'])
     message = generateDict(
-      myUUID,
-      generateTimeStamp(),
-      source,
-      phase,
-      status,
-      messageContent
+        myUUID,
+        generateTimeStamp(),
+        source,
+        phase,
+        status,
+        messageContent
     )
     if not isMessageFormatCorrect(message):
       logging.warning("Message format is not correct.")
@@ -189,6 +198,7 @@ def main():
                      source=args.source,
                      phase=args.phase,
                      status=args.status)
+
 
 if __name__ == '__main__':
   main()
