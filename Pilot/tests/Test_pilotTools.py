@@ -30,10 +30,11 @@ class TestPilotTools(unittest.TestCase):
     self.testOutputFile = 'fakeQueueFile'
 
   def tearDown(self):
-    try:
-      os.remove(self.testOutputFile)
-    except OSError:
-      pass
+    for fr in [self.testOutputFile, 'PilotUUID']:
+      try:
+        os.remove(fr)
+      except OSError:
+        pass
 
 
 def removeTimeStampAndPilotUUID(message):
@@ -42,6 +43,13 @@ def removeTimeStampAndPilotUUID(message):
 
 
 class TestPilotToolsExtendedLogger(TestPilotTools):
+
+  def tearDown(self):
+    for fr in [self.testOutputFile, 'PilotUUID']:
+      try:
+        os.remove(fr)
+      except OSError:
+        pass
 
   def test_sendMessageToLocalFile(self):
     msg_pattern = {

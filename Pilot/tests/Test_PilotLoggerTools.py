@@ -32,7 +32,7 @@ class TestPilotLoggerTools(unittest.TestCase):
 
   def tearDown(self):
     # for fileProd in [self.testFile, self.testFileCfg, 'PilotUUID']:
-    for fileProd in [self.testFile, 'PilotUUID']:
+    for fileProd in [self.testFile, 'PilotUUID', self.testFileCfg]:
       try:
         os.remove(fileProd)
       except OSError:
@@ -108,7 +108,7 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  (TestPilotLoggerTools):
       myF.write(jsonContent_LOCAL)
 
   def tearDown(self):
-    for fileProd in [self.pilotJSON_MQ, self.pilotJSON_REST, self.pilotJSON_LOCAL]:
+    for fileProd in [self.pilotJSON_MQ, self.pilotJSON_REST, self.pilotJSON_LOCAL, 'PilotUUID']:
       try:
         os.remove(fileProd)
       except OSError:

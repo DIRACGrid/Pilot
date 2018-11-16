@@ -3,8 +3,9 @@
 
 # pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 
-import unittest
 import os
+import unittest
+
 from Pilot.PilotLogger import PilotLogger, getPilotUUIDFromFile, addMissingConfiguration
 from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
 
@@ -18,10 +19,11 @@ class TestGetPilotUUIDFromFile(unittest.TestCase):
     self.nonExistentFile = 'abrakadabraToCzaryIMagia'
 
   def tearDown(self):
-    try:
-      os.remove(self.testFile)
-    except OSError:
-      pass
+    for fr in [self.testFile, 'PilotUUID']:
+      try:
+        os.remove(fr)
+      except OSError:
+        pass
 
   def test_success(self):
     uuid = getPilotUUIDFromFile(self.testFile)
