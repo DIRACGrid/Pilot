@@ -1,0 +1,1 @@
+{"Setups": {"Dirac-Certification": {"Logging": {"LoggingType": "MQ", "Queue": {"test.cern.ch": {}}, "HostKey": "certificates/client/key.pem", "Url": "", "LocalOutputFile": "", "HostCertificate": "certificates/client/cert.pem", "CACertificate": "certificates/testca/cacert.pem", "Host": "127.0.0.1", "FileWithID": "PilotUUID_test", "Port": "61614"}}}}

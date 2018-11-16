@@ -5,9 +5,8 @@
 
 import unittest
 import os
-from mock import MagicMock
+from mock import MagicMock, patch
 from Pilot.MessageSender import LocalFileSender, StompSender, RESTSender, eraseFileContent, loadAndCreateObject
-import Pilot.MessageSender as module
 
 
 def removeFile(filename):
@@ -77,23 +76,15 @@ class TestLocalFileSender(unittest.TestCase):
 
 class TestStompSender(unittest.TestCase):
 
-  def setUp(self):
-    self.testFile = 'myFile'
-    self.testMessage = 'my test message'
-    module.stomp = MagicMock()
-    module.stomp.Connection = MagicMock()
-    connectionMock = MagicMock()
-    connectionMock.is_connected.return_value = True
-    module.stomp.Connection.return_value = connectionMock
-
   def tearDown(self):
-    removeFile(self.testFile)
+    removeFile('myFile')
 
-  def test_success(self):
+  @patch("Pilot.MessageSender.stompConnect", return_value=MagicMock())
+  def test_success(self, _mockFun):
     params = {'HostKey': 'key', 'HostCertififcate': 'cert', 'CACertificate': 'caCert',
-              'Host': 'test.host.ch', 'Port': '666', 'QueuePath': '/queue/myqueue', 'LocalOutputFile': self.testFile}
+              'Host': 'localhost', 'Port': '61613', 'QueuePath': '/queue/myqueue', 'LocalOutputFile': 'myFile'}
     msgSender = StompSender(params)
-    res = msgSender.sendMessage(self.testMessage, 'info')
+    res = msgSender.sendMessage('my test message', 'info')
     self.assertTrue(res)
 
   def test_failure_badParams(self):
@@ -102,17 +93,12 @@ class TestStompSender(unittest.TestCase):
 
 class TestRESTSender(unittest.TestCase):
 
-  def setUp(self):
-    self.testFile = 'myFile'
-    self.testMessage = 'my test message'
-    module.requests = MagicMock()
-    module.requests.post = MagicMock()
-
-  def test_success(self):
+  @patch("Pilot.MessageSender.restSend", return_value=True)
+  def test_success(self, _patch):
     params = {'HostKey': 'key', 'HostCertififcate': 'cert', 'CACertificate': 'caCert',
-              'Url': 'https://some.host.ch/messages', 'LocalOutputFile': self.testFile}
+              'Url': 'https://some.host.ch/messages', 'LocalOutputFile': 'myFile'}
     msgSender = RESTSender(params)
-    res = msgSender.sendMessage(self.testMessage, 'info')
+    res = msgSender.sendMessage('my test message', 'info')
     self.assertTrue(res)
 
   def test_failure_badParams(self):
