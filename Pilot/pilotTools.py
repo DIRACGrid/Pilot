@@ -17,6 +17,7 @@ import subprocess
 
 from PilotLogger import PilotLogger
 
+
 def printVersion(log):
 
   log.info("Running %s" % " ".join(sys.argv))
@@ -280,6 +281,7 @@ class ExtendedLogger(Logger):
   """ The logger object, for use inside the pilot. It prints messages.
       But can be also used to send messages to the queue
   """
+
   def __init__(self,
                name='Pilot',
                debugFlag=False,
@@ -292,13 +294,13 @@ class ExtendedLogger(Logger):
     """
     super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
     if isPilotLoggerOn:
-      self.pilotLogger = PilotLogger(localOutputFile = localMessageQueue)
+      self.pilotLogger = PilotLogger(localOutputFile=localMessageQueue)
     else:
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
 
   def debug(self, msg, header=True, sendPilotLog=True):
-    super(ExtendedLogger, self).debug(msg,header)
+    super(ExtendedLogger, self).debug(msg, header)
     if self.isPilotLoggerOn:
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="debug")
@@ -321,15 +323,16 @@ class ExtendedLogger(Logger):
       if sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="info")
 
-  def sendMessage(self, msg, source, phase, status ='info', sendPilotLog=True):
+  def sendMessage(self, msg, source, phase, status='info', sendPilotLog=True):
     if self.isPilotLoggerOn:
       if sendPilotLog:
-        self.pilotLogger.sendMessage( messageContent = msg,
-                                      source = source,
-                                      phase = phase,
-                                      status = status)
+        self.pilotLogger.sendMessage(messageContent=msg,
+                                     source=source,
+                                     phase=phase,
+                                     status=status)
 
-class CommandBase( object ):
+
+class CommandBase(object):
   """ CommandBase is the base class for every command in the pilot commands toolbox
   """
 

@@ -3,10 +3,12 @@
 
 # pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 
-import unittest
 import os
+import unittest
+
 from Pilot.PilotLogger import PilotLogger, getPilotUUIDFromFile, addMissingConfiguration
 from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
+
 
 class TestGetPilotUUIDFromFile(unittest.TestCase):
 
@@ -17,10 +19,11 @@ class TestGetPilotUUIDFromFile(unittest.TestCase):
     self.nonExistentFile = 'abrakadabraToCzaryIMagia'
 
   def tearDown(self):
-    try:
-      os.remove(self.testFile)
-    except OSError:
-      pass
+    for fr in [self.testFile, 'PilotUUID']:
+      try:
+        os.remove(fr)
+      except OSError:
+        pass
 
   def test_success(self):
     uuid = getPilotUUIDFromFile(self.testFile)
@@ -33,6 +36,7 @@ class TestGetPilotUUIDFromFile(unittest.TestCase):
   def test_failureNonExistent(self):
     uuid = getPilotUUIDFromFile(self.nonExistentFile)
     self.assertFalse(uuid)
+
 
 class TestPilotLogger_isCorrectStatus(unittest.TestCase):
 
@@ -74,6 +78,7 @@ class TestPilotLogger_init(unittest.TestCase):
     self.assertEqual(logger.params['LocalOutputFile'], 'myLocalQueueOfMessages')
     self.assertEqual(logger.params['FileWithID'], 'PilotUUID')
 
+
 class TestPilotLogger_addMissingConfiguration(unittest.TestCase):
 
   def setUp(self):
@@ -92,7 +97,10 @@ class TestPilotLogger_addMissingConfiguration(unittest.TestCase):
     self.assertEqual(res, config)
 
   def test_emptyConfig(self):
-    self.assertEqual(addMissingConfiguration(None), {'LoggingType':'LOCAL_FILE','LocalOutputFile': 'myLocalQueueOfMessages', 'FileWithID': 'PilotUUID'})
+    self.assertEqual(addMissingConfiguration(None),
+                     {'LoggingType': 'LOCAL_FILE',
+                      'LocalOutputFile': 'myLocalQueueOfMessages',
+                      'FileWithID': 'PilotUUID'})
 
 
 class TestPilotLogger_sendMessage(unittest.TestCase):

@@ -59,10 +59,10 @@ class CheckWorkerNode(CommandBase):
     """ Get host and local user info, and other basic checks, e.g. space available
     """
 
-    self.log.info( 'Uname      = %s' % " ".join( os.uname() ))
-    self.log.info( 'Host Name  = %s' % socket.gethostname())
-    self.log.info( 'Host FQDN  = %s' % socket.getfqdn())
-    self.log.info( 'WorkingDir = %s' % self.pp.workingDir)  # this could be different than rootPath
+    self.log.info('Uname      = %s' % " ".join(os.uname()))
+    self.log.info('Host Name  = %s' % socket.gethostname())
+    self.log.info('Host FQDN  = %s' % socket.getfqdn())
+    self.log.info('WorkingDir = %s' % self.pp.workingDir)  # this could be different than rootPath
 
     fileName = '/etc/redhat-release'
     if os.path.exists(fileName):
@@ -588,11 +588,6 @@ class ConfigureSite(CommandBase):
     # this variable contains the options that are passed to dirac-configure, and that will fill the local dirac.cfg file
     self.cfg = []
 
-    self.boincUserID = ''
-    self.boincHostID = ''
-    self.boincHostPlatform = ''
-    self.boincHostName = ''
-
   def execute(self):
     """ Setup configuration parameters
     """
@@ -602,8 +597,6 @@ class ConfigureSite(CommandBase):
     self.cfg.append('-n "%s"' % self.pp.site)
     self.cfg.append('-S "%s"' % self.pp.setup)
 
-    if not self.pp.ceName or not self.pp.queueName:
-      self.__getCEName()
     self.cfg.append('-N "%s"' % self.pp.ceName)
     self.cfg.append('-o /LocalSite/GridCE=%s' % self.pp.ceName)
     self.cfg.append('-o /LocalSite/CEQueue=%s' % self.pp.queueName)
@@ -616,16 +609,6 @@ class ConfigureSite(CommandBase):
 
     if self.pp.pilotReference != 'Unknown':
       self.cfg.append('-o /LocalSite/PilotReference=%s' % self.pp.pilotReference)
-    # add options for BOINc
-    # FIXME: this should not be part of the standard configuration
-    if self.boincUserID:
-      self.cfg.append('-o /LocalSite/BoincUserID=%s' % self.boincUserID)
-    if self.boincHostID:
-      self.cfg.append('-o /LocalSite/BoincHostID=%s' % self.boincHostID)
-    if self.boincHostPlatform:
-      self.cfg.append('-o /LocalSite/BoincHostPlatform=%s' % self.boincHostPlatform)
-    if self.boincHostName:
-      self.cfg.append('-o /LocalSite/BoincHostName=%s' % self.boincHostName)
 
     if self.pp.useServerCertificate:
       self.cfg.append('--UseServerCertificate')
@@ -727,21 +710,6 @@ class ConfigureSite(CommandBase):
       self.pp.flavour = 'VMDIRAC'
       pilotRef = 'vm://' + self.pp.ceName + '/' + os.environ['JOB_ID']
 
-    # This is for BOINC case
-    if 'BOINC_JOB_ID' in os.environ:
-      self.pp.flavour = 'BOINC'
-      pilotRef = os.environ['BOINC_JOB_ID']
-
-    if self.pp.flavour == 'BOINC':
-      if 'BOINC_USER_ID' in os.environ:
-        self.boincUserID = os.environ['BOINC_USER_ID']
-      if 'BOINC_HOST_ID' in os.environ:
-        self.boincHostID = os.environ['BOINC_HOST_ID']
-      if 'BOINC_HOST_PLATFORM' in os.environ:
-        self.boincHostPlatform = os.environ['BOINC_HOST_PLATFORM']
-      if 'BOINC_HOST_NAME' in os.environ:
-        self.boincHostName = os.environ['BOINC_HOST_NAME']
-
     # Pilot reference is given explicitly in environment
     if 'PILOT_UUID' in os.environ:
       pilotRef = os.environ['PILOT_UUID']
@@ -753,57 +721,6 @@ class ConfigureSite(CommandBase):
     self.log.debug("Flavour: %s; pilot reference: %s " % (self.pp.flavour, pilotRef))
 
     self.pp.pilotReference = pilotRef
-
-  def __getCEName(self):
-    """ Try to get the CE name
-    """
-    # FIXME: this should not be part of the standard configuration (flavours discriminations should stay out)
-    if self.pp.flavour in ['LCG', 'OSG']:
-      retCode, CEName = self.executeAndGetOutput('glite-brokerinfo getCE',
-                                                 self.pp.installEnv)
-      if retCode:
-        self.log.warn("Could not get CE name with 'glite-brokerinfo getCE' command [ERROR %d]" % retCode)
-        if 'OSG_JOB_CONTACT' in os.environ:
-          # OSG_JOB_CONTACT String specifying the endpoint to use within the job submission
-          #                 for reaching the site (e.g. manager.mycluster.edu/jobmanager-pbs )
-          CE = os.environ['OSG_JOB_CONTACT']
-          self.pp.ceName = CE.split('/')[0]
-          if len(CE.split('/')) > 1:
-            self.pp.queueName = CE.split('/')[1]
-          else:
-            self.log.error("CE Name %s not accepted" % CE)
-            self.exitWithError(retCode)
-        else:
-          self.log.info("Looking if queue name is already present in local cfg")
-          from DIRAC import gConfig
-          ceName = gConfig.getValue('LocalSite/GridCE', '')
-          ceQueue = gConfig.getValue('LocalSite/CEQueue', '')
-          if ceName and ceQueue:
-            self.log.debug("Found CE %s, queue %s" % (ceName, ceQueue))
-            self.pp.ceName = ceName
-            self.pp.queueName = ceQueue
-          else:
-            self.log.error("Can't find ceName nor queue... have to fail!")
-            sys.exit(1)
-      else:
-        self.log.debug("Found CE %s" % CEName)
-        self.pp.ceName = CEName.split(':')[0]
-        if len(CEName.split('/')) > 1:
-          self.pp.queueName = CEName.split('/')[1]
-      # configureOpts.append( '-N "%s"' % cliParams.ceName )
-
-    elif self.pp.flavour == "CREAM":
-      if 'CE_ID' in os.environ:
-        self.log.debug("Found CE %s" % os.environ['CE_ID'])
-        self.pp.ceName = os.environ['CE_ID'].split(':')[0]
-        if os.environ['CE_ID'].count("/"):
-          self.pp.queueName = os.environ['CE_ID'].split('/')[1]
-        else:
-          self.log.error("Can't find queue name")
-          sys.exit(1)
-      else:
-        self.log.error("Can't find CE name")
-        sys.exit(1)
 
 
 class ConfigureArchitecture(CommandBase):

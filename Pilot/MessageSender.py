@@ -16,6 +16,7 @@
 import Queue
 import logging
 
+
 def loadAndCreateObject(moduleName, className, params):
   """
   Function loads the class from the module and creates
@@ -33,11 +34,11 @@ def loadAndCreateObject(moduleName, className, params):
     # In case of moduleName in the format of X.Y.Z, we have
     # mods =['X','Y','Z']. We are really interested in loading
     # 'Z' submodule.
-    mods = moduleName.split( '.' )
+    mods = moduleName.split('.')
     # The __import__ call with
     # fromlist option set to mods[-1]  will load Z submodule as expected.
     # Simpler X format will be also covered.
-    module = __import__(moduleName,globals(), locals(),mods[-1])
+    module = __import__(moduleName, globals(), locals(), mods[-1])
     try:
       myClass = getattr(module, className)
       if params:
@@ -74,9 +75,9 @@ def messageSenderFactory(senderType, params):
 
   """
   typeToModuleAndClassName = {
-    'LOCAL_FILE': {'module': 'MessageSender', 'class': 'LocalFileSender'},
-    'MQ': {'module': 'MessageSender', 'class': 'StompSender'},
-    'REST_API': {'module': 'MessageSender', 'class': 'RESTSender'}
+      'LOCAL_FILE': {'module': 'MessageSender', 'class': 'LocalFileSender'},
+      'MQ': {'module': 'MessageSender', 'class': 'StompSender'},
+      'REST_API': {'module': 'MessageSender', 'class': 'RESTSender'}
   }
   try:
     moduleName = typeToModuleAndClassName[senderType]['module']
@@ -119,7 +120,6 @@ class RESTSender(MessageSender):
   """ Message sender to a REST interface.
       It depends on requests module.
   """
-  import requests
 
   REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
                    'CACertificate', 'Url', 'LocalOutputFile']
@@ -140,15 +140,7 @@ class RESTSender(MessageSender):
     hostCertificate = self.params.get('HostCertificate')
     CACertificate = self.params.get('CACertificate')
 
-    try:
-      requests.post(url,
-                    json=msg,
-                    cert=(hostCertificate, hostKey),
-                    verify=CACertificate)
-    except (requests.exceptions.RequestException, IOError) as e:
-      logging.error(e)
-      return False
-    return True
+    return restSend(url, msg, hostCertificate, hostKey, CACertificate)
 
 
 def eraseFileContent(filename):
@@ -162,7 +154,7 @@ def saveMessageToFile(msg, filename='myLocalQueueOfMessages'):
   """ Adds the message to a file appended as a next line.
   """
   with open(filename, 'a+') as myFile:
-    myFile.write(msg+'\n')
+    myFile.write(msg + '\n')
 
 
 def readMessagesFromFileAndEraseFileContent(filename='myLocalQueueOfMessages'):
@@ -202,11 +194,11 @@ class LocalFileSender(MessageSender):
     saveMessageToFile(msg, filename=filename)
     return True
 
+
 class StompSender(MessageSender):
   """ Stomp message sender.
       It depends on stomp module.
   """
-  import stomp
   REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
                    'CACertificate', 'QueuePath', 'LocalOutputFile']
 
@@ -243,52 +235,14 @@ class StompSender(MessageSender):
     filename = self.params.get('LocalOutputFile')
 
     saveMessageToFile(msg, filename)
-    connection = self._connect((host, port), {
-      'key_file': hostKey, 'cert_file': hostCertificate, 'ca_certs': CACertificate})
+    connection = stompConnect([(host, port)], {'key_file': hostKey,
+                                               'cert_file': hostCertificate,
+                                               'ca_certs': CACertificate})
     if not connection:
       return False
     self._sendAllLocalMessages(connection, queue, filename)
     self._disconnect(connection)
     return True
-
-  def _connect(self, hostAndPort, sslCfg):
-    """ Connects to MQ server and returns connection
-        handler or None in case of connection down.
-        Stomp-depended function.
-    Args:
-      hostAndPort(list): of tuples, containing ip address and the port 
-                         where the message broker is listening for stomp 
-                         connections. e.g. [(127.0.0.1,6555)]
-      sslCfg(dict): with three keys 'key_file', 'cert_file', and 'ca_certs'. 
-    Return:
-      stomp.Connection: or None in case of errors. 
-    """
-    if not sslCfg:
-      logging.error("sslCfg argument is None")
-      return None
-    if not hostAndPort:
-      logging.error("hostAndPort argument is None")
-      return None
-    if not all(key in sslCfg for key in ['key_file', 'cert_file', 'ca_certs']):
-      logging.error("Missing sslCfg keys")
-      return None
-
-    try:
-      connection = stomp.Connection(host_and_ports=hostAndPort, use_ssl=True)
-      connection.set_ssl(for_hosts=hostAndPort,
-                         key_file=sslCfg['key_file'],
-                         cert_file=sslCfg['cert_file'],
-                         ca_certs=sslCfg['ca_certs'])
-      connection.start()
-      connection.connect()
-      return connection
-    except stomp.exception.ConnectFailedException:
-      logging.error('Connection error')
-      return None
-    except IOError:
-      logging.error('Could not find files with ssl certificates')
-      return None
-
 
   def _send(self, msg, destination, connectHandler):
     """Sends a message and logs info.
@@ -301,13 +255,11 @@ class StompSender(MessageSender):
     logging.info(" [x] Sent %r ", msg)
     return True
 
-
   def _disconnect(self, connectHandler):
     """Disconnects.
        Stomp-depended function.
     """
     connectHandler.disconnect()
-
 
   def _sendAllLocalMessages(self, connectHandler, destination, filename):
     """ Retrieves all messages from the local storage
@@ -317,3 +269,61 @@ class StompSender(MessageSender):
     while not queue.empty():
       msg = queue.get()
       self._send(msg, destination, connectHandler)
+
+
+def restSend(url, msg, hostCertificate, hostKey, CACertificate):
+  """ send a message via REST
+  """
+  try:
+    import requests
+    requests.post(url,
+                  json=msg,
+                  cert=(hostCertificate, hostKey),
+                  verify=CACertificate)
+  except (requests.exceptions.RequestException, IOError) as e:
+    logging.error(e)
+    return False
+  return True
+
+
+def stompConnect(hostAndPort, sslCfg):
+  """ Connects to MQ server and returns connection
+      handler or None in case of connection down.
+      Stomp-depended function.
+  Args:
+    hostAndPort(list): of tuples, containing ip address and the port
+                       where the message broker is listening for stomp
+                       connections. e.g. [(127.0.0.1,6555)]
+    sslCfg(dict): with three keys 'key_file', 'cert_file', and 'ca_certs'.
+
+  Return:
+    stomp.Connection: or None in case of errors.
+  """
+
+  import stomp
+
+  if not sslCfg:
+    logging.error("sslCfg argument is None")
+    return None
+  if not hostAndPort:
+    logging.error("hostAndPort argument is None")
+    return None
+  if not all(key in sslCfg for key in ['key_file', 'cert_file', 'ca_certs']):
+    logging.error("Missing sslCfg keys")
+    return None
+
+  try:
+    connection = stomp.Connection(host_and_ports=hostAndPort, use_ssl=True)
+    connection.set_ssl(for_hosts=hostAndPort,
+                       key_file=sslCfg['key_file'],
+                       cert_file=sslCfg['cert_file'],
+                       ca_certs=sslCfg['ca_certs'])
+    connection.start()
+    connection.connect()
+    return connection
+  except stomp.exception.ConnectFailedException:
+    logging.error('Connection error')
+    return None
+  except IOError:
+    logging.error('Could not find files with ssl certificates')
+    return None
