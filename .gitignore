@@ -44,6 +44,11 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+.pytest_cache
+.cache
+__pycache__
+pytests.xml
+Local_*
 
 # Translations
 *.mo
@@ -60,3 +65,28 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+# Mr Developer
+.mr.developer.cfg
+
+# Eclipse
+.project
+.pydevproject
+.pyproject
+.settings
+.metadata
+
+# Vim 
+.*.sw[a-z]
+*.un~
+Session.vim
+
+# Emacs 
+*~
+
+# Intellij
+.idea/
+DIRAC.iml
+
+# MaxOSX files
+.DS_Store
