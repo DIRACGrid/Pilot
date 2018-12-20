@@ -32,7 +32,8 @@ load-plugins=
 
 #R0903 = Too few public methods (%s/%s)
 #C0326 = bad-whitespace
-disable=R0903,C0326
+#I0011 = locally-disabling
+disable=R0903,C0326,I0011,redefined-variable-type,c-extension-no-member
 
 
 [REPORTS]
@@ -199,7 +200,8 @@ min-public-methods=1
 # Maximum number of public methods for a class (see R0904).
 max-public-methods=20
 
-
+# Maximum number of nested blocks
+max-nested-blocks=10
 [IMPORTS]
 
 # Deprecated modules which should not be used, separated by a comma
