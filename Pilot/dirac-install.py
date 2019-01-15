@@ -3,6 +3,8 @@
 The main DIRAC installer script
 """
 
+# pylint: skip-file
+
 import sys
 import os
 import getopt
