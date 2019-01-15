@@ -1,10 +1,12 @@
 ordereddict; python_version < '2.7'
-mock
+pytest==3.0.3; python_version < '2.7'
 astroid==1.2; python_version < '2.7'
 pylint==1.3; python_version < '2.7'
+pytest-cov==2.5.1; python_version < '2.7'
 pylint; python_version >= '2.7'
-pytest>=3.2
-pytest-cov
+pytest>=3.6; python_version >= '2.7'
+pytest-cov; python_version >= '2.7'
+mock
 coverage
 stomp.py
 requests
