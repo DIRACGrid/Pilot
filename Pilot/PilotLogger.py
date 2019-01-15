@@ -69,7 +69,7 @@ def getPilotUUIDFromFile(filename='PilotAgentUUID'):
       uniqueId = myFile.read()
     return uniqueId
   except IOError:
-    logging.error('Could not open the file with UUID', filename)
+    logging.error('Could not open the file with UUID' + filename)
     return ""
 
 
@@ -131,37 +131,38 @@ class PilotLogger(object):
 
     if not self.fileWithUUID:
       self.fileWithUUID = 'PilotAgentUUID'
-      logging.warning('No pilot logger id file name was specified. The default file name will be used:' + self.fileWithUUID)
+      logging.warning('No pilot logger id file name was specified.\
+       The default file name will be used:' + self.fileWithUUID)
       if os.path.isfile(self.fileWithUUID):
-        logging.warning('The default file: '+self.fileWithUUID + ' already exists. The content will be used to get UUID.')
+        logging.warning('The default file: ' + self.fileWithUUID + ' already exists. \
+          The content will be used to get UUID.')
       else:
-        res = getUniqueIDAndSaveToFile(filename = self.fileWithUUID)
+        res = getUniqueIDAndSaveToFile(filename=self.fileWithUUID)
         if not res:
           logging.error('Error while generating pilot logger id.')
 
   def _loadConfigurationFromFile(self, filename):
     """ Add comment
     """
-    config = readPilotLoggerConfigFile (filename)
+    config = readPilotLoggerConfigFile(filename)
     if not config:
       logging.warning('Could not open or load configuration File! Pilot Logger will use some default values!!!')
       return False
     else:
       self.fileWithUUID = config['fileWithID']
-      self.networkCfg= [(config['host'], int(config['port']))]
+      self.networkCfg = [(config['host'], int(config['port']))]
       self.queuePath = config['queuePath']
-      self.sslCfg = dict((k, config[k]) for k  in ('key_file', 'cert_file', 'ca_certs'))
+      self.sslCfg = dict((k, config[k]) for k in ('key_file', 'cert_file', 'ca_certs'))
       return True
 
-  def _isCorrectStatus( self, status ):
-
+  def _isCorrectStatus(self, status):
     """ Checks if the flag corresponds to one of the predefined
         STATUSES, check constructor for current set.
     """
 
     return status in self.STATUSES
 
-  def _sendAllLocalMessages(self, connect_handler, flag = 'info' ):
+  def _sendAllLocalMessages(self, connect_handler, flag='info'):
     """ Retrives all messages from the local storage
         and sends it.
     """
@@ -170,8 +171,7 @@ class PilotLogger(object):
       msg = queue.get()
       send(msg, self.queuePath, connect_handler)
 
-
-  def _sendMessage( self, msg, flag ):
+  def _sendMessage(self, msg, flag):
     """ Method first copies the message content to the
         local storage, then it checks if the connection
         to RabbitMQ server is up,
@@ -221,6 +221,7 @@ class PilotLogger(object):
     else:
       return self._sendMessage(encodedMsg, flag=status)
 
+
 def main():
   """ main() function  is used to send a message
       before any DIRAC related part is installed.
@@ -229,45 +230,46 @@ def main():
   """
 
   def singleWord(arg):
-    if len(arg.split()) !=1:
+    if len(arg.split()) != 1:
       msg = 'argument must be single word'
       raise argparse.ArgumentTypeError(msg)
     return arg
 
   parser = argparse.ArgumentParser(description="command line interface to send logs to MQ system.",
                                    formatter_class=argparse.RawTextHelpFormatter,
-                                   epilog=
-                                   'examples:\n'
-                                    +'                   python PilotLogger.py InstallDIRAC installing info My message\n'
-                                    +'                   python PilotLogger.py InstallDIRAC installing debug Debug message\n'
-                                    +'                   python PilotLogger.py "My message"\n'
-                                    +'                   python PilotLogger.py "My message" --output myFileName\n'
-                                  )
+                                   epilog='examples:\n' +
+                                   '                   python PilotLogger.py \
+                                   InstallDIRAC installing info My message\n' +
+                                   '                   python PilotLogger.py \
+                                   InstallDIRAC installing debug Debug message\n' +
+                                   '                   python PilotLogger.py "My message"\n' +
+                                   '                   python PilotLogger.py "My message" --output myFileName\n'
+                                   )
   parser.add_argument('source',
-                      type = singleWord,
+                      type=singleWord,
                       nargs='?',
-                      default ='unspecified',
-                      help='Source of the message e.g. "InstallDIRAC". It must be one word. '
-                           +'If not specified it is set to "unspecified".')
+                      default='unspecified',
+                      help='Source of the message e.g. "InstallDIRAC". It must be one word. ' +
+                           'If not specified it is set to "unspecified".')
   parser.add_argument('phase',
-                      type = singleWord,
+                      type=singleWord,
                       nargs='?',
-                      default ='unspecified',
-                      help='Phase of the process e.g. "fetching". It must be one word. '
-                            +'If not specified it is set to "unspecified".')
+                      default='unspecified',
+                      help='Phase of the process e.g. "fetching". It must be one word. ' +
+                            'If not specified it is set to "unspecified".')
   parser.add_argument('status',
-                      nargs = '?',
-                      choices = PilotLogger.STATUSES,
-                      default = 'info',
-                      help = 'Allowed values are: '+ ', '.join(PilotLogger.STATUSES)
-                      +'. If not specified it is set to "info".',
+                      nargs='?',
+                      choices=PilotLogger.STATUSES,
+                      default='info',
+                      help='Allowed values are: ' + ', '.join(PilotLogger.STATUSES) +
+                      '. If not specified it is set to "info".',
                       metavar='status ')
   parser.add_argument('message',
                       nargs='+',
                       help='Human readable content of the message. ')
   parser.add_argument('--output',
-                      help = 'Log the content to the specified file'
-                             +' instead of sending it to the Message Queue server.')
+                      help='Log the content to the specified file' +
+                      ' instead of sending it to the Message Queue server.')
   args = parser.parse_args()
 
   if len(" ".join(args.message)) >= 200:
@@ -279,12 +281,13 @@ def main():
                        source=args.source,
                        phase=args.phase,
                        status=args.status,
-                       localOutputFile = args.output)
+                       localOutputFile=args.output)
   else:
-    logger.sendMessage( messageContent = " ".join(args.message),
-                        source = args.source,
-                        phase = args.phase,
-                        status = args.status)
+    logger.sendMessage(messageContent=" ".join(args.message),
+                       source=args.source,
+                       phase=args.phase,
+                       status=args.status)
+
 
 if __name__ == '__main__':
   main()
