@@ -10,10 +10,11 @@ import Queue
 import logging
 import stomp
 import argparse
+
 from PilotLoggerTools import generateDict, encodeMessage
 from PilotLoggerTools import generateTimeStamp
 from PilotLoggerTools import isMessageFormatCorrect
-from PilotLoggerTools import readPilotLoggerConfigFile
+from PilotLoggerTools import readPilotJSONConfigFile
 from PilotLoggerTools import getUniqueIDAndSaveToFile
 
 
@@ -144,7 +145,7 @@ class PilotLogger(object):
   def _loadConfigurationFromFile(self, filename):
     """ Add comment
     """
-    config = readPilotLoggerConfigFile(filename)
+    config = readPilotJSONConfigFile(filename)
     if not config:
       logging.warning('Could not open or load configuration File! Pilot Logger will use some default values!!!')
       return False
