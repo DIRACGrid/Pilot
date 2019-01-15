@@ -775,7 +775,7 @@ class ConfigureSite(CommandBase):
             self.exitWithError(retCode)
         else:
           self.log.info("Looking if queue name is already present in local cfg")
-          from DIRAC import gConfig
+          from DIRAC import gConfig  # pylint: disable=import-error
           ceName = gConfig.getValue('LocalSite/GridCE', '')
           ceQueue = gConfig.getValue('LocalSite/CEQueue', '')
           if ceName and ceQueue:
