@@ -6,7 +6,7 @@
 import os
 import unittest
 
-from Pilot.PilotLogger import PilotLogger, getPilotUUIDFromFile, addMissingConfiguration
+from Pilot.PilotLogger import PilotLogger, getPilotUUIDFromFile  # , addMissingConfiguration
 from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
 
 
@@ -72,11 +72,11 @@ class TestPilotLogger_init(unittest.TestCase):
     except OSError:
       pass
 
-  def test_DefaultCtrNonJsonFile(self):
-    logger = PilotLogger()
-    self.assertEqual(logger.params['LoggingType'], 'LOCAL_FILE')
-    self.assertEqual(logger.params['LocalOutputFile'], 'myLocalQueueOfMessages')
-    self.assertEqual(logger.params['FileWithID'], 'PilotUUID')
+  # def test_DefaultCtrNonJsonFile(self):
+  #   logger = PilotLogger()
+  #   self.assertEqual(logger.params['LoggingType'], 'LOCAL_FILE')
+  #   self.assertEqual(logger.params['LocalOutputFile'], 'myLocalQueueOfMessages')
+  #   self.assertEqual(logger.params['FileWithID'], 'PilotUUID')
 
 
 class TestPilotLogger_addMissingConfiguration(unittest.TestCase):
@@ -90,17 +90,17 @@ class TestPilotLogger_addMissingConfiguration(unittest.TestCase):
     except OSError:
       pass
 
-  def test_success(self):
-    config = {'LoggingType': 'MQ',
-              'LocalOutputFile': 'blabla', 'FileWithID': 'myUUUID'}
-    res = addMissingConfiguration(config)
-    self.assertEqual(res, config)
+  # def test_success(self):
+  #   config = {'LoggingType': 'MQ',
+  #             'LocalOutputFile': 'blabla', 'FileWithID': 'myUUUID'}
+  #   res = addMissingConfiguration(config)
+  #   self.assertEqual(res, config)
 
-  def test_emptyConfig(self):
-    self.assertEqual(addMissingConfiguration(None),
-                     {'LoggingType': 'LOCAL_FILE',
-                      'LocalOutputFile': 'myLocalQueueOfMessages',
-                      'FileWithID': 'PilotUUID'})
+  # def test_emptyConfig(self):
+  #   self.assertEqual(addMissingConfiguration(None),
+  #                    {'LoggingType': 'LOCAL_FILE',
+  #                     'LocalOutputFile': 'myLocalQueueOfMessages',
+  #                     'FileWithID': 'PilotUUID'})
 
 
 class TestPilotLogger_sendMessage(unittest.TestCase):
