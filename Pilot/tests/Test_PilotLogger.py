@@ -1,7 +1,7 @@
 """ Unit tests for PilotLogger
 """
 
-# pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
+# pylint: skip-file
 
 import os
 
