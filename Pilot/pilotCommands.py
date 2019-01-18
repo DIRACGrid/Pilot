@@ -17,6 +17,8 @@
     execution.
 """
 
+__RCSID__ = "$Id$"
+
 import sys
 import os
 import time
@@ -27,8 +29,6 @@ import tarfile
 import httplib
 
 from pilotTools import CommandBase
-
-__RCSID__ = "$Id$"
 
 
 class GetPilotVersion(CommandBase):
@@ -66,21 +66,18 @@ class CheckWorkerNode(CommandBase):
 
     fileName = '/etc/redhat-release'
     if os.path.exists(fileName):
-      f = open(fileName, 'r')
-      self.log.info('RedHat Release = %s' % f.read().strip())
-      f.close()
+      with open(fileName, 'r') as f:
+        self.log.info('RedHat Release = %s' % f.read().strip())
 
     fileName = '/etc/lsb-release'
     if os.path.isfile(fileName):
-      f = open(fileName, 'r')
-      self.log.info('Linux release:\n%s' % f.read().strip())
-      f.close()
+      with open(fileName, 'r') as f:
+        self.log.info('Linux release:\n%s' % f.read().strip())
 
     fileName = '/proc/cpuinfo'
     if os.path.exists(fileName):
-      f = open(fileName, 'r')
-      cpu = f.readlines()
-      f.close()
+      with open(fileName, 'r') as f:
+        cpu = f.readlines()
       nCPU = 0
       for line in cpu:
         if line.find('cpu MHz') == 0:
@@ -93,9 +90,8 @@ class CheckWorkerNode(CommandBase):
 
     fileName = '/proc/meminfo'
     if os.path.exists(fileName):
-      f = open(fileName, 'r')
-      mem = f.readlines()
-      f.close()
+      with open(fileName, 'r') as f:
+        mem = f.readlines()
       freeMem = 0
       for line in mem:
         if line.find('MemTotal:') == 0:
@@ -1211,22 +1207,17 @@ class MultiLaunchAgent(CommandBase):
     ]
 
     try:
-      f = open(logFile, 'r')
+      with open(logFile, 'r') as f:
+        oneline = f.readline()
+        while oneline:
+          for pair in messageMappings:
+            if pair[0] in oneline:
+              shutdownMessage = pair[1]
+              break
+          oneline = f.readline()
+
     except BaseException:
       return '700 Internal VM logging failed'
-
-    oneline = f.readline()
-
-    while oneline:
-
-      for pair in messageMappings:
-        if pair[0] in oneline:
-          shutdownMessage = pair[1]
-          break
-
-      oneline = f.readline()
-
-    f.close()
 
     return shutdownMessage
 
