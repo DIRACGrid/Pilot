@@ -207,7 +207,7 @@ def getCommand(params, commandName, log):
       impData = imp.find_module(module)
       commandModule = imp.load_module(module, *impData)
       commandObject = getattr(commandModule, commandName)
-    except Exception as _e:
+    except Exception:
       pass
     if commandObject:
       return commandObject(params), module
@@ -348,7 +348,7 @@ class CommandBase(object):
         pilotOutput='pilot.out',
         isPilotLoggerOn=self.pp.pilotLogging
     )
-    #self.log = Logger( self.__class__.__name__ )
+    # self.log = Logger( self.__class__.__name__ )
     self.debugFlag = False
     for o, _ in self.pp.optList:
       if o == '-d' or o == '--debug':
@@ -496,6 +496,7 @@ class PilotParams(object):
     self.pilotCFGFile = 'pilot.json'
     self.replaceDIRACCode = ''
     self.pilotLogging = False
+    self.modules = ''  # see dirac-install "-m" option documentation
 
     # Parameters that can be determined at runtime only
     self.queueParameters = {}  # from CE description
@@ -524,6 +525,7 @@ class PilotParams(object):
                     ('p:', 'platform=', 'Use <platform> instead of local one'),
                     ('m:', 'maxNumberOfProcessors=',
                      'specify a max number of processors to use'),
+                    ('', 'modules=', 'for installing non-released code (see dirac-install "-m" option documentation)'),
                     ('r:', 'release=', 'DIRAC release to install'),
                     ('s:', 'section=', 'Set base section for relative parsed options'),
                     ('t:', 'tag=', 'extra tags for resource description'),
@@ -659,6 +661,8 @@ class PilotParams(object):
         self.tags.append(v)
       elif o == '--requiredTag':
         self.reqtags.append(v)
+      elif o == 'modules':
+        self.modules == v
 
   def __initJSON(self):
     """Retrieve pilot parameters from the content of json file. The file should be something like:

@@ -105,6 +105,10 @@ function PilotInstall(){
   then
     pilotOptions+=" -g "$lcgVersion
   fi
+  if [ $modules ]
+  then
+    pilotOptions+=" --modules="$modules
+  fi
   if [ $DEBUG ]
   then
     pilotOptions+=" --debug"
