@@ -12,7 +12,7 @@ source $TESTCODE/DIRAC/tests/Jenkins/utilities.sh
 function prepareForPilot(){
 
   #get the pilot files from the Pilot
-  for file in PilotLogger.py PilotLoggerTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py
+  for file in PilotLogger.py PilotLoggerTools.py dirac-pilot.py pilotCommands.py pilotTools.py
   do
     cp $TESTCODE/Pilot/Pilot/${file} .
   done
@@ -28,6 +28,8 @@ function prepareForPilot(){
     done
   fi
 
+  # get dirac-install.py file
+  curl -L -O https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
 }
 
 
@@ -46,4 +48,3 @@ function prepareForPilot(){
 #   cd $PILOTINSTALLDIR
 #   python consumeFromQueue.py
 # }
-
