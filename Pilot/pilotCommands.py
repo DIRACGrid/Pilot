@@ -17,6 +17,8 @@
     execution.
 """
 
+__RCSID__ = "$Id$"
+
 import sys
 import os
 import time
@@ -27,8 +29,6 @@ import tarfile
 import httplib
 
 from pilotTools import CommandBase
-
-__RCSID__ = "$Id$"
 
 
 class GetPilotVersion(CommandBase):

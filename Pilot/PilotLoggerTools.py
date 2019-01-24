@@ -1,15 +1,15 @@
 """A set of tools for the remote pilot agent logging system
 """
 
+__RCSID__ = "$Id$"
+
 
 import time
 import json
-from uuid import uuid1
 import sys
 import os
 import logging
-
-__RCSID__ = "$Id$"
+from uuid import uuid1
 
 
 def createPilotLoggerConfigFile(filename='PilotLogger.json',

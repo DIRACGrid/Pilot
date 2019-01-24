@@ -13,6 +13,9 @@
 
     """
 
+__RCSID__ = "$Id$"
+
+
 import Queue
 import logging
 

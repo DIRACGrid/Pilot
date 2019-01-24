@@ -10,10 +10,11 @@ import Queue
 import logging
 import stomp
 import argparse
+
 from PilotLoggerTools import generateDict, encodeMessage
 from PilotLoggerTools import generateTimeStamp
 from PilotLoggerTools import isMessageFormatCorrect
-from PilotLoggerTools import readPilotLoggerConfigFile
+from PilotLoggerTools import readPilotJSONConfigFile
 from PilotLoggerTools import getUniqueIDAndSaveToFile
 
 
@@ -25,9 +26,9 @@ def connect(host_and_port, ssl_cfg):
   try:
     connection = stomp.Connection(host_and_ports=host_and_port, use_ssl=True)
     connection.set_ssl(for_hosts=host_and_port,
-                       key_file=ssl_cfg['key_file'],
-                       cert_file=ssl_cfg['cert_file'],
-                       ca_certs=ssl_cfg['ca_certs'])
+                       key_file=ssl_cfg.get('key_file'),
+                       cert_file=ssl_cfg.get('cert_file'),
+                       ca_certs=ssl_cfg.get('ca_certs'))
     connection.start()
     connection.connect()
     return connection
@@ -126,7 +127,7 @@ class PilotLogger(object):
     self.fileWithUUID = ''
     self.networkCfg = None
     self.queuePath = ''
-    self.sslCfg = None
+    self.sslCfg = {}
     self._loadConfigurationFromFile(configFile)
 
     if not self.fileWithUUID:
@@ -144,7 +145,7 @@ class PilotLogger(object):
   def _loadConfigurationFromFile(self, filename):
     """ Add comment
     """
-    config = readPilotLoggerConfigFile(filename)
+    config = readPilotJSONConfigFile(filename)
     if not config:
       logging.warning('Could not open or load configuration File! Pilot Logger will use some default values!!!')
       return False

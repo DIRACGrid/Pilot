@@ -208,7 +208,7 @@ def getCommand(params, commandName, log):
       impData = imp.find_module(module)
       commandModule = imp.load_module(module, *impData)
       commandObject = getattr(commandModule, commandName)
-    except Exception as _e:
+    except Exception:
       pass
     if commandObject:
       return commandObject(params), module
@@ -294,7 +294,8 @@ class ExtendedLogger(Logger):
     """
     super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
     if isPilotLoggerOn:
-      self.pilotLogger = PilotLogger(localOutputFile=localMessageQueue)
+      # self.pilotLogger = PilotLogger(localOutputFile=localMessageQueue)
+      self.pilotLogger = PilotLogger()
     else:
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
@@ -348,7 +349,7 @@ class CommandBase(object):
         pilotOutput='pilot.out',
         isPilotLoggerOn=self.pp.pilotLogging
     )
-    #self.log = Logger( self.__class__.__name__ )
+    # self.log = Logger( self.__class__.__name__ )
     self.debugFlag = False
     for o, _ in self.pp.optList:
       if o == '-d' or o == '--debug':
