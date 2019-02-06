@@ -197,6 +197,7 @@ class Params(object):
     self.modules = {}
     self.externalVersion = ""
     self.cleanPYTHONPATH = False
+    self.createLink = False
 
 
 cliParams = Params()
@@ -1650,7 +1651,9 @@ cmdOpts = (('r:', 'release=', 'Release version to install'),
             'Module to be installed. for example: -m DIRAC or -m git://github.com/DIRACGrid/DIRAC.git:DIRAC'),
            ('s:', 'source=', 'location of the modules to be installed'),
            ('x:', 'external=', 'external version'),
-           ('  ', 'cleanPYTHONPATH', 'Only use the DIRAC PYTHONPATH (for pilots installation)')
+           ('  ', 'cleanPYTHONPATH', 'Only use the DIRAC PYTHONPATH (for pilots installation)'),
+           ('  ', 'createLink', 'create version symbolic link from the versions directory. This is equivalent to the \
+           following command: ln -s /opt/dirac/versions/vArBpC vArBpC')
            )
 
 
