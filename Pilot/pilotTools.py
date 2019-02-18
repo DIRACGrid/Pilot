@@ -661,7 +661,7 @@ class PilotParams(object):
         self.tags.append(v)
       elif o == '--requiredTag':
         self.reqtags.append(v)
-      elif o == 'modules':
+      elif o == '--modules':
         self.modules == v
 
   def __initJSON(self):
