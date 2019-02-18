@@ -658,7 +658,7 @@ class PilotParams(object):
       elif o == '--requiredTag':
         self.reqtags.append(v)
       elif o == '--modules':
-        self.modules == v
+        self.modules = v
 
   def __initJSON(self):
     """Retrieve pilot parameters from the content of json file. The file should be something like:

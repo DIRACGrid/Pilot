@@ -24,8 +24,6 @@ import os
 import time
 import stat
 import socket
-import urllib
-import tarfile
 import httplib
 
 from pilotTools import CommandBase
@@ -145,6 +143,7 @@ class InstallDIRAC(CommandBase):
   def _setInstallOptions(self):
     """ Setup installation parameters
     """
+
     for o, v in self.pp.optList:
       if o in ('-b', '--build'):
         self.installOpts.append('-b')

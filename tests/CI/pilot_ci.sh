@@ -12,7 +12,6 @@
 # A CI job needs:
 #
 # === environment variables (minimum set):
-# DEBUG
 # WORKSPACE
 #
 # === a default directory structure is created:
@@ -37,13 +36,8 @@
 
 # Def of environment variables:
 
-if [ ! -z "$DEBUG" ]
-then
-  echo '==> Running in DEBUG mode'
-  DEBUG='-ddd'
-else
-  echo '==> Running in non-DEBUG mode'
-fi
+echo '==> Running in DEBUG mode'
+DEBUG='-ddd'
 
 if [ ! -z "$WORKSPACE" ]
 then
@@ -109,10 +103,7 @@ function PilotInstall(){
   then
     pilotOptions+=" --modules="$modules
   fi
-  if [ $DEBUG ]
-  then
-    pilotOptions+=" --debug"
-  fi
+  pilotOptions+=" --debug"
 
   echo -e 'Running dirac-pilot.py ' $pilotOptions
   python dirac-pilot.py $pilotOptions
