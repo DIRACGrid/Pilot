@@ -494,7 +494,6 @@ class PilotParams(object):
     self.architectureScript = 'dirac-platform'
     self.certsLocation = '%s/etc/grid-security' % self.workingDir
     self.pilotCFGFile = 'pilot.json'
-    self.replaceDIRACCode = ''
     self.pilotLogging = False
     self.modules = ''  # see dirac-install "-m" option documentation
 
@@ -550,7 +549,6 @@ class PilotParams(object):
                     ('V:', 'installation=', 'Installation configuration file'),
                     ('W:', 'gateway=', 'Configure <gateway> as DIRAC Gateway during installation'),
                     ('X:', 'commands=', 'Pilot commands to execute'),
-                    ('Y:', 'replaceDIRACCode=', 'URL of replacement DIRAC TGZ archive'),
                     ('Z:', 'commandOptions=', 'Options parsed by command modules')
                     )
 
@@ -651,8 +649,6 @@ class PilotParams(object):
           self.procesors = int(v)
         except BaseException:
           pass
-      elif o == '-Y' or o == '--replaceDIRACCode':
-        self.replaceDIRACCode = v
       elif o == '-z' or o == '--pilotLogging':
         self.pilotLogging = True
       elif o in ('-o', '--option'):
