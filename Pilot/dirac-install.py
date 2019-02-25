@@ -4,14 +4,14 @@ The main DIRAC installer script. It can be used to install the main DIRAC softwa
 modules, web, rest etc. and DIRAC extensions.
 
 In order to deploy DIRAC you have to provide: globalDefaultsURL, which is by default:
-"http://lhcbproject.web.cern.ch/lhcbproject/dist/DIRAC3/globalDefaults.cfg", but it can be
+"http://diracproject.web.cern.ch/diracproject/configs/globalDefaults.cfg", but it can be
 in the local file system in a separate directory. The content of this file is the following::
 
   Installations
   {
     DIRAC
     {
-       DefaultsLocation = http://lhcbproject.web.cern.ch/lhcbproject/dist/DIRAC3/defaultsDIRAC.cfg
+       DefaultsLocation =  http://diracproject.web.cern.ch/diracproject/dirac.cfg
        LocalInstallation
        {
         PythonVersion = 27
@@ -19,7 +19,7 @@ in the local file system in a separate directory. The content of this file is th
        # in case you have a DIRAC extension
        LHCb
       {
-      DefaultsLocation = http://lhcbproject.web.cern.ch/lhcbproject/dist/DIRAC3/defaults/lhcb.cfg
+      DefaultsLocation = http://lhcb-rpm.web.cern.ch/lhcb-rpm/lhcbdirac/lhcb.cfg
       }
     }
   }
@@ -27,18 +27,18 @@ in the local file system in a separate directory. The content of this file is th
   {
     DIRAC
     {
-      DefaultsLocation = http://lhcbproject.web.cern.ch/lhcbproject/dist/DIRAC3/defaults/dirac.cfg
+      DefaultsLocation =  http://diracproject.web.cern.ch/diracproject/dirac.cfg
     }
     # in case you have a DIRAC extension
     LHCb
     {
-      DefaultsLocation = http://lhcbproject.web.cern.ch/lhcbproject/dist/DIRAC3/defaults/lhcb.cfg
+      DefaultsLocation = http://lhcb-rpm.web.cern.ch/lhcb-rpm/lhcbdirac/lhcb.cfg
     }
   }
 
 the DefaultsLocation for example::
 
-  DefaultsLocation = http://lhcbproject.web.cern.ch/lhcbproject/dist/DIRAC3/defaults/dirac.cfg
+  DefaultsLocation = http://diracproject.web.cern.ch/diracproject/dirac.cfg
 
 must contain a minimal configuration. The following options must be in this
 file::
@@ -495,7 +495,7 @@ class ReleaseConfig(object):
     if globalDefaultsURL:
       self.globalDefaultsURL = globalDefaultsURL
     else:
-      self.globalDefaultsURL = "http://lhcbproject.web.cern.ch/lhcbproject/dist/DIRAC3/globalDefaults.cfg"
+      self.globalDefaultsURL = "http://diracproject.web.cern.ch/diracproject/configs/globalDefaults.cfg"
     self.globalDefaults = ReleaseConfig.CFG()
     self.loadedCfgs = []
     self.prjDepends = {}
@@ -2568,5 +2568,7 @@ if __name__ == "__main__":
   if cliParams.externalsType == "server":
     fixMySQLScript()
   installExternalRequirements(cliParams.externalsType)
+  if cliParams.createLink:
+    createSymbolicLink()
   logNOTICE("%s properly installed" % cliParams.installation)
   sys.exit(0)
