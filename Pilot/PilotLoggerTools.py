@@ -23,7 +23,7 @@ def createPilotLoggerConfigFile(filename='PilotLogger.json',
                                 ca_certs='',
                                 fileWithID='',
                                 queue=None,
-                                setup = 'Dirac-Certification'):
+                                setup='Dirac-Certification'):
   """Helper function that creates a test configuration file.
      The format is json encoded file.
      The created file can be mainy used for testing of PilotLogger setups, since
@@ -60,9 +60,9 @@ def createPilotLoggerConfigFile(filename='PilotLogger.json',
   ]
   config = dict(zip(keys, values))
   content = dict()
-  content['Setups']={}
-  content['Setups'][setup]={}
-  content['Setups'][setup]['Logging']=config
+  content['Setups'] = {}
+  content['Setups'][setup] = {}
+  content['Setups'][setup]['Logging'] = config
   config = json.dumps(content)
   with open(filename, 'w') as myFile:
     myFile.write(config)
@@ -126,7 +126,8 @@ def readPilotJSONConfigFile(filename):
 
   return config
 
-def generateDict(pilotUUID, timestamp, source, phase,  status, messageContent):
+
+def generateDict(pilotUUID, timestamp, source, phase, status, messageContent):
   """Helper function that returs a dictionnary based on the
      set of input values.
   Returns
@@ -201,17 +202,15 @@ def isMessageFormatCorrect(content):
   """
   if not isinstance(content, dict):
     return False
-  refKeys = [
+  refKeys = sorted([
     'pilotUUID',
     'status',
     'messageContent',
     'timestamp',
     'phase',
     'source'
-  ]
-  refKeys.sort()
-  keys = content.keys()
-  keys.sort()
+  ])
+  keys = sorted(content.keys())
   if not keys == refKeys:
     return False
   values = content.values()

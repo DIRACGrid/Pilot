@@ -27,7 +27,7 @@ def getPilotUUIDFromFile(filename='PilotUUID'):
     return ""
 
 
-def addMissingConfiguration(config, defaultConfig = None):
+def addMissingConfiguration(config, defaultConfig=None):
   """ Creates new dict which contains content of config with added missing keys
       and values  defined in defaultConfig.
       If a key from defaultConfig is absent in config set, the value,key pair is added.
@@ -41,12 +41,15 @@ def addMissingConfiguration(config, defaultConfig = None):
       dict:
   """
   if defaultConfig is None:
-    defaultConfig = {'LoggingType':'LOCAL_FILE','LocalOutputFile': 'myLocalQueueOfMessages', 'FileWithID': 'PilotUUID'}
+    defaultConfig = {
+        'LoggingType': 'LOCAL_FILE',
+        'LocalOutputFile': 'myLocalQueueOfMessages',
+        'FileWithID': 'PilotUUID'}
   if not config or not isinstance(config, dict):
     return defaultConfig
 
   currConfig = config.copy()
-  for k,v in defaultConfig.iteritems():
+  for k, v in defaultConfig.iteritems():
     if k not in currConfig:
       currConfig[k] = v
     else:
@@ -54,13 +57,19 @@ def addMissingConfiguration(config, defaultConfig = None):
         currConfig[k] = v
   return currConfig
 
+
 class PilotLogger(object):
   """ Base pilot logger class.
   """
 
   STATUSES = ['info', 'warning', 'error', 'debug']
 
-  def __init__(self, configFile='pilot.json', messageSenderType='LOCAL_FILE', localOutputFile='myLocalQueueOfMessages', fileWithUUID='PilotUUID'):
+  def __init__(
+          self,
+          configFile='pilot.json',
+          messageSenderType='LOCAL_FILE',
+          localOutputFile='myLocalQueueOfMessages',
+          fileWithUUID='PilotUUID'):
     """ ctr loads the configuration parameters from the json file
         or if the file does not exists, loads the default set
         of values. Next, if self.fileWithUUID is not set (this
@@ -76,21 +85,24 @@ class PilotLogger(object):
     """
     self.STATUSES = PilotLogger.STATUSES
 
-    self.params = addMissingConfiguration(config = readPilotJSONConfigFile(configFile),
-                                          defaultConfig = {'LoggingType':messageSenderType,'LocalOutputFile':localOutputFile , 'FileWithID': fileWithUUID})
+    self.params = addMissingConfiguration(
+        config=readPilotJSONConfigFile(configFile),
+        defaultConfig={
+            'LoggingType': messageSenderType,
+            'LocalOutputFile': localOutputFile,
+            'FileWithID': fileWithUUID})
 
     fileWithID = self.params['FileWithID']
     if os.path.isfile(fileWithID):
-      logging.warning('The file: '+ fileWithID +
-                      ' already exists. The content will be used to get UUID.')
+      logging.warning('The file: ' + fileWithID 
+                      + ' already exists. The content will be used to get UUID.')
     else:
-      result = getUniqueIDAndSaveToFile(filename = fileWithID)
+      result = getUniqueIDAndSaveToFile(filename=fileWithID)
       if not result:
         logging.error('Error while generating pilot logger id.')
-    self.messageSender = messageSenderFactory(senderType = self.params['LoggingType'], params = self.params)
+    self.messageSender = messageSenderFactory(senderType=self.params['LoggingType'], params=self.params)
     if not self.messageSender:
       logging.error('Something went wrong - no messageSender created.')
-
 
   def _isCorrectStatus(self, status):
     """ Checks if the flag corresponds to one of the predefined
@@ -143,14 +155,15 @@ def main():
       raise argparse.ArgumentTypeError(msg)
     return arg
 
-  parser = argparse.ArgumentParser(description="command line interface to send logs to MQ system.",
-                                   formatter_class=argparse.RawTextHelpFormatter,
-                                   epilog='examples:\n'
-                                   + '                   python PilotLogger.py InstallDIRAC installing info My message\n'
-                                   + '                   python PilotLogger.py InstallDIRAC installing debug Debug message\n'
-                                   + '                   python PilotLogger.py "My message"\n'
-                                   + '                   python PilotLogger.py "My message" --output myFileName\n'
-                                  )
+  parser = argparse.ArgumentParser(
+    description="command line interface to send logs to MQ system.",
+    formatter_class=argparse.RawTextHelpFormatter,
+    epilog='examples:\n'
+    + '                   python PilotLogger.py InstallDIRAC installing info My message\n'
+    + '                   python PilotLogger.py InstallDIRAC installing debug Debug message\n'
+    + '                   python PilotLogger.py "My message"\n'
+    + '                   python PilotLogger.py "My message" --output myFileName\n')
+
   parser.add_argument('source',
                       type=singleWord,
                       nargs='?',
@@ -167,8 +180,8 @@ def main():
                       nargs='?',
                       choices=PilotLogger.STATUSES,
                       default='info',
-                      help='Allowed values are: ' +
-                      ', '.join(PilotLogger.STATUSES)
+                      help='Allowed values are: '
+                      + ', '.join(PilotLogger.STATUSES)
                       + '. If not specified it is set to "info".',
                       metavar='status ')
   parser.add_argument('message',
