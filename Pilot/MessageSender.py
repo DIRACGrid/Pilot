@@ -16,6 +16,7 @@
 import Queue
 import logging
 
+
 def loadAndCreateObject(moduleName, className, params):
   """
   Function loads the class from the module and creates
@@ -33,11 +34,11 @@ def loadAndCreateObject(moduleName, className, params):
     # In case of moduleName in the format of X.Y.Z, we have
     # mods =['X','Y','Z']. We are really interested in loading
     # 'Z' submodule.
-    mods = moduleName.split( '.' )
+    mods = moduleName.split('.')
     # The __import__ call with
     # fromlist option set to mods[-1]  will load Z submodule as expected.
     # Simpler X format will be also covered.
-    module = __import__(moduleName,globals(), locals(),mods[-1])
+    module = __import__(moduleName, globals(), locals(), mods[-1])
     try:
       myClass = getattr(module, className)
       if params:
@@ -162,7 +163,7 @@ def saveMessageToFile(msg, filename='myLocalQueueOfMessages'):
   """ Adds the message to a file appended as a next line.
   """
   with open(filename, 'a+') as myFile:
-    myFile.write(msg+'\n')
+    myFile.write(msg + '\n')
 
 
 def readMessagesFromFileAndEraseFileContent(filename='myLocalQueueOfMessages'):
@@ -201,6 +202,7 @@ class LocalFileSender(MessageSender):
     filename = self.params.get('LocalOutputFile')
     saveMessageToFile(msg, filename=filename)
     return True
+
 
 class StompSender(MessageSender):
   """ Stomp message sender.
@@ -256,12 +258,12 @@ class StompSender(MessageSender):
         handler or None in case of connection down.
         Stomp-depended function.
     Args:
-      hostAndPort(list): of tuples, containing ip address and the port 
-                         where the message broker is listening for stomp 
+      hostAndPort(list): of tuples, containing ip address and the port
+                         where the message broker is listening for stomp
                          connections. e.g. [(127.0.0.1,6555)]
-      sslCfg(dict): with three keys 'key_file', 'cert_file', and 'ca_certs'. 
+      sslCfg(dict): with three keys 'key_file', 'cert_file', and 'ca_certs'.
     Return:
-      stomp.Connection: or None in case of errors. 
+      stomp.Connection: or None in case of errors.
     """
     if not sslCfg:
       logging.error("sslCfg argument is None")
@@ -289,7 +291,6 @@ class StompSender(MessageSender):
       logging.error('Could not find files with ssl certificates')
       return None
 
-
   def _send(self, msg, destination, connectHandler):
     """Sends a message and logs info.
        Stomp-depended function.
@@ -301,13 +302,11 @@ class StompSender(MessageSender):
     logging.info(" [x] Sent %r ", msg)
     return True
 
-
   def _disconnect(self, connectHandler):
     """Disconnects.
        Stomp-depended function.
     """
     connectHandler.disconnect()
-
 
   def _sendAllLocalMessages(self, connectHandler, destination, filename):
     """ Retrieves all messages from the local storage
