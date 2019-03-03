@@ -94,7 +94,7 @@ class PilotLogger(object):
 
     fileWithID = self.params['FileWithID']
     if os.path.isfile(fileWithID):
-      logging.warning('The file: ' + fileWithID 
+      logging.warning('The file: ' + fileWithID
                       + ' already exists. The content will be used to get UUID.')
     else:
       result = getUniqueIDAndSaveToFile(filename=fileWithID)

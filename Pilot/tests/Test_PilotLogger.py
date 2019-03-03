@@ -8,6 +8,7 @@ import os
 from Pilot.PilotLogger import PilotLogger, getPilotUUIDFromFile, addMissingConfiguration
 from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
 
+
 class TestGetPilotUUIDFromFile(unittest.TestCase):
 
   def setUp(self):
@@ -33,6 +34,7 @@ class TestGetPilotUUIDFromFile(unittest.TestCase):
   def test_failureNonExistent(self):
     uuid = getPilotUUIDFromFile(self.nonExistentFile)
     self.assertFalse(uuid)
+
 
 class TestPilotLogger_isCorrectStatus(unittest.TestCase):
 
@@ -74,6 +76,7 @@ class TestPilotLogger_init(unittest.TestCase):
     self.assertEqual(logger.params['LocalOutputFile'], 'myLocalQueueOfMessages')
     self.assertEqual(logger.params['FileWithID'], 'PilotUUID')
 
+
 class TestPilotLogger_addMissingConfiguration(unittest.TestCase):
 
   def setUp(self):
@@ -92,7 +95,10 @@ class TestPilotLogger_addMissingConfiguration(unittest.TestCase):
     self.assertEqual(res, config)
 
   def test_emptyConfig(self):
-    self.assertEqual(addMissingConfiguration(None), {'LoggingType':'LOCAL_FILE','LocalOutputFile': 'myLocalQueueOfMessages', 'FileWithID': 'PilotUUID'})
+    self.assertEqual(addMissingConfiguration(None),
+                     {'LoggingType': 'LOCAL_FILE',
+                      'LocalOutputFile': 'myLocalQueueOfMessages',
+                      'FileWithID': 'PilotUUID'})
 
 
 class TestPilotLogger_sendMessage(unittest.TestCase):
