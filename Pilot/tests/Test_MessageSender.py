@@ -5,16 +5,15 @@
 
 import unittest
 import os
-from mock import MagicMock, patch
+from mock import MagicMock
 from Pilot.MessageSender import LocalFileSender, StompSender, RESTSender, eraseFileContent, loadAndCreateObject
-
+import Pilot.MessageSender as module
 
 def removeFile(filename):
   try:
     os.remove(filename)
   except OSError:
     pass
-
 
 class TestMessageSenderEraseFileContent(unittest.TestCase):
   def setUp(self):
@@ -28,29 +27,25 @@ class TestMessageSenderEraseFileContent(unittest.TestCase):
   def test_success(self):
     try:
       eraseFileContent(self.testFile)
-    except BaseException:
+    except:
       self.fail("eraseFileContent() raised ExceptionType!")
-
 
 class TestLoadAndCreateObject(unittest.TestCase):
   def setUp(self):
     pass
-
   def tearDown(self):
     pass
-
   def test_success(self):
-    res = loadAndCreateObject('MessageSender', 'LocalFileSender', {'LocalOutputFile': 'blabla'})
+    res = loadAndCreateObject('MessageSender',  'LocalFileSender', {'LocalOutputFile':'blabla'})
     self.assertTrue(res)
 
   def test_fail(self):
-    res = loadAndCreateObject('MessageSender', 'NonExistingClass', '')
+    res = loadAndCreateObject( 'MessageSender',  'NonExistingClass', '')
     self.assertFalse(res)
 
   def test_fail2(self):
-    res = loadAndCreateObject('Bla.Bla', 'NonExistingClass', '')
+    res = loadAndCreateObject( 'Bla.Bla',  'NonExistingClass', '')
     self.assertFalse(res)
-
 
 class TestLocalFileSender(unittest.TestCase):
   def setUp(self):
@@ -68,7 +63,7 @@ class TestLocalFileSender(unittest.TestCase):
     lineFromFile = ''
     with open(self.testFile, 'r') as myFile:
       lineFromFile = next(myFile)
-    self.assertEqual(self.testMessage + '\n', lineFromFile)
+    self.assertEqual(self.testMessage+'\n', lineFromFile)
 
   def test_failure_badParams(self):
     self.assertRaises(ValueError, LocalFileSender, {'blabl': 'bleble'})
@@ -76,15 +71,23 @@ class TestLocalFileSender(unittest.TestCase):
 
 class TestStompSender(unittest.TestCase):
 
-  def tearDown(self):
-    removeFile('myFile')
+  def setUp(self):
+    self.testFile = 'myFile'
+    self.testMessage = 'my test message'
+    module.stomp = MagicMock()
+    module.stomp.Connection = MagicMock()
+    connectionMock = MagicMock()
+    connectionMock.is_connected.return_value = True
+    module.stomp.Connection.return_value = connectionMock
 
-  @patch("Pilot.MessageSender.stompConnect", return_value=MagicMock())
-  def test_success(self, _mockFun):
+  def tearDown(self):
+    removeFile(self.testFile)
+
+  def test_success(self):
     params = {'HostKey': 'key', 'HostCertififcate': 'cert', 'CACertificate': 'caCert',
-              'Host': 'localhost', 'Port': '61613', 'QueuePath': '/queue/myqueue', 'LocalOutputFile': 'myFile'}
+              'Host': 'test.host.ch', 'Port': '666',  'QueuePath': '/queue/myqueue', 'LocalOutputFile': self.testFile}
     msgSender = StompSender(params)
-    res = msgSender.sendMessage('my test message', 'info')
+    res = msgSender.sendMessage(self.testMessage, 'info')
     self.assertTrue(res)
 
   def test_failure_badParams(self):
@@ -93,24 +96,28 @@ class TestStompSender(unittest.TestCase):
 
 class TestRESTSender(unittest.TestCase):
 
-  @patch("Pilot.MessageSender.restSend", return_value=True)
-  def test_success(self, _patch):
+  def setUp(self):
+    self.testFile = 'myFile'
+    self.testMessage = 'my test message'
+    module.requests = MagicMock()
+    module.requests.post = MagicMock()
+
+  def test_success(self):
     params = {'HostKey': 'key', 'HostCertififcate': 'cert', 'CACertificate': 'caCert',
-              'Url': 'https://some.host.ch/messages', 'LocalOutputFile': 'myFile'}
+              'Url': 'https://some.host.ch/messages', 'LocalOutputFile': self.testFile}
     msgSender = RESTSender(params)
-    res = msgSender.sendMessage('my test message', 'info')
+    res = msgSender.sendMessage(self.testMessage, 'info')
     self.assertTrue(res)
 
   def test_failure_badParams(self):
     self.assertRaises(ValueError, RESTSender, {'blabl': 'bleble'})
 
-
 if __name__ == '__main__':
   suite = unittest.defaultTestLoader.loadTestsFromTestCase(TestLocalFileSender)
   suite.addTest(
-      unittest.defaultTestLoader.loadTestsFromTestCase(TestStompSender))
+    unittest.defaultTestLoader.loadTestsFromTestCase(TestStompSender))
   suite.addTest(
-      unittest.defaultTestLoader.loadTestsFromTestCase(TestRESTSender))
+    unittest.defaultTestLoader.loadTestsFromTestCase(TestRESTSender))
   suite.addTest(
-      unittest.defaultTestLoader.loadTestsFromTestCase(TestMessageSenderEraseFileContent))
+    unittest.defaultTestLoader.loadTestsFromTestCase(TestMessageSenderEraseFileContent))
   testResult = unittest.TextTestRunner(verbosity=2).run(suite)

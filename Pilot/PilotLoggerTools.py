@@ -1,15 +1,15 @@
 """A set of tools for the remote pilot agent logging system
 """
 
-__RCSID__ = "$Id$"
-
 
 import time
 import json
+from uuid import uuid1
 import sys
 import os
 import logging
-from uuid import uuid1
+
+__RCSID__ = "$Id$"
 
 
 def createPilotLoggerConfigFile(filename='PilotLogger.json',
@@ -23,7 +23,7 @@ def createPilotLoggerConfigFile(filename='PilotLogger.json',
                                 ca_certs='',
                                 fileWithID='',
                                 queue=None,
-                                setup='Dirac-Certification'):
+                                setup = 'Dirac-Certification'):
   """Helper function that creates a test configuration file.
      The format is json encoded file.
      The created file can be mainy used for testing of PilotLogger setups, since
@@ -35,34 +35,34 @@ def createPilotLoggerConfigFile(filename='PilotLogger.json',
   if queue is None:
     queue = {}
   keys = [
-      'LoggingType',
-      'LocalOutputFile',
-      'Host',
-      'Port',
-      'Url',
-      'HostKey',
-      'HostCertificate',
-      'CACertificate',
-      'FileWithID',
-      'Queue'
+    'LoggingType',
+    'LocalOutputFile',
+    'Host',
+    'Port',
+    'Url',
+    'HostKey',
+    'HostCertificate',
+    'CACertificate',
+    'FileWithID',
+    'Queue'
   ]
   values = [
-      loggingType,
-      localOutputFile,
-      host,
-      port,
-      url,
-      key_file,
-      cert_file,
-      ca_certs,
-      fileWithID,
-      queue
+    loggingType,
+    localOutputFile,
+    host,
+    port,
+    url,
+    key_file,
+    cert_file,
+    ca_certs,
+    fileWithID,
+    queue
   ]
   config = dict(zip(keys, values))
   content = dict()
-  content['Setups'] = {}
-  content['Setups'][setup] = {}
-  content['Setups'][setup]['Logging'] = config
+  content['Setups']={}
+  content['Setups'][setup]={}
+  content['Setups'][setup]['Logging']=config
   config = json.dumps(content)
   with open(filename, 'w') as myFile:
     myFile.write(config)
@@ -103,15 +103,15 @@ def readPilotJSONConfigFile(filename):
     logging.error('Loaded data does not have the correct section format')
     return None
   keys = [
-      "LoggingType",
-      "LocalOutputFile",
-      'Host',
-      'Port',
-      'Url',
-      'HostKey',
-      'HostCertificate',
-      'CACertificate',
-      'FileWithID'
+    "LoggingType",
+    "LocalOutputFile",
+    'Host',
+    'Port',
+    'Url',
+    'HostKey',
+    'HostCertificate',
+    'CACertificate',
+    'FileWithID'
 
   ]
   config = dict((k, partial.get(k)) for k in keys)
@@ -126,8 +126,7 @@ def readPilotJSONConfigFile(filename):
 
   return config
 
-
-def generateDict(pilotUUID, timestamp, source, phase, status, messageContent):
+def generateDict(pilotUUID, timestamp, source, phase,  status, messageContent):
   """Helper function that returs a dictionnary based on the
      set of input values.
   Returns
@@ -135,20 +134,20 @@ def generateDict(pilotUUID, timestamp, source, phase, status, messageContent):
   """
 
   keys = [
-      'pilotUUID',
-      'timestamp',
-      'source',
-      'phase',
-      'status',
-      'messageContent'
+    'pilotUUID',
+    'timestamp',
+    'source',
+    'phase',
+    'status',
+    'messageContent'
   ]
   values = [
-      pilotUUID,
-      timestamp,
-      source,
-      phase,
-      status,
-      messageContent
+    pilotUUID,
+    timestamp,
+    source,
+    phase,
+    status,
+    messageContent
   ]
   return dict(zip(keys, values))
 
@@ -202,14 +201,15 @@ def isMessageFormatCorrect(content):
   """
   if not isinstance(content, dict):
     return False
-  refKeys = sorted([
-      'pilotUUID',
-      'status',
-      'messageContent',
-      'timestamp',
-      'phase',
-      'source'
-  ])
+  refKeys = [
+    'pilotUUID',
+    'status',
+    'messageContent',
+    'timestamp',
+    'phase',
+    'source'
+  ]
+  refKeys.sort()
   keys = content.keys()
   keys.sort()
   if not keys == refKeys:
