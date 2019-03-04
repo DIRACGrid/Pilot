@@ -35,28 +35,28 @@ def createPilotLoggerConfigFile(filename='PilotLogger.json',
   if queue is None:
     queue = {}
   keys = [
-    'LoggingType',
-    'LocalOutputFile',
-    'Host',
-    'Port',
-    'Url',
-    'HostKey',
-    'HostCertificate',
-    'CACertificate',
-    'FileWithID',
-    'Queue'
+      'LoggingType',
+      'LocalOutputFile',
+      'Host',
+      'Port',
+      'Url',
+      'HostKey',
+      'HostCertificate',
+      'CACertificate',
+      'FileWithID',
+      'Queue'
   ]
   values = [
-    loggingType,
-    localOutputFile,
-    host,
-    port,
-    url,
-    key_file,
-    cert_file,
-    ca_certs,
-    fileWithID,
-    queue
+      loggingType,
+      localOutputFile,
+      host,
+      port,
+      url,
+      key_file,
+      cert_file,
+      ca_certs,
+      fileWithID,
+      queue
   ]
   config = dict(zip(keys, values))
   content = dict()
@@ -103,15 +103,15 @@ def readPilotJSONConfigFile(filename):
     logging.error('Loaded data does not have the correct section format')
     return None
   keys = [
-    "LoggingType",
-    "LocalOutputFile",
-    'Host',
-    'Port',
-    'Url',
-    'HostKey',
-    'HostCertificate',
-    'CACertificate',
-    'FileWithID'
+      "LoggingType",
+      "LocalOutputFile",
+      'Host',
+      'Port',
+      'Url',
+      'HostKey',
+      'HostCertificate',
+      'CACertificate',
+      'FileWithID'
 
   ]
   config = dict((k, partial.get(k)) for k in keys)
@@ -135,20 +135,20 @@ def generateDict(pilotUUID, timestamp, source, phase, status, messageContent):
   """
 
   keys = [
-    'pilotUUID',
-    'timestamp',
-    'source',
-    'phase',
-    'status',
-    'messageContent'
+      'pilotUUID',
+      'timestamp',
+      'source',
+      'phase',
+      'status',
+      'messageContent'
   ]
   values = [
-    pilotUUID,
-    timestamp,
-    source,
-    phase,
-    status,
-    messageContent
+      pilotUUID,
+      timestamp,
+      source,
+      phase,
+      status,
+      messageContent
   ]
   return dict(zip(keys, values))
 
@@ -203,12 +203,12 @@ def isMessageFormatCorrect(content):
   if not isinstance(content, dict):
     return False
   refKeys = sorted([
-    'pilotUUID',
-    'status',
-    'messageContent',
-    'timestamp',
-    'phase',
-    'source'
+      'pilotUUID',
+      'status',
+      'messageContent',
+      'timestamp',
+      'phase',
+      'source'
   ])
   keys = sorted(content.keys())
   if not keys == refKeys:

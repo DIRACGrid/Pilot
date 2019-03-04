@@ -127,12 +127,12 @@ class PilotLogger(object):
       return False
     myUUID = getPilotUUIDFromFile(self.params['FileWithID'])
     message = generateDict(
-      myUUID,
-      generateTimeStamp(),
-      source,
-      phase,
-      status,
-      messageContent
+        myUUID,
+        generateTimeStamp(),
+        source,
+        phase,
+        status,
+        messageContent
     )
     if not isMessageFormatCorrect(message):
       logging.warning("Message format is not correct.")
@@ -156,13 +156,13 @@ def main():
     return arg
 
   parser = argparse.ArgumentParser(
-    description="command line interface to send logs to MQ system.",
-    formatter_class=argparse.RawTextHelpFormatter,
-    epilog='examples:\n'
-    + '                   python PilotLogger.py InstallDIRAC installing info My message\n'
-    + '                   python PilotLogger.py InstallDIRAC installing debug Debug message\n'
-    + '                   python PilotLogger.py "My message"\n'
-    + '                   python PilotLogger.py "My message" --output myFileName\n')
+      description="command line interface to send logs to MQ system.",
+      formatter_class=argparse.RawTextHelpFormatter,
+      epilog='examples:\n'
+      + '                   python PilotLogger.py InstallDIRAC installing info My message\n'
+      + '                   python PilotLogger.py InstallDIRAC installing debug Debug message\n'
+      + '                   python PilotLogger.py "My message"\n'
+      + '                   python PilotLogger.py "My message" --output myFileName\n')
 
   parser.add_argument('source',
                       type=singleWord,

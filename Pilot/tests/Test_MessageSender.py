@@ -122,9 +122,9 @@ class TestRESTSender(unittest.TestCase):
 if __name__ == '__main__':
   suite = unittest.defaultTestLoader.loadTestsFromTestCase(TestLocalFileSender)
   suite.addTest(
-    unittest.defaultTestLoader.loadTestsFromTestCase(TestStompSender))
+      unittest.defaultTestLoader.loadTestsFromTestCase(TestStompSender))
   suite.addTest(
-    unittest.defaultTestLoader.loadTestsFromTestCase(TestRESTSender))
+      unittest.defaultTestLoader.loadTestsFromTestCase(TestRESTSender))
   suite.addTest(
-    unittest.defaultTestLoader.loadTestsFromTestCase(TestMessageSenderEraseFileContent))
+      unittest.defaultTestLoader.loadTestsFromTestCase(TestMessageSenderEraseFileContent))
   testResult = unittest.TextTestRunner(verbosity=2).run(suite)

@@ -75,9 +75,9 @@ def messageSenderFactory(senderType, params):
 
   """
   typeToModuleAndClassName = {
-    'LOCAL_FILE': {'module': 'MessageSender', 'class': 'LocalFileSender'},
-    'MQ': {'module': 'MessageSender', 'class': 'StompSender'},
-    'REST_API': {'module': 'MessageSender', 'class': 'RESTSender'}
+      'LOCAL_FILE': {'module': 'MessageSender', 'class': 'LocalFileSender'},
+      'MQ': {'module': 'MessageSender', 'class': 'StompSender'},
+      'REST_API': {'module': 'MessageSender', 'class': 'RESTSender'}
   }
   try:
     moduleName = typeToModuleAndClassName[senderType]['module']
@@ -246,7 +246,7 @@ class StompSender(MessageSender):
 
     saveMessageToFile(msg, filename)
     connection = self._connect((host, port), {
-      'key_file': hostKey, 'cert_file': hostCertificate, 'ca_certs': CACertificate})
+        'key_file': hostKey, 'cert_file': hostCertificate, 'ca_certs': CACertificate})
     if not connection:
       return False
     self._sendAllLocalMessages(connection, queue, filename)
