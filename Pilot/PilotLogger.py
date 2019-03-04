@@ -94,8 +94,8 @@ class PilotLogger(object):
 
     fileWithID = self.params['FileWithID']
     if os.path.isfile(fileWithID):
-      logging.warning('The file: ' + fileWithID
-                      + ' already exists. The content will be used to get UUID.')
+      logging.warning('The file: ' + fileWithID +
+                      ' already exists. The content will be used to get UUID.')
     else:
       result = getUniqueIDAndSaveToFile(filename=fileWithID)
       if not result:
@@ -158,38 +158,38 @@ def main():
   parser = argparse.ArgumentParser(
       description="command line interface to send logs to MQ system.",
       formatter_class=argparse.RawTextHelpFormatter,
-      epilog='examples:\n'
-      + '                   python PilotLogger.py InstallDIRAC installing info My message\n'
-      + '                   python PilotLogger.py InstallDIRAC installing debug Debug message\n'
-      + '                   python PilotLogger.py "My message"\n'
-      + '                   python PilotLogger.py "My message" --output myFileName\n')
+      epilog='examples:\n' +
+      '                   python PilotLogger.py InstallDIRAC installing info My message\n' +
+      '                   python PilotLogger.py InstallDIRAC installing debug Debug message\n' +
+      '                   python PilotLogger.py "My message"\n' +
+      '                   python PilotLogger.py "My message" --output myFileName\n')
 
   parser.add_argument('source',
                       type=singleWord,
                       nargs='?',
                       default='unspecified',
-                      help='Source of the message e.g. "InstallDIRAC". It must be one word. '
-                      + 'If not specified it is set to "unspecified".')
+                      help='Source of the message e.g. "InstallDIRAC". It must be one word. ' +
+                      'If not specified it is set to "unspecified".')
   parser.add_argument('phase',
                       type=singleWord,
                       nargs='?',
                       default='unspecified',
-                      help='Phase of the process e.g. "fetching". It must be one word. '
-                      + 'If not specified it is set to "unspecified".')
+                      help='Phase of the process e.g. "fetching". It must be one word. ' +
+                      'If not specified it is set to "unspecified".')
   parser.add_argument('status',
                       nargs='?',
                       choices=PilotLogger.STATUSES,
                       default='info',
-                      help='Allowed values are: '
-                      + ', '.join(PilotLogger.STATUSES)
-                      + '. If not specified it is set to "info".',
+                      help='Allowed values are: ' +
+                      ', '.join(PilotLogger.STATUSES) +
+                      '. If not specified it is set to "info".',
                       metavar='status ')
   parser.add_argument('message',
                       nargs='+',
                       help='Human readable content of the message. ')
   parser.add_argument('--output',
-                      help='Log the content to the specified file'
-                      + ' instead of sending it to the Message Queue server.')
+                      help='Log the content to the specified file' +
+                      ' instead of sending it to the Message Queue server.')
   args = parser.parse_args()
 
   if len(" ".join(args.message)) >= 200:
