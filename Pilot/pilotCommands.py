@@ -17,18 +17,16 @@
     execution.
 """
 
+__RCSID__ = "$Id$"
+
 import sys
 import os
 import time
 import stat
 import socket
-import urllib
-import tarfile
 import httplib
 
 from pilotTools import CommandBase
-
-__RCSID__ = "$Id$"
 
 
 class GetPilotVersion(CommandBase):
@@ -66,21 +64,18 @@ class CheckWorkerNode(CommandBase):
 
     fileName = '/etc/redhat-release'
     if os.path.exists(fileName):
-      f = open(fileName, 'r')
-      self.log.info('RedHat Release = %s' % f.read().strip())
-      f.close()
+      with open(fileName, 'r') as f:
+        self.log.info('RedHat Release = %s' % f.read().strip())
 
     fileName = '/etc/lsb-release'
     if os.path.isfile(fileName):
-      f = open(fileName, 'r')
-      self.log.info('Linux release:\n%s' % f.read().strip())
-      f.close()
+      with open(fileName, 'r') as f:
+        self.log.info('Linux release:\n%s' % f.read().strip())
 
     fileName = '/proc/cpuinfo'
     if os.path.exists(fileName):
-      f = open(fileName, 'r')
-      cpu = f.readlines()
-      f.close()
+      with open(fileName, 'r') as f:
+        cpu = f.readlines()
       nCPU = 0
       for line in cpu:
         if line.find('cpu MHz') == 0:
@@ -93,9 +88,8 @@ class CheckWorkerNode(CommandBase):
 
     fileName = '/proc/meminfo'
     if os.path.exists(fileName):
-      f = open(fileName, 'r')
-      mem = f.readlines()
-      f.close()
+      with open(fileName, 'r') as f:
+        mem = f.readlines()
       freeMem = 0
       for line in mem:
         if line.find('MemTotal:') == 0:
@@ -149,6 +143,7 @@ class InstallDIRAC(CommandBase):
   def _setInstallOptions(self):
     """ Setup installation parameters
     """
+
     for o, v in self.pp.optList:
       if o in ('-b', '--build'):
         self.installOpts.append('-b')
@@ -180,9 +175,14 @@ class InstallDIRAC(CommandBase):
       self.installOpts.append('-p "%s"' % self.pp.platform)
     if self.pp.releaseProject:
       self.installOpts.append("-l '%s'" % self.pp.releaseProject)
+    if self.pp.modules:
+      self.installOpts.append("-m '%s'" % self.pp.modules)
 
     # The release version to install is a requirement
     self.installOpts.append('-r "%s"' % self.pp.releaseVersion)
+
+    # We clean the PYTHONPATH from the created bashrc
+    self.installOpts.append('--cleanPYTHONPATH')
 
     self.log.debug('INSTALL OPTIONS [%s]' % ', '.join(map(str, self.installOpts)))
 
@@ -250,53 +250,6 @@ class InstallDIRAC(CommandBase):
     self._setInstallOptions()
     self._locateInstallationScript()
     self._installDIRAC()
-
-
-class ReplaceDIRACCode(CommandBase):
-  """ This command will replace DIRAC code with the one taken from a different location.
-      This command is mostly for testing purposes, and should NOT be added in default configurations.
-
-      It uses -Y/--replaceDIRACCode option for specifying a TGZ archive with a URL which can be opened by
-      urllib.urlopen (on a webserver or a local .tgz file downloaded with the pilot directory.)
-
-      The TGZ file should be created by something equivalent to this
-        cd /cvmfs/lhcb.cern.ch/lib/lhcb/DIRAC/DIRAC_v6r17p33
-        tar zcvf /tmp/DIRACdev.tgz *
-      so the DIRAC directory itself AND the scripts directory at the same level are included and will be
-      unpacked in the ReplacementCode directory, which itself is added to PYTHONPATH. You must ensure that
-      the executable bits for scripts are retained when making the TGZ archive (they should be by default.)
-
-      You can include other packages (eg LHCbDIRAC) which should be found by Python, by including them at
-      that same top level when making the TGZ file.
-  """
-
-  def __init__(self, pilotParams):
-    """ c'tor
-    """
-    super(ReplaceDIRACCode, self).__init__(pilotParams)
-
-  def execute(self):
-    """ Download/untar a TGZ archive file
-    """
-    if not self.pp.replaceDIRACCode:
-      self.log.warn("No -Y/--replaceDIRACCode given so no action by ReplaceDIRACCode pilot command!")
-      return
-
-    os.mkdir(os.getcwd() + os.path.sep + 'ReplacementCode')
-
-    # Fetch and unpack the TGZ file
-    tar = tarfile.open(mode="r|gz", fileobj=urllib.urlopen(self.pp.replaceDIRACCode))
-    tar.extractall(os.getcwd() + os.path.sep + 'ReplacementCode')
-    tar.close()
-
-    # Add the ReplacementCode directory to the Python path
-    self.pp.installEnv['PYTHONPATH'] = os.getcwd() + os.path.sep + 'ReplacementCode' + \
-        ':' + self.pp.installEnv['PYTHONPATH']
-    self.pp.installEnv['PATH'] = os.getcwd() + os.path.sep + 'ReplacementCode' + \
-        os.path.sep + 'scripts:' + self.pp.installEnv['PATH']
-
-    self.log.info("TGZ file %s unpacked. PYTHONPATH updated to be %s and PATH updated to be %s" %
-                  (self.pp.replaceDIRACCode, self.pp.installEnv['PYTHONPATH'], self.pp.installEnv['PATH']))
 
 
 class ConfigureBasics(CommandBase):
@@ -1208,22 +1161,17 @@ class MultiLaunchAgent(CommandBase):
     ]
 
     try:
-      f = open(logFile, 'r')
+      with open(logFile, 'r') as f:
+        oneline = f.readline()
+        while oneline:
+          for pair in messageMappings:
+            if pair[0] in oneline:
+              shutdownMessage = pair[1]
+              break
+          oneline = f.readline()
+
     except BaseException:
       return '700 Internal VM logging failed'
-
-    oneline = f.readline()
-
-    while oneline:
-
-      for pair in messageMappings:
-        if pair[0] in oneline:
-          shutdownMessage = pair[1]
-          break
-
-      oneline = f.readline()
-
-    f.close()
 
     return shutdownMessage
 

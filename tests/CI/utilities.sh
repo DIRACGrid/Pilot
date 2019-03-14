@@ -46,4 +46,3 @@ function prepareForPilot(){
 #   cd $PILOTINSTALLDIR
 #   python consumeFromQueue.py
 # }
-
