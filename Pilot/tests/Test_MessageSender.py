@@ -3,6 +3,7 @@
 
 # pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 
+import sys
 import unittest
 import os
 from mock import MagicMock
@@ -128,3 +129,4 @@ if __name__ == '__main__':
   suite.addTest(
       unittest.defaultTestLoader.loadTestsFromTestCase(TestMessageSenderEraseFileContent))
   testResult = unittest.TextTestRunner(verbosity=2).run(suite)
+  sys.exit(not testResult.wasSuccessful())

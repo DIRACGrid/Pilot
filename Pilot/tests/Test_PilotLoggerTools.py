@@ -3,6 +3,7 @@
 
 # pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 
+import sys
 import json
 import os
 import unittest
@@ -349,3 +350,4 @@ if __name__ == '__main__':
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerGetUniqueIDAndSaveToFile))
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerGetUniqueIDFromOS))
   testResult = unittest.TextTestRunner(verbosity=2).run(suite)
+  sys.exit(not testResult.wasSuccessful())

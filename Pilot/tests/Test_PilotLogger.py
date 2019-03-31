@@ -3,6 +3,7 @@
 
 # pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 
+import sys
 import unittest
 import os
 from Pilot.PilotLogger import PilotLogger, getPilotUUIDFromFile, addMissingConfiguration
@@ -113,3 +114,4 @@ if __name__ == '__main__':
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLogger_addMissingConfiguration))
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLogger_sendMessage))
   testResult = unittest.TextTestRunner(verbosity=2).run(suite)
+  sys.exit(not testResult.wasSuccessful())
