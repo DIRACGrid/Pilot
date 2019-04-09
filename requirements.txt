@@ -10,5 +10,4 @@ mock
 coverage
 stomp.py
 requests
-python-coveralls
 autopep8
