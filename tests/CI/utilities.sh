@@ -46,4 +46,3 @@ function preparePythonEnvironment()
 #   cd $PILOTINSTALLDIR
 #   python consumeFromQueue.py
 # }
-

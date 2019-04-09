@@ -11,5 +11,4 @@ coverage
 pytest-mock
 stomp.py
 requests
-python-coveralls
 autopep8
