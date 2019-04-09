@@ -2038,8 +2038,7 @@ def createBashrc():
           certDir = '%s/etc/grid-security/certificates' % proPath
       lines.extend(['# CAs path for SSL verification',
                     'export X509_CERT_DIR=%s' % certDir,
-                    'export SSL_CERT_DIR=%s' % certDir,
-                    'export REQUESTS_CA_BUNDLE=%s' % certDir])
+                    'export SSL_CERT_DIR=%s' % certDir])
 
       lines.append(
           'export X509_VOMS_DIR=%s' %
@@ -2157,8 +2156,7 @@ def createCshrc():
           certDir = '%s/etc/grid-security/certificates' % proPath
       lines.extend(['# CAs path for SSL verification',
                     'setenv X509_CERT_DIR %s' % certDir,
-                    'setenv SSL_CERT_DIR %s' % certDir,
-                    'setenv REQUESTS_CA_BUNDLE %s' % certDir])
+                    'setenv SSL_CERT_DIR %s' % certDir])
 
       lines.append(
           'setenv X509_VOMS_DIR %s' %
@@ -2325,8 +2323,7 @@ def createBashrcForDiracOS():
           certDir = '%s/etc/grid-security/certificates' % proPath
       lines.extend(['# CAs path for SSL verification',
                     'export X509_CERT_DIR=%s' % certDir,
-                    'export SSL_CERT_DIR=%s' % certDir,
-                    'export REQUESTS_CA_BUNDLE=%s' % certDir])
+                    'export SSL_CERT_DIR=%s' % certDir])
 
       lines.append(
           'export X509_VOMS_DIR=%s' %
