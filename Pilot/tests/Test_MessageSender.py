@@ -3,10 +3,12 @@
 
 # pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 
+import sys
 import unittest
 import os
-from mock import MagicMock, patch
+from mock import MagicMock
 from Pilot.MessageSender import LocalFileSender, StompSender, RESTSender, eraseFileContent, loadAndCreateObject
+import Pilot.MessageSender as module
 
 
 def removeFile(filename):
@@ -76,15 +78,23 @@ class TestLocalFileSender(unittest.TestCase):
 
 class TestStompSender(unittest.TestCase):
 
-  def tearDown(self):
-    removeFile('myFile')
+  def setUp(self):
+    self.testFile = 'myFile'
+    self.testMessage = 'my test message'
+    module.stomp = MagicMock()
+    module.stomp.Connection = MagicMock()
+    connectionMock = MagicMock()
+    connectionMock.is_connected.return_value = True
+    module.stomp.Connection.return_value = connectionMock
 
-  @patch("Pilot.MessageSender.stompConnect", return_value=MagicMock())
-  def test_success(self, _mockFun):
+  def tearDown(self):
+    removeFile(self.testFile)
+
+  def test_success(self):
     params = {'HostKey': 'key', 'HostCertififcate': 'cert', 'CACertificate': 'caCert',
-              'Host': 'localhost', 'Port': '61613', 'QueuePath': '/queue/myqueue', 'LocalOutputFile': 'myFile'}
+              'Host': 'test.host.ch', 'Port': '666', 'QueuePath': '/queue/myqueue', 'LocalOutputFile': self.testFile}
     msgSender = StompSender(params)
-    res = msgSender.sendMessage('my test message', 'info')
+    res = msgSender.sendMessage(self.testMessage, 'info')
     self.assertTrue(res)
 
   def test_failure_badParams(self):
@@ -93,12 +103,17 @@ class TestStompSender(unittest.TestCase):
 
 class TestRESTSender(unittest.TestCase):
 
-  @patch("Pilot.MessageSender.restSend", return_value=True)
-  def test_success(self, _patch):
+  def setUp(self):
+    self.testFile = 'myFile'
+    self.testMessage = 'my test message'
+    module.requests = MagicMock()
+    module.requests.post = MagicMock()
+
+  def test_success(self):
     params = {'HostKey': 'key', 'HostCertififcate': 'cert', 'CACertificate': 'caCert',
-              'Url': 'https://some.host.ch/messages', 'LocalOutputFile': 'myFile'}
+              'Url': 'https://some.host.ch/messages', 'LocalOutputFile': self.testFile}
     msgSender = RESTSender(params)
-    res = msgSender.sendMessage('my test message', 'info')
+    res = msgSender.sendMessage(self.testMessage, 'info')
     self.assertTrue(res)
 
   def test_failure_badParams(self):
@@ -114,3 +129,4 @@ if __name__ == '__main__':
   suite.addTest(
       unittest.defaultTestLoader.loadTestsFromTestCase(TestMessageSenderEraseFileContent))
   testResult = unittest.TextTestRunner(verbosity=2).run(suite)
+  sys.exit(not testResult.wasSuccessful())

@@ -1,15 +1,15 @@
 """A set of tools for the remote pilot agent logging system
 """
 
-__RCSID__ = "$Id$"
-
 
 import time
 import json
+from uuid import uuid1
 import sys
 import os
 import logging
-from uuid import uuid1
+
+__RCSID__ = "$Id$"
 
 
 def createPilotLoggerConfigFile(filename='PilotLogger.json',
@@ -210,8 +210,7 @@ def isMessageFormatCorrect(content):
       'phase',
       'source'
   ])
-  keys = content.keys()
-  keys.sort()
+  keys = sorted(content.keys())
   if not keys == refKeys:
     return False
   values = content.values()

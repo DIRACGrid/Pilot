@@ -3,6 +3,7 @@
 
 # pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 
+import sys
 import json
 import os
 import unittest
@@ -32,7 +33,7 @@ class TestPilotLoggerTools(unittest.TestCase):
 
   def tearDown(self):
     # for fileProd in [self.testFile, self.testFileCfg, 'PilotUUID']:
-    for fileProd in [self.testFile, 'PilotUUID', self.testFileCfg]:
+    for fileProd in [self.testFile, 'PilotUUID']:
       try:
         os.remove(fileProd)
       except OSError:
@@ -108,7 +109,7 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  (TestPilotLoggerTools):
       myF.write(jsonContent_LOCAL)
 
   def tearDown(self):
-    for fileProd in [self.pilotJSON_MQ, self.pilotJSON_REST, self.pilotJSON_LOCAL, 'PilotUUID']:
+    for fileProd in [self.pilotJSON_MQ, self.pilotJSON_REST, self.pilotJSON_LOCAL]:
       try:
         os.remove(fileProd)
       except OSError:
@@ -134,8 +135,6 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  (TestPilotLoggerTools):
     self.assertEqual(config['CACertificate'], ca_certs)
     self.assertEqual(config['FileWithID'], 'PilotUUID')
 
-    # self.assertEqual(config['fileWithID'], fileWithID)
-
   def test_success_REST(self):
     config = readPilotJSONConfigFile(self.pilotJSON_REST)
     url = 'https://testMachineREST.cern.ch:666/msg'
@@ -152,8 +151,6 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  (TestPilotLoggerTools):
     self.assertEqual(config['FileWithID'], 'PilotUUID')
 
     self.assertFalse(config['QueuePath'])
-
-    # self.assertEqual(config['fileWithID'], fileWithID)
 
   def test_success_LOCAL(self):
     config = readPilotJSONConfigFile(self.pilotJSON_LOCAL)
@@ -307,7 +304,7 @@ def helper_get(var):
     return 'myVMTYPE'
   return ''
 
-  #environVars = ['CREAM_JOBID', 'GRID_GLOBAL_JOBID', 'VM_UUID']
+  # environVars = ['CREAM_JOBID', 'GRID_GLOBAL_JOBID', 'VM_UUID']
 
 
 class TestPilotLoggerGetUniqueIDFromOS(TestPilotLoggerTools):
@@ -353,3 +350,4 @@ if __name__ == '__main__':
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerGetUniqueIDAndSaveToFile))
   suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestPilotLoggerGetUniqueIDFromOS))
   testResult = unittest.TextTestRunner(verbosity=2).run(suite)
+  sys.exit(not testResult.wasSuccessful())
