@@ -1,6 +1,6 @@
 {
   "Setups": {
-    "Dirac-Certification": {
+    "DIRAC-Certification": {
       "CheckVersion": "True",
       "Commands": {
         "TEST": [
@@ -67,20 +67,21 @@
     }
   },
   "CEs": {
-    "VAR_JENKINS_CE": {
+    "jenkins.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
       "Queue": "VAR_JENKINS_QUEUE",
-      "GridCEType": "TEST"
+      "GridCEType": "LHCb"
     },
-    "jenkins-full.cern.ch": {
+    "jenkins-diracinstall.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
       "Queue": "VAR_JENKINS_QUEUE",
-      "GridCEType": "TEST-FULL"
+      "GridCEType": "LHCb-DI"
     },
-    "cygnus.grid.rug.nl": {
-      "Site": "LCG.RUG.nl",
-      "GridCEType": "CREAM"
+    "jenkins-mp.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "LHCb-MP"
     }
   },
-  "DefaultSetup": "Dirac-Certification"
+  "DefaultSetup": "DIRAC-Certification"
 }
