@@ -1,6 +1,6 @@
 {
   "Setups": {
-    "Dirac-Certification": {
+    "DIRAC-Certification": {
       "CheckVersion": "True",
       "Commands": {
         "TEST": [
@@ -82,5 +82,5 @@
       "GridCEType": "CREAM"
     }
   },
-  "DefaultSetup": "Dirac-Certification"
+  "DefaultSetup": "DIRAC-Certification"
 }
