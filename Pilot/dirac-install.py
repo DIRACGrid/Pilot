@@ -198,6 +198,7 @@ class Params(object):
     self.externalVersion = ""
     self.cleanPYTHONPATH = False
     self.createLink = False
+    self.scriptSymlink = False
 
 
 cliParams = Params()
@@ -1121,8 +1122,14 @@ class ReleaseConfig(object):
     if diracOSVersion:
       return diracOSVersion
     try:
-      return self.prjRelCFG[self.projectName][cliParams.release].get(
+      diracOSVersion = self.prjRelCFG[self.projectName][cliParams.release].get(
           "Releases/%s/DIRACOS" % cliParams.release, diracOSVersion)
+      if not diracOSVersion:
+        # the DIRAC extension does not specify DIRACOS version
+        for release in self.prjRelCFG['DIRAC']:
+          logWARN("Getting DIRACOS version from DIRAC %s!" % release)
+          diracOSVersion = self.prjRelCFG['DIRAC'][release].get(
+              "Releases/%s/DIRACOS" % release, diracOSVersion)
     except KeyError:
       pass
     return diracOSVersion
@@ -1653,7 +1660,8 @@ cmdOpts = (('r:', 'release=', 'Release version to install'),
            ('x:', 'external=', 'external version'),
            ('  ', 'cleanPYTHONPATH', 'Only use the DIRAC PYTHONPATH (for pilots installation)'),
            ('  ', 'createLink', 'create version symbolic link from the versions directory. This is equivalent to the \
-           following command: ln -s /opt/dirac/versions/vArBpC vArBpC')
+           following command: ln -s /opt/dirac/versions/vArBpC vArBpC'),
+           ('  ', 'scriptSymlink', 'Symlink the scripts instead of creating wrapper')
            )
 
 
@@ -1799,6 +1807,8 @@ def loadConfiguration():
       cliParams.cleanPYTHONPATH = True
     elif o == '--createLink':
       cliParams.createLink = True
+    elif o == '--scriptSymlink':
+      cliParams.scriptSymlink = True
 
   if not cliParams.release and not cliParams.modules:
     logERROR("Missing release to install")
@@ -1813,6 +1823,11 @@ def loadConfiguration():
       os.makedirs(cliParams.targetPath)
     except BaseException:
       pass
+
+  # If we are running an update, DIRACOS will be set in the environment
+  if not cliParams.diracOS and 'DIRACOS' in os.environ:
+    logWARN("Forcing to install DIRACOS, because it is already installed!")
+    cliParams.diracOS = True
 
   logNOTICE("Destination path for installation is %s" % cliParams.targetPath)
   releaseConfig.projectName = cliParams.project
@@ -2429,11 +2444,12 @@ def checkoutFromGit(moduleName, sourceURL, tagVersion, destinationDir=None):
 
   if exportRes:
     return S_ERROR("Error while exporting from git")
+
+  # replacing the code
   if os.path.exists(fDirName + '/' + moduleName):
     cmd = "ln -s %s/%s" % (codeRepo, moduleName)
   else:
-    cmd = "mv %s %s" % (codeRepo, moduleName)
-
+    cmd = "mv %s %s" % (fDirName, os.path.join(cliParams.targetPath, moduleName))
   logNOTICE("Executing: %s" % cmd)
   retVal = os.system(cmd)
 
@@ -2524,6 +2540,11 @@ if __name__ == "__main__":
                                  "scripts", "dirac_deploy_scripts.py")
     if os.path.isfile(ddeLocation):
       cmd = ddeLocation
+
+      # if specified, create symlink instead of wrapper.
+      if cliParams.scriptSymlink:
+        cmd += ' --symlink'
+
       # In MacOS /usr/bin/env does not find python in the $PATH, passing binary path
       # as an argument to the dirac-deploy-scripts
       if not cliParams.platform:
@@ -2532,6 +2553,7 @@ if __name__ == "__main__":
         binaryPath = os.path.join(cliParams.targetPath, cliParams.platform)
         logNOTICE("For MacOS (Darwin) use explicit binary path %s" % binaryPath)
         cmd += ' %s' % binaryPath
+
       os.system(cmd)
     else:
       logDEBUG("No dirac-deploy-scripts found. This doesn't look good")
