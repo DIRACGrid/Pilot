@@ -55,7 +55,7 @@ mkdir -p $WORKSPACE/ServerInstallDIR # Where servers are installed
 SERVERINSTALLDIR=$_
 mkdir -p $WORKSPACE/PilotInstallDIR # Where pilots are installed
 PILOTINSTALLDIR=$_
-CLIENTINSTALLDIR=$PILOTINSTALLDIR
+CLIENTINSTALLDIR=$SERVERINSTALLDIR
 
 # Sourcing utility file
 source $TESTCODE/Pilot/tests/CI/utilities.sh
@@ -198,12 +198,6 @@ function fullPilot(){
 # then we run a pilot that should hopefully match those jobs
 
 function submitAndMatch(){
-  cd $SERVERINSTALLDIR
-  if [ $? -ne 0 ]
-  then
-    echo -e 'ERROR: cannot change to ' $SERVERINSTALLDIR
-    return
-  fi
 
   # Here we submit the jobs (to DIRAC.Jenkins.ch)
   installDIRAC # This installs the DIRAC client
