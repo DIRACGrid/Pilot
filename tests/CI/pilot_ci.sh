@@ -54,6 +54,8 @@ mkdir -p $WORKSPACE/ClientInstallDIR # Where client are installed
 CLIENTINSTALLDIR=$_
 mkdir -p $WORKSPACE/PilotInstallDIR # Where pilots are installed
 PILOTINSTALLDIR=$_
+mkdir -p $WORKSPACE/ServerInstallDIR # Where server is installed
+SERVERINSTALLDIR=$_
 
 # Sourcing utility file
 source $TESTCODE/Pilot/tests/CI/utilities.sh
@@ -87,7 +89,8 @@ function PilotInstall(){
   prepareForPilot
 
   # launch the pilot script
-  pilotOptions="-M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs"
+  pilotOptions=$pilot_options
+  pilotOptions+="-M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs"
   if [ $VO ]
   then
     pilotOptions+=" -l $VO -E $VO"

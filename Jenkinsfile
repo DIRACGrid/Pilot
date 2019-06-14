@@ -11,7 +11,8 @@ properties([parameters([string(name: 'projectVersion', defaultValue: 'v6r22-pre1
                         string(name: 'DIRAC_test_repo', defaultValue: 'DIRACGrid', description: 'The DIRAC repo to use for getting the test code'),
                         string(name: 'DIRAC_test_branch', defaultValue: 'rel-v6r22', description: 'The DIRAC branch to use for getting the test code'),
                         string(name: 'JENKINS_CE', defaultValue: 'jenkins.cern.ch', description: 'The CE definition to use (of DIRAC.Jenkins.ch, see CS for others)'),
-                        string(name: 'modules', defaultValue: '', description: 'to override what is installed, e.g. with https://github.com/fstagni/DIRAC.git:::DIRAC:::someBranch')
+                        string(name: 'modules', defaultValue: '', description: 'to override what is installed, e.g. with https://github.com/fstagni/DIRAC.git:::DIRAC:::someBranch'),
+                        string(name: 'pilot_options', defaultValue: '', description: 'any pilot option, e.g. --dirac-os')
                        ])])
 
 
