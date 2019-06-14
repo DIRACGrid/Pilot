@@ -225,6 +225,12 @@ function submitAndMatch(){
   prepareForPilot
   default
 
+  if [ $DIRACOSVER ]
+  then
+    pilot_options=' --dirac-os --dirac-os-version='$DIRACOSVER
+    pilot_options+=' '
+  fi
+
   PilotInstall
   if [ $? -ne 0 ]
   then
