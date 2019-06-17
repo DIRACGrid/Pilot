@@ -2,12 +2,12 @@
 """
 
 
-import time
-import json
-from uuid import uuid1
 import sys
 import os
 import logging
+import time
+import json
+from uuid import uuid1
 
 __RCSID__ = "$Id$"
 
@@ -23,7 +23,7 @@ def createPilotLoggerConfigFile(filename='PilotLogger.json',
                                 ca_certs='',
                                 fileWithID='',
                                 queue=None,
-                                setup='Dirac-Certification'):
+                                setup='DIRAC-Certification'):
   """Helper function that creates a test configuration file.
      The format is json encoded file.
      The created file can be mainy used for testing of PilotLogger setups, since
@@ -68,13 +68,13 @@ def createPilotLoggerConfigFile(filename='PilotLogger.json',
     myFile.write(config)
 
 
-def readPilotJSONConfigFile(filename):
+def readPilotJSONConfigFile(filename, setup='DIRAC-Certification'):
   """Helper function that loads configuration settings from a pilot json file.
      It is assumed that the json file contains the section "Logging" embedded in
      the following form:
       {
         "Setups": {
-          "Dirac-Certification": {
+          "DIRAC-Certification": {
             "Logging": {
             }
           }
@@ -90,7 +90,6 @@ def readPilotJSONConfigFile(filename):
       'CACertificate','FileWithID' or None in case of errors.
   """
   pilotJSON = None
-  setup = 'Dirac-Certification'
   try:
     with open(filename, 'r') as myFile:
       pilotJSON = json.load(myFile)

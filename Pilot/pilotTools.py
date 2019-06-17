@@ -287,7 +287,8 @@ class ExtendedLogger(Logger):
                debugFlag=False,
                pilotOutput='pilot.out',
                localMessageQueue='myLocalQueueOfMessages',
-               isPilotLoggerOn=True):
+               isPilotLoggerOn=True,
+               setup='DIRAC-Certification'):
     """ c'tor
     If flag PilotLoggerOn is not set, the logger will behave just like
     the original Logger object, that means it will just print logs locally on the screen
@@ -295,7 +296,7 @@ class ExtendedLogger(Logger):
     super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
     if isPilotLoggerOn:
       # self.pilotLogger = PilotLogger(localOutputFile=localMessageQueue)
-      self.pilotLogger = PilotLogger()
+      self.pilotLogger = PilotLogger(setup=setup)
     else:
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
@@ -347,7 +348,8 @@ class CommandBase(object):
         name=self.__class__.__name__,
         debugFlag=False,
         pilotOutput='pilot.out',
-        isPilotLoggerOn=self.pp.pilotLogging
+        isPilotLoggerOn=self.pp.pilotLogging,
+        setup=self.pp.setup
     )
     # self.log = Logger( self.__class__.__name__ )
     self.debugFlag = False

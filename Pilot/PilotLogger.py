@@ -69,7 +69,8 @@ class PilotLogger(object):
           configFile='pilot.json',
           messageSenderType='LOCAL_FILE',
           localOutputFile='myLocalQueueOfMessages',
-          fileWithUUID='PilotUUID'):
+          fileWithUUID='PilotUUID',
+          setup='DIRAC-Certification'):
     """ ctr loads the configuration parameters from the json file
         or if the file does not exists, loads the default set
         of values. Next, if self.fileWithUUID is not set (this
@@ -86,7 +87,7 @@ class PilotLogger(object):
     self.STATUSES = PilotLogger.STATUSES
 
     self.params = addMissingConfiguration(
-        config=readPilotJSONConfigFile(configFile),
+        config=readPilotJSONConfigFile(configFile, setup),
         defaultConfig={
             'LoggingType': messageSenderType,
             'LocalOutputFile': localOutputFile,

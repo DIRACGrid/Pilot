@@ -45,7 +45,7 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  (TestPilotLoggerTools):
     jsonContent_MQ = """
       {
         "Setups": {
-          "Dirac-Certification": {
+          "DIRAC-Certification": {
             "Logging": {
               "Queue": {
                 "test": {
@@ -63,7 +63,7 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  (TestPilotLoggerTools):
             }
           }
         },
-        "DefaultSetup": "Dirac-Certification"
+        "DefaultSetup": "DIRAC-Certification"
       }
       """
     self.pilotJSON_MQ = 'pilotMQ.json'
@@ -73,7 +73,7 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  (TestPilotLoggerTools):
     jsonContent_REST = """
       {
         "Setups": {
-          "Dirac-Certification": {
+          "DIRAC-Certification": {
             "Logging": {
               "LoggingType":"REST_API",
               "LocalOutputFile":"myLocalQueueOfMessages",
@@ -84,7 +84,7 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  (TestPilotLoggerTools):
             }
           }
         },
-        "DefaultSetup": "Dirac-Certification"
+        "DefaultSetup": "DIRAC-Certification"
       }
       """
     self.pilotJSON_REST = 'pilotREST.json'
@@ -94,14 +94,14 @@ class TestPilotLoggerToolsreadPilotJSONConfigFile  (TestPilotLoggerTools):
     jsonContent_LOCAL = """
       {
         "Setups": {
-          "Dirac-Certification": {
+          "DIRAC-Certification": {
             "Logging": {
               "LoggingType":"LOCAL_FILE",
               "LocalOutputFile":"myLocalQueueOfMessages"
             }
           }
         },
-        "DefaultSetup": "Dirac-Certification"
+        "DefaultSetup": "DIRAC-Certification"
       }
       """
     self.pilotJSON_LOCAL = 'pilotLOCAL.json'
@@ -195,7 +195,7 @@ class TestPilotLoggerToolsCreatePilotLoggerConfigFile(TestPilotLoggerTools):
     with open(self.testFileCfg, 'r') as myFile:
       config = myFile.read()
     config = json.loads(config)
-    partial = config['Setups']['Dirac-Certification']['Logging']
+    partial = config['Setups']['DIRAC-Certification']['Logging']
     self.assertEqual(partial['LoggingType'], 'MQ')
     self.assertEqual(partial['Port'], port)
     self.assertEqual(partial['Host'], host)
