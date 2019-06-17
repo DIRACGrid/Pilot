@@ -16,7 +16,7 @@
 #
 # === a default directory structure is created:
 # ~/TestCode
-# ~/ServerInstallDIR
+# ~/ClientInstallDIR
 # ~/PilotInstallDIR
 
 # you can try this out with:
@@ -24,12 +24,11 @@
 # bash
 # DEBUG=True
 # WORKSPACE=$PWD
-# PILOT_FILES='file:///home/toffo/pyDevs/Pilot/Pilot' #Change this!
 # mkdir $PWD/TestCode
 # cd $PWD/TestCode
 # mkdir Pilot
 # cd Pilot
-# cp -r ~/pyDevs/Pilot/* .
+# cp -r ~/pyDevs/Pilot/* .  # change this...
 # cd ../..
 # source TestCode/Pilot/tests/CI/pilot_ci.sh
 # fullPilot
@@ -56,11 +55,12 @@ echo -e $WORKSPACE
 # Creating default structure
 mkdir -p $WORKSPACE/TestCode # Where the test code resides
 TESTCODE=$_
-mkdir -p $WORKSPACE/ServerInstallDIR # Where servers are installed
-SERVERINSTALLDIR=$_
+mkdir -p $WORKSPACE/ClientInstallDIR # Where client are installed
+CLIENTINSTALLDIR=$_
 mkdir -p $WORKSPACE/PilotInstallDIR # Where pilots are installed
 PILOTINSTALLDIR=$_
-CLIENTINSTALLDIR=$PILOTINSTALLDIR
+mkdir -p $WORKSPACE/ServerInstallDIR # Where server is installed
+SERVERINSTALLDIR=$_
 
 # Sourcing utility file
 source $TESTCODE/Pilot/tests/CI/utilities.sh
@@ -99,7 +99,8 @@ function PilotInstall(){
   python PilotLogger.py "Getting DIRAC Pilot 3.0 code from lhcbproject for now..."
 
   # launch the pilot script
-  pilotOptions="-M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs --pilotLogging"
+  pilotOptions=$pilot_options
+  pilotOptions+="-M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs --pilotLogging"
   if [ $VO ]
   then
     pilotOptions+=" -l $VO -E $VO"
@@ -266,6 +267,12 @@ function submitAndMatch(){
   fi
   prepareForPilot
   default
+
+  if [ $DIRACOSVER ]
+  then
+    pilot_options=' --dirac-os --dirac-os-version='$DIRACOSVER
+    pilot_options+=' '
+  fi
 
   PilotInstall
   if [ $? -ne 0 ]

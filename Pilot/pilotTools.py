@@ -518,6 +518,7 @@ class PilotParams(object):
                     ('d', 'debug', 'Set debug flag'),
                     ('e:', 'extraPackages=', 'Extra packages to install (comma separated)'),
                     ('g:', 'grid=', 'lcg tools package version'),
+                    ('', 'dirac-os', 'use DIRACOS'),
                     ('h', 'help', 'Show this help'),
                     ('i:', 'python=', 'Use python<26|27> interpreter'),
                     ('k', 'keepPP', 'Do not clear PYTHONPATH on start'),
