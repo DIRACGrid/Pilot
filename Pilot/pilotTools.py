@@ -506,9 +506,9 @@ class PilotParams(object):
 
     # Set number of allocatable processors from MJF if available
     try:
-      self.processors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
+      self.pilotProcessors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
     except BaseException:
-      self.processors = 1
+      self.pilotProcessors = 1
 
     # Pilot command options
     self.cmdOpts = (('', 'requiredTag=', 'extra required tags for resource description'),
@@ -545,6 +545,7 @@ class PilotParams(object):
                     ('M:', 'MaxCycles=', 'Maximum Number of JobAgent cycles to run'),
                     ('N:', 'Name=', 'CE Name'),
                     ('O:', 'OwnerDN=', 'Pilot OwnerDN (for private pilots)'),
+                    ('P:', 'pilotProcessors=', 'Number of processors allocated to this pilot'),
                     ('Q:', 'Queue=', 'Queue name'),
                     ('R:', 'reference=', 'Use this pilot reference'),
                     ('S:', 'setup=', 'DIRAC Setup to use'),
@@ -648,9 +649,9 @@ class PilotParams(object):
           pass
       elif o in ('-T', '--CPUTime'):
         self.jobCPUReq = v
-      elif o == '-P' or o == '--processors':
+      elif o == '-P' or o == '--pilotProcessors':
         try:
-          self.procesors = int(v)
+          self.pilotProcessors = int(v)
         except BaseException:
           pass
       elif o == '-z' or o == '--pilotLogging':
