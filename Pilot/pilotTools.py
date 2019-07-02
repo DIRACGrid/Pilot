@@ -726,6 +726,10 @@ class PilotParams(object):
           self.gridCEType = str(self.pilotJSON['CEs'][self.ceName]['GridCEType'])
       except KeyError:
         pass
+      try:
+        self.ceType = str(self.pilotJSON['CEs'][self.ceName]['LocalCEType'])
+      except KeyError:
+        pass
 
     self.log.debug("Setup: %s" % self.setup)
     if not self.setup:
@@ -778,9 +782,8 @@ class PilotParams(object):
         self.commandExtensions = [str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
     except KeyError:
       try:
-        if isinstance(
-                self.pilotJSON['Setups']['Defaults']['CommandExtensions'],
-                basestring):  # Or in the defaults section?
+        if isinstance(self.pilotJSON['Setups']['Defaults']['CommandExtensions'],
+                      basestring):  # Or in the defaults section?
           self.commandExtensions = [str(pv).strip() for pv in self.pilotJSON['Setups']
                                     ['Defaults']['CommandExtensions'].split(',')]
         else:
