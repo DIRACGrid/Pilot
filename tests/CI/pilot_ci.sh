@@ -96,7 +96,6 @@ function PilotInstall(){
   #preparePythonEnvironment
   python PilotLoggerTools.py PilotUUID
   python PilotLogger.py "Hello I am THE best pilot"
-  python PilotLogger.py "Getting DIRAC Pilot 3.0 code from lhcbproject for now..."
 
   # launch the pilot script
   pilotOptions=$pilot_options
