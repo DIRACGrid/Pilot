@@ -286,7 +286,6 @@ class ExtendedLogger(Logger):
                name='Pilot',
                debugFlag=False,
                pilotOutput='pilot.out',
-               localMessageQueue='myLocalQueueOfMessages',
                isPilotLoggerOn=True,
                setup='DIRAC-Certification'):
     """ c'tor
@@ -295,39 +294,33 @@ class ExtendedLogger(Logger):
     """
     super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
     if isPilotLoggerOn:
-      # self.pilotLogger = PilotLogger(localOutputFile=localMessageQueue)
       self.pilotLogger = PilotLogger(setup=setup)
     else:
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
 
-  def debug(self, msg, header=True, sendPilotLog=True):
+  def debug(self, msg, header=True, sendPilotLog=False):
     super(ExtendedLogger, self).debug(msg, header)
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="debug")
 
   def error(self, msg, header=True, sendPilotLog=False):
     super(ExtendedLogger, self).error(msg, header)
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="error")
 
   def warn(self, msg, header=True, sendPilotLog=False):
     super(ExtendedLogger, self).warn(msg, header)
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="warning")
 
   def info(self, msg, header=True, sendPilotLog=False):
     super(ExtendedLogger, self).info(msg, header)
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="info")
 
   def sendMessage(self, msg, source, phase, status='info', sendPilotLog=True):
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(messageContent=msg,
                                      source=source,
                                      phase=phase,
