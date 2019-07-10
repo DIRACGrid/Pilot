@@ -120,7 +120,10 @@ class RESTSender(MessageSender):
   """ Message sender to a REST interface.
       It depends on requests module.
   """
-  import requests
+  try:
+    import requests
+  except ImportError:
+    requests = None
 
   REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
                    'CACertificate', 'Url', 'LocalOutputFile']
@@ -208,7 +211,11 @@ class StompSender(MessageSender):
   """ Stomp message sender.
       It depends on stomp module.
   """
-  import stomp
+  try:
+    import stomp
+  except ImportError:
+    stomp = None
+
   REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
                    'CACertificate', 'QueuePath', 'LocalOutputFile']
 
