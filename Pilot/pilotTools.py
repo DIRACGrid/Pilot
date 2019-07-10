@@ -15,6 +15,8 @@ import urllib2
 import signal
 import subprocess
 
+from PilotLogger import PilotLogger
+
 
 def printVersion(log):
 
@@ -173,7 +175,6 @@ class ObjectLoader(object):
     module, parentPath = self.loadModule(loadModuleName)
     if module is None:
       return None, None
-
     try:
       commandObj = getattr(module, command)
       return commandObj, os.path.join(parentPath, moduleName)
@@ -281,55 +282,49 @@ class ExtendedLogger(Logger):
       But can be also used to send messages to the queue
   """
 
-  def __init__(self, name='Pilot', debugFlag=False, pilotOutput='pilot.out', isPilotLoggerOn=False):
+  def __init__(self,
+               name='Pilot',
+               debugFlag=False,
+               pilotOutput='pilot.out',
+               isPilotLoggerOn=True,
+               setup='DIRAC-Certification'):
     """ c'tor
     If flag PilotLoggerOn is not set, the logger will behave just like
     the original Logger object, that means it will just print logs locally on the screen
     """
     super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
     if isPilotLoggerOn:
-      # the import here was suggest F.S cause PilotLogger imports stomp
-      # which is not yet in the DIRAC externals
-      # so up to now we want to turn it off
-      from Pilot.PilotLogger import PilotLogger
-      self.pilotLogger = PilotLogger()
+      self.pilotLogger = PilotLogger(setup=setup)
     else:
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
 
   def debug(self, msg, header=True, sendPilotLog=False):
     super(ExtendedLogger, self).debug(msg, header)
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="debug")
 
   def error(self, msg, header=True, sendPilotLog=False):
     super(ExtendedLogger, self).error(msg, header)
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="error")
 
   def warn(self, msg, header=True, sendPilotLog=False):
     super(ExtendedLogger, self).warn(msg, header)
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="warning")
 
   def info(self, msg, header=True, sendPilotLog=False):
     super(ExtendedLogger, self).info(msg, header)
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="info")
 
-  def sendMessage(self, msg, source, phase, status='info', localFile=None, sendPilotLog=False):
-    pass
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+  def sendMessage(self, msg, source, phase, status='info', sendPilotLog=True):
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(messageContent=msg,
                                      source=source,
                                      phase=phase,
-                                     status=status,
-                                     localOutputFile=localFile)
+                                     status=status)
 
 
 class CommandBase(object):
@@ -346,7 +341,8 @@ class CommandBase(object):
         name=self.__class__.__name__,
         debugFlag=False,
         pilotOutput='pilot.out',
-        isPilotLoggerOn=self.pp.pilotLogging
+        isPilotLoggerOn=self.pp.pilotLogging,
+        setup=self.pp.setup
     )
     # self.log = Logger( self.__class__.__name__ )
     self.debugFlag = False
@@ -503,9 +499,9 @@ class PilotParams(object):
 
     # Set number of allocatable processors from MJF if available
     try:
-      self.processors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
+      self.pilotProcessors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
     except BaseException:
-      self.processors = 1
+      self.pilotProcessors = 1
 
     # Pilot command options
     self.cmdOpts = (('', 'requiredTag=', 'extra required tags for resource description'),
@@ -542,6 +538,7 @@ class PilotParams(object):
                     ('M:', 'MaxCycles=', 'Maximum Number of JobAgent cycles to run'),
                     ('N:', 'Name=', 'CE Name'),
                     ('O:', 'OwnerDN=', 'Pilot OwnerDN (for private pilots)'),
+                    ('P:', 'pilotProcessors=', 'Number of processors allocated to this pilot'),
                     ('Q:', 'Queue=', 'Queue name'),
                     ('R:', 'reference=', 'Use this pilot reference'),
                     ('S:', 'setup=', 'DIRAC Setup to use'),
@@ -645,9 +642,9 @@ class PilotParams(object):
           pass
       elif o in ('-T', '--CPUTime'):
         self.jobCPUReq = v
-      elif o == '-P' or o == '--processors':
+      elif o == '-P' or o == '--pilotProcessors':
         try:
-          self.procesors = int(v)
+          self.pilotProcessors = int(v)
         except BaseException:
           pass
       elif o == '-z' or o == '--pilotLogging':

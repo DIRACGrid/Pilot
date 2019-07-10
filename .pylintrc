@@ -106,7 +106,7 @@ no-docstring-rgx=__.*__
 [FORMAT]
 
 # Maximum number of characters on a single line.
-max-line-length=140
+max-line-length=120
 
 # Maximum number of lines in a module
 max-module-lines=1200
@@ -144,9 +144,6 @@ ignored-classes=SQLObject
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E0201 when accessed.
 generated-members=REQUEST,acl_users,aq_parent
-
-# List of ignored modules
-ignored-modules = MySQLdb
 
 [VARIABLES]
 
