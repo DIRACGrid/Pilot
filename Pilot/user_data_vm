@@ -349,7 +349,7 @@ cp -f /scratch/plt/bashrc /scratch/plt/jobagent.*.log /scratch/plt/shutdown_mess
     if [ "$DEPO_BASE_URL" != "" ] ; then
       # This will be replaced by extended pilot logging??
       curl --capath $X509_CERT_DIR --cert /root/x509proxy.pem --cacert /root/x509proxy.pem --location --upload-file "$i" \
-        "$DEPO_BASE_URL/##user_data_space##/##user_data_machinetype##/##user_data_machine_hostname##/##user_data_uuid##/"
+        "$DEPO_BASE_URL/##user_data_space##/##user_data_machinetype##/##user_data_machine_hostname##/$VM_UUID/"
     fi
    fi
   done
