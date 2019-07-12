@@ -491,7 +491,8 @@ class PilotParams(object):
     self.architectureScript = 'dirac-platform'
     self.certsLocation = '%s/etc/grid-security' % self.workingDir
     self.pilotCFGFile = 'pilot.json'
-    self.pilotLogging = False
+    # self.pilotLogging = False
+    self.pilotLogging = True
     self.modules = ''  # see dirac-install "-m" option documentation
 
     # Parameters that can be determined at runtime only
