@@ -36,7 +36,7 @@
         ]
       },
       "Logging": {
-        "LoggingType":"REST_API", 
+        "LoggingType":"LOCAL_FILE", 
         "LocalOutputFile":"myFile",
         "HostKey":"/home/dirac/certs/hostkey.pem", 
         "HostCertificate":"/home/dirac/certs/hostcert.pem",
