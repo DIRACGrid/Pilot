@@ -139,9 +139,7 @@ class PilotLogger(object):
       logging.warning("Message format is not correct.")
       return False
     encodedMsg = encodeMessage(message)
-    self.messageSender.sendMessage(encodedMsg, flag=status)
-    return False
-
+    return self.messageSender.sendMessage(encodedMsg, flag=status)
 
 def main():
   """ main() function  is used to send a message
