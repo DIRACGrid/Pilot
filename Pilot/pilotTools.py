@@ -338,7 +338,6 @@ class CommandBase(object):
         Defines the logger and the pilot parameters
     """
     self.pp = pilotParams
-    self.debug("pilotParams in init of CommandBase:%s",str(pilotParams))
     self.log = ExtendedLogger(
         name=self.__class__.__name__,
         debugFlag=False,
