@@ -292,7 +292,6 @@ class ExtendedLogger(Logger):
     If flag PilotLoggerOn is not set, the logger will behave just like
     the original Logger object, that means it will just print logs locally on the screen
     """
-    self.debug("in init of ExtendedLogger")
     super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
     if isPilotLoggerOn:
       self.pilotLogger = PilotLogger(setup=setup)
