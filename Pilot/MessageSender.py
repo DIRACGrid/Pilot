@@ -198,12 +198,14 @@ class LocalFileSender(MessageSender):
       Raises:
         ValueError: If params are not correct.
     """
+    logging.debug("in init of LocalFileSender")
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
     self.params = params
     if not self._areParamsCorrect(self.params):
       raise ValueError("Parameters missing needed to send messages")
 
   def sendMessage(self, msg, flag):
+    logging.debug("in sendMessage of LocalFileSender")
     filename = self.params.get('LocalOutputFile')
     saveMessageToFile(msg, filename=filename)
     return True
