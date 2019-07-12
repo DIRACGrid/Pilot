@@ -36,8 +36,12 @@
         ]
       },
       "Logging": {
-        "LoggingType":"LOCAL_FILE", 
-        "LocalOutputFile":"myFile"
+        "LoggingType":"REST_API", 
+        "LocalOutputFile":"myFile",
+        "HostKey":"", 
+        "HostCertififcate":"",
+        "CACertificate":"", 
+        "Url":"127.0.0.1"
       },
       "NagiosProbes": "WN-mjf, WN-sft-csh, WN-sft-voms, WN-sft-vo-swdir",
       "Version": "VAR_DIRAC_VERSION",
