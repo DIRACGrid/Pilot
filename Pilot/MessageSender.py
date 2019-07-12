@@ -133,6 +133,7 @@ class RESTSender(MessageSender):
       Raises:
         ValueError: If params are not correct.
     """
+    logging.debug("in init of RESTSender")
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
     self.params = params
     if not self._areParamsCorrect(self.params):
@@ -144,6 +145,7 @@ class RESTSender(MessageSender):
     hostCertificate = self.params.get('HostCertificate')
     CACertificate = self.params.get('CACertificate')
 
+    logging.debug("sending message from the REST Sender")
     try:
       requests.post(url,
                     json=msg,
