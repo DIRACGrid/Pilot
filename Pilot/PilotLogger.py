@@ -84,6 +84,7 @@ class PilotLogger(object):
       localOutputFile(str): Name of the file that can be used to store the log messages locally.
       fileWithUUID(str): Name of the file used to store the Pilot identifier.
     """
+    logging.debug("In init of PilotLogger")
     self.STATUSES = PilotLogger.STATUSES
 
     self.params = addMissingConfiguration(
@@ -123,6 +124,7 @@ class PilotLogger(object):
     Returns:
       bool: False in case of any errors, True otherwise
     """
+    logging.debug("In sendMessage of PilotLogger")
     if not self._isCorrectStatus(status):
       logging.error('status: ' + str(status) + ' is not correct')
       return False
