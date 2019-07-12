@@ -292,6 +292,7 @@ class ExtendedLogger(Logger):
     If flag PilotLoggerOn is not set, the logger will behave just like
     the original Logger object, that means it will just print logs locally on the screen
     """
+    self.debug("in init of ExtendedLogger")
     super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
     if isPilotLoggerOn:
       self.pilotLogger = PilotLogger(setup=setup)
@@ -299,22 +300,22 @@ class ExtendedLogger(Logger):
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
 
-  def debug(self, msg, header=True, sendPilotLog=False):
+  def debug(self, msg, header=True, sendPilotLog=True):
     super(ExtendedLogger, self).debug(msg, header)
     if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="debug")
 
-  def error(self, msg, header=True, sendPilotLog=False):
+  def error(self, msg, header=True, sendPilotLog=True):
     super(ExtendedLogger, self).error(msg, header)
     if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="error")
 
-  def warn(self, msg, header=True, sendPilotLog=False):
+  def warn(self, msg, header=True, sendPilotLog=True):
     super(ExtendedLogger, self).warn(msg, header)
     if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="warning")
 
-  def info(self, msg, header=True, sendPilotLog=False):
+  def info(self, msg, header=True, sendPilotLog=True):
     super(ExtendedLogger, self).info(msg, header)
     if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="info")
@@ -337,6 +338,7 @@ class CommandBase(object):
         Defines the logger and the pilot parameters
     """
     self.pp = pilotParams
+    self.debug("pilotParams in init of CommandBase:%s",str(pilotParams))
     self.log = ExtendedLogger(
         name=self.__class__.__name__,
         debugFlag=False,
