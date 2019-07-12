@@ -292,6 +292,7 @@ class ExtendedLogger(Logger):
     If flag PilotLoggerOn is not set, the logger will behave just like
     the original Logger object, that means it will just print logs locally on the screen
     """
+    self.debug("in init of ExtendedLogger")
     super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
     if isPilotLoggerOn:
       self.pilotLogger = PilotLogger(setup=setup)
@@ -337,6 +338,7 @@ class CommandBase(object):
         Defines the logger and the pilot parameters
     """
     self.pp = pilotParams
+    self.debug("pilotParams in init of CommandBase:%s",str(pilotParams))
     self.log = ExtendedLogger(
         name=self.__class__.__name__,
         debugFlag=False,
