@@ -38,9 +38,9 @@
       "Logging": {
         "LoggingType":"REST_API", 
         "LocalOutputFile":"myFile",
-        "HostKey":"", 
-        "HostCertififcate":"",
-        "CACertificate":"", 
+        "HostKey":"bal", 
+        "HostCertififcate":"bal",
+        "CACertificate":"bal", 
         "Url":"127.0.0.1"
       },
       "NagiosProbes": "WN-mjf, WN-sft-csh, WN-sft-voms, WN-sft-vo-swdir",
