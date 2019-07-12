@@ -95,8 +95,8 @@ function PilotInstall(){
   prepareForPilot
   #installStompRequestsIfNecessary
   #preparePythonEnvironment
-  #python PilotLoggerTools.py PilotUUID
-  #python PilotLogger.py "Hello I am THE best pilot"
+  python PilotLoggerTools.py PilotUUID
+  python PilotLogger.py "Hello I am THE best pilot"
 
   # launch the pilot script
   pilotOptions=$pilot_options
