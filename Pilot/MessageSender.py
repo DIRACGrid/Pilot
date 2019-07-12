@@ -84,7 +84,7 @@ def messageSenderFactory(senderType, params):
     className = typeToModuleAndClassName[senderType]['class']
     return loadAndCreateObject(moduleName, className, params)
   except ValueError:
-    logging.error("Error initializing the message sender")
+    logging.error("Error initializing the message sender of type %s", senderType)
   return None
 
 
