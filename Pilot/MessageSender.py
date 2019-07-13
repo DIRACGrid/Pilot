@@ -15,6 +15,7 @@
 
 import Queue
 import logging
+import requests
 
 
 def loadAndCreateObject(moduleName, className, params):
@@ -123,10 +124,10 @@ class RESTSender(MessageSender):
   """ Message sender to a REST interface.
       It depends on requests module.
   """
-  try:
-    import requests
-  except ImportError:
-    requests = None
+  # try:
+  # except ImportError:
+    # logging.error("requests is not installed!")
+    # requests = None
 
   REQUIRED_KEYS = ['HostKey', 'HostCertificate',
                    'CACertificate', 'Url', 'LocalOutputFile']
@@ -134,7 +135,7 @@ class RESTSender(MessageSender):
   def __init__(self, params):
     """
       Raises:
-        ValueError: If params are not correct.
+        ValueError: If params are not correct
     """
     logging.debug("in init of RESTSender")
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
