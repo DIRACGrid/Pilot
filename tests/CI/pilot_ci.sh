@@ -92,7 +92,7 @@ function PilotInstall(){
   sed -i "s#VAR_USERDN#$DIRACUSERDN#g" pilot.json
 
   prepareForPilot
-  #installStompRequestsIfNecessary
+  installStompRequestsIfNecessary
   #preparePythonEnvironment
   python PilotLoggerTools.py PilotUUID
   python PilotLogger.py "Hello I am THE best pilot"
