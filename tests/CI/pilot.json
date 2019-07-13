@@ -39,7 +39,7 @@
         "LoggingType":"REST_API", 
         "LocalOutputFile":"myFile",
         "HostKey":"bal", 
-        "HostCertififcate":"bal",
+        "HostCertificate":"bal",
         "CACertificate":"bal", 
         "Url":"127.0.0.1"
       },

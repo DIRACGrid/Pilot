@@ -128,7 +128,7 @@ class RESTSender(MessageSender):
   except ImportError:
     requests = None
 
-  REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
+  REQUIRED_KEYS = ['HostKey', 'HostCertificate',
                    'CACertificate', 'Url', 'LocalOutputFile']
 
   def __init__(self, params):
@@ -225,7 +225,7 @@ class StompSender(MessageSender):
   except ImportError:
     stomp = None
 
-  REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
+  REQUIRED_KEYS = ['HostKey', 'HostCertificate',
                    'CACertificate', 'QueuePath', 'LocalOutputFile']
 
   def __init__(self, params):

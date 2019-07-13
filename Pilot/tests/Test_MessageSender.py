@@ -91,7 +91,7 @@ class TestStompSender(unittest.TestCase):
     removeFile(self.testFile)
 
   def test_success(self):
-    params = {'HostKey': 'key', 'HostCertififcate': 'cert', 'CACertificate': 'caCert',
+    params = {'HostKey': 'key', 'HostCertificate': 'cert', 'CACertificate': 'caCert',
               'Host': 'test.host.ch', 'Port': '666', 'QueuePath': '/queue/myqueue', 'LocalOutputFile': self.testFile}
     msgSender = StompSender(params)
     res = msgSender.sendMessage(self.testMessage, 'info')
@@ -110,7 +110,7 @@ class TestRESTSender(unittest.TestCase):
     module.requests.post = MagicMock()
 
   def test_success(self):
-    params = {'HostKey': 'key', 'HostCertififcate': 'cert', 'CACertificate': 'caCert',
+    params = {'HostKey': 'key', 'HostCertificate': 'cert', 'CACertificate': 'caCert',
               'Url': 'https://some.host.ch/messages', 'LocalOutputFile': self.testFile}
     msgSender = RESTSender(params)
     res = msgSender.sendMessage(self.testMessage, 'info')
