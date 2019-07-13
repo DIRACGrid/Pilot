@@ -82,6 +82,9 @@ def messageSenderFactory(senderType, params):
   try:
     moduleName = typeToModuleAndClassName[senderType]['module']
     className = typeToModuleAndClassName[senderType]['class']
+
+    logging.debug("Trying to load and create object of module: %s, class: %s, params: %s",
+                  str(moduleName),str(className), str(params))
     return loadAndCreateObject(moduleName, className, params)
   except ValueError:
     logging.error("Error initializing the message sender of type %s", senderType)
