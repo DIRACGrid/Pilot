@@ -38,10 +38,10 @@
       "Logging": {
         "LoggingType":"REST_API", 
         "LocalOutputFile":"myFile",
-        "HostKey":"bal", 
-        "HostCertificate":"bal",
-        "CACertificate":"bal", 
-        "Url":"127.0.0.1"
+        "HostKey":"user.key", 
+        "HostCertificate":"user.crt",
+        "CACertificate":"CAcert.pem", 
+        "Url":"https://127.0.0.1"
       },
       "NagiosProbes": "WN-mjf, WN-sft-csh, WN-sft-voms, WN-sft-vo-swdir",
       "Version": "VAR_DIRAC_VERSION",
