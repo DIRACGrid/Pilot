@@ -94,9 +94,9 @@ function PilotInstall(){
 
   echo `pwd`
   echo "Lets copy certs"
-  cp $TESTCODE/../PilotLogging_Tornado/testCerts/user.key .
-  cp $TESTCODE/../PilotLogging_Tornado/testCerts/user.crt .
-  cp $TESTCODE/../PilotLogging_Tornado/testCerts/CAcert.pem .
+  cp $TESTCODE/PilotLogging_Tornado/testCerts/user.key .
+  cp $TESTCODE/PilotLogging_Tornado/testCerts/user.crt .
+  cp $TESTCODE/PilotLogging_Tornado/testCerts/CAcert.pem .
   prepareForPilot
   installStompRequestsIfNecessary
   #preparePythonEnvironment
