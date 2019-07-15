@@ -38,10 +38,10 @@
       "Logging": {
         "LoggingType":"REST_API", 
         "LocalOutputFile":"myFile",
-        "HostKey":"user.key", 
-        "HostCertificate":"user.crt",
-        "CACertificate":"CAcert.pem", 
-        "Url":"https://127.0.0.1"
+        "HostKey":"PilotLogging_Tornado/testCert/user.key", 
+        "HostCertificate":"PilotLogging_Tornado/testCert/user.crt",
+        "CACertificate":"PilotLogging_Tornado/testCert/CAcert.pem", 
+        "Url":"https://pilotloggerrest.cern.ch:8888"
       },
       "NagiosProbes": "WN-mjf, WN-sft-csh, WN-sft-voms, WN-sft-vo-swdir",
       "Version": "VAR_DIRAC_VERSION",
