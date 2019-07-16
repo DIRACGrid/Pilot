@@ -15,7 +15,14 @@
 
 import Queue
 import logging
-import requests
+try:
+  import requests
+except ImportError:
+  requests = None
+try:
+  import stomp
+except ImportError:
+  stomp = None
 
 
 def loadAndCreateObject(moduleName, className, params):
@@ -221,10 +228,6 @@ class StompSender(MessageSender):
   """ Stomp message sender.
       It depends on stomp module.
   """
-  try:
-    import stomp
-  except ImportError:
-    stomp = None
 
   REQUIRED_KEYS = ['HostKey', 'HostCertificate',
                    'CACertificate', 'QueuePath', 'LocalOutputFile']
