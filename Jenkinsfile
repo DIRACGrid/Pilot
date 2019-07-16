@@ -47,12 +47,6 @@ node('lhcbci-cernvm03') {
                     git checkout ${params.DIRAC_test_branch}
                     cd ..
                 """
-                sh """
-                    git clone https://github.com/${params.Tornado_repo}/PilotLogging_Tornado.git
-                    cd PilotLogging_Tornado 
-                    git checkout ${params.Tornado_branch}
-                    cd ..
-                """
 
                 echo "Got the test code"
             }
