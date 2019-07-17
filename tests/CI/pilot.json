@@ -87,6 +87,12 @@
       "Site": "VAR_JENKINS_SITE",
       "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-MP"
+    },
+    "jenkins-mp-pool.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST-FULL",
+      "LocalCEType": "Pool"
     }
   },
   "DefaultSetup": "DIRAC-Certification"
