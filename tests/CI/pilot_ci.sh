@@ -93,13 +93,11 @@ function PilotInstall(){
   sed -i "s#VAR_USERDN#$DIRACUSERDN#g" pilot.json
 
 
-  echo `pwd`
-  echo "Lets copy certs"
   cp $TESTCODE/PilotLogging_Tornado/testCerts/user.key .
   cp $TESTCODE/PilotLogging_Tornado/testCerts/user.crt .
   cp $TESTCODE/PilotLogging_Tornado/testCerts/CAcert.pem .
   prepareForPilot
-  installStompRequestsIfNecessary
+  #installStompRequestsIfNecessary
   #preparePythonEnvironment
   python PilotLoggerTools.py PilotUUID
   python PilotLogger.py "Hello I am THE best pilot"
@@ -211,7 +209,6 @@ function fullPilot(){
 
   echo '==> [Done fullPilot]'
 }
-
 
 function installStompRequestsIfNecessary()
 {
