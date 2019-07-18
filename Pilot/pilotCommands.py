@@ -350,7 +350,8 @@ class CheckCECapabilities(CommandBase):
     """
     super(CheckCECapabilities, self).__init__(pilotParams)
 
-    # this variable contains the options that are passed to dirac-configure, and that will fill the local dirac.cfg file
+    # this variable contains the options that are passed to dirac-configure,
+    # and that will fill the local dirac.cfg file
     self.cfg = []
 
   def execute(self):
@@ -471,7 +472,7 @@ class CheckWNCapabilities(CommandBase):
       self.exitWithError(retCode)
 
     # We store payloadProcessors in the global parameters so that other
-    # commands can more easily use it (eg MultiLaunchAgent)
+    # commands can more easily use it (eg MultiLaunchAgent, which right now is the only consumer)
     self.pp.payloadProcessors = 1
 
     try:
@@ -484,6 +485,7 @@ class CheckWNCapabilities(CommandBase):
 
     # If NumberOfProcessors or MaxRAM are defined in the resource configuration, these
     # values are preferred
+    self.pp.pilotProcessors = numberOfProcessorsOnWN
     if "WholeNode" in self.pp.tags:
       self.pp.payloadProcessors = numberOfProcessorsOnWN
     if self.pp.maxNumberOfProcessors > 0:
@@ -502,9 +504,10 @@ class CheckWNCapabilities(CommandBase):
       if ('%dProcessors' % self.pp.payloadProcessors) not in self.pp.tags:
         self.pp.tags.append('%dProcessors' % self.pp.payloadProcessors)
 
+    self.log.info('pilotProcessors = %d' % self.pp.pilotProcessors)
     self.log.info('payloadProcessors = %d' % self.pp.payloadProcessors)
     self.cfg.append(
-        '-o "/Resources/Computing/CEDefaults/NumberOfProcessors=%d"' % self.pp.payloadProcessors)
+        '-o "/Resources/Computing/CEDefaults/NumberOfProcessors=%d"' % self.pp.pilotProcessors)
 
     maxRAM = self.pp.queueParameters.get('MaxRAM', maxRAM)
     if maxRAM:
@@ -556,7 +559,8 @@ class ConfigureSite(CommandBase):
     """
     super(ConfigureSite, self).__init__(pilotParams)
 
-    # this variable contains the options that are passed to dirac-configure, and that will fill the local dirac.cfg file
+    # this variable contains the options that are passed to dirac-configure,
+    # and that will fill the local dirac.cfg file
     self.cfg = []
 
   def execute(self):
@@ -1083,7 +1087,8 @@ class MultiLaunchAgent(CommandBase):
 
         # Variants of: "600 Grid-wide problem with job agent or application within VM"
         ##############################################################################
-        ['ERROR: Pilot version does not match the production version', '600 Cannot match jobs with this pilot version'],
+        ['ERROR: Pilot version does not match the production version',
+         '600 Cannot match jobs with this pilot version'],
 
         # Variants of: "700 Error related to job agent or application within VM"
         ########################################################################
