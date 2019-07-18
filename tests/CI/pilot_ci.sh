@@ -99,7 +99,7 @@ function PilotInstall(){
 
   # launch the pilot script
   pilotOptions=$pilot_options
-  pilotOptions+=" -M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs --pilotLogging"
+  pilotOptions+=" -M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs"
   if [ $VO ]
   then
     pilotOptions+=" -l $VO -E $VO"
