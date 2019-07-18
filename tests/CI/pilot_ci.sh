@@ -92,14 +92,14 @@ function PilotInstall(){
   sed -i "s#VAR_USERDN#$DIRACUSERDN#g" pilot.json
 
   prepareForPilot
-  installStompRequestsIfNecessary
+  #installStompRequestsIfNecessary
   #preparePythonEnvironment
-  python PilotLoggerTools.py PilotUUID
-  python PilotLogger.py "Hello I am THE best pilot"
+  #python PilotLoggerTools.py PilotUUID
+  #python PilotLogger.py "Hello I am THE best pilot"
 
   # launch the pilot script
   pilotOptions=$pilot_options
-  pilotOptions+=" -M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs --pilotLogging"
+  pilotOptions+=" -M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs"
   if [ $VO ]
   then
     pilotOptions+=" -l $VO -E $VO"
