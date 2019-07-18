@@ -131,10 +131,6 @@ class RESTSender(MessageSender):
   """ Message sender to a REST interface.
       It depends on requests module.
   """
-  # try:
-  # except ImportError:
-    # logging.error("requests is not installed!")
-    # requests = None
 
   REQUIRED_KEYS = ['HostKey', 'HostCertificate',
                    'CACertificate', 'Url', 'LocalOutputFile']
