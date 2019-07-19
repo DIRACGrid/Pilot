@@ -92,9 +92,9 @@ function PilotInstall(){
   sed -i "s#VAR_USERDN#$DIRACUSERDN#g" pilot.json
 
 
-  cp $TESTCODE/PilotLogging_Tornado/testCerts/user.key .
-  cp $TESTCODE/PilotLogging_Tornado/testCerts/user.crt .
-  cp $TESTCODE/PilotLogging_Tornado/testCerts/CAcert.pem .
+  #cp $TESTCODE/PilotLogging_Tornado/testCerts/user.key .
+  #cp $TESTCODE/PilotLogging_Tornado/testCerts/user.crt .
+  #cp $TESTCODE/PilotLogging_Tornado/testCerts/CAcert.pem .
   prepareForPilot
   #installStompRequestsIfNecessary
   #preparePythonEnvironment
