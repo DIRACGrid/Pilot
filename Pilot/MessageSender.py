@@ -158,7 +158,8 @@ class RESTSender(MessageSender):
       requests.post(url,
                     json=msg,
                     cert=(hostCertificate, hostKey),
-                    verify=CACertificate)
+                    verify=False)
+                    # verify=CACertificate)
     except (requests.exceptions.RequestException, IOError) as e:
       logging.error(e)
       return False
