@@ -92,7 +92,7 @@ def messageSenderFactory(senderType, params):
     className = typeToModuleAndClassName[senderType]['class']
 
     logging.debug("Trying to load and create object of module: %s, class: %s, params: %s",
-                  str(moduleName),str(className), str(params))
+                  str(moduleName), str(className), str(params))
     return loadAndCreateObject(moduleName, className, params)
   except ValueError:
     logging.error("Error initializing the message sender of type %s", senderType)
@@ -158,8 +158,7 @@ class RESTSender(MessageSender):
       requests.post(url,
                     json=msg,
                     cert=(hostCertificate, hostKey),
-                    verify=False)
-                    # verify=CACertificate)
+                    verify=CACertificate)
     except (requests.exceptions.RequestException, IOError) as e:
       logging.error(e)
       return False

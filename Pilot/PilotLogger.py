@@ -11,9 +11,6 @@ from PilotLoggerTools import readPilotJSONConfigFile
 from PilotLoggerTools import getUniqueIDAndSaveToFile
 from MessageSender import messageSenderFactory
 
-#temporarly
-logging.basicConfig(level=logging.DEBUG)
-
 def getPilotUUIDFromFile(filename='PilotUUID'):
   """ Retrieves Pilot UUID from the file of given name.
   Returns:
