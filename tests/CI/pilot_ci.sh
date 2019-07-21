@@ -94,7 +94,7 @@ function PilotInstall(){
 
 
   prepareForPilot
-  installStompRequestsIfNecessary
+  #installStompRequestsIfNecessary
   #preparePythonEnvironment
   python PilotLoggerTools.py PilotUUID
   python PilotLogger.py "Hello I am THE best pilot"
@@ -204,9 +204,12 @@ function fullPilot(){
     return
   fi
 
+<<<<<<< HEAD
   echo '==> [Done fullPilot]'
 }
 
+=======
+>>>>>>> Resolvig error
 function installStompRequestsIfNecessary()
 {
   echo '==> [installStompRequestsIfNecessary]'
