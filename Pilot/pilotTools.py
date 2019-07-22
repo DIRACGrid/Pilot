@@ -462,8 +462,6 @@ class PilotParams(object):
     self.queueName = ""
     self.gridCEType = ""
     self.platform = ""
-    # in case users want to specify the max number of processors requested, per pilot
-    self.maxNumberOfProcessors = 0
     self.minDiskSpace = 2560  # MB
     self.pythonVersion = '27'
     self.userGroup = ""
@@ -519,8 +517,6 @@ class PilotParams(object):
                     ('n:', 'name=', 'Set <Site> as Site Name'),
                     ('o:', 'option=', 'Option=value to add'),
                     ('p:', 'platform=', 'Use <platform> instead of local one'),
-                    ('m:', 'maxNumberOfProcessors=',
-                     'specify a max number of processors to use'),
                     ('', 'modules=', 'for installing non-released code (see dirac-install "-m" option documentation)'),
                     ('r:', 'release=', 'DIRAC release to install'),
                     ('s:', 'section=', 'Set base section for relative parsed options'),
@@ -618,8 +614,6 @@ class PilotParams(object):
         self.installation = v
       elif o == '-p' or o == '--platform':
         self.platform = v
-      elif o == '-m' or o == '--maxNumberOfProcessors':
-        self.maxNumberOfProcessors = int(v)
       elif o == '-D' or o == '--disk':
         try:
           self.minDiskSpace = int(v)
