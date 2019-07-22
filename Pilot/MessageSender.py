@@ -15,6 +15,14 @@
 
 import Queue
 import logging
+try:
+  import requests
+except ImportError:
+  requests = None
+try:
+  import stomp
+except ImportError:
+  stomp = None
 
 
 def loadAndCreateObject(moduleName, className, params):
@@ -82,9 +90,12 @@ def messageSenderFactory(senderType, params):
   try:
     moduleName = typeToModuleAndClassName[senderType]['module']
     className = typeToModuleAndClassName[senderType]['class']
+
+    logging.debug("Trying to load and create object of module: %s, class: %s, params: %s",
+                  str(moduleName), str(className), str(params))
     return loadAndCreateObject(moduleName, className, params)
   except ValueError:
-    logging.error("Error initializing the message sender")
+    logging.error("Error initializing the message sender of type %s", senderType)
   return None
 
 
@@ -120,22 +131,20 @@ class RESTSender(MessageSender):
   """ Message sender to a REST interface.
       It depends on requests module.
   """
-  try:
-    import requests
-  except ImportError:
-    requests = None
 
-  REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
+  REQUIRED_KEYS = ['HostKey', 'HostCertificate',
                    'CACertificate', 'Url', 'LocalOutputFile']
 
   def __init__(self, params):
     """
       Raises:
-        ValueError: If params are not correct.
+        ValueError: If params are not correct
     """
+    logging.debug("in init of RESTSender")
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
     self.params = params
     if not self._areParamsCorrect(self.params):
+      logging.error("Parameters missing needed to send messages! Parameters:%s", str(self.params))
       raise ValueError("Parameters missing needed to send messages")
 
   def sendMessage(self, msg, flag):
@@ -144,11 +153,12 @@ class RESTSender(MessageSender):
     hostCertificate = self.params.get('HostCertificate')
     CACertificate = self.params.get('CACertificate')
 
+    logging.debug("sending message from the REST Sender")
     try:
       requests.post(url,
                     json=msg,
                     cert=(hostCertificate, hostKey),
-                    verify=CACertificate)
+                    verify=False)
     except (requests.exceptions.RequestException, IOError) as e:
       logging.error(e)
       return False
@@ -196,12 +206,15 @@ class LocalFileSender(MessageSender):
       Raises:
         ValueError: If params are not correct.
     """
+    logging.debug("in init of LocalFileSender")
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
     self.params = params
     if not self._areParamsCorrect(self.params):
+      logging.error("Parameters missing needed to send messages! Parameters:%s", str(self.params))
       raise ValueError("Parameters missing needed to send messages")
 
   def sendMessage(self, msg, flag):
+    logging.debug("in sendMessage of LocalFileSender")
     filename = self.params.get('LocalOutputFile')
     saveMessageToFile(msg, filename=filename)
     return True
@@ -211,12 +224,8 @@ class StompSender(MessageSender):
   """ Stomp message sender.
       It depends on stomp module.
   """
-  try:
-    import stomp
-  except ImportError:
-    stomp = None
 
-  REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
+  REQUIRED_KEYS = ['HostKey', 'HostCertificate',
                    'CACertificate', 'QueuePath', 'LocalOutputFile']
 
   def __init__(self, params):
@@ -228,6 +237,7 @@ class StompSender(MessageSender):
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
     self.params = params
     if not self._areParamsCorrect(self.params):
+      logging.error("Parameters missing needed to send messages! Parameters:%s", str(self.params))
       raise ValueError("Parameters missing needed to send messages")
 
   def sendMessage(self, msg, flag):
