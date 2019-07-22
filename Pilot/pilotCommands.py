@@ -471,10 +471,6 @@ class CheckWNCapabilities(CommandBase):
       self.log.error("Could not get resource parameters [ERROR %d]" % retCode)
       self.exitWithError(retCode)
 
-    # We store payloadProcessors in the global parameters so that other
-    # commands can more easily use it (eg MultiLaunchAgent, which right now is the only consumer)
-    self.pp.payloadProcessors = 1
-
     try:
       result = result.split(' ')
       numberOfProcessorsOnWN = int(result[0])
@@ -485,24 +481,18 @@ class CheckWNCapabilities(CommandBase):
 
     # If NumberOfProcessors or MaxRAM are defined in the resource configuration, these
     # values are preferred
+
+    # pilotProcessors is basically the number of processors this pilot is "managing"
     self.pp.pilotProcessors = numberOfProcessorsOnWN
+
+    # payloadProcessors is the number of processors used by the single payloads.
+    # We store payloadProcessors in the global parameters so that other commands can more easily use it.
+    # (MultiLaunchAgent is right now is the only consumer)
+    self.pp.payloadProcessors = 1
     if "WholeNode" in self.pp.tags:
-      self.pp.payloadProcessors = numberOfProcessorsOnWN
+      self.pp.payloadProcessors = self.pp.pilotProcessors
     if self.pp.maxNumberOfProcessors > 0:
-      self.pp.payloadProcessors = min(numberOfProcessorsOnWN, self.pp.maxNumberOfProcessors)
-
-    if not self.pp.payloadProcessors:
-      self.log.warn("Could not retrieve number of processors, assuming 1")
-      self.pp.payloadProcessors = 1
-
-    # Make sure the multiprocessor tags are present if not already there
-    if self.pp.payloadProcessors > 1:
-      if 'MultiProcessor' not in self.pp.tags:
-        self.pp.tags.append('MultiProcessor')
-      if 'MultiProcessor' not in self.pp.reqtags:
-        self.pp.reqtags.append('MultiProcessor')
-      if ('%dProcessors' % self.pp.payloadProcessors) not in self.pp.tags:
-        self.pp.tags.append('%dProcessors' % self.pp.payloadProcessors)
+      self.pp.payloadProcessors = min(self.pp.pilotProcessors, self.pp.maxNumberOfProcessors)
 
     self.log.info('pilotProcessors = %d' % self.pp.pilotProcessors)
     self.log.info('payloadProcessors = %d' % self.pp.payloadProcessors)

@@ -1066,11 +1066,9 @@ class ReleaseConfig(object):
       Web = git://github.com/DIRACGrid/DIRACWeb.git
       VMDIRAC = git://github.com/DIRACGrid/VMDIRAC.git
       DIRAC = git://github.com/DIRACGrid/DIRAC.git
-      MPIDIRAC = git://github.com/DIRACGrid/MPIDIRAC.git
       BoincDIRAC = git://github.com/DIRACGrid/BoincDIRAC.git
       RESTDIRAC = git://github.com/DIRACGrid/RESTDIRAC.git
       COMDIRAC = git://github.com/DIRACGrid/COMDIRAC.git
-      FSDIRAC = git://github.com/DIRACGrid/FSDIRAC.git
       WebAppDIRAC = git://github.com/DIRACGrid/WebAppDIRAC.git
     }
 
