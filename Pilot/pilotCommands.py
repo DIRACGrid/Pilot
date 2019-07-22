@@ -387,13 +387,6 @@ class CheckCECapabilities(CommandBase):
     if "WholeNode" in resourceDict:
       self.pp.tags.append('WholeNode')
 
-    # If MaxNumberOfProcessors not defined check for NumberOfProcessors
-    if self.pp.maxNumberOfProcessors == 0:
-      self.pp.maxNumberOfProcessors = int(
-          resourceDict.get(
-              "MaxNumberOfProcessors", resourceDict.get(
-                  "NumberOfProcessors", 0)))
-
      # Tags must be added to already defined tags if any
     if resourceDict.get('Tag'):
       self.pp.tags += resourceDict['Tag']
@@ -491,8 +484,6 @@ class CheckWNCapabilities(CommandBase):
     self.pp.payloadProcessors = 1
     if "WholeNode" in self.pp.tags:
       self.pp.payloadProcessors = self.pp.pilotProcessors
-    if self.pp.maxNumberOfProcessors > 0:
-      self.pp.payloadProcessors = min(self.pp.pilotProcessors, self.pp.maxNumberOfProcessors)
 
     self.log.info('pilotProcessors = %d' % self.pp.pilotProcessors)
     self.log.info('payloadProcessors = %d' % self.pp.payloadProcessors)
