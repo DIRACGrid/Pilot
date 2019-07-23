@@ -5,14 +5,14 @@ This is customized pipeline for running on jenkins-dirac.web.cern.ch
 */
 
 
-properties([parameters([string(name: 'projectVersion', defaultValue: 'v6r22', description: 'The DIRAC version to install'),
-                        string(name: 'Pilot_repo', defaultValue: 'DIRACGrid', description: 'The Pilot repo'),
-                        string(name: 'Pilot_branch', defaultValue: 'master', description: 'The Pilot branch'),
+properties([parameters([string(name: 'projectVersion', defaultValue: 'v6r22p1', description: 'The DIRAC version to install'),
+                        string(name: 'Pilot_repo', defaultValue: 'DiracGrid', description: 'The Pilot repo'),
+                        string(name: 'Pilot_branch', defaultValue: 'devel', description: 'The Pilot branch'),
                         string(name: 'DIRAC_test_repo', defaultValue: 'DIRACGrid', description: 'The DIRAC repo to use for getting the test code'),
                         string(name: 'DIRAC_test_branch', defaultValue: 'rel-v6r22', description: 'The DIRAC branch to use for getting the test code'),
                         string(name: 'JENKINS_CE', defaultValue: 'jenkins.cern.ch', description: 'The CE definition to use (of DIRAC.Jenkins.ch, see CS for others)'),
                         string(name: 'modules', defaultValue: '', description: 'to override what is installed, e.g. with https://github.com/fstagni/DIRAC.git:::DIRAC:::someBranch'),
-                        string(name: 'pilot_options', defaultValue: '', description: 'any pilot option, e.g. --dirac-os')
+                        string(name: 'pilot_options', defaultValue: ' --pilotLogging ', description: 'any pilot option, e.g. --dirac-os')
                        ])])
 
 
@@ -47,7 +47,6 @@ node('lhcbci-cernvm03') {
                     git checkout ${params.DIRAC_test_branch}
                     cd ..
                 """
-
                 echo "Got the test code"
             }
             stash includes: 'TestCode/**', name: 'testcode'
