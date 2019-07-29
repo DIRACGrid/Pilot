@@ -69,6 +69,7 @@ source $TESTCODE/Pilot/tests/CI/utilities.sh
 # basically it just calls the pilot wrapper
 # don't launch the JobAgent here
 function PilotInstall(){
+  echo '==> [PilotInstall]'
 
   default
 
@@ -129,10 +130,13 @@ function PilotInstall(){
     echo -e 'ERROR: cannot change to ' $cwd
     return
   fi
+
+  echo '==> [Done PilotInstall]'
 }
 
 
 function fullPilot(){
+  echo '==> [fullPilot]'
 
   #first simply install via the pilot
   PilotInstall
@@ -198,11 +202,15 @@ function fullPilot(){
     echo 'ERROR: cannot run dirac-configure'
     return
   fi
+
+  echo '==> [Done fullPilot]'
 }
 
 
 function installStompRequestsIfNecessary()
 {
+  echo '==> [installStompRequestsIfNecessary]'
+
   local PYTHON_VERSION=`python -c 'import sys; print(".".join(map(str, sys.version_info[:2])))'`
   #checking if stomp is installed
   if ! python -c 'import stomp' > /dev/null 2>&1; then
@@ -231,6 +239,8 @@ function installStompRequestsIfNecessary()
   python -c 'import stomp' > /dev/null 2>&1 ||{ echo >&2 "stomp installation failure. Aborting"; exit 1; }
   #requests should be installed now
   python -c 'import requests' > /dev/null 2>&1 ||{ echo >&2 "requests installation failure. Aborting"; exit 1; }
+
+  echo '==> [Done installStompRequestsIfNecessary]'
 }
 
 ####################################################################################
@@ -240,6 +250,7 @@ function installStompRequestsIfNecessary()
 # then we run a pilot that should hopefully match those jobs
 
 function submitAndMatch(){
+  echo '==> [submitAndMatch]'
 
   # Here we submit the jobs (to DIRAC.Jenkins.ch)
   installDIRAC # This installs the DIRAC client
@@ -278,4 +289,6 @@ function submitAndMatch(){
     echo 'ERROR: dirac-pilot failure'
     return
   fi
+
+  echo '==> [Done submitAndMatch]'
 }

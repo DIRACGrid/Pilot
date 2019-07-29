@@ -78,6 +78,11 @@
       "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST"
     },
+    "jenkins-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST-FULL"
+    },
     "jenkins-mp.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
       "Queue": "VAR_JENKINS_QUEUE",
