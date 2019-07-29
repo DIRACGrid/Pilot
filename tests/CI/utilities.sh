@@ -10,7 +10,8 @@ source $TESTCODE/DIRAC/tests/Jenkins/utilities.sh
 # function that override the default one in $TESTCODE/DIRAC/tests/Jenkins/utilities.sh
 # 
 function prepareForPilot(){
-  
+  echo '==> [prepareForPilot]'
+
   #get the pilot files from the Pilot
   for file in PilotLogger.py PilotLoggerTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py MessageSender.py
   do
@@ -28,6 +29,7 @@ function prepareForPilot(){
     done
   fi
 
+  echo '==> [Done prepareForPilot]'
 }
 
 
