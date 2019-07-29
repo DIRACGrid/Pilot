@@ -91,16 +91,16 @@ function PilotInstall(){
   sed -i "s#VAR_CS#$CSURL#g" pilot.json
   sed -i "s#VAR_USERDN#$DIRACUSERDN#g" pilot.json
 
+
   prepareForPilot
-  installStompRequestsIfNecessary
+  #installStompRequestsIfNecessary
   #preparePythonEnvironment
   python PilotLoggerTools.py PilotUUID
   python PilotLogger.py "Hello I am THE best pilot"
-  python PilotLogger.py "Getting DIRAC Pilot 3.0 code from lhcbproject for now..."
 
   # launch the pilot script
   pilotOptions=$pilot_options
-  pilotOptions+="-M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs --pilotLogging"
+  pilotOptions+=" -M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs"
   if [ $VO ]
   then
     pilotOptions+=" -l $VO -E $VO"
@@ -201,8 +201,6 @@ function fullPilot(){
   fi
 }
 
-
-        
 function installStompRequestsIfNecessary()
 {
   local PYTHON_VERSION=`python -c 'import sys; print(".".join(map(str, sys.version_info[:2])))'`
@@ -226,8 +224,8 @@ function installStompRequestsIfNecessary()
       fi
       python get-pip.py --user --upgrade
       echo "$PIP_LOC install --user 'stomp.py==4.1.11'"
-      `${PIP_LOC} install --user 'stomp.py==4.1.11'`
-      `${PIP_LOC} install --user 'requests'`
+      ${PIP_LOC} install --user 'stomp.py==4.1.11'
+      ${PIP_LOC} install --user 'requests'
   fi
   #stomp should be installed now
   python -c 'import stomp' > /dev/null 2>&1 ||{ echo >&2 "stomp installation failure. Aborting"; exit 1; }

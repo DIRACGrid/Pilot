@@ -16,7 +16,7 @@ properties([parameters([string(name: 'projectVersion', defaultValue: 'v6r22p3', 
                        ])])
 
 
-node('lhcbci-cernvm03') {
+node('lhcbci-cernvm4-01') {
     // Clean workspace before doing anything
     deleteDir()
 
@@ -70,7 +70,7 @@ node('lhcbci-cernvm03') {
             parallel(
 
                 "Integration" : {
-                    node('lhcbci-cernvm04') {
+                    node('lhcbci-cernvm4-02') {
 
                         cleanWs()
 
@@ -100,7 +100,7 @@ node('lhcbci-cernvm03') {
                 },
 
                 "Regression" : {
-                    node('lhcbci-cernvm05') {
+                    node('lhcbci-cernvm4-03') {
 
                         cleanWs()
 

@@ -300,7 +300,7 @@ fi
 chown -R plt.plt /scratch/plt
 chmod 1775 /scratch/plt
 
-# VO is not used within the user_data_script but it made available for include_vm_*.sh scripts
+# VO is not used within the user_data_script but is made available for include_vm_*.sh scripts
 export VO='##user_data_option_vo##'
 export DIRAC_OPTS='##user_data_option_dirac_opts##'
 

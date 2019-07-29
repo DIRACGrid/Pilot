@@ -13,6 +13,16 @@
           "ConfigureArchitecture",
           "ConfigureCPURequirements"
         ],
+        "TEST-MP": [
+          "CheckWorkerNode",
+          "InstallDIRAC",
+          "ConfigureBasics",
+          "CheckCECapabilities",
+          "CheckWNCapabilities",
+          "ConfigureSite",
+          "ConfigureArchitecture",
+          "ConfigureCPURequirements"
+        ],
         "TEST-FULL": [
           "CheckWorkerNode",
           "InstallDIRAC",
@@ -23,20 +33,15 @@
           "ConfigureArchitecture",
           "ConfigureCPURequirements",
           "LaunchAgent"
-        ],
-        "Vcycle": [
-          "CheckWorkerNode",
-          "LHCbInstallDIRAC",
-          "ConfigureBasics",
-          "ConfigureSite",
-          "ConfigureArchitecture",
-          "ConfigureCPURequirements",
-          "MultiLaunchAgent"
         ]
       },
       "Logging": {
-        "LoggingType":"LOCAL_FILE", 
-        "LocalOutputFile":"myFile"
+        "LoggingType":"REST_API", 
+        "LocalOutputFile":"myFile",
+        "HostKey":"/home/dirac/certs/hostkey.pem", 
+        "HostCertificate":"/home/dirac/certs/hostcert.pem",
+        "CACertificate":"/etc/pki/tls/certs/ca-bundle.crt", 
+        "Url":"https://pilotloggerrest.cern.ch:8888"
       },
       "NagiosProbes": "WN-mjf, WN-sft-csh, WN-sft-voms, WN-sft-vo-swdir",
       "Version": "VAR_DIRAC_VERSION",
@@ -55,13 +60,14 @@
           "ConfigureCPURequirements"
         ],
         "Defaults": [
-          "LHCbGetPilotVersion",
           "CheckWorkerNode",
-          "LHCbInstallDIRAC",
-          "LHCbConfigureBasics",
-          "LHCbConfigureSite",
-          "LHCbConfigureArchitecture",
-          "LHCbConfigureCPURequirements",
+          "InstallDIRAC",
+          "ConfigureBasics",
+          "CheckCECapabilities",
+          "CheckWNCapabilities",
+          "ConfigureSite",
+          "ConfigureArchitecture",
+          "ConfigureCPURequirements",
           "LaunchAgent"
         ]
       },
@@ -74,17 +80,12 @@
     "jenkins.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
       "Queue": "VAR_JENKINS_QUEUE",
-      "GridCEType": "LHCb"
-    },
-    "jenkins-diracinstall.cern.ch": {
-      "Site": "VAR_JENKINS_SITE",
-      "Queue": "VAR_JENKINS_QUEUE",
-      "GridCEType": "LHCb-DI"
+      "GridCEType": "TEST"
     },
     "jenkins-mp.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
       "Queue": "VAR_JENKINS_QUEUE",
-      "GridCEType": "LHCb-MP"
+      "GridCEType": "TEST-MP"
     }
   },
   "DefaultSetup": "DIRAC-Certification"

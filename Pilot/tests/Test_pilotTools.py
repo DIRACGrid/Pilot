@@ -64,7 +64,6 @@ def fixme_test_sendMessageToLocalFile(mocker, rmFiles):
       name='Pilot',
       debugFlag=True,
       pilotOutput='pilot.out',
-      localMessageQueue=testOutputFile,
       isPilotLoggerOn=True)
 
   logger.sendMessage(msg="test message", source="testSource", phase="testing", status='error', sendPilotLog=True)

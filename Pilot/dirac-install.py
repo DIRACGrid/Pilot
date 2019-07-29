@@ -128,7 +128,7 @@ You can use install.cfg configuration file::
 
 #  pylint: skip-file
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
 import sys
 import os
@@ -1095,7 +1095,7 @@ class ReleaseConfig(object):
       return S_OK((False, modTpl[0]))
     return S_OK((modTpl[0], modTpl[1]))
 
-  def getExtenalsVersion(self, release=None):
+  def getExternalsVersion(self, release=None):
     """
     It returns the version of DIRAC Externals. If it is not provided,
     uses the default cfg
@@ -1896,7 +1896,7 @@ def installExternals(releaseConfig):
   if not releaseConfig:
     externalsVersion = cliParams.externalVersion
   else:
-    externalsVersion = releaseConfig.getExtenalsVersion()
+    externalsVersion = releaseConfig.getExternalsVersion()
   if not externalsVersion:
     logERROR("No externals defined")
     return False
@@ -2384,6 +2384,7 @@ def createBashrcForDiracOS():
                     'export OPENSSL_CONF=/tmp'])
 
       # gfal2 requires some environment variables to be set
+      # Note: eventually this line should disappear as already set by diracosrc
       lines.extend(['# Gfal2 configuration and plugins',
                     'export GFAL_CONFIG_DIR=$DIRACOS/etc/gfal2.d',
                     'export  GFAL_PLUGIN_DIR=$DIRACOS/usr/lib64/gfal2-plugins/'])
@@ -2396,8 +2397,9 @@ def createBashrcForDiracOS():
                     'export GLOBUS_IO_IPV6=TRUE',
                     'export GLOBUS_FTP_CLIENT_IPV6=TRUE'])
       # Add the lines required for ARC CE support
+      # Note: eventually this line should disappear as already set by diracosrc
       lines.extend(['# ARC Computing Element',
-                    'export ARC_PLUGIN_PATH=$DIRACLIB/arc'])
+                    'export ARC_PLUGIN_PATH=$DIRACOS/usr/lib64/arc'])
       lines.append('')
       with open(bashrcFile, 'w') as f:
         f.write('\n'.join(lines))
@@ -2508,7 +2510,7 @@ if __name__ == "__main__":
       logNOTICE("Writing down the releases files")
       releaseConfig.dumpReleasesToPath()
     logNOTICE("Installing modules...")
-    for modName in modsOrder:
+    for modName in set(modsOrder):
       tarsURL, modVersion = modsToInstall[modName]
       if cliParams.installSource and not cliParams.modules:
         # we install not release version of DIRAC
@@ -2560,7 +2562,8 @@ if __name__ == "__main__":
   else:
     logNOTICE("Skipping installing DIRAC")
 
-  if cliParams.diracOS:
+  # we install with DIRACOS from v7rX DIRAC release
+  if cliParams.diracOS or int(releaseConfig.prjRelCFG['DIRAC'].keys()[0][1]) > 6:
     logNOTICE("Installing DIRAC OS %s..." % cliParams.diracOSVersion)
     if not installDiracOS(releaseConfig):
       sys.exit(1)

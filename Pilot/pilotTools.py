@@ -286,7 +286,6 @@ class ExtendedLogger(Logger):
                name='Pilot',
                debugFlag=False,
                pilotOutput='pilot.out',
-               localMessageQueue='myLocalQueueOfMessages',
                isPilotLoggerOn=True,
                setup='DIRAC-Certification'):
     """ c'tor
@@ -295,7 +294,6 @@ class ExtendedLogger(Logger):
     """
     super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
     if isPilotLoggerOn:
-      # self.pilotLogger = PilotLogger(localOutputFile=localMessageQueue)
       self.pilotLogger = PilotLogger(setup=setup)
     else:
       self.pilotLogger = None
@@ -303,31 +301,26 @@ class ExtendedLogger(Logger):
 
   def debug(self, msg, header=True, sendPilotLog=True):
     super(ExtendedLogger, self).debug(msg, header)
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="debug")
 
-  def error(self, msg, header=True, sendPilotLog=False):
+  def error(self, msg, header=True, sendPilotLog=True):
     super(ExtendedLogger, self).error(msg, header)
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="error")
 
-  def warn(self, msg, header=True, sendPilotLog=False):
+  def warn(self, msg, header=True, sendPilotLog=True):
     super(ExtendedLogger, self).warn(msg, header)
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="warning")
 
-  def info(self, msg, header=True, sendPilotLog=False):
+  def info(self, msg, header=True, sendPilotLog=True):
     super(ExtendedLogger, self).info(msg, header)
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="info")
 
   def sendMessage(self, msg, source, phase, status='info', sendPilotLog=True):
-    if self.isPilotLoggerOn:
-      if sendPilotLog:
+    if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(messageContent=msg,
                                      source=source,
                                      phase=phase,
@@ -497,7 +490,8 @@ class PilotParams(object):
     self.architectureScript = 'dirac-platform'
     self.certsLocation = '%s/etc/grid-security' % self.workingDir
     self.pilotCFGFile = 'pilot.json'
-    self.pilotLogging = False
+    # self.pilotLogging = False
+    self.pilotLogging = True
     self.modules = ''  # see dirac-install "-m" option documentation
 
     # Parameters that can be determined at runtime only
@@ -506,9 +500,9 @@ class PilotParams(object):
 
     # Set number of allocatable processors from MJF if available
     try:
-      self.processors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
+      self.pilotProcessors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
     except BaseException:
-      self.processors = 1
+      self.pilotProcessors = 1
 
     # Pilot command options
     self.cmdOpts = (('', 'requiredTag=', 'extra required tags for resource description'),
@@ -545,6 +539,7 @@ class PilotParams(object):
                     ('M:', 'MaxCycles=', 'Maximum Number of JobAgent cycles to run'),
                     ('N:', 'Name=', 'CE Name'),
                     ('O:', 'OwnerDN=', 'Pilot OwnerDN (for private pilots)'),
+                    ('P:', 'pilotProcessors=', 'Number of processors allocated to this pilot'),
                     ('Q:', 'Queue=', 'Queue name'),
                     ('R:', 'reference=', 'Use this pilot reference'),
                     ('S:', 'setup=', 'DIRAC Setup to use'),
@@ -648,9 +643,9 @@ class PilotParams(object):
           pass
       elif o in ('-T', '--CPUTime'):
         self.jobCPUReq = v
-      elif o == '-P' or o == '--processors':
+      elif o == '-P' or o == '--pilotProcessors':
         try:
-          self.procesors = int(v)
+          self.pilotProcessors = int(v)
         except BaseException:
           pass
       elif o == '-z' or o == '--pilotLogging':
@@ -729,6 +724,10 @@ class PilotParams(object):
           self.gridCEType = str(self.pilotJSON['CEs'][self.ceName]['GridCEType'])
       except KeyError:
         pass
+      try:
+        self.ceType = str(self.pilotJSON['CEs'][self.ceName]['LocalCEType'])
+      except KeyError:
+        pass
 
     self.log.debug("Setup: %s" % self.setup)
     if not self.setup:
@@ -781,9 +780,8 @@ class PilotParams(object):
         self.commandExtensions = [str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
     except KeyError:
       try:
-        if isinstance(
-                self.pilotJSON['Setups']['Defaults']['CommandExtensions'],
-                basestring):  # Or in the defaults section?
+        if isinstance(self.pilotJSON['Setups']['Defaults']['CommandExtensions'],
+                      basestring):  # Or in the defaults section?
           self.commandExtensions = [str(pv).strip() for pv in self.pilotJSON['Setups']
                                     ['Defaults']['CommandExtensions'].split(',')]
         else:
