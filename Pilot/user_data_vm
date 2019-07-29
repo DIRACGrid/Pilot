@@ -62,6 +62,12 @@ date --utc +"%Y-%m-%d %H:%M:%S %Z user_data_script Start user_data on `hostname`
 echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6
 date --utc +"%Y-%m-%d %H:%M:%S %Z Disable IPv6"
 
+# Cloud Init should do this automatically but something has changed since cernvm3 -> cernvm4
+ls -l /root/.ssh/authorized_keys
+curl http://169.254.169.254/2009-04-04/meta-data/public-keys/0/openssh-key > /root/.ssh/authorized_keys
+echo >> /root/.ssh/authorized_keys
+ls -l /root/.ssh/authorized_keys
+
 # Record MJFJO if substituted here by VM lifecycle manager
 export MACHINEFEATURES='##user_data_machinefeatures_url##'
 export JOBFEATURES='##user_data_jobfeatures_url##'
@@ -70,11 +76,6 @@ export JOBOUTPUTS='##user_data_joboutputs_url##'
 # Save whatever we use by other scripts
 /bin/echo -e "export MACHINEFEATURES=$MACHINEFEATURES\nexport JOBFEATURES=$JOBFEATURES\nexport JOBOUTPUTS=$JOBOUTPUTS" > /etc/profile.d/mjf.sh
 /bin/echo -e "setenv MACHINEFEATURES $MACHINEFEATURES\nsetenv JOBFEATURES $JOBFEATURES\nsetenv JOBOUTPUTS $JOBOUTPUTS" > /etc/profile.d/mjf.csh
-
-export VO='##user_data_option_vo##'
-if [ "$VO" == "" ] ; then
-  VO=lhcb
-fi
 
 export VM_UUID='##user_data_uuid##'
 if [ "$VM_UUID" = "" -a "$JOBFEATURES" != "" ] ; then
@@ -103,12 +104,6 @@ fi
 
 # Once we have finished with the metadata, stop any user process reading it later
 /sbin/iptables -A OUTPUT -d 169.254.169.254 -p tcp --dport 80 -j DROP 
-
-machine_syslog=`python -c "import urllib ; print urllib.urlopen('$MACHINEFEATURES/syslog').read().strip()"`
-if [ "$machine_syslog" ] ; then
- echo "*.* @$machinesyslog" > /etc/rsyslog.d/vm.conf
- /sbin/service rsyslog restart
-fi
 
 # Get the big 40GB+ logical partition as /scratch
 mkdir -p /scratch
@@ -305,7 +300,22 @@ fi
 chown -R plt.plt /scratch/plt
 chmod 1775 /scratch/plt
 
-SUBMIT_POOL_OPTS="-o '/LocalSite/SubmitPool=Test'"
+# VO is not used within the user_data_script but it made available for include_vm_*.sh scripts
+export VO='##user_data_option_vo##'
+export DIRAC_OPTS='##user_data_option_dirac_opts##'
+
+if [ '##user_data_option_submit_pool##' != '' ] ; then
+  export SUBMIT_POOL=##user_data_option_submit_pool##
+else
+  # Test matches any JobType
+  export SUBMIT_POOL=Test
+fi
+
+if [ '##user_data_option_dirac_queue##' != '' ] ; then
+  export QUEUE='##user_data_option_dirac_queue##'
+else
+  export QUEUE=default
+fi
 
 # Source any include scripts we fetched
 for i in include_vm_*.sh
@@ -315,12 +325,6 @@ do
  fi
 done
 
-if [ '##user_data_option_dirac_queue##' != '' ] ; then
-  QUEUE='##user_data_option_dirac_queue##'
-else
-  QUEUE=default
-fi
-
 # Now run the pilot script
 /usr/bin/sudo -i -n -u plt \
  X509_USER_PROXY=$X509_USER_PROXY \
@@ -328,13 +332,13 @@ fi
  JOB_ID="$JOB_ID" PILOT_UUID="$PILOT_UUID" \
  python /scratch/plt/dirac-pilot.py \
  --debug \
- $SUBMIT_POOL_OPTS \
+ -o /LocalSite/SubmitPool=$SUBMIT_POOL \
  --Name '##user_data_space##' \
  --Queue $QUEUE \
  --MaxCycles 1 \
  --CEType Sudo \
  --cert --certLocation /scratch/plt/etc/grid-security \
- ##user_data_option_dirac_opts## \
+ $DIRAC_OPTS \
  >/var/spool/joboutputs/dirac-pilot.log 2>&1
 
 # Save JobAgent and System logs
@@ -349,10 +353,10 @@ cp -f /scratch/plt/bashrc /scratch/plt/jobagent.*.log /scratch/plt/shutdown_mess
     curl --capath $X509_CERT_DIR --cert /root/x509proxy.pem --cacert /root/x509proxy.pem --location --upload-file "$i" \
      "$JOBOUTPUTS/"
 
-    if [ "$DEPO_BASE_URL" != ""] ; then
+    if [ "$DEPO_BASE_URL" != "" ] ; then
       # This will be replaced by extended pilot logging??
       curl --capath $X509_CERT_DIR --cert /root/x509proxy.pem --cacert /root/x509proxy.pem --location --upload-file "$i" \
-        "$DEPO_BASE_URL/##user_data_space##/##user_data_machinetype##/##user_data_machine_hostname##/##user_data_uuid##/"
+        "$DEPO_BASE_URL/##user_data_space##/##user_data_machinetype##/##user_data_machine_hostname##/$VM_UUID/"
     fi
    fi
   done
