@@ -491,6 +491,7 @@ class CheckWNCapabilities(CommandBase):
     self.log.info('payloadProcessors = %d' % self.pp.payloadProcessors)
     self.cfg.append(
         '-o "/Resources/Computing/CEDefaults/NumberOfProcessors=%d"' % self.pp.pilotProcessors)
+    self.cfg.append(
         '-o "/Resources/Computing/CEDefaults/NumberOfPayloadProcessors=%d"' % self.pp.payloadProcessors)
 
     maxRAM = self.pp.queueParameters.get('MaxRAM', maxRAM)
