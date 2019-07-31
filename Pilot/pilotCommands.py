@@ -478,17 +478,20 @@ class CheckWNCapabilities(CommandBase):
     # pilotProcessors is basically the number of processors this pilot is "managing"
     self.pp.pilotProcessors = numberOfProcessorsOnWN
 
-    # payloadProcessors is the number of processors used by the single payloads.
+    # payloadProcessors is the max number of processors used by the single payloads.
     # We store payloadProcessors in the global parameters so that other commands can more easily use it.
-    # (MultiLaunchAgent is right now is the only consumer)
+    # (MultiLaunchAgent is right now the only consumer)
     self.pp.payloadProcessors = 1
     if "WholeNode" in self.pp.tags:
       self.pp.payloadProcessors = self.pp.pilotProcessors
+    if self.pp.maxNumberOfProcessors > 0:
+      self.pp.payloadProcessors = min(self.pp.pilotProcessors, self.pp.maxNumberOfProcessors)
 
     self.log.info('pilotProcessors = %d' % self.pp.pilotProcessors)
     self.log.info('payloadProcessors = %d' % self.pp.payloadProcessors)
     self.cfg.append(
         '-o "/Resources/Computing/CEDefaults/NumberOfProcessors=%d"' % self.pp.pilotProcessors)
+        '-o "/Resources/Computing/CEDefaults/NumberOfPayloadProcessors=%d"' % self.pp.payloadProcessors)
 
     maxRAM = self.pp.queueParameters.get('MaxRAM', maxRAM)
     if maxRAM:
