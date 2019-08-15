@@ -7,7 +7,7 @@ For testing the PilotWrapper.
 
 
 properties([parameters([string(name: 'DIRAC_test_repo', defaultValue: 'DIRACGrid', description: 'The DIRAC repo to use for getting the test code'),
-                        string(name: 'DIRAC_test_branch_or_tag', defaultValue: 'rel-v7r0', description: 'The DIRAC branch or tag to use for getting the test code')
+                        string(name: 'DIRAC_test_branch', defaultValue: 'rel-v7r0', description: 'The DIRAC branch or tag to use for getting the test code')
                        ])])
 
 stage('Test') {
@@ -22,9 +22,18 @@ stage('Test') {
                 try {
                     // get the code, then execute:
                     // python Test_GenerateAndExecutePilotWrapper.py file://PilotWrapper.py file://dirac-install.py
-                    sh '''
-                        bash -c "echo HERE"
-                    '''
+                    sh """
+                        git clone https://github.com/${params.DIRAC_test_repo}/DIRAC.git
+                        cd DIRAC
+                        git checkout ${params.DIRAC_test_branch}
+                        cd ..
+
+                        cp DIRAC/tests/Integration/WorkloadManagementSystem/Test_GenerateAndExecutePilotWrapper.py .
+                        cp DIRAC/WorkloadManagementSystem/Utilities/PilotWrapper.py .
+                        cp DIRAC/Core/scripts/dirac-install.py .
+
+                        python Test_GenerateAndExecutePilotWrapper.py file:///PilotWrapper.py file:///dirac-install.py
+                    """
                 } catch (e) {
                     // if any exception occurs, mark the build as failed
                     currentBuild.result = 'FAILURE'
@@ -43,9 +52,18 @@ stage('Test') {
                 cleanWs()
 
                 try {
-                    sh '''
-                        bash -c "echo HERE"
-                    '''
+                    sh """
+                        git clone https://github.com/${params.DIRAC_test_repo}/DIRAC.git
+                        cd DIRAC
+                        git checkout ${params.DIRAC_test_branch}
+                        cd ..
+
+                        cp DIRAC/tests/Integration/WorkloadManagementSystem/Test_GenerateAndExecutePilotWrapper.py .
+                        cp DIRAC/WorkloadManagementSystem/Utilities/PilotWrapper.py .
+                        cp DIRAC/Core/scripts/dirac-install.py .
+
+                        python Test_GenerateAndExecutePilotWrapper.py file:///PilotWrapper.py file:///dirac-install.py
+                    """
                 } catch (e) {
                     // if any exception occurs, mark the build as failed
                     currentBuild.result = 'FAILURE'
