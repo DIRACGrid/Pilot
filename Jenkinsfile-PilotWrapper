@@ -29,10 +29,8 @@ stage('Test') {
                         cd ..
 
                         cp DIRAC/tests/Integration/WorkloadManagementSystem/Test_GenerateAndExecutePilotWrapper.py .
-                        cp DIRAC/WorkloadManagementSystem/Utilities/PilotWrapper.py .
-                        cp DIRAC/Core/scripts/dirac-install.py .
 
-                        python Test_GenerateAndExecutePilotWrapper.py file:///PilotWrapper.py file:///dirac-install.py
+                        python Test_GenerateAndExecutePilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/WorkloadManagementSystem/Utilities/PilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/Core/scripts/dirac-install.py
                     """
                 } catch (e) {
                     // if any exception occurs, mark the build as failed
@@ -59,10 +57,8 @@ stage('Test') {
                         cd ..
 
                         cp DIRAC/tests/Integration/WorkloadManagementSystem/Test_GenerateAndExecutePilotWrapper.py .
-                        cp DIRAC/WorkloadManagementSystem/Utilities/PilotWrapper.py .
-                        cp DIRAC/Core/scripts/dirac-install.py .
 
-                        python Test_GenerateAndExecutePilotWrapper.py file:///PilotWrapper.py file:///dirac-install.py
+                        python Test_GenerateAndExecutePilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/WorkloadManagementSystem/Utilities/PilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/Core/scripts/dirac-install.py
                     """
                 } catch (e) {
                     // if any exception occurs, mark the build as failed
