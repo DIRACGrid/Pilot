@@ -14,15 +14,78 @@ stage('Test') {
 
     parallel(
 
+        "SLC6" : {
+            node('diracci6-02') {
+
+                cleanWs()
+
+                try {
+                    sh """
+                        which python
+                        python --version
+
+                        git clone https://github.com/${params.DIRAC_test_repo}/DIRAC.git
+                        cd DIRAC
+                        git checkout ${params.DIRAC_test_branch}
+                        cd ..
+
+                        cp DIRAC/tests/Integration/WorkloadManagementSystem/Test_GenerateAndExecutePilotWrapper.py .
+
+                        python Test_GenerateAndExecutePilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/WorkloadManagementSystem/Utilities/PilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/Core/scripts/dirac-install.py
+                    """
+                } catch (e) {
+                    // if any exception occurs, mark the build as failed
+                    currentBuild.result = 'FAILURE'
+                    throw e
+                } finally {
+                    // perform workspace cleanup only if the build have passed
+                    // if the build has failed, the workspace will be kept
+                    cleanWs cleanWhenFailure: false
+                }
+            }
+        },
+
+        "CC7" : {
+            node('diracci7-02') {
+
+                cleanWs()
+
+                try {
+                    sh """
+                        which python
+                        python --version
+
+                        git clone https://github.com/${params.DIRAC_test_repo}/DIRAC.git
+                        cd DIRAC
+                        git checkout ${params.DIRAC_test_branch}
+                        cd ..
+
+                        cp DIRAC/tests/Integration/WorkloadManagementSystem/Test_GenerateAndExecutePilotWrapper.py .
+
+                        python Test_GenerateAndExecutePilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/WorkloadManagementSystem/Utilities/PilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/Core/scripts/dirac-install.py
+                    """
+                } catch (e) {
+                    // if any exception occurs, mark the build as failed
+                    currentBuild.result = 'FAILURE'
+                    throw e
+                } finally {
+                    // perform workspace cleanup only if the build have passed
+                    // if the build has failed, the workspace will be kept
+                    cleanWs cleanWhenFailure: false
+                }
+            }
+        },
+
         "cernVM" : {
             node('lhcbci-cernvm04') {
 
                 cleanWs()
 
                 try {
-                    // get the code, then execute:
-                    // python Test_GenerateAndExecutePilotWrapper.py file://PilotWrapper.py file://dirac-install.py
                     sh """
+                        which python
+                        python --version
+
                         git clone https://github.com/${params.DIRAC_test_repo}/DIRAC.git
                         cd DIRAC
                         git checkout ${params.DIRAC_test_branch}
@@ -51,6 +114,9 @@ stage('Test') {
 
                 try {
                     sh """
+                        which python
+                        python --version
+
                         git clone https://github.com/${params.DIRAC_test_repo}/DIRAC.git
                         cd DIRAC
                         git checkout ${params.DIRAC_test_branch}
@@ -70,6 +136,38 @@ stage('Test') {
                     cleanWs cleanWhenFailure: false
                 }
             }
+        },
+
+        "cernVM4-python34" : {
+            node('lhcbci-cernvm4-02') {
+
+                cleanWs()
+
+                try {
+                    sh """
+                        which python3.4
+                        python3.4 --version
+
+                        git clone https://github.com/${params.DIRAC_test_repo}/DIRAC.git
+                        cd DIRAC
+                        git checkout ${params.DIRAC_test_branch}
+                        cd ..
+
+                        cp DIRAC/tests/Integration/WorkloadManagementSystem/Test_GenerateAndExecutePilotWrapper.py .
+
+                        python3.4 Test_GenerateAndExecutePilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/WorkloadManagementSystem/Utilities/PilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/Core/scripts/dirac-install.py
+                    """
+                } catch (e) {
+                    // if any exception occurs, mark the build as failed
+                    currentBuild.result = 'FAILURE'
+                    throw e
+                } finally {
+                    // perform workspace cleanup only if the build have passed
+                    // if the build has failed, the workspace will be kept
+                    cleanWs cleanWhenFailure: false
+                }
+            }
         }
+
     )
 }
