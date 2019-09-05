@@ -20,18 +20,17 @@ try:
   import requests
 except ImportError:
   requests = None
+  from wasser import Wasser# as requests
 try:
   import stomp
 except ImportError:
   stomp = None
 
-############################
 # python 2 -> 3 "hacks"
 try:
   import Queue as queue
 except ImportError:
   import queue
-############################
 
 
 def loadAndCreateObject(moduleName, className, params):
