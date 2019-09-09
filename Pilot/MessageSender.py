@@ -19,8 +19,7 @@ import logging
 try:
   import requests
 except ImportError:
-  requests = None
-  from wasser import Wasser# as requests
+  import wasser as requests
 try:
   import stomp
 except ImportError:
@@ -165,11 +164,17 @@ class RESTSender(MessageSender):
 
     logging.debug("sending message from the REST Sender")
     try:
+<<<<<<< 1a3561f5dd821e8918ad586a4842451792c9bf31
       requests.post(url,  # pylint: disable=undefined-variable
                     json=msg,
                     cert=(hostCertificate, hostKey),
                     verify=CACertificate)
     except (requests.exceptions.RequestException, IOError) as e:  # pylint: disable=undefined-variable
+=======
+        requests.post(url, msg, (hostCertificate, hostKey), CACertificate)
+    except (requests.exceptions.RequestException,
+            requests.RequestException,IOError) as e:
+>>>>>>> Test of wasser with another API
       logging.error(e)
       return False
     return True
