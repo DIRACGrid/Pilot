@@ -152,9 +152,9 @@ class RESTSender(MessageSender):
     logging.debug("in init of RESTSender")
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
     self.params = params
-    if not self._areParamsCorrect(self.params):
-      logging.error("Parameters missing needed to send messages! Parameters:%s", str(self.params))
-      raise ValueError("Parameters missing needed to send messages")
+#    if not self._areParamsCorrect(self.params):
+#      logging.error("Parameters missing needed to send messages! Parameters:%s", str(self.params))
+#      raise ValueError("Parameters missing needed to send messages")
 
   def sendMessage(self, msg, flag):
     url = self.params.get('Url')
