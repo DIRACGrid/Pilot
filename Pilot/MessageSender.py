@@ -251,9 +251,9 @@ class StompSender(MessageSender):
 
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
     self.params = params
-    if not self._areParamsCorrect(self.params):
-      logging.error("Parameters missing needed to send messages! Parameters:%s", str(self.params))
-      raise ValueError("Parameters missing needed to send messages")
+#    if not self._areParamsCorrect(self.params):
+#      logging.error("Parameters missing needed to send messages! Parameters:%s", str(self.params))
+#      raise ValueError("Parameters missing needed to send messages")
 
   def sendMessage(self, msg, flag):
     """ Method first copies the message content to the
