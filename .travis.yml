@@ -22,7 +22,7 @@ script:
   - if [[ "${CHECK}" == "pytest"  ]];
     then pytest;
     elif [[ "${CHECK}" == "pylint"  ]];
-    then travis_wait 30 ./runPylint.sh;
+    then travis_wait 30 && cp Pilot/wasser.py Pilot/python2.6_tests/ && cp Pilot/MessageSender.py Pilot/python2.6_tests/  &&  ./runPylint.sh;
     elif [[ "${CHECK}" == "format" ]] && [[ "${TRAVIS_PULL_REQUEST}" != "false" ]];
     then git remote add GH https://github.com/DIRACGrid/Pilot.git; git fetch --no-tags GH ${TRAVIS_BRANCH}; git branch -vv; git diff -U0 GH/${TRAVIS_BRANCH} | pycodestyle --diff;
     fi
