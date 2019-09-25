@@ -7,7 +7,7 @@ For testing the PilotWrapper.
 
 
 properties([parameters([string(name: 'DIRAC_test_repo', defaultValue: 'DIRACGrid', description: 'The DIRAC repo to use for getting the test code'),
-                        string(name: 'DIRAC_test_branch', defaultValue: 'rel-v7r0', description: 'The DIRAC branch or tag to use for getting the test code')
+                        string(name: 'DIRAC_test_branch', defaultValue: 'rel-v7r1', description: 'The DIRAC branch or tag to use for getting the test code')
                        ])])
 
 stage('Test') {

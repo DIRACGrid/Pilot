@@ -350,7 +350,8 @@ class CheckCECapabilities(CommandBase):
     """
     super(CheckCECapabilities, self).__init__(pilotParams)
 
-    # this variable contains the options that are passed to dirac-configure, and that will fill the local dirac.cfg file
+    # this variable contains the options that are passed to dirac-configure,
+    # and that will fill the local dirac.cfg file
     self.cfg = []
 
   def execute(self):
@@ -385,13 +386,6 @@ class CheckCECapabilities(CommandBase):
     # Pick up all the relevant resource parameters that will be used in the job matching
     if "WholeNode" in resourceDict:
       self.pp.tags.append('WholeNode')
-
-    # If MaxNumberOfProcessors not defined check for NumberOfProcessors
-    if self.pp.maxNumberOfProcessors == 0:
-      self.pp.maxNumberOfProcessors = int(
-          resourceDict.get(
-              "MaxNumberOfProcessors", resourceDict.get(
-                  "NumberOfProcessors", 0)))
 
      # Tags must be added to already defined tags if any
     if resourceDict.get('Tag'):
@@ -470,10 +464,6 @@ class CheckWNCapabilities(CommandBase):
       self.log.error("Could not get resource parameters [ERROR %d]" % retCode)
       self.exitWithError(retCode)
 
-    # We store payloadProcessors in the global parameters so that other
-    # commands can more easily use it (eg MultiLaunchAgent)
-    self.pp.payloadProcessors = 1
-
     try:
       result = result.split(' ')
       numberOfProcessorsOnWN = int(result[0])
@@ -484,27 +474,25 @@ class CheckWNCapabilities(CommandBase):
 
     # If NumberOfProcessors or MaxRAM are defined in the resource configuration, these
     # values are preferred
+
+    # pilotProcessors is basically the number of processors this pilot is "managing"
+    self.pp.pilotProcessors = numberOfProcessorsOnWN
+
+    # payloadProcessors is the max number of processors used by the single payloads.
+    # We store payloadProcessors in the global parameters so that other commands can more easily use it.
+    # (MultiLaunchAgent is right now the only consumer)
+    self.pp.payloadProcessors = 1
     if "WholeNode" in self.pp.tags:
-      self.pp.payloadProcessors = numberOfProcessorsOnWN
+      self.pp.payloadProcessors = self.pp.pilotProcessors
     if self.pp.maxNumberOfProcessors > 0:
-      self.pp.payloadProcessors = min(numberOfProcessorsOnWN, self.pp.maxNumberOfProcessors)
+      self.pp.payloadProcessors = min(self.pp.pilotProcessors, self.pp.maxNumberOfProcessors)
 
-    if not self.pp.payloadProcessors:
-      self.log.warn("Could not retrieve number of processors, assuming 1")
-      self.pp.payloadProcessors = 1
-
-    # Make sure the multiprocessor tags are present if not already there
-    if self.pp.payloadProcessors > 1:
-      if 'MultiProcessor' not in self.pp.tags:
-        self.pp.tags.append('MultiProcessor')
-      if 'MultiProcessor' not in self.pp.reqtags:
-        self.pp.reqtags.append('MultiProcessor')
-      if ('%dProcessors' % self.pp.payloadProcessors) not in self.pp.tags:
-        self.pp.tags.append('%dProcessors' % self.pp.payloadProcessors)
-
+    self.log.info('pilotProcessors = %d' % self.pp.pilotProcessors)
     self.log.info('payloadProcessors = %d' % self.pp.payloadProcessors)
     self.cfg.append(
-        '-o "/Resources/Computing/CEDefaults/NumberOfProcessors=%d"' % self.pp.payloadProcessors)
+        '-o "/Resources/Computing/CEDefaults/NumberOfProcessors=%d"' % self.pp.pilotProcessors)
+    self.cfg.append(
+        '-o "/Resources/Computing/CEDefaults/NumberOfPayloadProcessors=%d"' % self.pp.payloadProcessors)
 
     maxRAM = self.pp.queueParameters.get('MaxRAM', maxRAM)
     if maxRAM:
@@ -556,7 +544,8 @@ class ConfigureSite(CommandBase):
     """
     super(ConfigureSite, self).__init__(pilotParams)
 
-    # this variable contains the options that are passed to dirac-configure, and that will fill the local dirac.cfg file
+    # this variable contains the options that are passed to dirac-configure,
+    # and that will fill the local dirac.cfg file
     self.cfg = []
 
   def execute(self):
@@ -1083,7 +1072,8 @@ class MultiLaunchAgent(CommandBase):
 
         # Variants of: "600 Grid-wide problem with job agent or application within VM"
         ##############################################################################
-        ['ERROR: Pilot version does not match the production version', '600 Cannot match jobs with this pilot version'],
+        ['ERROR: Pilot version does not match the production version',
+         '600 Cannot match jobs with this pilot version'],
 
         # Variants of: "700 Error related to job agent or application within VM"
         ########################################################################
