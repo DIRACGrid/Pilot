@@ -72,6 +72,12 @@ After providing the default configuration files, DIRAC or your extension can be 
 
    It will install DIRAC v6r20-pre16
 
+   You can install an extension of diracos.
+
+   for example::
+
+     dirac-install -r v9r4-pre2 -l LHCb --dirac-os --dirac-os-version=LHCb:master
+
 3. You have possibility to install a not-yet-released DIRAC, module or extension using -m or --tag options.
    The non release version can be specified.
 
@@ -737,17 +743,20 @@ class ReleaseConfig(object):
       return S_OK(sourceUrl)
     return S_ERROR("Don't know how to find the installation tarballs for project %s" % project)
 
-  def getDiracOsLocation(self, project=None):
+  def getDiracOsLocation(self, project=None, diracosDefault=False):
     """
     Returns the location of the DIRAC os binary for a given project for example: LHCb or DIRAC, etc...
 
     :param str project: the name of the project
+    :param bool diracosDefault: flag to take diracos distribution from the default location
+
+    :return: the location of the tar balls
     """
     if project is None:
       project = 'DIRAC'
 
     diracOsLoc = "Projects/%s/DIRACOS" % self.projectName
-    if self.globalDefaults.isOption(diracOsLoc):
+    if not diracosDefault and self.globalDefaults.isOption(diracOsLoc):
       # use from the VO specific configuration file
       location = self.globalDefaults.get(diracOsLoc, "")
     else:
@@ -1111,6 +1120,21 @@ class ReleaseConfig(object):
     except KeyError:
       return False
 
+  def getDiracOSExtensionAndVersion(self, diracOSVersion):
+    """
+    This method return the diracos and version taking into
+    account the extension. The file format will be <Extension<diracos-<version>.tar.gz
+
+    :param str diracOSVersion: column separated string for example: LHCb:v1
+    :return: if the extension is not provided, it will return DIRACOS defined in DIRAC otherwise
+    the DIRACOS specified in the extension
+    """
+    if ":" in diracOSVersion:
+      package, packageVersion = [i.strip() for i in diracOSVersion.split(':')]
+      return [package + 'diracos', packageVersion]
+    else:
+      return ['diracos', diracOSVersion]
+
   def getDiracOSVersion(self, diracOSVersion=None):
     """
     It returns the DIRACOS version
@@ -1118,7 +1142,7 @@ class ReleaseConfig(object):
     """
 
     if diracOSVersion:
-      return diracOSVersion
+      return self.getDiracOSExtensionAndVersion(diracOSVersion)
     try:
       diracOSVersion = self.prjRelCFG[self.projectName][cliParams.release].get(
           "Releases/%s/DIRACOS" % cliParams.release, diracOSVersion)
@@ -1130,7 +1154,7 @@ class ReleaseConfig(object):
               "Releases/%s/DIRACOS" % release, diracOSVersion)
     except KeyError:
       pass
-    return diracOSVersion
+    return self.getDiracOSExtensionAndVersion(diracOSVersion)
 
   def getLCGVersion(self, lcgVersion=None):
     """
@@ -1668,7 +1692,7 @@ def usage():
   print ("\nOptions:")
   for cmdOpt in cmdOpts:
     print ("\n  %s %s : %s" % (cmdOpt[0].ljust(3), cmdOpt[1].ljust(20), cmdOpt[2]))
-  print
+  print()
   print ("Known options and default values from /defaults section of releases file")
   for options in [('Release', cliParams.release),
                   ('Project', cliParams.project),
@@ -2130,6 +2154,10 @@ def createBashrc():
       # Add the lines required for ARC CE support
       lines.extend(['# ARC Computing Element',
                     'export ARC_PLUGIN_PATH=$DIRACLIB/arc'])
+
+      # Add the lines required for fork support for xrootd
+      lines.extend(['# Fork support for xrootd',
+                    'export XRD_RUNFORKHANDLER=1'])
       lines.append('')
       f = open(bashrcFile, 'w')
       f.write('\n'.join(lines))
@@ -2226,6 +2254,11 @@ def createCshrc():
       # Add the lines required for ARC CE support
       lines.extend(['# ARC Computing Element',
                     'setenv ARC_PLUGIN_PATH $DIRACLIB/arc'])
+
+      # Add the lines required for fork support for xrootd
+      lines.extend(['# Fork support for xrootd',
+                    'setenv XRD_RUNFORKHANDLER 1'])
+
       lines.append('')
       f = open(cshrcFile, 'w')
       f.write('\n'.join(lines))
@@ -2282,7 +2315,7 @@ def installDiracOS(releaseConfig):
 
   :param str releaseConfig: the version of the DIRAC OS
   """
-  diracOSVersion = releaseConfig.getDiracOSVersion(cliParams.diracOSVersion)
+  diracos, diracOSVersion = releaseConfig.getDiracOSVersion(cliParams.diracOSVersion)
   if not diracOSVersion:
     logERROR("No diracos defined")
     return False
@@ -2290,11 +2323,23 @@ def installDiracOS(releaseConfig):
   if cliParams.installSource:
     tarsURL = cliParams.installSource
   else:
-    tarsURL = releaseConfig.getDiracOsLocation()['Value']
+    # if ":" is not present in diracos name, we take the diracos tarball from vanilla DIRAC location
+    if diracos.lower() == 'diracos':
+      retVal = releaseConfig.getDiracOsLocation(diracosDefault=True)
+      if retVal['OK']:
+        tarsURL = retVal['Value']
+      else:
+        logERROR(retVal['Message'])
+    else:
+      retVal = releaseConfig.getDiracOsLocation()
+      if retVal['OK']:
+        tarsURL = retVal['Value']
+      else:
+        logERROR(retVal['Message'])
   if not tarsURL:
     tarsURL = releaseConfig.getTarsLocation('DIRAC')['Value']
     logWARN("DIRACOS location is not specified using %s" % tarsURL)
-  if not downloadAndExtractTarball(tarsURL, "diracos", diracOSVersion, cache=True):
+  if not downloadAndExtractTarball(tarsURL, diracos, diracOSVersion, cache=True):
     return False
   logNOTICE("Fixing externals paths...")
   fixBuildPaths()
@@ -2319,8 +2364,9 @@ def createBashrcForDiracOS():
       lines = ['# DIRAC bashrc file, used by service and agent run scripts to set environment',
                'export PYTHONUNBUFFERED=yes',
                'export PYTHONOPTIMIZE=x',
-               '[ -z "$DIRACOS" ] && export DIRACOS=%s/diracos' % proPath,
-               '. %s/diracos/diracosrc' % proPath]
+               '[ -z "$DIRAC" ] && export DIRAC=%s' % proPath,
+               '[ -z "$DIRACOS" ] && export DIRACOS=$DIRAC/diracos',
+               '. $DIRACOS/diracosrc']
       if 'HOME' in os.environ:
         lines.append('[ -z "$HOME" ] && export HOME=%s' % os.environ['HOME'])
 
@@ -2348,8 +2394,6 @@ def createBashrcForDiracOS():
       lines.extend(
           [
               '# Some DIRAC locations',
-              '[ -z "$DIRAC" ] && export DIRAC=%s' %
-              proPath,
               'export DIRACSCRIPTS=%s' %
               os.path.join(
                   "$DIRAC",
@@ -2369,7 +2413,7 @@ def createBashrcForDiracOS():
                   'fonts',
                   'DejaVuSansMono-Roman.ttf')])
 
-      lines.extend(['# Prepend the PYTHONPATH, the LD_LIBRARY_PATH, and the DYLD_LIBRARY_PATH'])
+      lines.extend(['# Prepend the PATH and set the PYTHONPATH'])
 
       lines.extend(['( echo $PATH | grep -q $DIRACSCRIPTS ) || export PATH=$DIRACSCRIPTS:$PATH'])
 
@@ -2398,6 +2442,11 @@ def createBashrcForDiracOS():
       # Note: eventually this line should disappear as already set by diracosrc
       lines.extend(['# ARC Computing Element',
                     'export ARC_PLUGIN_PATH=$DIRACOS/usr/lib64/arc'])
+
+      # Add the lines required for fork support for xrootd
+      lines.extend(['# Fork support for xrootd',
+                    'export XRD_RUNFORKHANDLER=1'])
+
       lines.append('')
       with open(bashrcFile, 'w') as f:
         f.write('\n'.join(lines))
