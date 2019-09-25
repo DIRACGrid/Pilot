@@ -8,7 +8,9 @@ env:
   matrix:
     - CHECK=pytest
     - CHECK=pylint
+    - CHECK=pylintPY3K
     - CHECK=format
+    - CHECK=shellcheck
 
 # command to install dependencies
 install: 
@@ -20,16 +22,23 @@ install:
 script:
   - export PYTHONPATH=${PWD%/*}
   - ls $PYTHONPATH
-  - if [[ "${CHECK}" == "pytest"  ]];
-    then pytest;
-    elif [[ "${CHECK}" == "pylint"  ]];
-    then travis_wait 30 ./runPylint.sh;
-    elif [[ "${CHECK}" == "format" ]] && [[ "${TRAVIS_PULL_REQUEST}" != "false" ]];
-    then git remote add GH https://github.com/DIRACGrid/Pilot.git; git fetch --no-tags GH ${TRAVIS_BRANCH}; git branch -vv; git diff -U0 GH/${TRAVIS_BRANCH} | pycodestyle --diff;
+  - if [[ "${CHECK}" == "pytest"  ]]; then
+      pytest;
+    elif [[ "${CHECK}" == "pylint"  ]]; then
+      travis_wait 30 ./runPylint.sh;
+    elif [[ "${CHECK}" == "pylintPY3K"  ]]; then
+      travis_wait 30 .travis.d/runPylint.sh;
+    elif [[ "${CHECK}" == "format" ]] && [[ "${TRAVIS_PULL_REQUEST}" != "false" ]]; then
+      git remote add GH https://github.com/DIRACGrid/Pilot.git; git fetch --no-tags GH ${TRAVIS_BRANCH}; git branch -vv; git diff -U0 GH/${TRAVIS_BRANCH} | pycodestyle --diff;
+    elif [[ "${CHECK}" == "shellcheck"  ]]; then
+      find tests/CI -name '*.sh' -print0 | xargs -0 -n1 shellcheck --external-sources
+    else
+      echo "Unrecognised check ${CHECK}";
+      exit 42;
     fi
 
 ## ignore errors for sourcefiles "-i"
 after_success:
-  - if [[ "${CHECK}" == "pytest"  ]];
-    then coveralls -i;
+  - if [[ "${CHECK}" == "pytest"  ]]; then
+      coveralls -i;
     fi
