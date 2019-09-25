@@ -1,0 +1,142 @@
+#!/usr/bin/env groovy
+
+/*
+This is customized pipeline for running on jenkins-dirac.web.cern.ch
+For testing the PilotWrapper.
+*/
+
+
+properties([parameters([string(name: 'DIRAC_test_repo', defaultValue: 'DIRACGrid', description: 'The DIRAC repo to use for getting the test code'),
+                        string(name: 'DIRAC_test_branch', defaultValue: 'rel-v7r0', description: 'The DIRAC branch or tag to use for getting the test code')
+                       ])])
+
+stage('Test') {
+
+    parallel(
+
+        "SLC6" : {
+            node('diracci6-02') {
+
+                cleanWs()
+
+                try {
+                    sh """
+                        which python
+                        python --version
+
+                        git clone https://github.com/${params.DIRAC_test_repo}/DIRAC.git
+                        cd DIRAC
+                        git checkout ${params.DIRAC_test_branch}
+                        cd ..
+
+                        cp DIRAC/tests/Integration/WorkloadManagementSystem/Test_GenerateAndExecutePilotWrapper.py .
+
+                        python Test_GenerateAndExecutePilotWrapper.py file:///scratch/workspace/PilotWrapper/DIRAC/WorkloadManagementSystem/Utilities/PilotWrapper.py file:///scratch/workspace/PilotWrapper/DIRAC/Core/scripts/dirac-install.py
+                    """
+                } catch (e) {
+                    // if any exception occurs, mark the build as failed
+                    currentBuild.result = 'FAILURE'
+                    throw e
+                } finally {
+                    // perform workspace cleanup only if the build have passed
+                    // if the build has failed, the workspace will be kept
+                    cleanWs cleanWhenFailure: false
+                }
+            }
+        },
+
+        "CC7" : {
+            node('diracci7-02') {
+
+                cleanWs()
+
+                try {
+                    sh """
+                        which python
+                        python --version
+
+                        git clone https://github.com/${params.DIRAC_test_repo}/DIRAC.git
+                        cd DIRAC
+                        git checkout ${params.DIRAC_test_branch}
+                        cd ..
+
+                        cp DIRAC/tests/Integration/WorkloadManagementSystem/Test_GenerateAndExecutePilotWrapper.py .
+
+                        python Test_GenerateAndExecutePilotWrapper.py file:///scratch/workspace/PilotWrapper/DIRAC/WorkloadManagementSystem/Utilities/PilotWrapper.py file:///scratch/workspace/PilotWrapper/DIRAC/Core/scripts/dirac-install.py
+                    """
+                } catch (e) {
+                    // if any exception occurs, mark the build as failed
+                    currentBuild.result = 'FAILURE'
+                    throw e
+                } finally {
+                    // perform workspace cleanup only if the build have passed
+                    // if the build has failed, the workspace will be kept
+                    cleanWs cleanWhenFailure: false
+                }
+            }
+        },
+
+        "cernVM" : {
+            node('lhcbci-cernvm04') {
+
+                cleanWs()
+
+                try {
+                    sh """
+                        which python
+                        python --version
+
+                        git clone https://github.com/${params.DIRAC_test_repo}/DIRAC.git
+                        cd DIRAC
+                        git checkout ${params.DIRAC_test_branch}
+                        cd ..
+
+                        cp DIRAC/tests/Integration/WorkloadManagementSystem/Test_GenerateAndExecutePilotWrapper.py .
+
+                        python Test_GenerateAndExecutePilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/WorkloadManagementSystem/Utilities/PilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/Core/scripts/dirac-install.py
+                    """
+                } catch (e) {
+                    // if any exception occurs, mark the build as failed
+                    currentBuild.result = 'FAILURE'
+                    throw e
+                } finally {
+                    // perform workspace cleanup only if the build have passed
+                    // if the build has failed, the workspace will be kept
+                    cleanWs cleanWhenFailure: false
+                }
+            }
+        },
+
+        "cernVM4" : {
+            node('lhcbci-cernvm4-01') {
+
+                cleanWs()
+
+                try {
+                    sh """
+                        which python
+                        python --version
+
+                        git clone https://github.com/${params.DIRAC_test_repo}/DIRAC.git
+                        cd DIRAC
+                        git checkout ${params.DIRAC_test_branch}
+                        cd ..
+
+                        cp DIRAC/tests/Integration/WorkloadManagementSystem/Test_GenerateAndExecutePilotWrapper.py .
+
+                        python Test_GenerateAndExecutePilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/WorkloadManagementSystem/Utilities/PilotWrapper.py file:///home/dirac/scratch/workspace/PilotWrapper/DIRAC/Core/scripts/dirac-install.py
+                    """
+                } catch (e) {
+                    // if any exception occurs, mark the build as failed
+                    currentBuild.result = 'FAILURE'
+                    throw e
+                } finally {
+                    // perform workspace cleanup only if the build have passed
+                    // if the build has failed, the workspace will be kept
+                    cleanWs cleanWhenFailure: false
+                }
+            }
+        }
+
+    )
+}
