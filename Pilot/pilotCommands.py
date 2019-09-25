@@ -17,6 +17,8 @@
     execution.
 """
 
+from __future__ import print_function
+
 __RCSID__ = "$Id$"
 
 import sys
@@ -1020,7 +1022,7 @@ class MultiLaunchAgent(CommandBase):
     for i in xrange(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
       shutdownMessage = self.__parseJobAgentLog(os.path.join(self.pp.workingDir, 'jobagent.%02d.log' % i))
       open(os.path.join(self.pp.workingDir, 'shutdown_message.%02d' % i), 'w').write(shutdownMessage)
-      print shutdownMessage
+      print(shutdownMessage)
 
     # FIX ME: this effectively picks one at random. Should be the last one to finish chronologically.
     # Not in order of being started.
