@@ -56,6 +56,7 @@ echo -e "$WORKSPACE"
 mkdir -p "$WORKSPACE/TestCode" # Where the test code resides
 TESTCODE=$_
 mkdir -p "$WORKSPACE/ClientInstallDIR" # Where client are installed
+# shellcheck disable=SC2034
 CLIENTINSTALLDIR=$_
 mkdir -p "$WORKSPACE/PilotInstallDIR" # Where pilots are installed
 PILOTINSTALLDIR=$_
@@ -85,6 +86,7 @@ function PilotInstall(){
   sed -i "s/VAR_JENKINS_SITE/$JENKINS_SITE/g" pilot.json
   sed -i "s/VAR_JENKINS_CE/$JENKINS_CE/g" pilot.json
   sed -i "s/VAR_JENKINS_QUEUE/$JENKINS_QUEUE/g" pilot.json
+  # shellcheck disable=SC2154
   sed -i "s/VAR_DIRAC_VERSION/$projectVersion/g" pilot.json
   sed -i "s#VAR_CS#$CSURL#g" pilot.json
   sed -i "s#VAR_USERDN#$DIRACUSERDN#g" pilot.json

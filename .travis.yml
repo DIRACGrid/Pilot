@@ -40,10 +40,7 @@ script:
     elif [[ "${CHECK}" == "format" ]] && [[ "${TRAVIS_PULL_REQUEST}" != "false" ]]; then
       git remote add GH https://github.com/DIRACGrid/Pilot.git; git fetch --no-tags GH ${TRAVIS_BRANCH}; git branch -vv; git diff -U0 GH/${TRAVIS_BRANCH} | pycodestyle --diff;
     elif [[ "${CHECK}" == "shellcheck"  ]]; then
-      find tests/CI -name '*.sh' -print0 | xargs -0 -n1 shellcheck --external-sources
-    else
-      echo "Unrecognised check ${CHECK}";
-      exit 42;
+      find tests/CI -name '*.sh' -print0 | xargs -0 -n1 shellcheck --external-sources;
     fi
 
 ## ignore errors for sourcefiles "-i"

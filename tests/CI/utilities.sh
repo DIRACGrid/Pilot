@@ -6,7 +6,7 @@
 
 # Sourcing DIRAC/tests utility file
 
-# shellcheck source=../DIRAC/tests/Jenkins/utilities.sh
+# shellcheck source=/dev/null
 source "$TESTCODE/DIRAC/tests/Jenkins/utilities.sh"
 
 
