@@ -5,12 +5,21 @@ python:
   - "2.7"
 
 env:
-  matrix:
-    - CHECK=pytest
-    - CHECK=pylint
-    - CHECK=pylintPY3K
-    - CHECK=format
-    - CHECK=shellcheck
+  - CHECK=pytest
+  - CHECK=pylint
+  - CHECK=pylintPY3K
+  - CHECK=format
+  - CHECK=shellcheck
+
+# no need to run some tests on python 2.6 (and pylintPY3K anyway would fail)
+matrix:
+  exclude:
+    - python: "2.6"
+      env: CHECK=format
+    - python: "2.6"
+      env: CHECK=pylintPY3K
+    - python: "2.6"
+      env: CHECK=shellcheck
 
 # command to install dependencies
 install: 
