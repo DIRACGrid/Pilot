@@ -78,21 +78,28 @@
       "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST"
     },
-    "jenkins-full.cern.ch": {
-      "Site": "VAR_JENKINS_SITE",
-      "Queue": "VAR_JENKINS_QUEUE",
-      "GridCEType": "TEST-FULL"
-    },
     "jenkins-mp.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
       "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-MP"
+    },
+    "jenkins-mp-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST-FULL"
     },
     "jenkins-mp-pool.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
       "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-FULL",
       "LocalCEType": "Pool"
+    },
+    "jenkins-mp-pool-sudo.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST-FULL",
+      "LocalCEType": "Pool",
+      "SudoExecution": "True"
     }
   },
   "DefaultSetup": "DIRAC-Certification"
