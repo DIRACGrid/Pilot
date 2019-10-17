@@ -485,7 +485,7 @@ class PilotParams(object):
     # Some commands can define environment necessary to execute subsequent commands
     self.installEnv = os.environ
     # If DIRAC is preinstalled this file will receive the updates of the local configuration
-    self.localConfigFile = ''
+    self.localConfigFile = 'pilot.cfg'
     self.executeCmd = False
     self.configureScript = 'dirac-configure'
     self.architectureScript = 'dirac-platform'
