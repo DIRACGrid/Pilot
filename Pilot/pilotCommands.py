@@ -179,6 +179,8 @@ class InstallDIRAC(CommandBase):
       self.installOpts.append("-l '%s'" % self.pp.releaseProject)
     if self.pp.modules:
       self.installOpts.append("-m '%s'" % self.pp.modules)
+    if self.pp.userEnvVariables:
+      self.installOpts.append("--userEnvVariables=%s" % self.pp.userEnvVariables)
 
     # The release version to install is a requirement
     self.installOpts.append('-r "%s"' % self.pp.releaseVersion)
