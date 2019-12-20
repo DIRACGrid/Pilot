@@ -480,8 +480,8 @@ class PilotParams(object):
     self.queueName = ""
     self.gridCEType = ""
     self.platform = ""
-    # maxNumberOfProcessors: the number of processors allocated to the pilot
-    # which the pilot can allocate to one payload
+    # maxNumberOfProcessors: the number of
+    # processors allocated to the pilot which the pilot can allocate to one payload
     # used to set payloadProcessors unless other limits are reached (like the number of processors on the WN)
     self.maxNumberOfProcessors = 0
     self.minDiskSpace = 2560  # MB
@@ -512,6 +512,7 @@ class PilotParams(object):
     self.pilotCFGFile = 'pilot.json'
     self.pilotLogging = False
     self.modules = ''  # see dirac-install "-m" option documentation
+    self.userEnvVariables = ''  # see dirac-install "--userEnvVariables" option documentation
 
     # Parameters that can be determined at runtime only
     self.queueParameters = {}  # from CE description
@@ -542,6 +543,8 @@ class PilotParams(object):
                     ('m:', 'maxNumberOfProcessors=',
                      'specify a max number of processors to use by the payload inside a pilot'),
                     ('', 'modules=', 'for installing non-released code (see dirac-install "-m" option documentation)'),
+                    ('', 'userEnvVariables=',
+                     'User-requested environment variables (comma-separated, name and value separated by ":::")'),
                     ('r:', 'release=', 'DIRAC release to install'),
                     ('s:', 'section=', 'Set base section for relative parsed options'),
                     ('t:', 'tag=', 'extra tags for resource description'),
@@ -677,6 +680,8 @@ class PilotParams(object):
         self.reqtags.append(v)
       elif o == '--modules':
         self.modules = v
+      elif o == '--userEnvVariables':
+        self.userEnvVariables = v
 
   def __initJSON(self):
     """Retrieve pilot parameters from the content of json file. The file should be something like:
