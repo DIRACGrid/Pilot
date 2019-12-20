@@ -205,6 +205,7 @@ class Params(object):
     self.cleanPYTHONPATH = False
     self.createLink = False
     self.scriptSymlink = False
+    self.userEnvVariables = {}
 
 
 cliParams = Params()
@@ -1683,7 +1684,9 @@ cmdOpts = (('r:', 'release=', 'Release version to install'),
            ('  ', 'cleanPYTHONPATH', 'Only use the DIRAC PYTHONPATH (for pilots installation)'),
            ('  ', 'createLink', 'create version symbolic link from the versions directory. This is equivalent to the \
            following command: ln -s /opt/dirac/versions/vArBpC vArBpC'),
-           ('  ', 'scriptSymlink', 'Symlink the scripts instead of creating wrapper')
+           ('  ', 'scriptSymlink', 'Symlink the scripts instead of creating wrapper'),
+           ('  ', 'userEnvVariables=',
+            'User-requested environment variables (comma-separated, name and value separated by ":::")')
            )
 
 
@@ -1741,7 +1744,7 @@ def loadConfiguration():
 
   # at the end we load the local configuration and merge with the global cfg
   for arg in args:
-    if len(arg) > 4 and arg.find(".cfg") == len(arg) - 4:
+    if len(arg) > 4 and arg.find(".cfg") == len(arg) - 4 and ':::' not in arg:
       result = releaseConfig.loadInstallationLocalDefaults(arg)
       if not result['OK']:
         logERROR(result['Message'])
@@ -1831,6 +1834,9 @@ def loadConfiguration():
       cliParams.createLink = True
     elif o == '--scriptSymlink':
       cliParams.scriptSymlink = True
+    elif o == '--userEnvVariables':
+      cliParams.userEnvVariables = dict(zip([name.split(':::')[0] for name in v.replace(' ', '').split(',')],
+                                            [value.split(':::')[1] for value in v.replace(' ', '').split(',')]))
 
   if not cliParams.release and not cliParams.modules:
     logERROR("Missing release to install")
@@ -2158,6 +2164,13 @@ def createBashrc():
       # Add the lines required for fork support for xrootd
       lines.extend(['# Fork support for xrootd',
                     'export XRD_RUNFORKHANDLER=1'])
+
+      # Add the lines required for further env variables requested
+      if cliParams.userEnvVariables:
+        lines.extend(['# User-requested variables'])
+        for envName, envValue in cliParams.userEnvVariables.items():
+          lines.extend(['export %s=%s' % (envName, envValue)])
+
       lines.append('')
       f = open(bashrcFile, 'w')
       f.write('\n'.join(lines))
@@ -2258,6 +2271,12 @@ def createCshrc():
       # Add the lines required for fork support for xrootd
       lines.extend(['# Fork support for xrootd',
                     'setenv XRD_RUNFORKHANDLER 1'])
+
+      # Add the lines required for further env variables requested
+      if cliParams.userEnvVariables:
+        lines.extend(['# User-requested variables'])
+        for envName, envValue in cliParams.userEnvVariables.items():
+          lines.extend(['setenv %s %s' % (envName, envValue)])
 
       lines.append('')
       f = open(cshrcFile, 'w')
@@ -2447,6 +2466,12 @@ def createBashrcForDiracOS():
       lines.extend(['# Fork support for xrootd',
                     'export XRD_RUNFORKHANDLER=1'])
 
+      # Add the lines required for further env variables requested
+      if cliParams.userEnvVariables:
+        lines.extend(['# User-requested variables'])
+        for envName, envValue in cliParams.userEnvVariables.items():
+          lines.extend(['export %s=%s' % (envName, envValue)])
+
       lines.append('')
       with open(bashrcFile, 'w') as f:
         f.write('\n'.join(lines))
@@ -2471,6 +2496,10 @@ def checkoutFromGit(moduleName, sourceURL, tagVersion, destinationDir=None):
   codeRepo = moduleName + 'Repo'
 
   fDirName = os.path.join(cliParams.targetPath, codeRepo)
+  if os.path.isdir(sourceURL):
+    logNOTICE("Using local copy for source: %s" % sourceURL)
+    shutil.copytree(sourceURL, fDirName)
+  else:
   cmd = "git clone '%s' '%s'" % (sourceURL, fDirName)
 
   logNOTICE("Executing: %s" % cmd)
