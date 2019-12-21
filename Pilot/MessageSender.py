@@ -15,8 +15,16 @@
 
 from __future__ import absolute_import, division, print_function
 
+import sys
+import Queue
+>>>>>>> Working version for python 2.6
 import logging
-import wasser as requests
+def isPython2_6():
+  return sys.version_info[0]==2 and sys.version_info[1]==6
+if isPython2_6():
+    import wasser as requests
+else:
+    import requests
 try:
   import stomp
 except ImportError:
@@ -159,16 +167,23 @@ class RESTSender(MessageSender):
     hostCertificate = self.params.get('HostCertificate')
     CACertificate = self.params.get('CACertificate')
 
-    logging.debug("sending message from the REST Sender")
-    try:
-      requests.post(url,  # pylint: disable=undefined-variable
-                    json=msg,
-                    cert=(hostCertificate, hostKey),
-                    verify=CACertificate)
-    except (requests.exceptions.RequestException, IOError) as e:  # pylint: disable=undefined-variable
-      logging.error(e)
-      return False
-    return True
+    if isPython2_6():
+        try:
+          requests.post(url,  # pylint: disable=undefined-variable
+                        json=msg,
+                        cert=(hostCertificate, hostKey),
+                        verify=CACertificate)
+        except (requests.RequestException,IOError) as e:
+          logging.error(e)
+          return False
+    else:
+        try:
+            requests.post(url, json=msg, cert=(hostCertificate, hostKey),
+                          verify=CACertificate)
+        except (requests.exceptions.RequestException,IOError) as e:
+          logging.error(e)
+          return False
+      return True
 
 
 def eraseFileContent(filename):
