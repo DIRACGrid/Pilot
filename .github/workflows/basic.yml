@@ -35,7 +35,8 @@ jobs:
         conda create -c conda-forge -c free -n python_${{ matrix.python }} python=${{ matrix.python }}
         source "${CONDA}/bin/activate"
         conda activate python_${{ matrix.python }}
-        conda install pytest pytest-mock pylint
+        conda install pytest pytest-mock pylint autopep8  mock requests
+        pip install caniusepython3 stomp.py
     - name: Run tests
       run: |
         source "${CONDA}/bin/activate"
