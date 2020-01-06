@@ -22,7 +22,7 @@ jobs:
                 git diff -U0 GH/${TRAVIS_BRANCH} | pycodestyle --diff;
             fi
         python: 
-          - 2.6.9
+          # - 2.6.9
           - 2.7.5
           - 2.7.13
           # - 3.6.8
@@ -35,7 +35,11 @@ jobs:
         conda create -c conda-forge -c free -n python_${{ matrix.python }} python=${{ matrix.python }}
         source "${CONDA}/bin/activate"
         conda activate python_${{ matrix.python }}
-        conda install pytest pylint
+        conda install pytest pytest-mock pylint
     - name: Run tests
       run: |
+        source "${CONDA}/bin/activate"
+        conda activate python_${{ matrix.python }}
+        set -euxo pipefail
+        export PYTHONPATH=${PWD%/*}
         ${{ matrix.command }}
