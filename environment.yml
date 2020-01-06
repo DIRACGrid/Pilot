@@ -1,0 +1,13 @@
+dependencies:
+  # runtime
+  - requests
+  - stomp.py
+  # testing and development
+  - autopep8
+  - caniusepython3
+  - coverage
+  - mock
+  - pylint
+  - pytest
+  - pytest-mock
+  - shellcheck
