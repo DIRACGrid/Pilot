@@ -1,0 +1,45 @@
+name: Basic tests
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: False
+      matrix:
+        command:
+          - pytest
+          - find tests/CI -name '*.sh' -print0 | xargs -0 -n1 shellcheck --external-sources;
+          - ./runPylint.sh
+          - CHECK=pylintPY3K ./runPylint.sh
+          - |
+            if [[ "${REFERENCE_BRANCH}" != "" ]]; then
+                git remote add GH https://github.com/DIRACGrid/Pilot.git
+                git fetch --no-tags GH ${TRAVIS_BRANCH}
+                git branch -vv
+                git diff -U0 GH/${TRAVIS_BRANCH} | pycodestyle --diff;
+            fi
+        python: 
+          - 2.6.9
+          - 2.7.5
+          - 2.7.13
+          - 3.6.8
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Prepare environment
+      run: |
+        conda config --set add_pip_as_python_dependency false
+        conda create -c conda-forge -c free -n python_${{ matrix.python }} python=${{ matrix.python }}
+        pip install -r requirements.txt
+    - name: Run tests
+      run: |
+        source "${CONDA}/bin/activate"
+        conda activate dirac-testing
+        set -euxo pipefail
+        export PYTHONPATH=${PWD%/*}
+        ${{ matrix.command }}
+      env:
+        REFERENCE_BRANCH: ${{ github['base_ref'] || github['head_ref'] }}
