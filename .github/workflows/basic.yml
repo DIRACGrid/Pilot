@@ -36,8 +36,5 @@ jobs:
         pip install -r requirements.txt
     - name: Run tests
       run: |
-        source "${CONDA}/bin/activate"
-        conda activate dirac-testing
-        set -euxo pipefail
-        export PYTHONPATH=${PWD%/*}
+        eval "$(conda shell.bash hook)" && conda activate python_${{ matrix.python }}
         ${{ matrix.command }}
