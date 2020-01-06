@@ -17,9 +17,9 @@ jobs:
           - |
             if [[ "${REFERENCE_BRANCH}" != "" ]]; then
                 git remote add GH https://github.com/DIRACGrid/Pilot.git
-                git fetch --no-tags GH ${TRAVIS_BRANCH}
+                git fetch --no-tags GH ${REFERENCE_BRANCH}
                 git branch -vv
-                git diff -U0 GH/${TRAVIS_BRANCH} | pycodestyle --diff;
+                git diff -U0 GH/${REFERENCE_BRANCH} | pycodestyle --diff;
             fi
         python: 
           # - 2.6.9
@@ -44,3 +44,5 @@ jobs:
         set -euxo pipefail
         export PYTHONPATH=${PWD%/*}
         ${{ matrix.command }}
+      env:
+        REFERENCE_BRANCH: ${{ github['base_ref'] || github['head_ref'] }}

@@ -145,11 +145,11 @@ class RESTSender(MessageSender):
     CACertificate = self.params.get('CACertificate')
 
     try:
-      requests.post(url,
+      requests.post(url,  # pylint: disable=undefined-variable
                     json=msg,
                     cert=(hostCertificate, hostKey),
                     verify=CACertificate)
-    except (requests.exceptions.RequestException, IOError) as e:
+    except (requests.exceptions.RequestException, IOError) as e:  # pylint: disable=undefined-variable
       logging.error(e)
       return False
     return True
@@ -283,7 +283,7 @@ class StompSender(MessageSender):
       return None
 
     try:
-      connection = stomp.Connection(host_and_ports=hostAndPort, use_ssl=True)
+      connection = stomp.Connection(host_and_ports=hostAndPort, use_ssl=True)  # pylint: disable=undefined-variable
       connection.set_ssl(for_hosts=hostAndPort,
                          key_file=sslCfg['key_file'],
                          cert_file=sslCfg['cert_file'],
@@ -291,7 +291,7 @@ class StompSender(MessageSender):
       connection.start()
       connection.connect()
       return connection
-    except stomp.exception.ConnectFailedException:
+    except stomp.exception.ConnectFailedException:  # pylint: disable=undefined-variable
       logging.error('Connection error')
       return None
     except IOError:

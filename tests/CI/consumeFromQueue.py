@@ -32,7 +32,7 @@ def consume():
   conn.set_ssl(for_hosts=host_port, key_file=key_file, cert_file=cert_file, ca_certs=ca_certs)
   listener = MyListener()
   conn.set_listener('', listener)
-  conn.start()
+  conn.start()  # pylint: disable=no-member
   conn.connect(wait=True)
   conn.subscribe(destination='/queue/test', id=1, ack='auto')
   conn.disconnect()
