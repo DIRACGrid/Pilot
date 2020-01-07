@@ -29,7 +29,7 @@ except NameError:
   basestring = str
 ############################
 
-from .PilotLogger import PilotLogger
+from Pilot.PilotLogger import PilotLogger
 
 
 def printVersion(log):

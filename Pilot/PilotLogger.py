@@ -6,12 +6,13 @@ from __future__ import absolute_import, print_function
 import os
 import logging
 import argparse
-from .PilotLoggerTools import generateDict, encodeMessage
-from .PilotLoggerTools import generateTimeStamp
-from .PilotLoggerTools import isMessageFormatCorrect
-from .PilotLoggerTools import readPilotJSONConfigFile
-from .PilotLoggerTools import getUniqueIDAndSaveToFile
-from .MessageSender import messageSenderFactory
+
+from Pilot.PilotLoggerTools import generateDict, encodeMessage
+from Pilot.PilotLoggerTools import generateTimeStamp
+from Pilot.PilotLoggerTools import isMessageFormatCorrect
+from Pilot.PilotLoggerTools import readPilotJSONConfigFile
+from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
+from Pilot.MessageSender import messageSenderFactory
 
 
 def getPilotUUIDFromFile(filename='PilotUUID'):
