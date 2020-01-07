@@ -35,7 +35,7 @@ jobs:
         conda create -c conda-forge -c free -n python_${{ matrix.python }} python=${{ matrix.python }}
         source "${CONDA}/bin/activate"
         conda activate python_${{ matrix.python }}
-        conda install pytest pytest-mock pylint autopep8  mock requests
+        conda install pytest pytest-mock pylint autopep8 docopt mock requests
 
         if [[ "${{ matrix.python }}" == "3.6.8" ]]
         then
