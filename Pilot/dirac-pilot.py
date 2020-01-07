@@ -18,13 +18,15 @@
     But, as said, all the actions are actually configurable.
 """
 
+from __future__ import absolute_import, print_function
+
 __RCSID__ = "$Id$"
 
 import os
 import sys
 import time
 
-from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
+from .pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
 
 if __name__ == "__main__":
 

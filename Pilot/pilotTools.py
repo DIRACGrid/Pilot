@@ -1,7 +1,7 @@
 """ A set of common tools to be used in pilot commands
 """
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 __RCSID__ = '$Id$'
 
@@ -12,12 +12,24 @@ import pickle
 import getopt
 import imp
 import json
-import urllib
-import urllib2
 import signal
 import subprocess
 
-from PilotLogger import PilotLogger
+############################
+# python 2 -> 3 "hacks"
+try:
+  from urllib.request import urlopen
+  from urllib.error import HTTPError, URLError
+except ImportError:
+  from urllib2 import urlopen, HTTPError, URLError
+
+try:
+  basestring
+except NameError:
+  basestring = str
+############################
+
+from .PilotLogger import PilotLogger
 
 
 def printVersion(log):
@@ -71,11 +83,11 @@ def retrieveUrlTimeout(url, fileName, log, timeout=0):
     # set timeout alarm
     signal.alarm(timeout + 5)
   try:
-    remoteFD = urllib2.urlopen(url)
+    remoteFD = urlopen(url)
     expectedBytes = 0
     # Sometimes repositories do not return Content-Length parameter
     try:
-      expectedBytes = long(remoteFD.info()['Content-Length'])
+      expectedBytes = int(remoteFD.info()['Content-Length'])
     except Exception as x:
       expectedBytes = 0
     data = remoteFD.read()
@@ -95,13 +107,13 @@ def retrieveUrlTimeout(url, fileName, log, timeout=0):
       return True
     return urlData
 
-  except urllib2.HTTPError as x:
+  except HTTPError as x:
     if x.code == 404:
       log.error("URL retrieve: %s does not exist" % url)
       if timeout:
         signal.alarm(0)
       return False
-  except urllib2.URLError:
+  except URLError:
     log.error('Timeout after %s seconds on transfer request for "%s"' % (str(timeout), url))
     return False
   except Exception as x:
@@ -387,7 +399,8 @@ class CommandBase(object):
     """ Wrapper around sys.exit()
     """
     self.log.info("List of child processes of current PID:")
-    retCode, _outData = self.executeAndGetOutput("ps --forest -o pid,%%cpu,%%mem,tty,stat,time,cmd -g %d" % os.getpid())
+    retCode, _outData = self.executeAndGetOutput(
+        "ps --forest -o pid,%%cpu,%%mem,tty,stat,time,cmd -g %d" % os.getpid())
     if retCode:
       self.log.error("Failed to issue ps [ERROR %d] " % retCode)
     sys.exit(errorCode)
@@ -464,7 +477,8 @@ class PilotParams(object):
     self.queueName = ""
     self.gridCEType = ""
     self.platform = ""
-    # maxNumberOfProcessors: the number of processors allocated to the pilot which the pilot can allocate to one payload
+    # maxNumberOfProcessors: the number of processors allocated to the pilot
+    # which the pilot can allocate to one payload
     # used to set payloadProcessors unless other limits are reached (like the number of processors on the WN)
     self.maxNumberOfProcessors = 0
     self.minDiskSpace = 2560  # MB
@@ -502,8 +516,8 @@ class PilotParams(object):
 
     # Set number of allocatable processors from MJF if available
     try:
-      self.pilotProcessors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
-    except BaseException:
+      self.pilotProcessors = int(urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
+    except Exception:
       self.pilotProcessors = 1
 
     # Pilot command options

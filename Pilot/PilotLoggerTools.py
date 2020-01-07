@@ -1,6 +1,7 @@
 """A set of tools for the remote pilot agent logging system
 """
 
+from __future__ import absolute_import, print_function
 
 import sys
 import os

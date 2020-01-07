@@ -17,7 +17,7 @@
     execution.
 """
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 __RCSID__ = "$Id$"
 
@@ -28,7 +28,7 @@ import stat
 import socket
 import httplib
 
-from pilotTools import CommandBase
+from .pilotTools import CommandBase
 
 
 class GetPilotVersion(CommandBase):

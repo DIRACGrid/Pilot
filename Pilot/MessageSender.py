@@ -13,8 +13,15 @@
 
     """
 
-import Queue
+from __future__ import absolute_import, print_function
+
 import logging
+
+# Queue is python 2 -- -> it was renamed queue in python 3
+try:
+  import Queue as queue
+except ImportError:
+  import queue
 
 
 def loadAndCreateObject(moduleName, className, params):
@@ -177,12 +184,12 @@ def readMessagesFromFileAndEraseFileContent(filename='myLocalQueueOfMessages'):
   Returns:
     Queue:
   """
-  queue = Queue.Queue()
+  rqueue = queue.Queue()
   with open(filename, 'r') as myFile:
     for line in myFile:
-      queue.put(line)
+      rqueue.put(line)
   eraseFileContent(filename)
-  return queue
+  return rqueue
 
 
 class LocalFileSender(MessageSender):
@@ -243,7 +250,7 @@ class StompSender(MessageSender):
       bool: False in case of any errors, True otherwise
     """
 
-    queue = self.params.get('QueuePath')
+    wqueue = self.params.get('QueuePath')
     host = self.params.get('Host')
     port = int(self.params.get('Port'))
     hostKey = self.params.get('HostKey')
@@ -256,7 +263,7 @@ class StompSender(MessageSender):
         'key_file': hostKey, 'cert_file': hostCertificate, 'ca_certs': CACertificate})
     if not connection:
       return False
-    self._sendAllLocalMessages(connection, queue, filename)
+    self._sendAllLocalMessages(connection, wqueue, filename)
     self._disconnect(connection)
     return True
 
@@ -319,7 +326,7 @@ class StompSender(MessageSender):
     """ Retrieves all messages from the local storage
         and sends it.
     """
-    queue = readMessagesFromFileAndEraseFileContent(filename)
-    while not queue.empty():
-      msg = queue.get()
+    rqueue = readMessagesFromFileAndEraseFileContent(filename)
+    while not rqueue.empty():
+      msg = rqueue.get()
       self._send(msg, destination, connectHandler)
