@@ -26,7 +26,7 @@ import os
 import sys
 import time
 
-from .pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
+from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
 
 if __name__ == "__main__":
 
