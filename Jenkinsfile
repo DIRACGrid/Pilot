@@ -22,7 +22,7 @@ node('lhcbci-cernvm03') {
 
     withEnv([
         "DIRACSETUP=DIRAC-Certification",
-        "CSURL=dips://lbcertifdirac7.cern.ch:9135/Configuration/Server",
+        "CSURL=dips://lbcertifdirac70.cern.ch:9135/Configuration/Server",
         "PILOTCFG=pilot.cfg",
         "DIRACSE=CERN-SWTEST",
         "JENKINS_QUEUE=jenkins-queue_not_important",
