@@ -36,13 +36,29 @@ jobs:
         source "${CONDA}/bin/activate"
         conda activate python_${{ matrix.python }}
         conda install pytest pytest-mock pylint autopep8  mock requests
-        pip install caniusepython3 stomp.py
+
+        if [[ "${{ matrix.python }}" == "3.6.8" ]]
+        then
+            pip install stomp.py
+        else
+            pip install caniusepython3 stomp.py
+        fi
+
+        
     - name: Run tests
       run: |
-        source "${CONDA}/bin/activate"
-        conda activate python_${{ matrix.python }}
-        set -euxo pipefail
-        export PYTHONPATH=${PWD%/*}
-        ${{ matrix.command }}
+        if [[ "${{ matrix.python }}" == "3.6.8" ]]
+        then
+            if [[ "${{ matrix.command }}" == "CHECK=pylintPY3K ./runPylint.sh" ]]
+            then
+                echo "skipped"
+            fi
+        else
+            source "${CONDA}/bin/activate"
+            conda activate python_${{ matrix.python }}
+            set -euxo pipefail
+            export PYTHONPATH=${PWD%/*}
+            ${{ matrix.command }}
+        fi
       env:
         REFERENCE_BRANCH: ${{ github['base_ref'] || github['head_ref'] }}
