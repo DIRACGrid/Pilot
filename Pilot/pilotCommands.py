@@ -26,7 +26,14 @@ import os
 import time
 import stat
 import socket
-import httplib
+
+############################
+# python 2 -> 3 "hacks"
+try:
+  from http.client import HTTPSConnection
+except ImportError:
+  from httplib import HTTPSConnection
+############################
 
 from .pilotTools import CommandBase
 
@@ -985,7 +992,7 @@ class MultiLaunchAgent(CommandBase):
 
     pid = {}
 
-    for i in xrange(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
+    for i in range(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
       # One JobAgent per each set of payload processors, based on the
       # number of processors allocated to this pilot, rounding downwards
 
@@ -1016,10 +1023,10 @@ class MultiLaunchAgent(CommandBase):
                          pid[i]))
 
     # Not very subtle this. How about a time limit??
-    for i in xrange(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
+    for i in range(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
       os.waitpid(pid[i], 0)
 
-    for i in xrange(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
+    for i in range(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
       shutdownMessage = self.__parseJobAgentLog(os.path.join(self.pp.workingDir, 'jobagent.%02d.log' % i))
       open(os.path.join(self.pp.workingDir, 'shutdown_message.%02d' % i), 'w').write(shutdownMessage)
       print(shutdownMessage)
@@ -1180,14 +1187,14 @@ class NagiosProbes(CommandBase):
         retCode, output = self.executeAndGetOutput('./' + probeCmd)
 
       if retCode == 0:
-        self.log.info('Return code = 0: %s' % output.split('\n', 1)[0])
+        self.log.info('Return code = 0: %s' % str(output).split('\n', 1)[0])
         retStatus = 'info'
       elif retCode == 1:
-        self.log.warn('Return code = 1: %s' % output.split('\n', 1)[0])
+        self.log.warn('Return code = 1: %s' % str(output).split('\n', 1)[0])
         retStatus = 'warning'
       else:
         # retCode could be 2 (error) or 3 (unknown) or something we haven't thought of
-        self.log.error('Return code = %d: %s' % (retCode, output.split('\n', 1)[0]))
+        self.log.error('Return code = %d: %s' % (retCode, str(output).split('\n', 1)[0]))
         retStatus = 'error'
 
       # report results to pilot logger too. Like this:
@@ -1201,10 +1208,10 @@ class NagiosProbes(CommandBase):
         self.log.info('Putting %s Nagios output to https://%s%s' % (probeCmd, hostPort, path))
 
         try:
-          connection = httplib.HTTPSConnection(host=hostPort,
-                                               timeout=30,
-                                               key_file=os.environ['X509_USER_PROXY'],
-                                               cert_file=os.environ['X509_USER_PROXY'])
+          connection = HTTPSConnection(host=hostPort,
+                                       timeout=30,
+                                       key_file=os.environ['X509_USER_PROXY'],
+                                       cert_file=os.environ['X509_USER_PROXY'])
 
           connection.request('PUT', path, str(retCode) + ' ' + str(int(time.time())) + '\n' + output)
 

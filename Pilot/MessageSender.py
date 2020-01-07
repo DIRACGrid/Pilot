@@ -17,11 +17,13 @@ from __future__ import absolute_import, print_function
 
 import logging
 
-# Queue is python 2 -- -> it was renamed queue in python 3
+############################
+# python 2 -> 3 "hacks"
 try:
   import Queue as queue
 except ImportError:
   import queue
+############################
 
 
 def loadAndCreateObject(moduleName, className, params):
@@ -45,9 +47,11 @@ def loadAndCreateObject(moduleName, className, params):
     # The __import__ call with
     # fromlist option set to mods[-1]  will load Z submodule as expected.
     # Simpler X format will be also covered.
+    print(moduleName, mods)
     module = __import__(moduleName, globals(), locals(), mods[-1])
     try:
       myClass = getattr(module, className)
+      print('myClass', myClass)
       if params:
         myObj = myClass(params)
       else:

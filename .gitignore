@@ -49,6 +49,7 @@ coverage.xml
 __pycache__
 pytests.xml
 Local_*
+TestConf.json
 
 # Translations
 *.mo

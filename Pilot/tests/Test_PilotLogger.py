@@ -1,6 +1,8 @@
 """ Unit tests for PilotLogger
 """
 
+from __future__ import absolute_import, print_function
+
 # pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 
 import sys

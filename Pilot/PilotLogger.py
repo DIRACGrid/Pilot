@@ -51,7 +51,7 @@ def addMissingConfiguration(config, defaultConfig=None):
     return defaultConfig
 
   currConfig = config.copy()
-  for k, v in defaultConfig.iteritems():
+  for k, v in defaultConfig.items():
     if k not in currConfig:
       currConfig[k] = v
     else:

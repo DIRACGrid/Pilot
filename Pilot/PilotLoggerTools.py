@@ -10,6 +10,15 @@ import time
 import json
 from uuid import uuid1
 
+############################
+# python 2 -> 3 "hacks"
+try:
+  basestring
+except NameError:
+  basestring = str
+############################
+
+
 __RCSID__ = "$Id$"
 
 
