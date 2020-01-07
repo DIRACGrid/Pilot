@@ -47,12 +47,9 @@ jobs:
         
     - name: Run tests
       run: |
-        if [[ "${{ matrix.python }}" == "3.6.8" ]]
+        if [[ "${{ matrix.python }}" == "3.6.8" ]] && [[ "${{ matrix.command }}" == "CHECK=pylintPY3K ./runPylint.sh" ]]
         then
-            if [[ "${{ matrix.command }}" == "CHECK=pylintPY3K ./runPylint.sh" ]]
-            then
-                echo "skipped"
-            fi
+            echo "skipped"
         else
             source "${CONDA}/bin/activate"
             conda activate python_${{ matrix.python }}
