@@ -17,7 +17,7 @@ function prepareForPilot(){
   echo '==> [prepareForPilot]'
 
   #get the pilot files from the Pilot
-  for file in PilotLogger.py PilotLoggerTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py MessageSender.py __init__.py
+  for file in PilotLogger.py PilotLoggerTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py MessageSender.py
   do
     cp "$TESTCODE/Pilot/Pilot/${file}" .
   done

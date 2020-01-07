@@ -26,7 +26,10 @@ import os
 import sys
 import time
 
-from Pilot.pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
+try:
+  from Pilot.pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
+except ImportError:
+  from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
 
 if __name__ == "__main__":
 

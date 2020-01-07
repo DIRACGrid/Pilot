@@ -7,12 +7,20 @@ import os
 import logging
 import argparse
 
-from Pilot.PilotLoggerTools import generateDict, encodeMessage
-from Pilot.PilotLoggerTools import generateTimeStamp
-from Pilot.PilotLoggerTools import isMessageFormatCorrect
-from Pilot.PilotLoggerTools import readPilotJSONConfigFile
-from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
-from Pilot.MessageSender import messageSenderFactory
+try:
+  from Pilot.PilotLoggerTools import generateDict, encodeMessage
+  from Pilot.PilotLoggerTools import generateTimeStamp
+  from Pilot.PilotLoggerTools import isMessageFormatCorrect
+  from Pilot.PilotLoggerTools import readPilotJSONConfigFile
+  from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
+  from Pilot.MessageSender import messageSenderFactory
+except ImportError:
+  from PilotLoggerTools import generateDict, encodeMessage
+  from PilotLoggerTools import generateTimeStamp
+  from PilotLoggerTools import isMessageFormatCorrect
+  from PilotLoggerTools import readPilotJSONConfigFile
+  from PilotLoggerTools import getUniqueIDAndSaveToFile
+  from MessageSender import messageSenderFactory
 
 
 def getPilotUUIDFromFile(filename='PilotUUID'):
