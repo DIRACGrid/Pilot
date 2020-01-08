@@ -347,6 +347,8 @@ class ConfigureBasics(CommandBase):
   def _getSecurityCFG(self):
     """ Nothing specific by default, but need to know host cert and key location in case they are needed
     """
+    print("AAAAAAAAAAAa", self.pp.useServerCertificate)
+    print("AAAAAAAAAAAa", self.pp)
     if self.pp.useServerCertificate:
       self.cfg.append('--UseServerCertificate')
       self.cfg.append("-o /DIRAC/Security/CertFile=%s/hostcert.pem" % self.pp.certsLocation)
