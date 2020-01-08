@@ -47,11 +47,9 @@ def loadAndCreateObject(moduleName, className, params):
     # The __import__ call with
     # fromlist option set to mods[-1]  will load Z submodule as expected.
     # Simpler X format will be also covered.
-    print(moduleName, mods)
     module = __import__(moduleName, globals(), locals(), mods[-1])
     try:
       myClass = getattr(module, className)
-      print('myClass', myClass)
       if params:
         myObj = myClass(params)
       else:
