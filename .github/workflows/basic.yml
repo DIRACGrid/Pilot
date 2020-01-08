@@ -11,7 +11,6 @@ jobs:
       matrix:
         command:
           - pytest
-          - find tests/CI -name '*.sh' -print0 | xargs -0 -n1 shellcheck --external-sources;
           - ./runPylint.sh
           - CHECK=pylintPY3K ./runPylint.sh
           - |
@@ -59,3 +58,16 @@ jobs:
         fi
       env:
         REFERENCE_BRANCH: ${{ github['base_ref'] || github['head_ref'] }}
+
+
+  shellcheck:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: False
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Run shellcheck
+      run: find tests/CI -name '*.sh' -print0 | xargs -0 -n1 shellcheck --external-sources;
