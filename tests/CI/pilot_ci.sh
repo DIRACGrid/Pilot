@@ -108,17 +108,17 @@ function PilotInstall(){
   # shellcheck disable=SC2154
   if [ "$lcgVersion" ]
   then
-    pilotOptions+=" -g $lcgVersion"
+    pilotOptions+=" -g ""$lcgVersion"
   fi
   # shellcheck disable=SC2154
   if [ "$modules" ]
   then
-    pilotOptions+=" --modules=$modules"
+    pilotOptions+=" --modules=""$modules"
   fi
   pilotOptions+=" --debug"
 
-  echo -e "Running dirac-pilot.py $pilotOptions"
-  if ! python dirac-pilot.py "$pilotOptions"; then
+  echo -e "Running dirac-pilot.py " "$pilotOptions"
+  if ! python dirac-pilot.py $pilotOptions; then
     echo 'ERROR: pilot script failed'
     exit 1
   fi
