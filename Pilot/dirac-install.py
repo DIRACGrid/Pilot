@@ -202,9 +202,9 @@ class Params(object):
     self.tag = ""
     self.modules = {}
     self.externalVersion = ""
-    self.cleanPYTHONPATH = False
     self.createLink = False
     self.scriptSymlink = False
+    self.userEnvVariables = {}
 
 
 cliParams = Params()
@@ -1345,7 +1345,7 @@ def urlretrieveTimeout(url, fileName='', timeout=0):
     # Sometimes repositories do not return Content-Length parameter
     try:
       expectedBytes = long(remoteFD.info()['Content-Length'])
-    except Exception as x:
+    except Exception:
       logWARN('Content-Length parameter not returned, skipping expectedBytes check')
 
     receivedBytes = 0
@@ -1618,8 +1618,7 @@ def installExternalRequirements(extType):
   if os.path.isfile(reqScript):
     os.chmod(reqScript, executablePerms)
     logNOTICE("Executing %s..." % reqScript)
-    command = "python '%s' -t '%s' > '%s.out' 2> '%s.err'" % (reqScript, extType,
-                                                              reqScript, reqScript)
+    command = "%s -t '%s' > '%s.out' 2> '%s.err'" % (reqScript, extType, reqScript, reqScript)
     if os.system('bash -c "source %s; %s"' % (bashrcFile, command)):
       logERROR("Requirements installation script %s failed. Check %s.err" % (reqScript,
                                                                              reqScript))
@@ -1680,10 +1679,11 @@ cmdOpts = (('r:', 'release=', 'Release version to install'),
             'Module to be installed. for example: -m DIRAC or -m git://github.com/DIRACGrid/DIRAC.git:DIRAC'),
            ('s:', 'source=', 'location of the modules to be installed'),
            ('x:', 'external=', 'external version'),
-           ('  ', 'cleanPYTHONPATH', 'Only use the DIRAC PYTHONPATH (for pilots installation)'),
            ('  ', 'createLink', 'create version symbolic link from the versions directory. This is equivalent to the \
            following command: ln -s /opt/dirac/versions/vArBpC vArBpC'),
-           ('  ', 'scriptSymlink', 'Symlink the scripts instead of creating wrapper')
+           ('  ', 'scriptSymlink', 'Symlink the scripts instead of creating wrapper'),
+           ('  ', 'userEnvVariables=',
+            'User-requested environment variables (comma-separated, name and value separated by ":::")')
            )
 
 
@@ -1741,7 +1741,7 @@ def loadConfiguration():
 
   # at the end we load the local configuration and merge with the global cfg
   for arg in args:
-    if len(arg) > 4 and arg.find(".cfg") == len(arg) - 4:
+    if len(arg) > 4 and arg.find(".cfg") == len(arg) - 4 and ':::' not in arg:
       result = releaseConfig.loadInstallationLocalDefaults(arg)
       if not result['OK']:
         logERROR(result['Message'])
@@ -1825,12 +1825,13 @@ def loadConfiguration():
       cliParams.modules = discoverModules(v)
     elif o in ('-x', '--external'):
       cliParams.externalVersion = v
-    elif o == '--cleanPYTHONPATH':
-      cliParams.cleanPYTHONPATH = True
     elif o == '--createLink':
       cliParams.createLink = True
     elif o == '--scriptSymlink':
       cliParams.scriptSymlink = True
+    elif o == '--userEnvVariables':
+      cliParams.userEnvVariables = dict(zip([name.split(':::')[0] for name in v.replace(' ', '').split(',')],
+                                            [value.split(':::')[1] for value in v.replace(' ', '').split(',')]))
 
   if not cliParams.release and not cliParams.modules:
     logERROR("Missing release to install")
@@ -2131,10 +2132,7 @@ def createBashrc():
                     '( echo $DYLD_LIBRARY_PATH | grep -q $DIRACLIB/mysql ) || \
                     export DYLD_LIBRARY_PATH=$DIRACLIB/mysql:$DYLD_LIBRARY_PATH'])
 
-      if cliParams.cleanPYTHONPATH:
-        lines.extend(['export PYTHONPATH=$DIRAC'])
-      else:
-        lines.extend(['( echo $PYTHONPATH | grep -q $DIRAC ) || export PYTHONPATH=$DIRAC:$PYTHONPATH'])
+      lines.extend(['export PYTHONPATH=$DIRAC'])
 
       lines.extend(['# new OpenSSL version require OPENSSL_CONF to point to some accessible location',
                     'export OPENSSL_CONF=/tmp'])
@@ -2158,6 +2156,13 @@ def createBashrc():
       # Add the lines required for fork support for xrootd
       lines.extend(['# Fork support for xrootd',
                     'export XRD_RUNFORKHANDLER=1'])
+
+      # Add the lines required for further env variables requested
+      if cliParams.userEnvVariables:
+        lines.extend(['# User-requested variables'])
+        for envName, envValue in cliParams.userEnvVariables.items():
+          lines.extend(['export %s=%s' % (envName, envValue)])
+
       lines.append('')
       f = open(bashrcFile, 'w')
       f.write('\n'.join(lines))
@@ -2233,10 +2238,7 @@ def createCshrc():
                     '( echo $DYLD_LIBRARY_PATH | grep -q $DIRACLIB/mysql ) || \
                     setenv DYLD_LIBRARY_PATH ${DIRACLIB}/mysql:$DYLD_LIBRARY_PATH'])
 
-      if cliParams.cleanPYTHONPATH:
-        lines.extend(['setenv PYTHONPATH ${DIRAC}'])
-      else:
-        lines.extend(['( echo $PYTHONPATH | grep -q $DIRAC ) || setenv PYTHONPATH ${DIRAC}:$PYTHONPATH'])
+      lines.extend(['setenv PYTHONPATH ${DIRAC}'])
 
       lines.extend(['# new OpenSSL version require OPENSSL_CONF to point to some accessible location',
                     'setenv OPENSSL_CONF /tmp'])
@@ -2258,6 +2260,12 @@ def createCshrc():
       # Add the lines required for fork support for xrootd
       lines.extend(['# Fork support for xrootd',
                     'setenv XRD_RUNFORKHANDLER 1'])
+
+      # Add the lines required for further env variables requested
+      if cliParams.userEnvVariables:
+        lines.extend(['# User-requested variables'])
+        for envName, envValue in cliParams.userEnvVariables.items():
+          lines.extend(['setenv %s %s' % (envName, envValue)])
 
       lines.append('')
       f = open(cshrcFile, 'w')
@@ -2417,10 +2425,7 @@ def createBashrcForDiracOS():
 
       lines.extend(['( echo $PATH | grep -q $DIRACSCRIPTS ) || export PATH=$DIRACSCRIPTS:$PATH'])
 
-      if cliParams.cleanPYTHONPATH:
-        lines.extend(['export PYTHONPATH=$DIRAC'])
-      else:
-        lines.extend(['( echo $PYTHONPATH | grep -q $DIRAC ) || export PYTHONPATH=$DIRAC:$PYTHONPATH'])
+      lines.extend(['export PYTHONPATH=$DIRAC'])
 
       lines.extend(['# new OpenSSL version require OPENSSL_CONF to point to some accessible location',
                     'export OPENSSL_CONF=/tmp'])
@@ -2447,6 +2452,12 @@ def createBashrcForDiracOS():
       lines.extend(['# Fork support for xrootd',
                     'export XRD_RUNFORKHANDLER=1'])
 
+      # Add the lines required for further env variables requested
+      if cliParams.userEnvVariables:
+        lines.extend(['# User-requested variables'])
+        for envName, envValue in cliParams.userEnvVariables.items():
+          lines.extend(['export %s=%s' % (envName, envValue)])
+
       lines.append('')
       with open(bashrcFile, 'w') as f:
         f.write('\n'.join(lines))
@@ -2471,28 +2482,32 @@ def checkoutFromGit(moduleName, sourceURL, tagVersion, destinationDir=None):
   codeRepo = moduleName + 'Repo'
 
   fDirName = os.path.join(cliParams.targetPath, codeRepo)
-  cmd = "git clone '%s' '%s'" % (sourceURL, fDirName)
-
-  logNOTICE("Executing: %s" % cmd)
-  if os.system(cmd):
-    return S_ERROR("Error while retrieving sources from git")
-
-  branchName = "%s-%s" % (tagVersion, os.getpid())
-
-  isTagCmd = "( cd '%s'; git tag -l | grep '%s' )" % (fDirName, tagVersion)
-  if os.system(isTagCmd):
-    # No tag found, assume branch
-    branchSource = 'origin/%s' % tagVersion
+  if os.path.isdir(sourceURL):
+    logNOTICE("Using local copy for source: %s" % sourceURL)
+    shutil.copytree(sourceURL, fDirName)
   else:
-    branchSource = tagVersion
+    cmd = "git clone '%s' '%s'" % (sourceURL, fDirName)
 
-  cmd = "( cd '%s'; git checkout -b '%s' '%s' )" % (fDirName, branchName, branchSource)
+    logNOTICE("Executing: %s" % cmd)
+    if os.system(cmd):
+      return S_ERROR("Error while retrieving sources from git")
 
-  logNOTICE("Executing: %s" % cmd)
-  exportRes = os.system(cmd)
+    branchName = "%s-%s" % (tagVersion, os.getpid())
 
-  if exportRes:
-    return S_ERROR("Error while exporting from git")
+    isTagCmd = "( cd '%s'; git tag -l | grep '%s' )" % (fDirName, tagVersion)
+    if os.system(isTagCmd):
+      # No tag found, assume branch
+      branchSource = 'origin/%s' % tagVersion
+    else:
+      branchSource = tagVersion
+
+    cmd = "( cd '%s'; git checkout -b '%s' '%s' )" % (fDirName, branchName, branchSource)
+
+    logNOTICE("Executing: %s" % cmd)
+    exportRes = os.system(cmd)
+
+    if exportRes:
+      return S_ERROR("Error while exporting from git")
 
   # replacing the code
   if os.path.exists(fDirName + '/' + moduleName):
