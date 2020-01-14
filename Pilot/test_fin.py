@@ -8,11 +8,11 @@ from time import sleep
 import unittest
 import json
 import ssl
-import wasser
+import Pilot.wasser
 from simple_ssl_server import SimpleServer
 import sys
 import os
-from MessageSender import LocalFileSender, StompSender, RESTSender, eraseFileContent, loadAndCreateObject
+from Pilot.MessageSender import LocalFileSender, StompSender, RESTSender, eraseFileContent, loadAndCreateObject
 
 class TestServer(SimpleServer):
     """Server for tests"""
