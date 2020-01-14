@@ -262,7 +262,7 @@ class Logger(object):
   def __outputMessage(self, msg, level, header):
     if self.out:
       with open(self.out, 'a') as outputFile:
-        for _line in msg.split("\n"):
+        for _line in str(msg).split("\n"):
           if header:
             outLine = "%s UTC %s [%s] %s" % (time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime()),
                                              level,
