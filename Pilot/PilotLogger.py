@@ -5,7 +5,13 @@ from __future__ import absolute_import, print_function
 
 import os
 import logging
-import argparse
+try:
+  from argparse import ArgumentTypeError
+  from argparse import ArgumentParser
+  from argparse import RawTextHelpFormatter
+except ImportError:  # argparse is from python 2.7+
+  from optparse import OptParseError as ArgumentTypeError
+  from optparse import OptionParser as ArgumentParser
 
 try:
   from Pilot.PilotLoggerTools import generateDict, encodeMessage
@@ -164,12 +170,12 @@ def main():
   def singleWord(arg):
     if len(arg.split()) != 1:
       msg = 'argument must be single word'
-      raise argparse.ArgumentTypeError(msg)
+      raise ArgumentTypeError(msg)
     return arg
 
-  parser = argparse.ArgumentParser(
+  parser = ArgumentParser(
       description="command line interface to send logs to MQ system.",
-      formatter_class=argparse.RawTextHelpFormatter,
+      formatter_class=RawTextHelpFormatter,
       epilog='examples:\n' +
       '                   python PilotLogger.py InstallDIRAC installing info My message\n' +
       '                   python PilotLogger.py InstallDIRAC installing debug Debug message\n' +
@@ -205,7 +211,7 @@ def main():
   args = parser.parse_args()
 
   if len(" ".join(args.message)) >= 200:
-    raise argparse.ArgumentTypeError('message must be less than 200 characters')
+    raise ArgumentTypeError('message must be less than 200 characters')
   if args.output:
     logger = PilotLogger(localOutputFile=args.output)
   else:
