@@ -1,0 +1,35 @@
+name: Nightly
+
+on: 
+  schedule:
+    # every night at midnight
+    - cron:  '0 0 * * *'
+
+
+jobs:
+  # uploading master and devel tarballs to web server, for use in subsequent tests
+  upload:
+    runs-on: ubuntu-latest
+    if: github.repository == 'DIRACGrid/Pilot'
+
+    strategy:
+      fail-fast: False
+      matrix:
+        branch:
+          - master
+          - devel
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ matrix.branch }}
+      - name: upload
+        run: |
+          cp tests/upload.sh deploy.sh
+          sed -i 's/lhcbprod/${{ secrets.KRB_USERNAME }}/g' deploy.sh && \
+          cat deploy.sh && "\
+          echo ${{ secrets.KRB_PASSWORD }} | kinit ${{ secrets.KRB_USERNAME }}@CERN.CH && \
+          echo readyToUpload && \
+          export USER=${{ secrets.KRB_USERNAME }} && \
+          echo reallyReadyToUpload && \
+          ./deploy.sh ${{ matrix.branch }}

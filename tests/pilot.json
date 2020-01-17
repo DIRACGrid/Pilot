@@ -1,0 +1,41 @@
+{
+  "Setups": {
+    "CI": {
+      "CheckVersion": "True",
+      "Commands": {
+        "TEST": [
+          "CheckWorkerNode",
+          "InstallDIRAC"
+        ],
+      },
+      "Logging": {
+        "LoggingType":"LOCAL_FILE", 
+        "LocalOutputFile":"myFile"
+      },
+      "Version": "VAR_DIRAC_VERSION",
+    },
+    "Defaults": {
+      "Commands": {
+        "defaultList": [
+          "CheckWorkerNode",
+          "InstallDIRAC"
+        ],
+        "Defaults": [
+          "CheckWorkerNode",
+          "InstallDIRAC"
+        ]
+      },
+      "ConfigurationServer": "dips://does.not.matter.org:9162",
+      "GenericPilotGroup": "dirac_pilot",
+      "GenericPilotDN": "/just/a/dn"
+    }
+  },
+  "CEs": {
+    "ce.dirac.org": {
+      "Site": "DIRAC.CI.ORG",
+      "Queue": "DIRACQUEUE",
+      "GridCEType": "TEST"
+    }
+  },
+  "DefaultSetup": "CI"
+}
