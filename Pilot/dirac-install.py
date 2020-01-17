@@ -134,7 +134,7 @@ You can use install.cfg configuration file::
 
 #  pylint: skip-file
 
-from __future__ import absolute_import, division, print_function
+from __future__ import unicode_literals, absolute_import, division, print_function
 
 import sys
 import os
@@ -2295,7 +2295,7 @@ def writeDefaultConfiguration():
   # Keep the default configuration file in the working directory
   filePath = "defaults-%s.cfg" % cliParams.installation
   try:
-    fd = open(filePath, "wb")
+    fd = open(filePath, "w")
     fd.write(instCFG.toString())
     fd.close()
   except Exception as excp:
