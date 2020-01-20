@@ -2639,7 +2639,9 @@ if __name__ == "__main__":
     logNOTICE("Skipping installing DIRAC")
 
   # we install with DIRACOS from v7rX DIRAC release
-  if cliParams.diracOS or int(releaseConfig.prjRelCFG['DIRAC'].keys()[0][1]) > 6:
+  if cliParams.diracOS \
+     or isinstance(releaseConfig.prjRelCFG['DIRAC'].keys()[0][1], str_type) \
+     or int(releaseConfig.prjRelCFG['DIRAC'].keys()[0][1]) > 6:
     logNOTICE("Installing DIRAC OS %s..." % cliParams.diracOSVersion)
     if not installDiracOS(releaseConfig):
       sys.exit(1)
