@@ -6,13 +6,13 @@
         "TEST": [
           "CheckWorkerNode",
           "InstallDIRAC"
-        ],
+        ]
       },
       "Logging": {
         "LoggingType":"LOCAL_FILE", 
         "LocalOutputFile":"myFile"
       },
-      "Version": "VAR_DIRAC_VERSION",
+      "Version": "integration"
     },
     "Defaults": {
       "Commands": {
