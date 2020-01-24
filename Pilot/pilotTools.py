@@ -1,7 +1,7 @@
 """ A set of common tools to be used in pilot commands
 """
 
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import, division, print_function
 
 __RCSID__ = '$Id$'
 
@@ -91,7 +91,7 @@ def retrieveUrlTimeout(url, fileName, log, timeout=0):
     # Sometimes repositories do not return Content-Length parameter
     try:
       expectedBytes = int(remoteFD.info()['Content-Length'])
-    except Exception as x:
+    except Exception:
       expectedBytes = 0
     data = remoteFD.read()
     if fileName:

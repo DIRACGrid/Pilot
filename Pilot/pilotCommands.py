@@ -17,7 +17,7 @@
     execution.
 """
 
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import, division, print_function
 
 __RCSID__ = "$Id$"
 
@@ -128,7 +128,7 @@ class CheckWorkerNode(CommandBase):
     # favail;   /* # free inodes for non-root */
     # flag;     /* mount flags */
     # namemax;  /* maximum filename length */
-    diskSpace = fs[4] * fs[0] / 1024 / 1024
+    diskSpace = int(fs[4] * fs[0] / 1024 / 1024)
     self.log.info('DiskSpace (MB) = %s' % diskSpace)
 
     if diskSpace < self.pp.minDiskSpace:
@@ -890,7 +890,7 @@ class LaunchAgent(CommandBase):
     if self.pp.executeCmd:
       # Execute user command
       self.log.info("Executing user defined command: %s" % self.pp.executeCmd)
-      self.exitWithError(os.system("source bashrc; %s" % self.pp.executeCmd) / 256)
+      self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
 
     self.log.info('Starting JobAgent')
     os.environ['PYTHONUNBUFFERED'] = 'yes'
@@ -906,7 +906,7 @@ class LaunchAgent(CommandBase):
       self.exitWithError(retCode)
 
     fs = os.statvfs(self.pp.workingDir)
-    diskSpace = fs[4] * fs[0] / 1024 / 1024
+    diskSpace = int(fs[4] * fs[0] / 1024 / 1024)
     self.log.info('DiskSpace (MB) = %s' % diskSpace)
 
   def execute(self):
@@ -987,7 +987,7 @@ class MultiLaunchAgent(CommandBase):
     if self.pp.executeCmd:
       # Execute user command
       self.log.info("Executing user defined command: %s" % self.pp.executeCmd)
-      self.exitWithError(os.system("source bashrc; %s" % self.pp.executeCmd) / 256)
+      self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
 
     self.log.info('Starting JobAgent')
     os.environ['PYTHONUNBUFFERED'] = 'yes'
@@ -1038,7 +1038,7 @@ class MultiLaunchAgent(CommandBase):
     open(os.path.join(self.pp.workingDir, 'shutdown_message'), 'w').write(shutdownMessage)
 
     fs = os.statvfs(self.pp.workingDir)
-    diskSpace = fs[4] * fs[0] / 1024 / 1024
+    diskSpace = int(fs[4] * fs[0] / 1024 / 1024)
     self.log.info('DiskSpace (MB) = %s' % diskSpace)
 
   def __parseJobAgentLog(self, logFile):
@@ -1223,7 +1223,7 @@ class NagiosProbes(CommandBase):
         else:
           result = connection.getresponse()
 
-          if result.status / 100 == 2:
+          if int(result.status / 100) == 2:
             self.log.info('PUT of %s Nagios output succeeds with %d %s' % (probeCmd, result.status, result.reason))
           else:
             self.log.error('PUT of %s Nagios output fails with %d %s' % (probeCmd, result.status, result.reason))
