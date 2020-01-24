@@ -690,20 +690,20 @@ class ReleaseConfig(object):
         continue
 
       logNOTICE("Defaults for LocalInstallation are in %s" % fileName)
-    try:
-      fd = open(fileName, "r")
-      # TODO: Merge with installation CFG
-      cfg = ReleaseConfig.CFG().parse(fd.read())
-      fd.close()
-    except Exception as excp:
+      try:
+        fd = open(fileName, "r")
+        # TODO: Merge with installation CFG
+        cfg = ReleaseConfig.CFG().parse(fd.read())
+        fd.close()
+      except Exception as excp:
         logERROR("Could not load %s: %s" % (fileName, excp))
         continue
 
-    self.globalDefaults.update("Installations/%s" % self.instName, cfg)
-    self.globalDefaults.update("Projects/%s" % self.instName, cfg)
-    if self.projectName:
-      # we have an extension and have a local cfg file
-      self.globalDefaults.update("Projects/%s" % self.projectName, cfg)
+      self.globalDefaults.update("Installations/%s" % self.instName, cfg)
+      self.globalDefaults.update("Projects/%s" % self.instName, cfg)
+      if self.projectName:
+        # we have an extension and have a local cfg file
+        self.globalDefaults.update("Projects/%s" % self.projectName, cfg)
 
       logNOTICE("Loaded %s" % arg)
 
@@ -2363,7 +2363,7 @@ def installDiracOS(releaseConfig):
   if not diracOSVersion:
     logERROR("No diracos defined")
     return False
-    tarsURL = cliParams.installSource
+  tarsURL = cliParams.installSource
   if not tarsURL:
     tarsURL = releaseConfig.getDiracOsLocation(useVanillaDiracOS=(diracos.lower() == 'diracos'))
   if not tarsURL:
@@ -2616,9 +2616,9 @@ if __name__ == "__main__":
           logERROR("Cannot checkout %s" % retVal['Message'])
           sys.exit(1)
         continue
-        logNOTICE("Installing %s:%s" % (modName, modVersion))
-        if not downloadAndExtractTarball(tarsURL, modName, modVersion):
-          sys.exit(1)
+      logNOTICE("Installing %s:%s" % (modName, modVersion))
+      if not downloadAndExtractTarball(tarsURL, modName, modVersion):
+        sys.exit(1)
     logNOTICE("Deploying scripts...")
     ddeLocation = os.path.join(cliParams.targetPath, "DIRAC", "Core",
                                "scripts", "dirac-deploy-scripts.py")
