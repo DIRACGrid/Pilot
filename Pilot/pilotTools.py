@@ -381,7 +381,7 @@ class CommandBase(object):
                             stderr=subprocess.PIPE, close_fds=False)
 
       # standard output
-      outData = _p.stdout.read().strip()
+      outData = _p.stdout.read().decode().strip()
       for line in outData:
         sys.stdout.write(str(line))
       sys.stdout.write('\n')
