@@ -4,14 +4,14 @@ PILOTBRANCH=pilot_loggers
 
 echo -e "**** Starting Pilot tests with PilotLogger ****\n"
 
-echo -e "***' $(date -u) **** Getting the tests ****\n"
+echo -e "*** $(date -u) **** Getting the tests ****\n"
 
 mkdir -p "$PWD/TestCode"
 if ! cd "$PWD/TestCode"; then
   exit 1
 fi
 
-git clone https://github.com/wkrzemien/Pilot.git
+git clone https://github.com/DIRACGrid/Pilot.git
 if ! cd Pilot; then
   exit 1
 fi
