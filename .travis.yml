@@ -20,7 +20,7 @@ script:
   - export PYTHONPATH=${PWD%/*}
   - ls $PYTHONPATH
   - if [[ "${CHECK}" == "pytest"  ]];
-    then pytest && cp Pilot/MessageSender.py Pilot/tests/; cp Pilot/wasser.py Pilot/tests/ && python Pilot/tests/test_MessageSenderPython26.py;
+    then pytest;
     elif [[ "${CHECK}" == "pylint"  ]];
     then travis_wait 30 &&   cp Pilot/MessageSender.py Pilot/tests; cp Pilot/wasser.py Pilot/tests&& ./runPylint.sh;
     elif [[ "${CHECK}" == "format" ]] && [[ "${TRAVIS_PULL_REQUEST}" != "false" ]];
