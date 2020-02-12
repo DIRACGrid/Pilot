@@ -1,6 +1,8 @@
 """Unit tests for PilotLoggerTools
 """
 
+from __future__ import absolute_import, division, print_function
+
 # pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 
 import sys
@@ -295,46 +297,21 @@ class TestPilotLoggerGetUniqueIDAndSaveToFile(TestPilotLoggerTools):
     self.assertFalse(getUniqueIDAndSaveToFile(self.badFile))
 
 
-def helper_get(var):
-  if var == 'VM_UUID':
-    return 'VM_uuid'
-  if var == 'CE_NAME':
-    return 'myCE'
-  if var == 'VMTYPE':
-    return 'myVMTYPE'
-  return ''
-
-  # environVars = ['CREAM_JOBID', 'GRID_GLOBAL_JOBID', 'VM_UUID']
-
-
 class TestPilotLoggerGetUniqueIDFromOS(TestPilotLoggerTools):
 
-  @mock.patch('Pilot.PilotLoggerTools.os.environ.__contains__',
-              side_effect=lambda var: var == 'CREAM_JOBID')
-  @mock.patch('Pilot.PilotLoggerTools.os.environ.get',
-              side_effect=lambda var: 'CREAM_uuid' if var == 'CREAM_JOBID' else '')
-  def test_successCREAM(self, mock_environ_get, mock_environ_key):
-    self.assertEqual(getUniqueIDFromOS(), 'CREAM_uuid')
+  def test_successCREAM(self):
+    with mock.patch.dict(os.environ, {'CREAM_JOBID': 'CREAM_uuid'}):
+      self.assertEqual(getUniqueIDFromOS(), 'CREAM_uuid')
 
-  @mock.patch('Pilot.PilotLoggerTools.os.environ.__contains__',
-              side_effect=lambda var: var == 'GRID_GLOBAL_JOBID')
-  @mock.patch('Pilot.PilotLoggerTools.os.environ.get',
-              side_effect=lambda var: 'GRID_uuid' if var == 'GRID_GLOBAL_JOBID' else '')
-  def test_successGRID(self, mock_environ_get, mock_environ_key):
-    self.assertEqual(getUniqueIDFromOS(), 'GRID_uuid')
+  def test_successGRID(self):
+    with mock.patch.dict(os.environ, {'GRID_GLOBAL_JOBID': 'GRID_uuid'}):
+      self.assertEqual(getUniqueIDFromOS(), 'GRID_uuid')
 
-  @mock.patch('Pilot.PilotLoggerTools.os.environ.__contains__',
-              side_effect=lambda var: var == 'VM_UUID' or var == 'CE_NAME' or var == 'VMTYPE')
-  @mock.patch('Pilot.PilotLoggerTools.os.environ.get',
-              side_effect=helper_get)
-  def test_successVM(self, mock_environ_get, mock_environ_key):
-    self.assertEqual(getUniqueIDFromOS(), 'vm://myCE/myCE:myVMTYPE:VM_uuid')
+  def test_successVM(self):
+    with mock.patch.dict(os.environ, {'VM_UUID': 'VM_uuid', 'CE_NAME': 'myCE', 'VMTYPE': 'myVMTYPE'}):
+      self.assertEqual(getUniqueIDFromOS(), 'vm://myCE/myCE:myVMTYPE:VM_uuid')
 
-  @mock.patch('Pilot.PilotLoggerTools.os.environ.__contains__',
-              side_effect=lambda var: False)
-  @mock.patch('Pilot.PilotLoggerTools.os.environ.get',
-              side_effect=lambda var: None)
-  def test_failVM(self, mock_environ_get, mock_environ_key):
+  def test_failVM(self):
     self.assertFalse(getUniqueIDFromOS())
 
 

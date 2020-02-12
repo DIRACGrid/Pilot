@@ -17,6 +17,8 @@
     execution.
 """
 
+from __future__ import absolute_import, division, print_function
+
 __RCSID__ = "$Id$"
 
 import sys
@@ -24,9 +26,19 @@ import os
 import time
 import stat
 import socket
-import httplib
 
-from pilotTools import CommandBase
+############################
+# python 2 -> 3 "hacks"
+try:
+  from http.client import HTTPSConnection
+except ImportError:
+  from httplib import HTTPSConnection
+############################
+
+try:
+  from Pilot.pilotTools import CommandBase
+except ImportError:
+  from pilotTools import CommandBase
 
 
 class GetPilotVersion(CommandBase):
@@ -116,7 +128,7 @@ class CheckWorkerNode(CommandBase):
     # favail;   /* # free inodes for non-root */
     # flag;     /* mount flags */
     # namemax;  /* maximum filename length */
-    diskSpace = fs[4] * fs[0] / 1024 / 1024
+    diskSpace = int(fs[4] * fs[0] / 1024 / 1024)
     self.log.info('DiskSpace (MB) = %s' % diskSpace)
 
     if diskSpace < self.pp.minDiskSpace:
@@ -179,12 +191,11 @@ class InstallDIRAC(CommandBase):
       self.installOpts.append("-l '%s'" % self.pp.releaseProject)
     if self.pp.modules:
       self.installOpts.append("-m '%s'" % self.pp.modules)
+    if self.pp.userEnvVariables:
+      self.installOpts.append("--userEnvVariables=%s" % self.pp.userEnvVariables)
 
     # The release version to install is a requirement
     self.installOpts.append('-r "%s"' % self.pp.releaseVersion)
-
-    # We clean the PYTHONPATH from the created bashrc
-    self.installOpts.append('--cleanPYTHONPATH')
 
     self.log.debug('INSTALL OPTIONS [%s]' % ', '.join(map(str, self.installOpts)))
 
@@ -879,7 +890,7 @@ class LaunchAgent(CommandBase):
     if self.pp.executeCmd:
       # Execute user command
       self.log.info("Executing user defined command: %s" % self.pp.executeCmd)
-      self.exitWithError(os.system("source bashrc; %s" % self.pp.executeCmd) / 256)
+      self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
 
     self.log.info('Starting JobAgent')
     os.environ['PYTHONUNBUFFERED'] = 'yes'
@@ -895,7 +906,7 @@ class LaunchAgent(CommandBase):
       self.exitWithError(retCode)
 
     fs = os.statvfs(self.pp.workingDir)
-    diskSpace = fs[4] * fs[0] / 1024 / 1024
+    diskSpace = int(fs[4] * fs[0] / 1024 / 1024)
     self.log.info('DiskSpace (MB) = %s' % diskSpace)
 
   def execute(self):
@@ -976,14 +987,14 @@ class MultiLaunchAgent(CommandBase):
     if self.pp.executeCmd:
       # Execute user command
       self.log.info("Executing user defined command: %s" % self.pp.executeCmd)
-      self.exitWithError(os.system("source bashrc; %s" % self.pp.executeCmd) / 256)
+      self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
 
     self.log.info('Starting JobAgent')
     os.environ['PYTHONUNBUFFERED'] = 'yes'
 
     pid = {}
 
-    for i in xrange(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
+    for i in range(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
       # One JobAgent per each set of payload processors, based on the
       # number of processors allocated to this pilot, rounding downwards
 
@@ -1014,20 +1025,20 @@ class MultiLaunchAgent(CommandBase):
                          pid[i]))
 
     # Not very subtle this. How about a time limit??
-    for i in xrange(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
+    for i in range(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
       os.waitpid(pid[i], 0)
 
-    for i in xrange(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
+    for i in range(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
       shutdownMessage = self.__parseJobAgentLog(os.path.join(self.pp.workingDir, 'jobagent.%02d.log' % i))
       open(os.path.join(self.pp.workingDir, 'shutdown_message.%02d' % i), 'w').write(shutdownMessage)
-      print shutdownMessage
+      print(shutdownMessage)
 
     # FIX ME: this effectively picks one at random. Should be the last one to finish chronologically.
     # Not in order of being started.
     open(os.path.join(self.pp.workingDir, 'shutdown_message'), 'w').write(shutdownMessage)
 
     fs = os.statvfs(self.pp.workingDir)
-    diskSpace = fs[4] * fs[0] / 1024 / 1024
+    diskSpace = int(fs[4] * fs[0] / 1024 / 1024)
     self.log.info('DiskSpace (MB) = %s' % diskSpace)
 
   def __parseJobAgentLog(self, logFile):
@@ -1178,14 +1189,14 @@ class NagiosProbes(CommandBase):
         retCode, output = self.executeAndGetOutput('./' + probeCmd)
 
       if retCode == 0:
-        self.log.info('Return code = 0: %s' % output.split('\n', 1)[0])
+        self.log.info('Return code = 0: %s' % str(output).split('\n', 1)[0])
         retStatus = 'info'
       elif retCode == 1:
-        self.log.warn('Return code = 1: %s' % output.split('\n', 1)[0])
+        self.log.warn('Return code = 1: %s' % str(output).split('\n', 1)[0])
         retStatus = 'warning'
       else:
         # retCode could be 2 (error) or 3 (unknown) or something we haven't thought of
-        self.log.error('Return code = %d: %s' % (retCode, output.split('\n', 1)[0]))
+        self.log.error('Return code = %d: %s' % (retCode, str(output).split('\n', 1)[0]))
         retStatus = 'error'
 
       # report results to pilot logger too. Like this:
@@ -1199,10 +1210,10 @@ class NagiosProbes(CommandBase):
         self.log.info('Putting %s Nagios output to https://%s%s' % (probeCmd, hostPort, path))
 
         try:
-          connection = httplib.HTTPSConnection(host=hostPort,
-                                               timeout=30,
-                                               key_file=os.environ['X509_USER_PROXY'],
-                                               cert_file=os.environ['X509_USER_PROXY'])
+          connection = HTTPSConnection(host=hostPort,
+                                       timeout=30,
+                                       key_file=os.environ['X509_USER_PROXY'],
+                                       cert_file=os.environ['X509_USER_PROXY'])
 
           connection.request('PUT', path, str(retCode) + ' ' + str(int(time.time())) + '\n' + output)
 
@@ -1212,7 +1223,7 @@ class NagiosProbes(CommandBase):
         else:
           result = connection.getresponse()
 
-          if result.status / 100 == 2:
+          if int(result.status / 100) == 2:
             self.log.info('PUT of %s Nagios output succeeds with %d %s' % (probeCmd, result.status, result.reason))
           else:
             self.log.error('PUT of %s Nagios output fails with %d %s' % (probeCmd, result.status, result.reason))

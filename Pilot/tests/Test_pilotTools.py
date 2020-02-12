@@ -1,14 +1,23 @@
 """Unit tests for pilotTools
 """
 
+from __future__ import absolute_import, division, print_function
+
 # pylint: skip-file
 
 import os
 import json
-import Queue
 
 import pytest
 from mock import MagicMock
+
+############################
+# python 2 -> 3 "hacks"
+try:
+  import Queue as queue
+except ImportError:
+  import queue
+############################
 
 from Pilot.pilotTools import ExtendedLogger
 
@@ -27,11 +36,11 @@ def rmFiles():
 
 
 def readMessagesFromFileQueue(filename):
-  queue = Queue.Queue()
+  rqueue = queue.Queue()
   with open(filename, 'r') as myFile:
     for line in myFile:
-      queue.put(line)
-  return queue
+      rqueue.put(line)
+  return rqueue
 
 
 def dictWithoutKey(d, keyToRemove):
@@ -67,9 +76,9 @@ def fixme_test_sendMessageToLocalFile(mocker, rmFiles):
       isPilotLoggerOn=True)
 
   logger.sendMessage(msg="test message", source="testSource", phase="testing", status='error', sendPilotLog=True)
-  queue = readMessagesFromFileQueue(testOutputFile)
+  rqueue = readMessagesFromFileQueue(testOutputFile)
 
-  msg_result = json.loads(queue.get(block=False))
+  msg_result = json.loads(rqueue.get(block=False))
   msg_result = removeTimeStampAndPilotUUID(msg_result)
   expected_msg = removeTimeStampAndPilotUUID(msg_pattern)
   assert expected_msg == msg_result

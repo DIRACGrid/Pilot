@@ -1,15 +1,32 @@
 """ Pilot logger module for the remote logging system.
 """
 
+from __future__ import absolute_import, division, print_function
+
 import os
 import logging
-import argparse
-from PilotLoggerTools import generateDict, encodeMessage
-from PilotLoggerTools import generateTimeStamp
-from PilotLoggerTools import isMessageFormatCorrect
-from PilotLoggerTools import readPilotJSONConfigFile
-from PilotLoggerTools import getUniqueIDAndSaveToFile
-from MessageSender import messageSenderFactory
+try:
+  from argparse import ArgumentTypeError
+  from argparse import ArgumentParser
+  from argparse import RawTextHelpFormatter
+except ImportError:  # argparse is from python 2.7+
+  from optparse import OptParseError as ArgumentTypeError
+  from optparse import OptionParser as ArgumentParser
+
+try:
+  from Pilot.PilotLoggerTools import generateDict, encodeMessage
+  from Pilot.PilotLoggerTools import generateTimeStamp
+  from Pilot.PilotLoggerTools import isMessageFormatCorrect
+  from Pilot.PilotLoggerTools import readPilotJSONConfigFile
+  from Pilot.PilotLoggerTools import getUniqueIDAndSaveToFile
+  from Pilot.MessageSender import messageSenderFactory
+except ImportError:
+  from PilotLoggerTools import generateDict, encodeMessage
+  from PilotLoggerTools import generateTimeStamp
+  from PilotLoggerTools import isMessageFormatCorrect
+  from PilotLoggerTools import readPilotJSONConfigFile
+  from PilotLoggerTools import getUniqueIDAndSaveToFile
+  from MessageSender import messageSenderFactory
 
 
 def getPilotUUIDFromFile(filename='PilotUUID'):
@@ -49,7 +66,7 @@ def addMissingConfiguration(config, defaultConfig=None):
     return defaultConfig
 
   currConfig = config.copy()
-  for k, v in defaultConfig.iteritems():
+  for k, v in defaultConfig.items():
     if k not in currConfig:
       currConfig[k] = v
     else:
@@ -153,12 +170,12 @@ def main():
   def singleWord(arg):
     if len(arg.split()) != 1:
       msg = 'argument must be single word'
-      raise argparse.ArgumentTypeError(msg)
+      raise ArgumentTypeError(msg)
     return arg
 
-  parser = argparse.ArgumentParser(
+  parser = ArgumentParser(
       description="command line interface to send logs to MQ system.",
-      formatter_class=argparse.RawTextHelpFormatter,
+      formatter_class=RawTextHelpFormatter,
       epilog='examples:\n' +
       '                   python PilotLogger.py InstallDIRAC installing info My message\n' +
       '                   python PilotLogger.py InstallDIRAC installing debug Debug message\n' +
@@ -194,7 +211,7 @@ def main():
   args = parser.parse_args()
 
   if len(" ".join(args.message)) >= 200:
-    raise argparse.ArgumentTypeError('message must be less than 200 characters')
+    raise ArgumentTypeError('message must be less than 200 characters')
   if args.output:
     logger = PilotLogger(localOutputFile=args.output)
   else:
