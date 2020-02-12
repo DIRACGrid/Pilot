@@ -29,7 +29,8 @@ class PilotTestCase(unittest.TestCase):
                                           'CommandExtensions': 'TestExtension1,TestExtension2',
                                           'NagiosProbes': 'Nagios1,Nagios2',
                                           'NagiosPutURL': 'https://127.0.0.2/',
-                                          'Version': 'v1r1, v2r2'
+                                          'Version': 'v1r1, v2r2',
+                                          'Logging': {}
                                           }
                             },
                  'CEs': {'grid1.example.com': {'GridCEType': 'cetype1', 'Site': 'site.example.com'}},

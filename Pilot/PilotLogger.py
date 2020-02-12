@@ -28,6 +28,7 @@ except ImportError:
   from PilotLoggerTools import getUniqueIDAndSaveToFile
   from MessageSender import messageSenderFactory
 
+
 def getPilotUUIDFromFile(filename='PilotUUID'):
   """ Retrieves Pilot UUID from the file of given name.
   Returns:
@@ -158,6 +159,7 @@ class PilotLogger(object):
       return False
     encodedMsg = encodeMessage(message)
     return self.messageSender.sendMessage(encodedMsg, flag=status)
+
 
 def main():
   """ main() function  is used to send a message
