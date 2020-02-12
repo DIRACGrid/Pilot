@@ -101,8 +101,7 @@ def readPilotJSONConfigFile(filename, setup='DIRAC-Certification'):
   """
   pilotJSON = None
   try:
-    with open(filename, 'r') as myFile:
-      pilotJSON = json.load(myFile)
+    pilotJSON = json.loads(open(filename, 'r').read())
   except (IOError, ValueError):
     logging.warning('Could not open or load the configuration file:' + filename)
     return None
