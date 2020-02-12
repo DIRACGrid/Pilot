@@ -13,7 +13,8 @@
 
     """
 
-import Queue
+from __future__ import absolute_import, division, print_function
+
 import logging
 try:
   import requests
@@ -23,6 +24,14 @@ try:
   import stomp
 except ImportError:
   stomp = None
+
+############################
+# python 2 -> 3 "hacks"
+try:
+  import Queue as queue
+except ImportError:
+  import queue
+############################
 
 
 def loadAndCreateObject(moduleName, className, params):
@@ -155,11 +164,11 @@ class RESTSender(MessageSender):
 
     logging.debug("sending message from the REST Sender")
     try:
-      requests.post(url,
+      requests.post(url,  # pylint: disable=undefined-variable
                     json=msg,
                     cert=(hostCertificate, hostKey),
-                    verify=False)
-    except (requests.exceptions.RequestException, IOError) as e:
+                    verify=CACertificate)
+    except (requests.exceptions.RequestException, IOError) as e:  # pylint: disable=undefined-variable
       logging.error(e)
       return False
     return True
@@ -187,12 +196,12 @@ def readMessagesFromFileAndEraseFileContent(filename='myLocalQueueOfMessages'):
   Returns:
     Queue:
   """
-  queue = Queue.Queue()
+  rqueue = queue.Queue()
   with open(filename, 'r') as myFile:
     for line in myFile:
-      queue.put(line)
+      rqueue.put(line)
   eraseFileContent(filename)
-  return queue
+  return rqueue
 
 
 class LocalFileSender(MessageSender):
@@ -253,7 +262,7 @@ class StompSender(MessageSender):
       bool: False in case of any errors, True otherwise
     """
 
-    queue = self.params.get('QueuePath')
+    wqueue = self.params.get('QueuePath')
     host = self.params.get('Host')
     port = int(self.params.get('Port'))
     hostKey = self.params.get('HostKey')
@@ -266,7 +275,7 @@ class StompSender(MessageSender):
         'key_file': hostKey, 'cert_file': hostCertificate, 'ca_certs': CACertificate})
     if not connection:
       return False
-    self._sendAllLocalMessages(connection, queue, filename)
+    self._sendAllLocalMessages(connection, wqueue, filename)
     self._disconnect(connection)
     return True
 
@@ -293,7 +302,7 @@ class StompSender(MessageSender):
       return None
 
     try:
-      connection = stomp.Connection(host_and_ports=hostAndPort, use_ssl=True)
+      connection = stomp.Connection(host_and_ports=hostAndPort, use_ssl=True)  # pylint: disable=undefined-variable
       connection.set_ssl(for_hosts=hostAndPort,
                          key_file=sslCfg['key_file'],
                          cert_file=sslCfg['cert_file'],
@@ -301,7 +310,7 @@ class StompSender(MessageSender):
       connection.start()
       connection.connect()
       return connection
-    except stomp.exception.ConnectFailedException:
+    except stomp.exception.ConnectFailedException:  # pylint: disable=undefined-variable
       logging.error('Connection error')
       return None
     except IOError:
@@ -329,7 +338,7 @@ class StompSender(MessageSender):
     """ Retrieves all messages from the local storage
         and sends it.
     """
-    queue = readMessagesFromFileAndEraseFileContent(filename)
-    while not queue.empty():
-      msg = queue.get()
+    rqueue = readMessagesFromFileAndEraseFileContent(filename)
+    while not rqueue.empty():
+      msg = rqueue.get()
       self._send(msg, destination, connectHandler)

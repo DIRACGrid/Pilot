@@ -1,6 +1,8 @@
 """ Unit tests for MessageSender
 """
 
+from __future__ import absolute_import, division, print_function
+
 # pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 
 import sys
@@ -42,7 +44,7 @@ class TestLoadAndCreateObject(unittest.TestCase):
     pass
 
   def test_success(self):
-    res = loadAndCreateObject('MessageSender', 'LocalFileSender', {'LocalOutputFile': 'blabla'})
+    res = loadAndCreateObject('Pilot.MessageSender', 'LocalFileSender', {'LocalOutputFile': 'blabla'})
     self.assertTrue(res)
 
   def test_fail(self):

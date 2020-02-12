@@ -1,6 +1,7 @@
 """A set of tools for the remote pilot agent logging system
 """
 
+from __future__ import absolute_import, division, print_function
 
 import sys
 import os
@@ -8,6 +9,15 @@ import logging
 import time
 import json
 from uuid import uuid1
+
+############################
+# python 2 -> 3 "hacks"
+try:
+  basestring
+except NameError:
+  basestring = str
+############################
+
 
 __RCSID__ = "$Id$"
 

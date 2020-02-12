@@ -1,6 +1,8 @@
 """ A set of common tools to be used in pilot commands
 """
 
+from __future__ import absolute_import, division, print_function
+
 __RCSID__ = '$Id$'
 
 import sys
@@ -10,12 +12,27 @@ import pickle
 import getopt
 import imp
 import json
-import urllib
-import urllib2
 import signal
 import subprocess
 
-from PilotLogger import PilotLogger
+############################
+# python 2 -> 3 "hacks"
+try:
+  from urllib.request import urlopen
+  from urllib.error import HTTPError, URLError
+except ImportError:
+  from urllib2 import urlopen, HTTPError, URLError
+
+try:
+  basestring
+except NameError:
+  basestring = str
+############################
+
+try:
+  from Pilot.PilotLogger import PilotLogger
+except ImportError:
+  from PilotLogger import PilotLogger
 
 
 def printVersion(log):
@@ -34,7 +51,7 @@ def pythonPathCheck():
   try:
     os.umask(18)  # 022
     pythonpath = os.getenv('PYTHONPATH', '').split(':')
-    print 'Directories in PYTHONPATH:', pythonpath
+    print('Directories in PYTHONPATH:', pythonpath)
     for p in pythonpath:
       if p == '':
         continue
@@ -43,15 +60,15 @@ def pythonPathCheck():
           # In case a given directory is twice in PYTHONPATH it has to removed only once
           sys.path.remove(os.path.normpath(p))
       except Exception as x:
-        print x
-        print "[EXCEPTION-info] Failing path:", p, os.path.normpath(p)
-        print "[EXCEPTION-info] sys.path:", sys.path
+        print(x)
+        print("[EXCEPTION-info] Failing path:", p, os.path.normpath(p))
+        print("[EXCEPTION-info] sys.path:", sys.path)
         raise x
   except Exception as x:
-    print x
-    print "[EXCEPTION-info] sys.executable:", sys.executable
-    print "[EXCEPTION-info] sys.version:", sys.version
-    print "[EXCEPTION-info] os.uname():", os.uname()
+    print(x)
+    print("[EXCEPTION-info] sys.executable:", sys.executable)
+    print("[EXCEPTION-info] sys.version:", sys.version)
+    print("[EXCEPTION-info] os.uname():", os.uname())
     raise x
 
 
@@ -69,12 +86,12 @@ def retrieveUrlTimeout(url, fileName, log, timeout=0):
     # set timeout alarm
     signal.alarm(timeout + 5)
   try:
-    remoteFD = urllib2.urlopen(url)
+    remoteFD = urlopen(url)
     expectedBytes = 0
     # Sometimes repositories do not return Content-Length parameter
     try:
-      expectedBytes = long(remoteFD.info()['Content-Length'])
-    except Exception as x:
+      expectedBytes = int(remoteFD.info()['Content-Length'])
+    except Exception:
       expectedBytes = 0
     data = remoteFD.read()
     if fileName:
@@ -93,13 +110,13 @@ def retrieveUrlTimeout(url, fileName, log, timeout=0):
       return True
     return urlData
 
-  except urllib2.HTTPError as x:
+  except HTTPError as x:
     if x.code == 404:
       log.error("URL retrieve: %s does not exist" % url)
       if timeout:
         signal.alarm(0)
       return False
-  except urllib2.URLError:
+  except URLError:
     log.error('Timeout after %s seconds on transfer request for "%s"' % (str(timeout), url))
     return False
   except Exception as x:
@@ -245,17 +262,17 @@ class Logger(object):
   def __outputMessage(self, msg, level, header):
     if self.out:
       with open(self.out, 'a') as outputFile:
-        for _line in msg.split("\n"):
+        for _line in str(msg).split("\n"):
           if header:
             outLine = "%s UTC %s [%s] %s" % (time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime()),
                                              level,
                                              self.name,
                                              _line)
-            print outLine
+            print(outLine)
             if self.out:
               outputFile.write(outLine + '\n')
           else:
-            print _line
+            print(_line)
             outputFile.write(_line + '\n')
 
     sys.stdout.flush()
@@ -364,13 +381,13 @@ class CommandBase(object):
                             stderr=subprocess.PIPE, close_fds=False)
 
       # standard output
-      outData = _p.stdout.read().strip()
+      outData = _p.stdout.read().decode().strip()
       for line in outData:
-        sys.stdout.write(line)
+        sys.stdout.write(str(line))
       sys.stdout.write('\n')
 
       for line in _p.stderr:
-        sys.stdout.write(line)
+        sys.stdout.write(str(line))
       sys.stdout.write('\n')
 
       # return code
@@ -385,7 +402,8 @@ class CommandBase(object):
     """ Wrapper around sys.exit()
     """
     self.log.info("List of child processes of current PID:")
-    retCode, _outData = self.executeAndGetOutput("ps --forest -o pid,%%cpu,%%mem,tty,stat,time,cmd -g %d" % os.getpid())
+    retCode, _outData = self.executeAndGetOutput(
+        "ps --forest -o pid,%%cpu,%%mem,tty,stat,time,cmd -g %d" % os.getpid())
     if retCode:
       self.log.error("Failed to issue ps [ERROR %d] " % retCode)
     sys.exit(errorCode)
@@ -462,7 +480,8 @@ class PilotParams(object):
     self.queueName = ""
     self.gridCEType = ""
     self.platform = ""
-    # maxNumberOfProcessors: the number of processors allocated to the pilot which the pilot can allocate to one payload
+    # maxNumberOfProcessors: the number of
+    # processors allocated to the pilot which the pilot can allocate to one payload
     # used to set payloadProcessors unless other limits are reached (like the number of processors on the WN)
     self.maxNumberOfProcessors = 0
     self.minDiskSpace = 2560  # MB
@@ -485,7 +504,7 @@ class PilotParams(object):
     # Some commands can define environment necessary to execute subsequent commands
     self.installEnv = os.environ
     # If DIRAC is preinstalled this file will receive the updates of the local configuration
-    self.localConfigFile = ''
+    self.localConfigFile = 'pilot.cfg'
     self.executeCmd = False
     self.configureScript = 'dirac-configure'
     self.architectureScript = 'dirac-platform'
@@ -494,6 +513,7 @@ class PilotParams(object):
     # self.pilotLogging = False
     self.pilotLogging = True
     self.modules = ''  # see dirac-install "-m" option documentation
+    self.userEnvVariables = ''  # see dirac-install "--userEnvVariables" option documentation
 
     # Parameters that can be determined at runtime only
     self.queueParameters = {}  # from CE description
@@ -501,8 +521,8 @@ class PilotParams(object):
 
     # Set number of allocatable processors from MJF if available
     try:
-      self.pilotProcessors = int(urllib.urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
-    except BaseException:
+      self.pilotProcessors = int(urlopen(os.path.join(os.environ['JOBFEATURES'], 'allocated_cpu')).read())
+    except Exception:
       self.pilotProcessors = 1
 
     # Pilot command options
@@ -524,6 +544,8 @@ class PilotParams(object):
                     ('m:', 'maxNumberOfProcessors=',
                      'specify a max number of processors to use by the payload inside a pilot'),
                     ('', 'modules=', 'for installing non-released code (see dirac-install "-m" option documentation)'),
+                    ('', 'userEnvVariables=',
+                     'User-requested environment variables (comma-separated, name and value separated by ":::")'),
                     ('r:', 'release=', 'DIRAC release to install'),
                     ('s:', 'section=', 'Set base section for relative parsed options'),
                     ('t:', 'tag=', 'extra tags for resource description'),
@@ -659,6 +681,8 @@ class PilotParams(object):
         self.reqtags.append(v)
       elif o == '--modules':
         self.modules = v
+      elif o == '--userEnvVariables':
+        self.userEnvVariables = v
 
   def __initJSON(self):
     """Retrieve pilot parameters from the content of json file. The file should be something like:

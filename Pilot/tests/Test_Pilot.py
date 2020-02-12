@@ -1,6 +1,8 @@
 """ Test class for Pilot
 """
 
+from __future__ import absolute_import, division, print_function
+
 # pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 
 # imports
@@ -93,8 +95,7 @@ class CommandsTestCase(PilotTestCase):
     """
     pp = PilotParams()
     cwn = CheckWorkerNode(pp)
-    res = cwn.execute()
-    self.assertEqual(res, None)
+    self.assertEqual(cwn.execute(), None)
 
   def test_ConfigureSite(self):
     """ Test ConfigureSite command
@@ -102,8 +103,7 @@ class CommandsTestCase(PilotTestCase):
     pp = PilotParams()
     pp.configureScript = 'echo'
     cs = ConfigureSite(pp)
-    res = cs.execute()
-    self.assertEqual(res, None)
+    self.assertEqual(cs.execute(), None)
 
   def test_NagiosProbes(self):
     """ Test NagiosProbes command
