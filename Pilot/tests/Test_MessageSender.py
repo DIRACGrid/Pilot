@@ -12,6 +12,14 @@ from mock import MagicMock
 from Pilot.MessageSender import LocalFileSender, StompSender, RESTSender, eraseFileContent, loadAndCreateObject
 import Pilot.MessageSender as module
 
+############################
+# python 2 -> 3 "hacks"
+try:
+  ModuleNotFoundError
+except NameError:
+  ModuleNotFoundError = ImportError
+############################
+
 
 def removeFile(filename):
   try:
@@ -48,12 +56,7 @@ class TestLoadAndCreateObject(unittest.TestCase):
     self.assertTrue(res)
 
   def test_fail(self):
-    res = loadAndCreateObject('MessageSender', 'NonExistingClass', '')
-    self.assertFalse(res)
-
-  def test_fail2(self):
-    res = loadAndCreateObject('Bla.Bla', 'NonExistingClass', '')
-    self.assertFalse(res)
+    self.assertRaises(ModuleNotFoundError, loadAndCreateObject, 'Bla.Bla', 'NonExistingClass', '')
 
 
 class TestLocalFileSender(unittest.TestCase):
