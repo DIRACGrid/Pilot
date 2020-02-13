@@ -27,7 +27,7 @@ jobs:
         run: |
           cp tests/upload.sh deploy.sh
           sed -i 's/uploaduser/${{ secrets.KRB_USERNAME }}/g' deploy.sh && \
-          cat deploy.sh && "\
+          cat deploy.sh && \
           echo ${{ secrets.KRB_PASSWORD }} | kinit ${{ secrets.KRB_USERNAME }}@CERN.CH && \
           echo readyToUpload && \
           export USER=${{ secrets.KRB_USERNAME }} && \
