@@ -25,11 +25,14 @@ jobs:
           ref: ${{ matrix.branch }}
       - name: upload
         run: |
-          cp tests/upload.sh deploy.sh
-          sed -i 's/uploaduser/${{ secrets.KRB_USERNAME }}/g' deploy.sh && \
-          cat deploy.sh && \
-          echo ${{ secrets.KRB_PASSWORD }} | kinit ${{ secrets.KRB_USERNAME }}@CERN.CH && \
-          echo readyToUpload && \
-          export USER=${{ secrets.KRB_USERNAME }} && \
-          echo reallyReadyToUpload && \
-          ./deploy.sh ${{ matrix.branch }}
+          docker pull docker.pkg.github.com/diracgrid/management/dirac-distribution:latest
+          contID=$(docker run -dt docker.pkg.github.com/diracgrid/management/dirac-distribution:latest)
+          docker cp tests/pilot.json ${contID}:.
+          docker exec ${contID} bash -c \
+          "sed -i 's/uploaduser/${{ secrets.KRB_USERNAME }}/g' pilot_tarball_upload.sh && "\
+          "cat pilot_tarball_upload.sh && "\
+          "echo ${{ secrets.KRB_PASSWORD }} | kinit ${{ secrets.KRB_USERNAME }}@CERN.CH  && "\
+          "echo readyToUpload && "\
+          "export USER=${{ secrets.KRB_USERNAME }} && "\
+          "echo reallyReadyToUpload && "\
+          "./pilot_tarball_upload.sh ${{ matrix.branch }}""
