@@ -16,15 +16,16 @@
 from __future__ import absolute_import, division, print_function
 
 import sys
-import Queue
->>>>>>> Working version for python 2.6
 import logging
+
 def isPython2_6():
   return sys.version_info[0]==2 and sys.version_info[1]==6
+
 if isPython2_6():
-    import wasser as requests
+  import wasser as requests
 else:
-    import requests
+  import requests
+
 try:
   import stomp
 except ImportError:
@@ -92,9 +93,9 @@ def messageSenderFactory(senderType, params):
 
   """
   typeToModuleAndClassName = {
-      'LOCAL_FILE': {'module': 'MessageSender', 'class': 'LocalFileSender'},
-      'MQ': {'module': 'MessageSender', 'class': 'StompSender'},
-      'REST_API': {'module': 'MessageSender', 'class': 'RESTSender'}
+    'LOCAL_FILE': {'module': 'MessageSender', 'class': 'LocalFileSender'},
+    'MQ': {'module': 'MessageSender', 'class': 'StompSender'},
+    'REST_API': {'module': 'MessageSender', 'class': 'RESTSender'}
   }
   try:
     moduleName = typeToModuleAndClassName[senderType]['module']
@@ -168,22 +169,22 @@ class RESTSender(MessageSender):
     CACertificate = self.params.get('CACertificate')
 
     if isPython2_6():
-        try:
-          requests.post(url,  # pylint: disable=undefined-variable
-                        json=msg,
-                        cert=(hostCertificate, hostKey),
-                        verify=CACertificate)
-        except (requests.RequestException,IOError) as e:
-          logging.error(e)
-          return False
+      try:
+        requests.post(url,  # pylint: disable=undefined-variable
+                      json=msg,
+                      cert=(hostCertificate, hostKey),
+                      verify=CACertificate)
+      except (requests.RequestException,IOError) as e:
+        logging.error(e)
+        return False
     else:
-        try:
-            requests.post(url, json=msg, cert=(hostCertificate, hostKey),
-                          verify=CACertificate)
-        except (requests.exceptions.RequestException,IOError) as e:
-          logging.error(e)
-          return False
-      return True
+      try:
+        requests.post(url, json=msg, cert=(hostCertificate, hostKey),
+                      verify=CACertificate)
+      except (requests.exceptions.RequestException,IOError) as e:
+        logging.error(e)
+        return False
+    return True
 
 
 def eraseFileContent(filename):
