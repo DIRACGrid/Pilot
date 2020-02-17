@@ -22,7 +22,10 @@ def isPython2_6():
   return sys.version_info[0]==2 and sys.version_info[1]==6
 
 if isPython2_6():
-  import wasser as requests
+  try:
+    import Pilot.wasser as requests
+  except ImportError:
+    import wasser as requests
 else:
   import requests
 

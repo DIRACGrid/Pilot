@@ -7,12 +7,14 @@ from multiprocessing import Process
 from time import sleep
 import unittest
 import json
-import ssl
-import wasser
-from simple_ssl_server import SimpleServer
 import sys
 import os
-from MessageSender import LocalFileSender, StompSender, RESTSender, eraseFileContent, loadAndCreateObject
+try:
+  from MessageSender import RESTSender
+except ImportError:
+  from Pilot.MessageSender import RESTSender
+from simple_ssl_server import SimpleServer
+
 
 class TestServer(SimpleServer):
     """Server for tests"""
