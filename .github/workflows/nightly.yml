@@ -25,6 +25,7 @@ jobs:
           ref: ${{ matrix.branch }}
       - name: upload
         run: |
+          echo ${{ secrets.DOCKER_HUB_PASSWORD }} | docker login docker.pkg.github.com --username ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
           docker pull docker.pkg.github.com/diracgrid/management/dirac-distribution:latest
           contID=$(docker run -dt docker.pkg.github.com/diracgrid/management/dirac-distribution:latest)
           docker cp tests/pilot.json ${contID}:.
