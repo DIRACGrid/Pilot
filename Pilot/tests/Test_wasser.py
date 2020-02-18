@@ -3,8 +3,7 @@ from multiprocessing import Process
 from time import sleep
 import unittest
 import json
-import ssl
-import wasser
+import Pilot.wasser as wasser
 from simple_ssl_server import SimpleServer
 
 
