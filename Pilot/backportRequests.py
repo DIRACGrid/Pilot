@@ -132,10 +132,3 @@ def get(url, cert, verify='certs/CAcert.pem'):
   response = ssl_socket.recv()
   ssl_socket.close()
   return response
-
-
-if __name__ == '__main__':
-  test_json = {'wasser': 'stein'}
-  print('\nGET request, normal certificate\n')
-  print(get('https://localhost:1027/',
-            ('certs/user.crt', 'certs/user.key')))
