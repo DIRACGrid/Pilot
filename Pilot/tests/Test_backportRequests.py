@@ -7,6 +7,42 @@ from time import sleep
 import unittest
 import json
 import Pilot.backportRequests as backport_requests
+from Pilot.tests.simple_ssl_server import SimpleServer
+
+
+class TestServer(SimpleServer):
+  """Server for tests"""
+
+  def get(self, path):
+    if path == '/':
+      response = """HTTP/1.0 200 OK
+                       Content-Type: text/html
+
+
+                       <head>Test message ...</head>
+                       <body>Hello there, general Kenobi</body>
+                       """
+      self.ssl_socket.send(response)
+    elif path == '/second':
+      reponse = """HTTP/1.1 200 OK
+            Content-Type: text/plain
+
+
+            Hello there"""
+      self.ssl_socket.send(response)
+
+  def post(self, path):
+    if path == '/':
+      if isinstance(self.message, dict):
+        json_string = json.dumps(self.message)
+        message_len = len(json_string)
+        response = "HTTP/1.0 200 OK\nContent-Type: application/json\nContent-Length: {0}\n\n{1}".format(
+          message_len, json_string)
+      else:
+        message = str(self.message)
+        message_len = len(message)
+        response = "HTTP/1.0 200 OK\nContent-Type: text/plain\nContent-Length: {0}\n\n{1}".format(message_len, message)
+    self.ssl_socket.send(response)
 
 
 class Testbackport_requestsRequest(unittest.TestCase):
