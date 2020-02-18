@@ -24,7 +24,7 @@ class SimpleServer(object):
   def listen(self):
     """Listening on socket"""
     if self.verbose:
-      print 'Begin listening\n'
+      print('Begin listening\n')
     self.sock.listen(5)
     while True:
       try:
@@ -32,7 +32,7 @@ class SimpleServer(object):
       except KeyboardInterrupt:
         self.close()
         if self.verbose:
-          print '\nConnection closed'
+          print('\nConnection closed')
         sys.exit()
 
   def handle(self):
@@ -47,12 +47,12 @@ class SimpleServer(object):
                                         server_side=True)
       data = self.ssl_socket.read()
       if self.verbose:
-        print '\n\nThis person sending message to us - {0}'.format(fromaddr)
+        print('\n\nThis person sending message to us - {0}'.format(fromaddr))
         cert = self.ssl_socket.getpeercert()
-        print 'Certificate of person:'
-        print cert
-        print 'Message:'
-        print data
+        print('Certificate of person:')
+        print(cert)
+        print('Message:')
+        print(data)
       for path in self.path:
         if re.search('^GET {0} HTTP/1.1'.format(path), data):
           self.get(path)
