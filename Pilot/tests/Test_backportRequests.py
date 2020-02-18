@@ -3,7 +3,7 @@ from multiprocessing import Process
 from time import sleep
 import unittest
 import json
-import Pilot.backport_requests as backport_requests
+import Pilot.backportRequests as backport_requests
 from simple_ssl_server import SimpleServer
 
 

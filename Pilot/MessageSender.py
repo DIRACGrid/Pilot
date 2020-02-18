@@ -23,9 +23,9 @@ def isPython2_6():
 
 if isPython2_6():
   try:
-    import Pilot.backport_requests as requests
+    import Pilot.backportRequests as requests
   except ImportError:
-    import backport_requests as requests
+    import backportRequests as requests
 else:
   import requests
 

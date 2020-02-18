@@ -1,5 +1,5 @@
 """
-   backport_requests is created to provide https requests for Python 2.6,
+   backportRequests is created to provide https requests for Python 2.6,
    where you don't have pyOpenSSL, cryptography.
    Here  SSL wrapper for socket is used.
 """

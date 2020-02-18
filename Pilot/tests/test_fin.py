@@ -7,65 +7,72 @@ from multiprocessing import Process
 from time import sleep
 import unittest
 import json
-import ssl
-import wasser
-from simple_ssl_server import SimpleServer
 import sys
 import os
-from MessageSender import LocalFileSender, StompSender, RESTSender, eraseFileContent, loadAndCreateObject
+from Pilot.simple_ssl_server import SimpleServer
+from Pilot.MessageSender import RESTSender
+
 
 class TestServer(SimpleServer):
-    """Server for tests"""
-    def get(self, path):
-        if path == '/':
-            response = """HTTP/1.0 200 OK
+  """Server for tests"""
+
+  def get(self, path):
+    if path == '/':
+      response = """HTTP/1.0 200 OK
                        Content-Type: text/html
 
 
                        <head>Test message ...</head>
                        <body>Hello there, general Kenobi</body>
                        """
-            self.ssl_socket.send(response)
-        elif path == '/second':
-            reponse = """HTTP/1.1 200 OK
+      self.ssl_socket.send(response)
+    elif path == '/second':
+      reponse = """HTTP/1.1 200 OK
             Content-Type: text/plain
 
 
             Hello there"""
-            self.ssl_socket.send(response)
-    def post(self, path):
-        if path == '/':
-            if isinstance(self.message, dict):
-                json_string = json.dumps(self.message)
-                message_len = len(json_string)
-                response = "HTTP/1.0 200 OK\nContent-Type: application/json\nContent-Length: {0}\n\n{1}".format(message_len, json_string)
-            else:
-                message = str(self.message)
-                message_len = len(message)
-                response = "HTTP/1.0 200 OK\nContent-Type: text/plain\nContent-Length: {0}\n\n{1}".format(message_len, message)
-        self.ssl_socket.send(response)
+      self.ssl_socket.send(response)
+
+  def post(self, path):
+    if path == '/':
+      if isinstance(self.message, dict):
+        json_string = json.dumps(self.message)
+        message_len = len(json_string)
+        response = "HTTP/1.0 200 OK\nContent-Type: application/json\nContent-Length: {0}\n\n{1}".format(
+            message_len, json_string)
+      else:
+        message = str(self.message)
+        message_len = len(message)
+        response = "HTTP/1.0 200 OK\nContent-Type: text/plain\nContent-Length: {0}\n\n{1}".format(message_len, message)
+    self.ssl_socket.send(response)
+
 
 class TestRESTSender(unittest.TestCase):
 
-    def setUp(self):
-        self.testFile = 'myFile'
-        self.testMessage = 'my test message'
-    def test_success(self):
-        params = {'HostKey': 'key', 'HostCertificate': 'cert', 'CACertificate':
-                  'CAcert.pem',
-                  'Url': 'https://localhost:1207/', 'LocalOutputFile': self.testFile}
-        msgSender = RESTSender(params)
-        res = msgSender.sendMessage(self.testMessage, 'info')
-        self.assertTrue(res)
-    def test_failure_badParams(self):
-        self.assertRaises(ValueError, RESTSender, {'blabl': 'bleble'})
+  def setUp(self):
+    self.testFile = 'myFile'
+    self.testMessage = 'my test message'
+
+  def test_success(self):
+    params = {'HostKey': 'key', 'HostCertificate': 'cert', 'CACertificate':
+              'CAcert.pem',
+              'Url': 'https://localhost:1207/', 'LocalOutputFile': self.testFile}
+    msgSender = RESTSender(params)
+    res = msgSender.sendMessage(self.testMessage, 'info')
+    self.assertTrue(res)
+
+  def test_failure_badParams(self):
+    self.assertRaises(ValueError, RESTSender, {'blabl': 'bleble'})
+
+
 if __name__ == '__main__':
-    addr = ('127.0.0.1', 1207)
-    server_cert = 'server.crt'
-    server_key = 'server.key'
-    ca = 'CAcert.pem'
-    CA_file = open(ca, 'w+')
-    CA_file.write('''-----BEGIN CERTIFICATE-----
+  addr = ('127.0.0.1', 1207)
+  server_cert = 'server.crt'
+  server_key = 'server.key'
+  ca = 'CAcert.pem'
+  CA_file = open(ca, 'w+')
+  CA_file.write('''-----BEGIN CERTIFICATE-----
 MIIDuTCCAqGgAwIBAgIJAOFEPV8gUfTvMA0GCSqGSIb3DQEBCwUAMHMxCzAJBgNV
 BAYTAlBMMRMwEQYDVQQIDApTb21lLVN0YXRlMQswCQYDVQQHDAJLUjEUMBIGA1UE
 CgwLRmFrZUNvbXBhbnkxDzANBgNVBAMMBkZha2VDQTEbMBkGCSqGSIb3DQEJARYM
@@ -87,9 +94,9 @@ WrORn4D5IQB9pdkMSrxb0uOHzXem6tptItpXRBGnuOqK9VnrNMHRXioDSonBWHCg
 5FOzR9M2wCCeNhWZ7GlkPfEMsRS2YED4CHYF4/noFscTIBn0nzi7HmfCWZ9IZt4U
 JU+cMU9UeD0bcayGYn6+FdUOAMRL1nuiuZSGsfDfP9uf8MUt/b9svEQdy7AN
 -----END CERTIFICATE-----''')
-    CA_file.close()
-    server_cert_file = open(server_cert, 'w+')
-    server_cert_file.write('''-----BEGIN CERTIFICATE-----
+  CA_file.close()
+  server_cert_file = open(server_cert, 'w+')
+  server_cert_file.write('''-----BEGIN CERTIFICATE-----
 MIIDajCCAlICCQDFJV8E0N4atzANBgkqhkiG9w0BAQsFADBzMQswCQYDVQQGEwJQ
 TDETMBEGA1UECAwKU29tZS1TdGF0ZTELMAkGA1UEBwwCS1IxFDASBgNVBAoMC0Zh
 a2VDb21wYW55MQ8wDQYDVQQDDAZGYWtlQ0ExGzAZBgkqhkiG9w0BCQEWDGZha2VA
@@ -110,9 +117,9 @@ SzMcBln1mU84JnYWuqV7qzPhbSQVJreQMD2mWuhYXQ6ebqsvXAcL9yJzSgK/j5dV
 iCQrmT6rDtXNC+U+aos9AyuBZmfakywpMJnTYijTqaatqhVyjcckeuAh071OAEl+
 YDz8oBCf0xLyILyd1+8=
 -----END CERTIFICATE-----''')
-    server_cert_file.close()
-    server_key_file = open(server_key,'w+')
-    server_key_file.write('''-----BEGIN RSA PRIVATE KEY-----
+  server_cert_file.close()
+  server_key_file = open(server_key, 'w+')
+  server_key_file.write('''-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEAp6priaJosURGdARKXmsIwH5mzeuvdbeOOFc1iHkbaNFr5mpj
 bWgwJT5QQDJ2yvzTiHts44DmlQ1/B7OU9wJYCFbUlHIEI4Wjy0ck1sahWEEPtGoN
 mo1WJIcIgEoiW5aOyjAiBoxo/aN2afwK37KzIMpsUh2V3djTCg53vFOle37XG+i4
@@ -139,10 +146,10 @@ HaoZAoGBAMuvL7nHiJYYWpvodkLj6EjJooWsJkMtzWfC/ox6CBdIYlNM3s5UEkQI
 JDdPmz8seNh+bq5QvL9fnh0fgmeUzV6xhsd9IxQGSQj5yfgEMZXPYDGrAL2hVGNJ
 /8j1N6ULtBuUwQxvSXF4TixNwM6HpL8Pt9+4wkw4jul/cXe/qH8F
 -----END RSA PRIVATE KEY-----''')
-    server_key_file.close()
+  server_key_file.close()
 
-    user_cert_file = open('cert', 'w+')
-    user_cert_file.write('''-----BEGIN CERTIFICATE-----
+  user_cert_file = open('cert', 'w+')
+  user_cert_file.write('''-----BEGIN CERTIFICATE-----
 MIIDXDCCAkQCCQDFJV8E0N4atTANBgkqhkiG9w0BAQsFADBzMQswCQYDVQQGEwJQ
 TDETMBEGA1UECAwKU29tZS1TdGF0ZTELMAkGA1UEBwwCS1IxFDASBgNVBAoMC0Zh
 a2VDb21wYW55MQ8wDQYDVQQDDAZGYWtlQ0ExGzAZBgkqhkiG9w0BCQEWDGZha2VA
@@ -162,10 +169,10 @@ RlTLbDo92R5gyypNKFbdH/xldMElF9vljSyrdrot5yJuOiF0Foa5PL8T5XD00R7l
 jGOOo3PWGBLC0JLcojBB1FCp6+HpD27yixu4cZWiLzeBD7CzIZKcXTkkWg/hvizb
 GVyZygrgouxS+IVQ8yM1mvwnHEKg4/N0KbPQuR/gU63G+qRG09LgmP+NgLcLfDFl
 -----END CERTIFICATE-----''')
-    user_cert_file.close()
+  user_cert_file.close()
 
-    user_key_file = open('key', 'w+')
-    user_key_file.write('''-----BEGIN RSA PRIVATE KEY-----
+  user_key_file = open('key', 'w+')
+  user_key_file.write('''-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEA1kVc7zgjaEzcMUMUI+Mqe+50kF3qxCshtsd7YXWqQZ7p8ogb
 L/s2Uy4wjb4OqxSS9VWkkLJokgdxRZJUc55NrAM0ilFl6A+aY5saSy25iGhe2X6B
 2MYgV4gDuTlmrdyNACrFjIU+Xk4du0+9i7iQmA0yMVn3fuxb2YJffTsnJnDrmGUH
@@ -192,17 +199,17 @@ n6YfswKBgHCduQC30UMmSB0y46NrTJ32pHOoxJj9PiJFidQV/9ifVjcrVHJXGRzA
 WA9z7+WQHJOoGo1JaX8sp+8DRuJEJhWDXGqhNLWpmmFAgbY5jq6OaUEhiOnv4Fwa
 x4tCpgBFteVpNiJ1gZ3SKdDFZ/mKkIGau20fi6oBdldtrULijjVF
 -----END RSA PRIVATE KEY-----''')
-    user_key_file.close()
+  user_key_file.close()
 
-    server = TestServer(addr, server_cert, server_key, ca, ['/', '/second'])
-    server_process = Process(target=server.listen)
-    server_process.start()
-    print 'Server is listening'
-    sleep(1)
+  server = TestServer(addr, server_cert, server_key, ca, ['/', '/second'])
+  server_process = Process(target=server.listen)
+  server_process.start()
+  print 'Server is listening'
+  sleep(1)
 
-    suite = unittest.defaultTestLoader.loadTestsFromTestCase(TestRESTSender)
-    testResult = unittest.TextTestRunner(verbosity=2).run(suite)
-    server_process.terminate()
-    for f in ['cert','key', server_cert, server_key, ca]:
-        os.remove(f)
-    sys.exit(not testResult.wasSuccessful())
+  suite = unittest.defaultTestLoader.loadTestsFromTestCase(TestRESTSender)
+  testResult = unittest.TextTestRunner(verbosity=2).run(suite)
+  server_process.terminate()
+  for f in ['cert', 'key', server_cert, server_key, ca]:
+    os.remove(f)
+  sys.exit(not testResult.wasSuccessful())
