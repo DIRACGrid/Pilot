@@ -23,9 +23,9 @@ def isPython2_6():
 
 if isPython2_6():
   try:
-    import Pilot.wasser as requests
+    import Pilot.backport_requests as requests
   except ImportError:
-    import wasser as requests
+    import backport_requests as requests
 else:
   import requests
 
