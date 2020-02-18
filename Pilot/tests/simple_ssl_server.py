@@ -5,6 +5,7 @@ import ssl
 import socket
 import sys
 import re
+import logging
 
 
 class SimpleServer(object):
@@ -24,7 +25,7 @@ class SimpleServer(object):
   def listen(self):
     """Listening on socket"""
     if self.verbose:
-      print('Begin listening\n')
+      logging.debug('Begin listening')
     self.sock.listen(5)
     while True:
       try:
@@ -32,7 +33,7 @@ class SimpleServer(object):
       except KeyboardInterrupt:
         self.close()
         if self.verbose:
-          print('\nConnection closed')
+          logging.debug('Connection closed')
         sys.exit()
 
   def handle(self):
@@ -47,12 +48,12 @@ class SimpleServer(object):
                                         server_side=True)
       data = self.ssl_socket.read()
       if self.verbose:
-        print('\n\nThis person sending message to us - {0}'.format(fromaddr))
+        logging.debug('\n\nThis person sending message to us - {0}'.format(fromaddr))
         cert = self.ssl_socket.getpeercert()
-        print('Certificate of person:')
-        print(cert)
-        print('Message:')
-        print(data)
+        logging.debug('Certificate of person:')
+        logging.debug(cert)
+        logging.debug('Message:')
+        logging.debug(data)
       for path in self.path:
         if re.search('^GET {0} HTTP/1.1'.format(path), data):
           self.get(path)
@@ -62,10 +63,6 @@ class SimpleServer(object):
       self.ssl_socket.close()
     except ssl.SSLError as e:
       pass
-#            print 'Problem with connection from this addr:\n'
-#            print fromaddr
-#            print 'Problem:\n'
-#            print e
 
   def close(self):
     """Close socket"""
