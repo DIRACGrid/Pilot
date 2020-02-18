@@ -7,7 +7,11 @@
 import json
 import socket
 import ssl
-from urlparse import urlparse
+
+try:
+  from urlparse import urlparse
+except ImportError:
+  from urllib.parse import urlparse
 
 
 class RequestException(Exception):
@@ -132,6 +136,6 @@ def get(url, cert, verify='certs/CAcert.pem'):
 
 if __name__ == '__main__':
   test_json = {'wasser': 'stein'}
-  print '\nGET request, normal certificate\n'
-  print get('https://localhost:1027/',
-            ('certs/user.crt', 'certs/user.key'))
+  print('\nGET request, normal certificate\n')
+  print(get('https://localhost:1027/',
+            ('certs/user.crt', 'certs/user.key')))
