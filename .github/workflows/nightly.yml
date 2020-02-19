@@ -36,4 +36,4 @@ jobs:
           "echo readyToUpload && "\
           "export USER=${{ secrets.KRB_USERNAME }} && "\
           "echo reallyReadyToUpload && "\
-          "./pilot_tarball_upload.sh ${{ matrix.branch }}""
+          "./pilot_tarball_upload.sh ${{ matrix.branch }}"
