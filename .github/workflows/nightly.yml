@@ -30,8 +30,8 @@ jobs:
           docker pull docker.pkg.github.com/diracgrid/management/dirac-distribution:latest
           contID=$(docker run -dt docker.pkg.github.com/diracgrid/management/dirac-distribution:latest)
           docker exec ${contID} mkdir Pilot
-          docker cp Pilot/*.py ${contID}:Pilot/.
-          docker cp tests/pilot.json ${contID}:tests/pilot.json
+          docker cp Pilot ${contID}:.
+          docker cp tests ${contID}:.
           docker exec ${contID} bash -c \
           "sed -i 's/uploaduser/${{ secrets.KRB_USERNAME }}/g' pilot_tarball_upload.sh && "\
           "cat pilot_tarball_upload.sh && "\
