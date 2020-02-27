@@ -19,6 +19,7 @@ class exceptions(object):
     """Exception for requests"""
 
     def __init__(self, url, message):
+      super(exceptions.RequestException, self).__init__(message)
       self.url = url
       self.message = message
 
@@ -28,12 +29,15 @@ class exceptions(object):
 
 def post(url, data, cert, verify='certs/CAcert.pem'):
   """
-  POST method for https request, please provide:
-  url - url which you want to connect,
-  data - message to POST,
-  cert - tuple of your certificate and key, in this order
-  verify - do you want to verify server certificate,
-  verify - verify certificate which you want to use in verifying (only if isinstance(verify, str) = True)
+  POST method for https request.
+  Args:
+    url(str): url which you want to connect,
+    data: message to POST,
+    cert(tuple): tuple of your certificate and key, in this order.
+    verify(bool): do you want to verify server certificate.
+    verify(bool): verify certificate which you want to use in verifying (only if isinstance(verify, str) = True).
+  Return:
+    obj: Response.
   """
   parsed_url = urlparse(url)
   location = parsed_url.netloc
@@ -80,7 +84,7 @@ def post(url, data, cert, verify='certs/CAcert.pem'):
     message_len = len(message)
     content_type = 'text/plain'
   request_body = "POST {0} HTTP/1.1\nContent-Type: {1}\nContent-Length: {2}\n\n{3}".format(
-      path, content_type, message_len, message)
+    path, content_type, message_len, message)
   ssl_socket.send(request_body)
   response = ssl_socket.recv()
   ssl_socket.close()
@@ -124,9 +128,9 @@ def get(url, cert, verify='certs/CAcert.pem'):
     ssl_socket.connect((host, port))
   except ssl.SSLError as error:
     error_list = error.strerror.split(':')
-    raise RequestException(url, error_list[-1])
+    raise exceptions.RequestException(url, error_list[-1])
   except socket.error as error:
-    raise RequestException(url, error.strerror)
+    raise exceptions.RequestException(url, error.strerror)
   request_body = 'GET {0} HTTP/1.1\nAccept: */*\n\n'.format(path)
   ssl_socket.send(request_body)
   response = ssl_socket.recv()
