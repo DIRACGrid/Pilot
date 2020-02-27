@@ -170,23 +170,12 @@ class RESTSender(MessageSender):
     hostKey = self.params.get('HostKey')
     hostCertificate = self.params.get('HostCertificate')
     CACertificate = self.params.get('CACertificate')
-
-    if isPython2_6():
-      try:
-        requests.post(url,  # pylint: disable=undefined-variable
-                      json=msg,
-                      cert=(hostCertificate, hostKey),
-                      verify=CACertificate)
-      except (requests.RequestException,IOError) as e:
-        logging.error(e)
-        return False
-    else:
-      try:
-        requests.post(url, json=msg, cert=(hostCertificate, hostKey),
-                      verify=CACertificate)
-      except (requests.exceptions.RequestException,IOError) as e:
-        logging.error(e)
-        return False
+    try:
+      requests.post(url, json=msg, cert=(hostCertificate, hostKey),
+                    verify=CACertificate)
+    except (requests.exceptions.RequestException,IOError) as e:
+      logging.error(e)
+      return False
     return True
 
 

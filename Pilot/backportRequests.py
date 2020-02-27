@@ -14,16 +14,16 @@ except ImportError:
   from urllib.parse import urlparse
 
 
-class RequestException(Exception):
-  """Exception for requests"""
+class exceptions(object):
+  class RequestException(Exception):
+    """Exception for requests"""
 
-  def __init__(self, url, message):
-    super(RequestException, self).__init__(url, message)
-    self.url = url
-    self.message = message
+    def __init__(self, url, message):
+      self.url = url
+      self.message = message
 
-  def __str__(self):
-    return '\nProblem with connecting to this url:\n{0}\nProblem:\n{1}'.format(self.url, self.message)
+    def __str__(self):
+      return '\nProblem with connecting to this url:\n{0}\nProblem:\n{1}'.format(self.url, self.message)
 
 
 def post(url, data, cert, verify='certs/CAcert.pem'):
@@ -68,9 +68,9 @@ def post(url, data, cert, verify='certs/CAcert.pem'):
     ssl_socket.connect((host, port))
   except ssl.SSLError as error:
     error_list = error.strerror.split(':')
-    raise RequestException(url, error_list[-1])
+    raise exceptions.RequestException(url, error_list[-1])
   except socket.error as error:
-    raise RequestException(url, error.strerror)
+    raise exceptions.RequestException(url, error.strerror)
   if isinstance(data, dict):
     message = json.dumps(data)
     message_len = len(message)
