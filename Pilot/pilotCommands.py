@@ -839,7 +839,10 @@ class LaunchAgent(CommandBase):
     self.inProcessOpts = ['-s /Resources/Computing/CEDefaults']
     self.inProcessOpts.append('-o WorkingDirectory=%s' % self.pp.workingDir)
     self.inProcessOpts.append('-o /LocalSite/CPUTime=%s' % (int(self.pp.jobCPUReq)))
-    self.jobAgentOpts = ['-o MaxCycles=%s' % self.pp.maxCycles]
+    self.jobAgentOpts = ['-o MaxCycles=%s' % self.pp.maxCycles,
+                         '-o PollingTime=%s' % self.pp.pollingTime,
+                         '-o StopOnApplicationFailure=%s' % self.pp.stopOnApplicationFailure,
+                         '-o StopAfterFailedMatches=%s' % self.pp.stopAfterFailedMatches]
 
     if self.debugFlag:
       self.jobAgentOpts.append('-o LogLevel=DEBUG')
@@ -938,6 +941,8 @@ class MultiLaunchAgent(CommandBase):
     # To prevent a wayward agent picking up and failing many jobs.
     self.inProcessOpts.append('-o MaxTotalJobs=%s' % self.pp.maxCycles)
     self.jobAgentOpts = ['-o MaxCycles=%s' % self.pp.maxCycles,
+                         '-o PollingTime=%s' % self.pp.pollingTime,
+                         '-o StopOnApplicationFailure=%s' % self.pp.stopOnApplicationFailure,
                          '-o StopAfterFailedMatches=0']
 
     if self.debugFlag:

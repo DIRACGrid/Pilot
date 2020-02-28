@@ -445,8 +445,6 @@ class PilotParams(object):
   """ Class that holds the structure with all the parameters to be used across all the commands
   """
 
-  MAX_CYCLES = 10
-
   def __init__(self):
     """ c'tor
 
@@ -488,7 +486,10 @@ class PilotParams(object):
     self.pythonVersion = '27'
     self.userGroup = ""
     self.userDN = ""
-    self.maxCycles = self.MAX_CYCLES
+    self.maxCycles = 10
+    self.pollingTime = 120
+    self.stopOnApplicationFailure = True
+    self.stopAfterFailedMatches = 10
     self.flavour = 'DIRAC'
     self.gridVersion = ''
     self.pilotReference = ''
@@ -559,6 +560,9 @@ class PilotParams(object):
                     ('G:', 'Group=', 'DIRAC Group to use'),
                     ('K:', 'certLocation=', 'Specify server certificate location'),
                     ('M:', 'MaxCycles=', 'Maximum Number of JobAgent cycles to run'),
+                    ('', 'PollingTime=', 'JobAgent execution frequency'),
+                    ('', 'StopOnApplicationFailure=', 'Stop Job Agent when encounter an application failure'),
+                    ('', 'StopAfterFailedMatches=', 'Stop Job Agent after N failed matches'),
                     ('N:', 'Name=', 'CE Name'),
                     ('O:', 'OwnerDN=', 'Pilot OwnerDN (for private pilots)'),
                     ('P:', 'pilotProcessors=', 'Number of processors allocated to this pilot'),
@@ -660,7 +664,19 @@ class PilotParams(object):
         self.certsLocation = v
       elif o == '-M' or o == '--MaxCycles':
         try:
-          self.maxCycles = min(self.MAX_CYCLES, int(v))
+          self.maxCycles = int(v)
+        except ValueError:
+          pass
+      elif o == '--PollingTime':
+        try:
+          self.pollingTime = int(v)
+        except ValueError:
+          pass
+      elif o == '--StopOnApplicationFailure':
+        self.stopOnApplicationFailure = v
+      elif o == '--StopAfterFailedMatches':
+        try:
+          self.stopAfterFailedMatches = int(v)
         except ValueError:
           pass
       elif o in ('-T', '--CPUTime'):
