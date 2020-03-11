@@ -9,6 +9,9 @@ on:
 
 jobs:
   # uploading master and devel tarballs to web server, for use in subsequent tests
+  # the base tests that use these uploaded tarballs are the DIRAC "pilot wrapper" tests:
+  # https://github.com/DIRACGrid/DIRAC/actions?query=workflow%3A%22pilot+wrapper%22
+  # (triggered by https://github.com/DIRACGrid/DIRAC/blob/integration/.github/workflows/pilotWrapper.yml)
   upload:
     runs-on: ubuntu-latest
     if: github.repository == 'DIRACGrid/Pilot'

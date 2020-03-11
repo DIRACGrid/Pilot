@@ -232,8 +232,7 @@ class InstallDIRAC(CommandBase):
 
     # At this point self.pp.installEnv may coincide with os.environ
     # If extensions want to pass in a modified environment, it's easy to set self.pp.installEnv in an extended command
-    retCode, output = self.executeAndGetOutput(installCmd, self.pp.installEnv)
-    self.log.info(output, header=False)
+    retCode, _output = self.executeAndGetOutput(installCmd, self.pp.installEnv)
 
     if retCode:
       self.log.error("Could not make a proper DIRAC installation [ERROR %d]" % retCode)
@@ -717,7 +716,7 @@ class ConfigureArchitecture(CommandBase):
     if retCode:
       self.log.error("There was an error updating the platform [ERROR %d]" % retCode)
       self.exitWithError(retCode)
-    self.log.debug("Architecture determined: %s" % localArchitecture)
+    self.log.info("Architecture determined: %s" % localArchitecture)
 
     # standard options
     cfg = ['-FDMH']  # force update, skip CA checks, skip CA download, skip VOMS
@@ -839,13 +838,7 @@ class LaunchAgent(CommandBase):
     self.log.info('User Id    = %s' % localUid)
     self.inProcessOpts = ['-s /Resources/Computing/CEDefaults']
     self.inProcessOpts.append('-o WorkingDirectory=%s' % self.pp.workingDir)
-    # FIXME: this is artificial
-    self.inProcessOpts.append('-o TotalCPUs=%s' % 1)
-    self.inProcessOpts.append('-o /LocalSite/MaxCPUTime=%s' % (int(self.pp.jobCPUReq)))
     self.inProcessOpts.append('-o /LocalSite/CPUTime=%s' % (int(self.pp.jobCPUReq)))
-    self.inProcessOpts.append('-o MaxRunningJobs=%s' % 1)
-    # To prevent a wayward agent picking up and failing many jobs.
-    self.inProcessOpts.append('-o MaxTotalJobs=%s' % 10)
     self.jobAgentOpts = ['-o MaxCycles=%s' % self.pp.maxCycles]
 
     if self.debugFlag:
@@ -941,7 +934,6 @@ class MultiLaunchAgent(CommandBase):
     self.log.info('User Id    = %s' % localUid)
     self.inProcessOpts = ['-s /Resources/Computing/CEDefaults']
     self.inProcessOpts.append('-o WorkingDirectory=%s' % self.pp.workingDir)
-    self.inProcessOpts.append('-o /LocalSite/MaxCPUTime=%s' % (int(self.pp.jobCPUReq)))
     self.inProcessOpts.append('-o /LocalSite/CPUTime=%s' % (int(self.pp.jobCPUReq)))
     # To prevent a wayward agent picking up and failing many jobs.
     self.inProcessOpts.append('-o MaxTotalJobs=%s' % self.pp.maxCycles)
