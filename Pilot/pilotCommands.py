@@ -165,8 +165,6 @@ class InstallDIRAC(CommandBase):
         self.installOpts.append('-e "%s"' % v)
       elif o == '-g' or o == '--grid':
         self.pp.gridVersion = v
-      elif o == '--dirac-os':
-        self.installOpts.append('--dirac-os')
       elif o == '-i' or o == '--python':
         self.pp.pythonVersion = v
       elif o == '-p' or o == '--platform':

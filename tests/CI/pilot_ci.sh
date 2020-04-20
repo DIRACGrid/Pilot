@@ -270,12 +270,6 @@ function submitAndMatch(){
   prepareForPilot
   default
 
-  if [ "$DIRACOSVER" ]
-  then
-    pilot_options=" --dirac-os --dirac-os-version=$DIRACOSVER"
-    pilot_options+=' '
-  fi
-
   if ! PilotInstall; then
     echo 'ERROR: dirac-pilot failure'
     exit 1
