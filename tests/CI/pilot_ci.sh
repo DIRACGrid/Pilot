@@ -35,16 +35,14 @@
 
 # Def of environment variables:
 
-if [ ! -z "${DEBUG:-}" ]
-then
+if [[ -n "${DEBUG:-}" ]]; then
   echo '==> Running in DEBUG mode'
   DEBUG='-ddd'
 else
   echo '==> Running in non-DEBUG mode'
 fi
 
-if [ ! -z "${WORKSPACE:-}" ]
-then
+if [[ -n "${WORKSPACE:-}" ]]; then
   echo '==> We are in Jenkins I guess'
 else
   WORKSPACE=$PWD
@@ -98,7 +96,7 @@ function PilotInstall(){
   #python PilotLogger.py "Hello I am THE best pilot"
 
   # launch the pilot script
-  pilotOptions=$pilot_options
+  pilotOptions="${pilot_options}"
   pilotOptions+=" -M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs"
   if [ "$VO" ]
   then
@@ -106,13 +104,7 @@ function PilotInstall(){
     pilotOptions+="Pilot"
   fi
   # shellcheck disable=SC2154
-  if [ "$lcgVersion" ]
-  then
-    pilotOptions+=" -g ""$lcgVersion"
-  fi
-  # shellcheck disable=SC2154
-  if [ "$modules" ]
-  then
+  if [[ "$modules" ]]; then
     pilotOptions+=" --modules=""$modules"
   fi
   pilotOptions+=" --debug"
