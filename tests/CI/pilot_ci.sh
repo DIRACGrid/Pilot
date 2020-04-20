@@ -96,6 +96,7 @@ function PilotInstall(){
   #python PilotLogger.py "Hello I am THE best pilot"
 
   # launch the pilot script
+  # shellcheck disable=SC2154
   pilotOptions="${pilot_options}"
   pilotOptions+=" -M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs"
   if [ "$VO" ]
