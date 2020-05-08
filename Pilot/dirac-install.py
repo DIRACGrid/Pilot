@@ -1517,18 +1517,24 @@ def downloadAndExtractTarball(tarsURL, pkgName, pkgVer, checkHash=True, cache=Fa
   #  tf.extract( member )
   # os.chdir(cwd)
   if not isSource:
-    with closing(tarfile.open(tarPath, mode="r:*")) as tar:
-      for tarinfo in tar:  # pylint: disable=not-an-iterable
-        try:
-          tar.extract(tarinfo, cliParams.targetPath)  # pylint: disable=no-member
-        except IOError:
-          os.remove(tarinfo.name)
-          tar.extract(tarinfo, cliParams.targetPath)  # pylint: disable=no-member
-        finally:
+    try:
+      with closing(tarfile.open(tarPath, mode="r:*")) as tar:
+        for tarinfo in tar:  # pylint: disable=not-an-iterable
           try:
-            os.chmod(tarinfo.name, tarinfo.mode)
-          except OSError:  # the file can be a link
-            pass
+            tar.extract(tarinfo, cliParams.targetPath)  # pylint: disable=no-member
+          except IOError:
+            os.remove(tarinfo.name)
+            tar.extract(tarinfo, cliParams.targetPath)  # pylint: disable=no-member
+          finally:
+            try:
+              os.chmod(tarinfo.name, tarinfo.mode)
+            except OSError:  # the file can be a link
+              pass
+    except Exception as e:
+      logWARN("Trying do extract using system tar: %s" % repr(e))
+      tarCmd = "tar xzf '%s' -C '%s'" % (tarPath, cliParams.targetPath)
+      os.system(tarCmd)
+
     # Delete tar
     if cache:
       if not os.path.isdir(cacheDir):
@@ -1721,9 +1727,9 @@ def usage():
   print("\nUsage:\n\n  %s <opts> <cfgFile>" % os.path.basename(sys.argv[0]))
   print("\nOptions:")
   for cmdOpt in cmdOpts:
-    print("\n  %s %s : %s" % (cmdOpt[0].ljust(3), cmdOpt[1].ljust(20), cmdOpt[2]))
+    print("  %s %s : %s" % (cmdOpt[0].ljust(3), cmdOpt[1].ljust(20), cmdOpt[2]))
   print()
-  print("Known options and default values from /defaults section of releases file")
+  print("Known options and default values from /defaults section of releases file:")
   for options in [('Release', cliParams.release),
                   ('Project', cliParams.project),
                   ('ModulesToInstall', []),
@@ -1998,13 +2004,7 @@ def installLCGutils(releaseConfig):
   if lcgVer:
     verString = "%s-%s-python%s" % (lcgVer, cliParams.platform, cliParams.pythonVersion)
     # HACK: try to find a more elegant solution for the lcg bundles location
-    if not downloadAndExtractTarball(
-        tarsURL +
-        "/../lcgBundles",
-        "DIRAC-lcg",
-        verString,
-        False,
-            cache=True):
+    if not downloadAndExtractTarball(tarsURL + "/../lcgBundles", "DIRAC-lcg", verString, False, cache=True):
       logERROR(
           "\nThe requested LCG software version %s for the local operating system could not be downloaded." %
           verString)
@@ -2195,6 +2195,8 @@ def createBashrc():
       lines.append('# export DIRAC_DEBUG_STOMP=1')
       lines.append('# export DIRAC_DEPRECATED_FAIL=1')
       lines.append('# export DIRAC_GFAL_GRIDFTP_SESSION_REUSE=true')
+      lines.append('# export DIRAC_USE_JSON_DECODE=no')
+      lines.append('# export DIRAC_USE_JSON_ENCODE=no')
       lines.append('# export DIRAC_USE_M2CRYPTO=true')
       lines.append('# export DIRAC_USE_NEWTHREADPOOL=yes')
       lines.append('# export DIRAC_VOMSES=$DIRAC/etc/grid-security/vomses')
@@ -2476,6 +2478,21 @@ def createBashrcForDiracOS():
       lines.extend(['# Fork support for xrootd',
                     'export XRD_RUNFORKHANDLER=1'])
 
+      # Add possible DIRAC environment variables
+      lines.append('')
+      lines.append('# before enabling any of these variables, please see the documentation ')
+      lines.append('# https://dirac.readthedocs.io/en/latest/AdministratorGuide/' +
+                   'ServerInstallations/environment_variable_configuration.html')
+      lines.append('# export DIRAC_DEBUG_DENCODE_CALLSTACK=1')
+      lines.append('# export DIRAC_DEBUG_STOMP=1')
+      lines.append('# export DIRAC_DEPRECATED_FAIL=1')
+      lines.append('# export DIRAC_GFAL_GRIDFTP_SESSION_REUSE=true')
+      lines.append('# export DIRAC_USE_JSON_DECODE=no')
+      lines.append('# export DIRAC_USE_JSON_ENCODE=no')
+      lines.append('# export DIRAC_USE_M2CRYPTO=true')
+      lines.append('# export DIRAC_USE_NEWTHREADPOOL=yes')
+      lines.append('# export DIRAC_VOMSES=$DIRAC/etc/grid-security/vomses')
+
       # Add the lines required for further env variables requested
       if cliParams.userEnvVariables:
         lines.extend(['# User-requested variables'])
@@ -2616,10 +2633,10 @@ if __name__ == "__main__":
         if not retVal['OK']:
           logERROR("Cannot checkout %s" % retVal['Message'])
           sys.exit(1)
-        continue
-      logNOTICE("Installing %s:%s" % (modName, modVersion))
-      if not downloadAndExtractTarball(tarsURL, modName, modVersion):
-        sys.exit(1)
+      else:
+        logNOTICE("Installing %s:%s" % (modName, modVersion))
+        if not downloadAndExtractTarball(tarsURL, modName, modVersion):
+          sys.exit(1)
     logNOTICE("Deploying scripts...")
     ddeLocation = os.path.join(cliParams.targetPath, "DIRAC", "Core",
                                "scripts", "dirac-deploy-scripts.py")
@@ -2650,7 +2667,7 @@ if __name__ == "__main__":
 
   # we install with DIRACOS from v7rX DIRAC release
   if cliParams.diracOS \
-     or isinstance(list(releaseConfig.prjRelCFG['DIRAC'])[0][1], str_type) \
+     or list(releaseConfig.prjRelCFG['DIRAC'])[0][1] not in '0123456789' \
      or int(list(releaseConfig.prjRelCFG['DIRAC'])[0][1]) > 6:
     logNOTICE("Installing DIRAC OS %s..." % cliParams.diracOSVersion)
     if not installDiracOS(releaseConfig):
