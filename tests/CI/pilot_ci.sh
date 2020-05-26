@@ -49,19 +49,19 @@ else
 fi
 
 pwd
-echo -e "$WORKSPACE"
+echo -e "${WORKSPACE}"
 # Creating default structure
-mkdir -p "$WORKSPACE/TestCode" # Where the test code resides
+mkdir -p "${WORKSPACE}/TestCode" # Where the test code resides
 TESTCODE=$_
-mkdir -p "$WORKSPACE/ClientInstallDIR" # Where client are installed
+mkdir -p "${WORKSPACE}/ClientInstallDIR" # Where client are installed
 # shellcheck disable=SC2034
 CLIENTINSTALLDIR=$_
-mkdir -p "$WORKSPACE/PilotInstallDIR" # Where pilots are installed
+mkdir -p "${WORKSPACE}/PilotInstallDIR" # Where pilots are installed
 PILOTINSTALLDIR=$_
 
 # Sourcing utility file
 # shellcheck source=tests/CI/utilities.sh
-source "$TESTCODE/Pilot/tests/CI/utilities.sh"
+source "${TESTCODE}/Pilot/tests/CI/utilities.sh"
 
 
 # basically it just calls the pilot wrapper
@@ -71,15 +71,15 @@ function PilotInstall(){
 
   default
 
-  cwd=$PWD
-  if ! cd "$PILOTINSTALLDIR"; then
-    echo -e "ERROR: cannot change to $PILOTINSTALLDIR"
+  cwd=${PWD}
+  if ! cd "${PILOTINSTALLDIR}"; then
+    echo -e "ERROR: cannot change to ${PILOTINSTALLDIR}" >&2
     exit 1
   fi
 
   #get the configuration file (from an VO extension, if it exists)
   pilot="Pilot"
-  cp "$TESTCODE/$VO$pilot/tests/CI/pilot.json" .
+  cp "${TESTCODE}/${VO}${pilot}/tests/CI/pilot.json" .
   # and adapt it
   sed -i "s/VAR_JENKINS_SITE/$JENKINS_SITE/g" pilot.json
   sed -i "s/VAR_JENKINS_CE/$JENKINS_CE/g" pilot.json
@@ -98,27 +98,27 @@ function PilotInstall(){
   # launch the pilot script
   # shellcheck disable=SC2154
   pilotOptions="${pilot_options}"
-  pilotOptions+=" -M 1 -S $DIRACSETUP -N $JENKINS_CE -Q $JENKINS_QUEUE -n $JENKINS_SITE --cert --certLocation=/home/dirac/certs"
-  if [ "$VO" ]
+  pilotOptions+=" -M 1 -S ${DIRACSETUP} -N ${JENKINS_CE} -Q ${JENKINS_QUEUE} -n ${JENKINS_SITE} --cert --certLocation=/home/dirac/certs"
+  if [ "${VO}" ]
   then
-    pilotOptions+=" -l $VO -E $VO"
+    pilotOptions+=" -l ${VO} -E ${VO}"
     pilotOptions+="Pilot"
   fi
   # shellcheck disable=SC2154
-  if [[ "$modules" ]]; then
-    pilotOptions+=" --modules=""$modules"
+  if [[ "${modules}" ]]; then
+    pilotOptions+=" --modules=""${modules}"
   fi
   pilotOptions+=" --debug"
 
   echo -e "Running dirac-pilot.py " "$pilotOptions"
   # shellcheck disable=SC2086
   if ! python dirac-pilot.py $pilotOptions; then
-    echo 'ERROR: pilot script failed'
+    echo 'ERROR: pilot script failed' >&2
     exit 1
   fi
 
-  if ! cd "$cwd"; then
-    echo -e "ERROR: cannot change to $cwd"
+  if ! cd "${cwd}"; then
+    echo -e "ERROR: cannot change to ${cwd}" >&2
     exit 1
   fi
 
@@ -131,20 +131,20 @@ function fullPilot(){
 
   #first simply install via the pilot
   if ! PilotInstall; then
-    echo "ERROR: pilot installation failed"
+    echo "ERROR: pilot installation failed" >&2
     exit 1
   fi
 
   #this should have been created, we source it so that we can continue
   # shellcheck source=/dev/null
-  if ! source "$PILOTINSTALLDIR/bashrc"; then
-    echo "ERROR: cannot source bashrc"
+  if ! source "${PILOTINSTALLDIR}/bashrc"; then
+    echo "ERROR: cannot source bashrc" >&2
     exit 1
   fi
 
-  echo -e "\n----PATH:$PATH\n----" | tr ":" "\n"
-  echo -e "\n----LD_LIBRARY_PATH:$LD_LIBRARY_PATH\n----" | tr ":" "\n"
-  echo -e "\n----DYLD_LIBRARY_PATH:$DYLD_LIBRARY_PATH\n----" | tr ":" "\n"
+  echo -e "\n----PATH:${PATH}\n----" | tr ":" "\n"
+  echo -e "\n----LD_LIBRARY_PATH:${LD_LIBRARY_PATH}\n----" | tr ":" "\n"
+  echo -e "\n----DYLD_LIBRARY_PATH:${DYLD_LIBRARY_PATH}\n----" | tr ":" "\n"
   echo -e "\n----PYTHONPATH:$PYTHONPATH\n----" | tr ":" "\n"
 
   echo -e '\n----python'
@@ -153,24 +153,24 @@ function fullPilot(){
 
 
   #Adding the LocalSE and the CPUTimeLeft, for the subsequent tests
-  if [ "$PILOTCFG" ]
+  if [ "${PILOTCFG}" ]
   then
-    if ! dirac-configure -FDMH --UseServerCertificate -L "$DIRACSE" -O "$PILOTINSTALLDIR/$PILOTCFG" "$PILOTINSTALLDIR/$PILOTCFG" "$DEBUG"; then
-      echo 'ERROR: cannot configure'
+    if ! dirac-configure -FDMH --UseServerCertificate -L "$DIRACSE" -O "$PILOTINSTALLDIR/${PILOTCFG}" "$PILOTINSTALLDIR/${PILOTCFG}" "${DEBUG}"; then
+      echo 'ERROR: cannot configure' >&2
       exit 1
     fi
   else
-    if ! dirac-configure -FDMH --UseServerCertificate -L "$DIRACSE" "$DEBUG"; then
-      echo 'ERROR: cannot configure'
+    if ! dirac-configure -FDMH --UseServerCertificate -L "$DIRACSE" "${DEBUG}"; then
+      echo 'ERROR: cannot configure' >&2
       exit 1
     fi
   fi
 
   #Configure for CPUTimeLeft and more
-  if ! [ "$PILOTCFG" ]
+  if ! [ "${PILOTCFG}" ]
   then
-    if ! python "$TESTCODE/DIRAC/tests/Jenkins/dirac-cfg-update.py" -o /DIRAC/Security/UseServerCertificate=True "$DEBUG"; then
-      echo "ERROR: cannot update the CFG"
+    if ! python "${TESTCODE}/DIRAC/tests/Jenkins/dirac-cfg-update.py" -o /DIRAC/Security/UseServerCertificate=True "${DEBUG}"; then
+      echo "ERROR: cannot update the CFG" >&2
       exit 1
     fi
   fi
@@ -178,15 +178,15 @@ function fullPilot(){
   #Getting a user proxy, so that we can run jobs
   downloadProxy
   echo "==> Set not to use the server certificate for running the jobs"
-  if [ "$PILOTCFG" ]
+  if [ "${PILOTCFG}" ]
   then
-    if ! dirac-configure -FDMH -o /DIRAC/Security/UseServerCertificate=False -O "$PILOTINSTALLDIR/$PILOTCFG" "$PILOTINSTALLDIR/$PILOTCFG" "$DEBUG"; then
-      echo "ERROR: cannot run dirac-configure"
+    if ! dirac-configure -FDMH -o /DIRAC/Security/UseServerCertificate=False -O "$PILOTINSTALLDIR/${PILOTCFG}" "$PILOTINSTALLDIR/${PILOTCFG}" "${DEBUG}"; then
+      echo "ERROR: cannot run dirac-configure" >&2
       exit 1
     fi
   else
-    if ! dirac-configure -FDMH -o /DIRAC/Security/UseServerCertificate=False "$DEBUG"; then
-      echo "ERROR: cannot run dirac-configure"
+    if ! dirac-configure -FDMH -o /DIRAC/Security/UseServerCertificate=False "${DEBUG}"; then
+      echo "ERROR: cannot run dirac-configure" >&2
       exit 1
     fi
   fi
@@ -215,13 +215,13 @@ function installStompRequestsIfNecessary()
       local USER_SITE_PACKAGE_BASE=$(python -m site --user-base)
       local PIP_LOC=$USER_SITE_PACKAGE_BASE/bin/pip
       echo "PIP_LOC: $PIP_LOC"
-      if [ "$PYTHON_VERSION" = '2.6' ]; then
+      if [ "${PYTHON_VERSION}" = '2.6' ]; then
         curl https://bootstrap.pypa.io/2.6/get-pip.py -o get-pip.py
       else 
         curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
       fi
       python get-pip.py --user --upgrade
-      echo "$PIP_LOC install --user 'stomp.py==4.1.11'"
+      echo "${PIP_LOC} install --user 'stomp.py==4.1.11'"
       ${PIP_LOC} install --user 'stomp.py==4.1.11'
       ${PIP_LOC} install --user 'requests'
   fi
@@ -245,26 +245,26 @@ function submitAndMatch(){
   # Here we submit the jobs (to DIRAC.Jenkins.ch)
   # This installs the DIRAC client
   if ! installDIRAC; then
-    echo 'ERROR: failure installing the DIRAC client'
+    echo 'ERROR: failure installing the DIRAC client' >&2
     exit 1
   fi
 
   # This submits the jobs
   if ! submitJob; then
-    echo 'ERROR: failure submitting the jobs'
+    echo 'ERROR: failure submitting the jobs' >&2
     exit 1
   fi
 
   # Then we run the full pilot, including the JobAgent, which should match the jobs we just submitted
-  if ! cd "$PILOTINSTALLDIR"; then
-    echo -e "ERROR: cannot change to $PILOTINSTALLDIR"
+  if ! cd "${PILOTINSTALLDIR}"; then
+    echo -e "ERROR: cannot change to ${PILOTINSTALLDIR}" >&2
     exit 1
   fi
   prepareForPilot
   default
 
   if ! PilotInstall; then
-    echo 'ERROR: dirac-pilot failure'
+    echo 'ERROR: dirac-pilot failure' >&2
     exit 1
   fi
 
