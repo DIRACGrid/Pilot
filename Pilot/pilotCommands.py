@@ -611,6 +611,8 @@ class ConfigureSite(CommandBase):
       self.pp.flavour = 'DIRAC'
       pilotRef = self.pp.pilotReference
 
+    # # Batch systems
+
     # Take the reference from the Torque batch system
     if 'PBS_JOBID' in os.environ:
       self.pp.flavour = 'SSHTorque'
@@ -630,16 +632,6 @@ class ConfigureSite(CommandBase):
       self.pp.flavour = 'Generic'
       pilotRef = 'generic://' + self.pp.ceName + '/' + os.environ['JOB_ID']
 
-    # Condor
-    if 'CONDOR_JOBID' in os.environ:
-      self.pp.flavour = 'SSHCondor'
-      pilotRef = 'sshcondor://' + self.pp.ceName + '/' + os.environ['CONDOR_JOBID']
-
-    # HTCondor
-    if 'HTCONDOR_JOBID' in os.environ:
-      self.pp.flavour = 'HTCondorCE'
-      pilotRef = 'htcondorce://' + self.pp.ceName + '/' + os.environ['HTCONDOR_JOBID']
-
     # LSF
     if 'LSB_BATCH_JID' in os.environ:
       self.pp.flavour = 'SSHLSF'
@@ -649,6 +641,18 @@ class ConfigureSite(CommandBase):
     if 'SLURM_JOBID' in os.environ:
       self.pp.flavour = 'SSHSLURM'
       pilotRef = 'sshslurm://' + self.pp.ceName + '/' + os.environ['SLURM_JOBID']
+
+    # Condor
+    if 'CONDOR_JOBID' in os.environ:
+      self.pp.flavour = 'SSHCondor'
+      pilotRef = 'sshcondor://' + self.pp.ceName + '/' + os.environ['CONDOR_JOBID']
+
+    # # CEs
+
+    # HTCondor
+    if 'HTCONDOR_JOBID' in os.environ:
+      self.pp.flavour = 'HTCondorCE'
+      pilotRef = 'htcondorce://' + self.pp.ceName + '/' + os.environ['HTCONDOR_JOBID']
 
     # This is the CREAM direct submission case
     if 'CREAM_JOBID' in os.environ:
@@ -672,6 +676,8 @@ class ConfigureSite(CommandBase):
     if 'GRID_GLOBAL_JOBID' in os.environ:
       self.pp.flavour = 'ARC'
       pilotRef = os.environ['GRID_GLOBAL_JOBID']
+
+    # # DIRAC specific
 
     # VMDIRAC case
     if 'VMDIRAC_VERSION' in os.environ:
@@ -697,7 +703,8 @@ class ConfigureArchitecture(CommandBase):
   """
 
   def execute(self):
-    """ This is a simple command to call the dirac-platform utility to get the platform, and add it to the configuration
+    """ This is a simple command to call the dirac-platform utility to get the platform,
+        and add it to the configuration
 
         The architecture script, as well as its options can be replaced in a pilot extension
     """
