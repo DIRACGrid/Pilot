@@ -13,21 +13,15 @@ jobs:
           - pytest
           - ./runPylint.sh
           - CHECK=pylintPY3K ./runPylint.sh
-          - |
-            if [[ "${REFERENCE_BRANCH}" != "" ]]; then
-                git remote add GH https://github.com/DIRACGrid/Pilot.git
-                git fetch --no-tags GH ${REFERENCE_BRANCH}
-                git branch -vv
-                git diff -U0 GH/${REFERENCE_BRANCH} | pycodestyle --diff;
-            fi
         python: 
           # - 2.6.9
           - 2.7.5
           - 2.7.13
           - 3.6.8
+          - 3.8
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Prepare environment
       run: |
         conda config --set add_pip_as_python_dependency false
@@ -42,8 +36,6 @@ jobs:
         else
             pip install caniusepython3 stomp.py
         fi
-
-        
     - name: Run tests
       run: |
         if [[ "${{ matrix.python }}" == "3.6.8" ]] && [[ "${{ matrix.command }}" == "CHECK=pylintPY3K ./runPylint.sh" ]]
@@ -56,18 +48,37 @@ jobs:
             export PYTHONPATH=${PWD%/*}
             ${{ matrix.command }}
         fi
-      env:
-        REFERENCE_BRANCH: ${{ github['base_ref'] || github['head_ref'] }}
-
 
   shellcheck:
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: False
-
     steps:
-    - uses: actions/checkout@v1
-
+    - uses: actions/checkout@v2
     - name: Run shellcheck
       run: find tests/CI -name '*.sh' -print0 | xargs -0 -n1 shellcheck --external-sources;
+
+  pycodestyle:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Prepare environment
+      run: |
+        conda config --set add_pip_as_python_dependency false
+        conda create -c conda-forge -c free -n python_3.8 python=3.8
+        source "${CONDA}/bin/activate"
+        conda activate python_3.8
+        conda install pytest pytest-mock pylint autopep8 docopt mock requests pip
+        pip install stomp.py
+    - name: Run pycodestyle
+      run: |
+            source "${CONDA}/bin/activate"
+            conda activate python_3.8
+            set -euxo pipefail
+            export PYTHONPATH=${PWD%/*}
+            git remote add GH https://github.com/DIRACGrid/Pilot.git
+            git fetch --no-tags GH ${REFERENCE_BRANCH}
+            git branch -vv
+            git diff -U0 GH/${REFERENCE_BRANCH} | pycodestyle --diff;
+      env:
+        REFERENCE_BRANCH: ${{ github['base_ref'] || github['head_ref'] }}

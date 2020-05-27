@@ -165,8 +165,6 @@ class InstallDIRAC(CommandBase):
         self.installOpts.append('-e "%s"' % v)
       elif o == '-g' or o == '--grid':
         self.pp.gridVersion = v
-      elif o == '--dirac-os':
-        self.installOpts.append('--dirac-os')
       elif o == '-i' or o == '--python':
         self.pp.pythonVersion = v
       elif o == '-p' or o == '--platform':
@@ -232,8 +230,7 @@ class InstallDIRAC(CommandBase):
 
     # At this point self.pp.installEnv may coincide with os.environ
     # If extensions want to pass in a modified environment, it's easy to set self.pp.installEnv in an extended command
-    retCode, output = self.executeAndGetOutput(installCmd, self.pp.installEnv)
-    self.log.info(output, header=False)
+    retCode, _output = self.executeAndGetOutput(installCmd, self.pp.installEnv)
 
     if retCode:
       self.log.error("Could not make a proper DIRAC installation [ERROR %d]" % retCode)
@@ -614,6 +611,8 @@ class ConfigureSite(CommandBase):
       self.pp.flavour = 'DIRAC'
       pilotRef = self.pp.pilotReference
 
+    # # Batch systems
+
     # Take the reference from the Torque batch system
     if 'PBS_JOBID' in os.environ:
       self.pp.flavour = 'SSHTorque'
@@ -633,16 +632,6 @@ class ConfigureSite(CommandBase):
       self.pp.flavour = 'Generic'
       pilotRef = 'generic://' + self.pp.ceName + '/' + os.environ['JOB_ID']
 
-    # Condor
-    if 'CONDOR_JOBID' in os.environ:
-      self.pp.flavour = 'SSHCondor'
-      pilotRef = 'sshcondor://' + self.pp.ceName + '/' + os.environ['CONDOR_JOBID']
-
-    # HTCondor
-    if 'HTCONDOR_JOBID' in os.environ:
-      self.pp.flavour = 'HTCondorCE'
-      pilotRef = 'htcondorce://' + self.pp.ceName + '/' + os.environ['HTCONDOR_JOBID']
-
     # LSF
     if 'LSB_BATCH_JID' in os.environ:
       self.pp.flavour = 'SSHLSF'
@@ -652,6 +641,18 @@ class ConfigureSite(CommandBase):
     if 'SLURM_JOBID' in os.environ:
       self.pp.flavour = 'SSHSLURM'
       pilotRef = 'sshslurm://' + self.pp.ceName + '/' + os.environ['SLURM_JOBID']
+
+    # Condor
+    if 'CONDOR_JOBID' in os.environ:
+      self.pp.flavour = 'SSHCondor'
+      pilotRef = 'sshcondor://' + self.pp.ceName + '/' + os.environ['CONDOR_JOBID']
+
+    # # CEs
+
+    # HTCondor
+    if 'HTCONDOR_JOBID' in os.environ:
+      self.pp.flavour = 'HTCondorCE'
+      pilotRef = 'htcondorce://' + self.pp.ceName + '/' + os.environ['HTCONDOR_JOBID']
 
     # This is the CREAM direct submission case
     if 'CREAM_JOBID' in os.environ:
@@ -675,6 +676,8 @@ class ConfigureSite(CommandBase):
     if 'GRID_GLOBAL_JOBID' in os.environ:
       self.pp.flavour = 'ARC'
       pilotRef = os.environ['GRID_GLOBAL_JOBID']
+
+    # # DIRAC specific
 
     # VMDIRAC case
     if 'VMDIRAC_VERSION' in os.environ:
@@ -700,7 +703,8 @@ class ConfigureArchitecture(CommandBase):
   """
 
   def execute(self):
-    """ This is a simple command to call the dirac-platform utility to get the platform, and add it to the configuration
+    """ This is a simple command to call the dirac-platform utility to get the platform,
+        and add it to the configuration
 
         The architecture script, as well as its options can be replaced in a pilot extension
     """
@@ -717,7 +721,7 @@ class ConfigureArchitecture(CommandBase):
     if retCode:
       self.log.error("There was an error updating the platform [ERROR %d]" % retCode)
       self.exitWithError(retCode)
-    self.log.debug("Architecture determined: %s" % localArchitecture)
+    self.log.info("Architecture determined: %s" % localArchitecture)
 
     # standard options
     cfg = ['-FDMH']  # force update, skip CA checks, skip CA download, skip VOMS
@@ -839,14 +843,11 @@ class LaunchAgent(CommandBase):
     self.log.info('User Id    = %s' % localUid)
     self.inProcessOpts = ['-s /Resources/Computing/CEDefaults']
     self.inProcessOpts.append('-o WorkingDirectory=%s' % self.pp.workingDir)
-    # FIXME: this is artificial
-    self.inProcessOpts.append('-o TotalCPUs=%s' % 1)
-    self.inProcessOpts.append('-o /LocalSite/MaxCPUTime=%s' % (int(self.pp.jobCPUReq)))
     self.inProcessOpts.append('-o /LocalSite/CPUTime=%s' % (int(self.pp.jobCPUReq)))
-    self.inProcessOpts.append('-o MaxRunningJobs=%s' % 1)
-    # To prevent a wayward agent picking up and failing many jobs.
-    self.inProcessOpts.append('-o MaxTotalJobs=%s' % 10)
-    self.jobAgentOpts = ['-o MaxCycles=%s' % self.pp.maxCycles]
+    self.jobAgentOpts = ['-o MaxCycles=%s' % self.pp.maxCycles,
+                         '-o PollingTime=%s' % self.pp.pollingTime,
+                         '-o StopOnApplicationFailure=%s' % self.pp.stopOnApplicationFailure,
+                         '-o StopAfterFailedMatches=%s' % self.pp.stopAfterFailedMatches]
 
     if self.debugFlag:
       self.jobAgentOpts.append('-o LogLevel=DEBUG')
@@ -941,11 +942,12 @@ class MultiLaunchAgent(CommandBase):
     self.log.info('User Id    = %s' % localUid)
     self.inProcessOpts = ['-s /Resources/Computing/CEDefaults']
     self.inProcessOpts.append('-o WorkingDirectory=%s' % self.pp.workingDir)
-    self.inProcessOpts.append('-o /LocalSite/MaxCPUTime=%s' % (int(self.pp.jobCPUReq)))
     self.inProcessOpts.append('-o /LocalSite/CPUTime=%s' % (int(self.pp.jobCPUReq)))
     # To prevent a wayward agent picking up and failing many jobs.
     self.inProcessOpts.append('-o MaxTotalJobs=%s' % self.pp.maxCycles)
     self.jobAgentOpts = ['-o MaxCycles=%s' % self.pp.maxCycles,
+                         '-o PollingTime=%s' % self.pp.pollingTime,
+                         '-o StopOnApplicationFailure=%s' % self.pp.stopOnApplicationFailure,
                          '-o StopAfterFailedMatches=0']
 
     if self.debugFlag:

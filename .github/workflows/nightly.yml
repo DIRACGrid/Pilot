@@ -1,5 +1,6 @@
 name: Nightly
 
+# on: push
 on: 
   schedule:
     # every night at midnight
@@ -8,6 +9,9 @@ on:
 
 jobs:
   # uploading master and devel tarballs to web server, for use in subsequent tests
+  # the base tests that use these uploaded tarballs are the DIRAC "pilot wrapper" tests:
+  # https://github.com/DIRACGrid/DIRAC/actions?query=workflow%3A%22pilot+wrapper%22
+  # (triggered by https://github.com/DIRACGrid/DIRAC/blob/integration/.github/workflows/pilotWrapper.yml)
   upload:
     runs-on: ubuntu-latest
     if: github.repository == 'DIRACGrid/Pilot'
@@ -28,7 +32,9 @@ jobs:
           echo ${{ secrets.DOCKER_HUB_PASSWORD }} | docker login docker.pkg.github.com --username ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
           docker pull docker.pkg.github.com/diracgrid/management/dirac-distribution:latest
           contID=$(docker run -dt docker.pkg.github.com/diracgrid/management/dirac-distribution:latest)
-          docker cp tests/pilot.json ${contID}:.
+          docker exec ${contID} mkdir Pilot
+          docker cp Pilot ${contID}:.
+          docker cp tests ${contID}:.
           docker exec ${contID} bash -c \
           "sed -i 's/uploaduser/${{ secrets.KRB_USERNAME }}/g' pilot_tarball_upload.sh && "\
           "cat pilot_tarball_upload.sh && "\
