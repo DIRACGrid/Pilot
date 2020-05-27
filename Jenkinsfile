@@ -27,7 +27,7 @@ node('lhcbci-cernvm03') {
         "DIRACSE=CERN-SWTEST",
         "JENKINS_QUEUE=jenkins-queue_not_important",
         "JENKINS_SITE=DIRAC.Jenkins.ch",
-        "DIRACUSERDN=/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=zmathe/CN=674937/CN=Zoltan Mathe",
+        "DIRACUSERDN=/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=cburr/CN=761704/CN=Chris Burr",
         "DIRACUSERROLE=dirac_user"]){
 
         stage('GET') {

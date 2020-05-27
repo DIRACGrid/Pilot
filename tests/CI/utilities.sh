@@ -23,8 +23,7 @@ function prepareForPilot(){
   done
 
   #get possible extensions
-  if [ "$VO" ]
-  then
+  if [[ "$VO" ]]; then
     pilotFile="PilotCommands.py"
     pilot="Pilot"
     for file in $VO$pilotFile
