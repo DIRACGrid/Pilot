@@ -322,8 +322,6 @@ class ConfigureBasics(CommandBase):
     if retCode:
       self.log.error("Could not configure DIRAC basics [ERROR %d]" % retCode)
       self.exitWithError(retCode)
-    if not os.path.isfile("etc/dirac.cfg"):
-      os.symlink(os.path.join("..", self.pp.localConfigFile), "etc/dirac.cfg")
 
   def _getBasicsCFG(self):
     """  basics (needed!)
