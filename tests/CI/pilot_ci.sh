@@ -45,7 +45,7 @@ fi
 if [[ -n "${WORKSPACE:-}" ]]; then
   echo '==> We are in Jenkins I guess'
 else
-  WORKSPACE=$PWD
+  WORKSPACE=${PWD}
 fi
 
 pwd
@@ -66,7 +66,7 @@ source "${TESTCODE}/Pilot/tests/CI/utilities.sh"
 
 # basically it just calls the pilot wrapper
 # don't launch the JobAgent here
-function PilotInstall(){
+PilotInstall(){
   echo '==> [PilotInstall]'
 
   default
@@ -77,17 +77,17 @@ function PilotInstall(){
     exit 1
   fi
 
-  #get the configuration file (from an VO extension, if it exists)
+  # get the configuration file (from an VO extension, if it exists)
   pilot="Pilot"
   cp "${TESTCODE}/${VO}${pilot}/tests/CI/pilot.json" .
   # and adapt it
-  sed -i "s/VAR_JENKINS_SITE/$JENKINS_SITE/g" pilot.json
-  sed -i "s/VAR_JENKINS_CE/$JENKINS_CE/g" pilot.json
-  sed -i "s/VAR_JENKINS_QUEUE/$JENKINS_QUEUE/g" pilot.json
+  sed -i "s/VAR_JENKINS_SITE/${JENKINS_SITE}/g" pilot.json
+  sed -i "s/VAR_JENKINS_CE/${JENKINS_CE}/g" pilot.json
+  sed -i "s/VAR_JENKINS_QUEUE/${JENKINS_QUEUE}/g" pilot.json
   # shellcheck disable=SC2154
-  sed -i "s/VAR_DIRAC_VERSION/$projectVersion/g" pilot.json
-  sed -i "s#VAR_CS#$CSURL#g" pilot.json
-  sed -i "s#VAR_USERDN#$DIRACUSERDN#g" pilot.json
+  sed -i "s/VAR_DIRAC_VERSION/${projectVersion}/g" pilot.json
+  sed -i "s#VAR_CS#${CSURL}#g" pilot.json
+  sed -i "s#VAR_USERDN#${DIRACUSERDN}#g" pilot.json
 
   prepareForPilot
   #installStompRequestsIfNecessary
@@ -110,9 +110,9 @@ function PilotInstall(){
   fi
   pilotOptions+=" --debug"
 
-  echo -e "Running dirac-pilot.py " "$pilotOptions"
+  echo -e "Running dirac-pilot.py " "${pilotOptions}"
   # shellcheck disable=SC2086
-  if ! python dirac-pilot.py $pilotOptions; then
+  if ! python dirac-pilot.py "${pilotOptions}"; then
     echo 'ERROR: pilot script failed' >&2
     exit 1
   fi
@@ -126,7 +126,7 @@ function PilotInstall(){
 }
 
 
-function fullPilot(){
+fullPilot(){
   echo '==> [fullPilot]'
 
   #first simply install via the pilot
@@ -155,12 +155,12 @@ function fullPilot(){
   #Adding the LocalSE and the CPUTimeLeft, for the subsequent tests
   if [ "${PILOTCFG}" ]
   then
-    if ! dirac-configure -FDMH --UseServerCertificate -L "$DIRACSE" -O "$PILOTINSTALLDIR/${PILOTCFG}" "$PILOTINSTALLDIR/${PILOTCFG}" "${DEBUG}"; then
+    if ! dirac-configure -FDMH --UseServerCertificate -L "${DIRACSE}" -O "${PILOTINSTALLDIR}/${PILOTCFG}" "$PILOTINSTALLDIR/${PILOTCFG}" "${DEBUG}"; then
       echo 'ERROR: cannot configure' >&2
       exit 1
     fi
   else
-    if ! dirac-configure -FDMH --UseServerCertificate -L "$DIRACSE" "${DEBUG}"; then
+    if ! dirac-configure -FDMH --UseServerCertificate -L "${DIRACSE}" "${DEBUG}"; then
       echo 'ERROR: cannot configure' >&2
       exit 1
     fi
@@ -195,7 +195,7 @@ function fullPilot(){
 }
 
 
-function installStompRequestsIfNecessary()
+installStompRequestsIfNecessary()
 {
   echo '==> [installStompRequestsIfNecessary]'
 
@@ -239,7 +239,7 @@ function installStompRequestsIfNecessary()
 # This installs a DIRAC client, then use it to submit jobs to DIRAC.Jenkins.ch,
 # then we run a pilot that should hopefully match those jobs
 
-function submitAndMatch(){
+submitAndMatch(){
   echo '==> [submitAndMatch]'
 
   # Here we submit the jobs (to DIRAC.Jenkins.ch)
