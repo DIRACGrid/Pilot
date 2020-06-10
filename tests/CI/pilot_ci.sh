@@ -110,9 +110,9 @@ PilotInstall(){
   fi
   pilotOptions+=" --debug"
 
-  echo -e "Running dirac-pilot.py " "${pilotOptions}"
+  echo -e "Running dirac-pilot.py ${pilotOptions}"
   # shellcheck disable=SC2086
-  if ! python dirac-pilot.py "${pilotOptions}"; then
+  if ! python dirac-pilot.py ${pilotOptions}; then
     echo 'ERROR: pilot script failed' >&2
     exit 1
   fi

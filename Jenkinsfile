@@ -28,7 +28,7 @@ node('lhcbci-cernvm03') {
         "JENKINS_QUEUE=jenkins-queue_not_important",
         "JENKINS_SITE=DIRAC.Jenkins.ch",
         "DIRACUSERDN=/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=cburr/CN=761704/CN=Chris Burr",
-        "DIRACUSERROLE=dirac_user"]){
+	"DIRACUSERROLE=dteam_user"]){
 
         stage('GET') {
 
