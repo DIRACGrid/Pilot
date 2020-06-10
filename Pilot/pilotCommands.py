@@ -323,6 +323,21 @@ class ConfigureBasics(CommandBase):
       self.log.error("Could not configure DIRAC basics [ERROR %d]" % retCode)
       self.exitWithError(retCode)
 
+    # Create etc/dirac.cfg if it's missing and safe to do so
+    if not os.path.exists("etc/dirac.cfg"):
+      symlink_conf = False
+      # If etc exists, check it's a normal dir
+      # otherwise, create etc dir
+      if os.path.exists("etc"):
+        if os.path.isdir("etc"):
+          symlink_conf = True
+      else:
+        os.mkdir("etc", 0o755)
+        symlink_conf = True
+      # Create the dirac.cfg in the etc dir
+      if symlink_conf:
+        os.symlink(os.path.join("..", self.pp.localConfigFile), "etc/dirac.cfg")
+
   def _getBasicsCFG(self):
     """  basics (needed!)
     """
