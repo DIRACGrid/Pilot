@@ -387,8 +387,8 @@ class CommandBase(object):
       sys.stdout.write('\n')
 
       for line in _p.stderr:
-        sys.stdout.write(str(line))
-      sys.stdout.write('\n')
+        sys.stderr.write(str(line))
+      sys.stderr.write('\n')
 
       # return code
       returnCode = _p.wait()

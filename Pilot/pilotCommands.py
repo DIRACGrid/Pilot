@@ -323,6 +323,21 @@ class ConfigureBasics(CommandBase):
       self.log.error("Could not configure DIRAC basics [ERROR %d]" % retCode)
       self.exitWithError(retCode)
 
+    # Create etc/dirac.cfg if it's missing and safe to do so
+    if not os.path.exists("etc/dirac.cfg"):
+      symlink_conf = False
+      # If etc exists, check it's a normal dir
+      # otherwise, create etc dir
+      if os.path.exists("etc"):
+        if os.path.isdir("etc"):
+          symlink_conf = True
+      else:
+        os.mkdir("etc", 0o755)
+        symlink_conf = True
+      # Create the dirac.cfg in the etc dir
+      if symlink_conf:
+        os.symlink(os.path.join("..", self.pp.localConfigFile), "etc/dirac.cfg")
+
   def _getBasicsCFG(self):
     """  basics (needed!)
     """
@@ -382,7 +397,7 @@ class CheckCECapabilities(CommandBase):
       self.exitWithError(retCode)
     try:
       import json
-      resourceDict = json.loads(resourceDict)
+      resourceDict = json.loads(resourceDict.split('\n')[-1])
     except ValueError:
       self.log.error("The pilot command output is not json compatible.")
       sys.exit(1)
@@ -473,7 +488,7 @@ class CheckWNCapabilities(CommandBase):
       self.exitWithError(retCode)
 
     try:
-      result = result.split(' ')
+      result = result.split('\n')[-1].split(' ')
       numberOfProcessorsOnWN = int(result[0])
       maxRAM = int(result[1])
     except ValueError:
@@ -721,7 +736,7 @@ class ConfigureArchitecture(CommandBase):
     if retCode:
       self.log.error("There was an error updating the platform [ERROR %d]" % retCode)
       self.exitWithError(retCode)
-    self.log.info("Architecture determined: %s" % localArchitecture)
+    self.log.info("Architecture determined: %s" % localArchitecture.split('\n')[-1])
 
     # standard options
     cfg = ['-FDMH']  # force update, skip CA checks, skip CA download, skip VOMS
@@ -734,7 +749,7 @@ class ConfigureArchitecture(CommandBase):
       cfg.append("-ddd")
 
     # real options added here
-    localArchitecture = localArchitecture.strip()
+    localArchitecture = localArchitecture.split('\n')[-1].strip()
     cfg.append('-S "%s"' % self.pp.setup)
     cfg.append('-o /LocalSite/Architecture=%s' % localArchitecture)
 
@@ -770,6 +785,7 @@ class ConfigureCPURequirements(CommandBase):
     if retCode:
       self.log.error("Failed to determine cpu normalization [ERROR %d]" % retCode)
       self.exitWithError(retCode)
+    cpuNormalizationFactorOutput = cpuNormalizationFactorOutput.split('\n')[-1]
 
     # HS06 benchmark
     # FIXME: this is a (necessary) hack!
@@ -789,6 +805,7 @@ class ConfigureCPURequirements(CommandBase):
     if retCode:
       self.log.error("Failed to determine cpu time left in the queue [ERROR %d]" % retCode)
       self.exitWithError(retCode)
+    cpuTimeOutput = cpuTimeOutput.split('\n')[-1]
 
     for line in cpuTimeOutput.split('\n'):
       if "CPU time left determined as" in line:
