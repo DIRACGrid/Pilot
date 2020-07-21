@@ -381,7 +381,10 @@ class CommandBase(object):
                             stderr=subprocess.PIPE, close_fds=False)
 
       # standard output
-      outData = _p.stdout.read().decode().strip()
+      try:
+        outData = _p.stdout.read().decode().strip()
+      except AttributeError:
+        outData = _p.stdout.read().strip()
       for line in outData:
         sys.stdout.write(str(line))
       sys.stdout.write('\n')
