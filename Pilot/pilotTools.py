@@ -382,7 +382,7 @@ class CommandBase(object):
 
       # standard output
       outData = _p.stdout.read()
-      # always convert the output to ascii
+      # always interpret the output as ascii
       outData = outData.decode("ascii", "replace")
       # replace any invalid characters with "?" to avoid having unicode output
       outData = str(outData.replace(u"\ufffd", "?").strip())
