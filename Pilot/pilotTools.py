@@ -381,10 +381,13 @@ class CommandBase(object):
                             stderr=subprocess.PIPE, close_fds=False)
 
       # standard output
-      outData = _p.stdout.read().decode().strip()
-      for line in outData:
-        sys.stdout.write(str(line))
-      sys.stdout.write('\n')
+      outData = _p.stdout.read()
+      # always interpret the output as ascii
+      outData = outData.decode("ascii", "replace")
+      # replace any invalid characters with "?" to avoid having unicode output
+      outData = str(outData.replace(u"\ufffd", "?").strip())
+      # write to stdout for debugging
+      sys.stdout.write(outData + '\n')
 
       for line in _p.stderr:
         sys.stderr.write(str(line))
