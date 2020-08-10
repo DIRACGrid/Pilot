@@ -387,10 +387,10 @@ class CheckCECapabilities(CommandBase):
       self.cfg.append(self.pp.localConfigFile)  # this file is as input
 
     # Get the resource description as defined in its configuration
-    checkCmd = 'dirac-resource-get-parameters -S %s -N %s -Q %s %s' % (self.pp.site,
-                                                                       self.pp.ceName,
-                                                                       self.pp.queueName,
-                                                                       " ".join(self.cfg))
+    checkCmd = 'dirac-resource-get-parameters -S %s -N %s -Q %s %s -d' % (self.pp.site,
+                                                                          self.pp.ceName,
+                                                                          self.pp.queueName,
+                                                                          " ".join(self.cfg))
     retCode, resourceDict = self.executeAndGetOutput(checkCmd, self.pp.installEnv)
     if retCode:
       self.log.error("Could not get resource parameters [ERROR %d]" % retCode)
@@ -478,10 +478,10 @@ class CheckWNCapabilities(CommandBase):
     if self.pp.localConfigFile:
       self.cfg.append(self.pp.localConfigFile)  # this file is as input
     # Get the worker node parameters
-    checkCmd = 'dirac-wms-get-wn-parameters -S %s -N %s -Q %s %s' % (self.pp.site,
-                                                                     self.pp.ceName,
-                                                                     self.pp.queueName,
-                                                                     " ".join(self.cfg))
+    checkCmd = 'dirac-wms-get-wn-parameters -S %s -N %s -Q %s %s -d' % (self.pp.site,
+                                                                        self.pp.ceName,
+                                                                        self.pp.queueName,
+                                                                        " ".join(self.cfg))
     retCode, result = self.executeAndGetOutput(checkCmd, self.pp.installEnv)
     if retCode:
       self.log.error("Could not get resource parameters [ERROR %d]" % retCode)
@@ -730,7 +730,7 @@ class ConfigureArchitecture(CommandBase):
     if self.pp.localConfigFile:
       cfg.append(self.pp.localConfigFile)  # this file is as input
 
-    architectureCmd = "%s %s" % (self.pp.architectureScript, " ".join(cfg))
+    architectureCmd = "%s %s -d" % (self.pp.architectureScript, " ".join(cfg))
 
     retCode, localArchitecture = self.executeAndGetOutput(architectureCmd, self.pp.installEnv)
     if retCode:
@@ -781,37 +781,40 @@ class ConfigureCPURequirements(CommandBase):
     if self.pp.localConfigFile:
       configFileArg = '%s -R %s %s' % (configFileArg, self.pp.localConfigFile, self.pp.localConfigFile)
     retCode, cpuNormalizationFactorOutput = self.executeAndGetOutput(
-        'dirac-wms-cpu-normalization -U %s' % configFileArg, self.pp.installEnv)
+        'dirac-wms-cpu-normalization -U %s -d' % configFileArg,
+        self.pp.installEnv)
     if retCode:
       self.log.error("Failed to determine cpu normalization [ERROR %d]" % retCode)
       self.exitWithError(retCode)
-    cpuNormalizationFactorOutput = cpuNormalizationFactorOutput.split('\n')[-1]
-
     # HS06 benchmark
-    # FIXME: this is a (necessary) hack!
-    cpuNormalizationFactor = float(cpuNormalizationFactorOutput.split('\n')[0].replace("Estimated CPU power is ",
-                                                                                       '').replace(" HS06", ''))
-    self.log.info(
-        "Current normalized CPU as determined by 'dirac-wms-cpu-normalization' is %f" %
-        cpuNormalizationFactor)
+    for line in cpuNormalizationFactorOutput.split('\n'):
+      if "Estimated CPU power is" in line:
+        line = line.replace("Estimated CPU power is", '')
+      if "HS06" in line:
+        line = line.replace("HS06", '')
+        cpuNormalizationFactor = float(line.strip())
+        self.log.info(
+            "Current normalized CPU as determined by 'dirac-wms-cpu-normalization' is %f" %
+            cpuNormalizationFactor)
 
     configFileArg = ''
     if self.pp.useServerCertificate:
       configFileArg = '-o /DIRAC/Security/UseServerCertificate=yes'
-    retCode, cpuTimeOutput = self.executeAndGetOutput('dirac-wms-get-queue-cpu-time %s %s' % (configFileArg,
-                                                                                              self.pp.localConfigFile),
-                                                      self.pp.installEnv)
+    retCode, cpuTimeOutput = self.executeAndGetOutput(
+        'dirac-wms-get-queue-cpu-time --CPUNormalizationFactor=%f %s %s -d' % (cpuNormalizationFactor,
+                                                                               configFileArg,
+                                                                               self.pp.localConfigFile),
+        self.pp.installEnv)
 
     if retCode:
       self.log.error("Failed to determine cpu time left in the queue [ERROR %d]" % retCode)
       self.exitWithError(retCode)
-    cpuTimeOutput = cpuTimeOutput.split('\n')[-1]
 
     for line in cpuTimeOutput.split('\n'):
       if "CPU time left determined as" in line:
-        # FIXME: this is horrible
-        cpuTime = int(line.replace("CPU time left determined as", '').strip())
-    self.log.info("CPUTime left (in seconds) is %s" % cpuTime)
+        cpuTimeOutput = line.replace("CPU time left determined as", '').strip()
+        cpuTime = int(cpuTimeOutput)
+        self.log.info("CPUTime left (in seconds) is %d" % cpuTime)
 
     # HS06s = seconds * HS06
     try:
