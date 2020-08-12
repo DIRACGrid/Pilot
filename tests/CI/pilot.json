@@ -78,6 +78,11 @@
       "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST"
     },
+    "jenkins-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST-FULL"
+    },
     "jenkins-mp.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
       "Queue": "VAR_JENKINS_QUEUE",
@@ -88,7 +93,25 @@
       "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-FULL"
     },
+    "jenkins-singularity.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST",
+      "LocalCEType": "Singularity"
+    },
+    "jenkins-singularity-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST-FULL",
+      "LocalCEType": "Singularity"
+    },
     "jenkins-mp-pool.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST-MP",
+      "LocalCEType": "Pool"
+    },
+    "jenkins-mp-pool-full.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
       "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-FULL",
@@ -97,9 +120,26 @@
     "jenkins-mp-pool-sudo.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
       "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST-MP",
+      "LocalCEType": "Pool/Sudo"
+    },
+    "jenkins-mp-pool-sudo-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-FULL",
-      "LocalCEType": "Pool",
-      "SudoExecution": "True"
+      "LocalCEType": "Pool/Sudo"
+    },
+    "jenkins-mp-pool-singularity.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST-MP",
+      "LocalCEType": "Pool/Singularity"
+    },
+    "jenkins-mp-pool-singularity-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST-FULL",
+      "LocalCEType": "Pool/Singularity"
     }
   },
   "DefaultSetup": "DIRAC-Certification"

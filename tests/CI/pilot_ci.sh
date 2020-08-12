@@ -237,7 +237,7 @@ installStompRequestsIfNecessary()
 # submitAndMatch
 #
 # This installs a DIRAC client, then use it to submit jobs to DIRAC.Jenkins.ch,
-# then we run a pilot that should hopefully match those jobs
+# then we run a few pilots, with different Inner CE types, that should hopefully match those jobs
 
 submitAndMatch(){
   echo '==> [submitAndMatch]'
@@ -255,18 +255,30 @@ submitAndMatch(){
     exit 1
   fi
 
-  # Then we run the full pilot, including the JobAgent, which should match the jobs we just submitted
-  if ! cd "${PILOTINSTALLDIR}"; then
-    echo -e "ERROR: cannot change to ${PILOTINSTALLDIR}" >&2
-    exit 1
-  fi
-  prepareForPilot
-  default
+  # FIXME: these tests should be run in parallel Jenkins jobs, through a pipeline.
 
-  if ! PilotInstall; then
-    echo 'ERROR: dirac-pilot failure' >&2
-    exit 1
-  fi
+  # list of CEs that will be tried out (see pilot.json, and CS, for more info)
+  ces=(jenkins-full.cern.ch jenkins-mp-full.cern.ch jenkins-singularity-full.cern.ch jenkins-mp-pool-full.cern.ch jenkins-mp-pool-singularity-full.cern.ch)
+  for ce in "${ces[@]}"; do
+    # Then we run the full pilot, including the JobAgent, which should match the jobs we just submitted
+    if ! mkdir "${PILOTINSTALLDIR}_${ce}"; then
+      echo -e "ERROR: cannot create dir ${PILOTINSTALLDIR}_${ce}" >&2
+      exit 1
+    fi
+    if ! cd "${PILOTINSTALLDIR}_${ce}"; then
+      echo -e "ERROR: cannot change to ${PILOTINSTALLDIR}_${ce}" >&2
+      exit 1
+    fi
+    prepareForPilot
+    default
+
+    JENKINS_CE="${ce}"
+
+    if ! PilotInstall; then
+      echo 'ERROR: dirac-pilot failure' >&2
+      exit 1
+    fi
+  done
 
   echo '==> [Done submitAndMatch]'
 }
