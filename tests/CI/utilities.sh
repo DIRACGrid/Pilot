@@ -13,7 +13,7 @@ source "$TESTCODE/DIRAC/tests/Jenkins/utilities.sh"
 
 # function that override the default one in $TESTCODE/DIRAC/tests/Jenkins/utilities.sh
 # 
-function prepareForPilot(){
+prepareForPilot(){
   echo '==> [prepareForPilot]'
 
   #get the pilot files from the Pilot
@@ -35,8 +35,25 @@ function prepareForPilot(){
   echo "==> [Done prepareForPilot]"
 }
 
+cleanPilot(){
+  for file in PilotLogger.py PilotLoggerTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py MessageSender.py pilot.cfg pilot.json
+  do
+    rm -f "${file}"
+  done
 
-function preparePythonEnvironment()
+  #get possible extensions
+  if [[ "$VO" ]]; then
+    pilotFile="PilotCommands.py"
+    pilot="Pilot"
+    for file in $VO$pilotFile
+    do
+      rm -f "${file}" .
+    done
+  fi
+
+}
+
+preparePythonEnvironment()
 {
   if ! cd "$PILOTINSTALLDIR"; then
    exit 1

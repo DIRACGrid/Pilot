@@ -56,7 +56,7 @@ TESTCODE=$_
 mkdir -p "${WORKSPACE}/ClientInstallDIR" # Where client are installed
 # shellcheck disable=SC2034
 CLIENTINSTALLDIR=$_
-mkdir -p "${WORKSPACE}/PilotInstallDIR" # Where pilots are installed
+mkdir -p "${WORKSPACE}/PilotInstallDIR" # Where pilots are normally installed
 PILOTINSTALLDIR=$_
 
 # Sourcing utility file
@@ -64,18 +64,11 @@ PILOTINSTALLDIR=$_
 source "${TESTCODE}/Pilot/tests/CI/utilities.sh"
 
 
-# basically it just calls the pilot wrapper
-# don't launch the JobAgent here
+# Here the pilot is run in the current directory. This assumes that the pilot files are found locally.
 PilotInstall(){
   echo '==> [PilotInstall]'
 
   default
-
-  cwd=${PWD}
-  if ! cd "${PILOTINSTALLDIR}"; then
-    echo -e "ERROR: cannot change to ${PILOTINSTALLDIR}" >&2
-    exit 1
-  fi
 
   # get the configuration file (from an VO extension, if it exists)
   pilot="Pilot"
@@ -89,7 +82,6 @@ PilotInstall(){
   sed -i "s#VAR_CS#${CSURL}#g" pilot.json
   sed -i "s#VAR_USERDN#${DIRACUSERDN}#g" pilot.json
 
-  prepareForPilot
   #installStompRequestsIfNecessary
   #preparePythonEnvironment
   #python PilotLoggerTools.py PilotUUID
@@ -117,21 +109,29 @@ PilotInstall(){
     exit 1
   fi
 
-  if ! cd "${cwd}"; then
-    echo -e "ERROR: cannot change to ${cwd}" >&2
-    exit 1
-  fi
-
   echo '==> [Done PilotInstall]'
 }
 
-
+# Here the pilot is installed in PILOTINSTALLDIR.
+# This is usually done for preparing workflow tests
 fullPilot(){
   echo '==> [fullPilot]'
+
+  cwd=${PWD}
+
+  if ! cd "${PILOTINSTALLDIR}"; then
+    echo -e "ERROR: cannot change to ${PILOTINSTALLDIR}" >&2
+    exit 1
+  fi
 
   #first simply install via the pilot
   if ! PilotInstall; then
     echo "ERROR: pilot installation failed" >&2
+    exit 1
+  fi
+
+  if ! cd "${cwd}"; then
+    echo -e "ERROR: cannot change to ${cwd}" >&2
     exit 1
   fi
 
@@ -269,6 +269,7 @@ submitAndMatch(){
       echo -e "ERROR: cannot change to ${PILOTINSTALLDIR}_${ce}" >&2
       exit 1
     fi
+    cleanPilot
     prepareForPilot
     default
 
