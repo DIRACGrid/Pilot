@@ -124,6 +124,9 @@ fullPilot(){
     exit 1
   fi
 
+  cleanPilot
+  prepareForPilot
+
   #first simply install via the pilot
   if ! PilotInstall; then
     echo "ERROR: pilot installation failed" >&2
