@@ -56,7 +56,7 @@ TESTCODE=$_
 mkdir -p "${WORKSPACE}/ClientInstallDIR" # Where client are installed
 # shellcheck disable=SC2034
 CLIENTINSTALLDIR=$_
-mkdir -p "${WORKSPACE}/PilotInstallDIR" # Where pilots are installed
+mkdir -p "${WORKSPACE}/PilotInstallDIR" # Where pilots are normally installed
 PILOTINSTALLDIR=$_
 
 # Sourcing utility file
@@ -64,18 +64,11 @@ PILOTINSTALLDIR=$_
 source "${TESTCODE}/Pilot/tests/CI/utilities.sh"
 
 
-# basically it just calls the pilot wrapper
-# don't launch the JobAgent here
+# Here the pilot is run in the current directory. This assumes that the pilot files are found locally.
 PilotInstall(){
   echo '==> [PilotInstall]'
 
   default
-
-  cwd=${PWD}
-  if ! cd "${PILOTINSTALLDIR}"; then
-    echo -e "ERROR: cannot change to ${PILOTINSTALLDIR}" >&2
-    exit 1
-  fi
 
   # get the configuration file (from an VO extension, if it exists)
   pilot="Pilot"
@@ -89,7 +82,6 @@ PilotInstall(){
   sed -i "s#VAR_CS#${CSURL}#g" pilot.json
   sed -i "s#VAR_USERDN#${DIRACUSERDN}#g" pilot.json
 
-  prepareForPilot
   #installStompRequestsIfNecessary
   #preparePythonEnvironment
   #python PilotLoggerTools.py PilotUUID
@@ -117,21 +109,32 @@ PilotInstall(){
     exit 1
   fi
 
-  if ! cd "${cwd}"; then
-    echo -e "ERROR: cannot change to ${cwd}" >&2
-    exit 1
-  fi
-
   echo '==> [Done PilotInstall]'
 }
 
-
+# Here the pilot is installed in PILOTINSTALLDIR.
+# This is usually done for preparing workflow tests
 fullPilot(){
   echo '==> [fullPilot]'
+
+  cwd=${PWD}
+
+  if ! cd "${PILOTINSTALLDIR}"; then
+    echo -e "ERROR: cannot change to ${PILOTINSTALLDIR}" >&2
+    exit 1
+  fi
+
+  cleanPilot
+  prepareForPilot
 
   #first simply install via the pilot
   if ! PilotInstall; then
     echo "ERROR: pilot installation failed" >&2
+    exit 1
+  fi
+
+  if ! cd "${cwd}"; then
+    echo -e "ERROR: cannot change to ${cwd}" >&2
     exit 1
   fi
 
@@ -237,7 +240,7 @@ installStompRequestsIfNecessary()
 # submitAndMatch
 #
 # This installs a DIRAC client, then use it to submit jobs to DIRAC.Jenkins.ch,
-# then we run a pilot that should hopefully match those jobs
+# then we run a few pilots, with different Inner CE types, that should hopefully match those jobs
 
 submitAndMatch(){
   echo '==> [submitAndMatch]'
@@ -255,18 +258,31 @@ submitAndMatch(){
     exit 1
   fi
 
-  # Then we run the full pilot, including the JobAgent, which should match the jobs we just submitted
-  if ! cd "${PILOTINSTALLDIR}"; then
-    echo -e "ERROR: cannot change to ${PILOTINSTALLDIR}" >&2
-    exit 1
-  fi
-  prepareForPilot
-  default
+  # FIXME: these tests should be run in parallel Jenkins jobs, through a pipeline.
 
-  if ! PilotInstall; then
-    echo 'ERROR: dirac-pilot failure' >&2
-    exit 1
-  fi
+  # list of CEs that will be tried out (see pilot.json, and CS, for more info)
+  ces=(jenkins-full.cern.ch jenkins-mp-full.cern.ch jenkins-singularity-full.cern.ch jenkins-mp-pool-full.cern.ch jenkins-mp-pool-sudo-full.cern.ch jenkins-mp-pool-singularity-full.cern.ch)
+  for ce in "${ces[@]}"; do
+    # Then we run the full pilot, including the JobAgent, which should match the jobs we just submitted
+    if ! mkdir "${PILOTINSTALLDIR}_${ce}"; then
+      echo -e "ERROR: cannot create dir ${PILOTINSTALLDIR}_${ce}" >&2
+      exit 1
+    fi
+    if ! cd "${PILOTINSTALLDIR}_${ce}"; then
+      echo -e "ERROR: cannot change to ${PILOTINSTALLDIR}_${ce}" >&2
+      exit 1
+    fi
+    cleanPilot
+    prepareForPilot
+    default
+
+    JENKINS_CE="${ce}"
+
+    if ! PilotInstall; then
+      echo 'ERROR: dirac-pilot failure' >&2
+      exit 1
+    fi
+  done
 
   echo '==> [Done submitAndMatch]'
 }
