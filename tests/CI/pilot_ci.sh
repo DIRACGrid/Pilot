@@ -261,7 +261,7 @@ submitAndMatch(){
   # FIXME: these tests should be run in parallel Jenkins jobs, through a pipeline.
 
   # list of CEs that will be tried out (see pilot.json, and CS, for more info)
-  ces=(jenkins-full.cern.ch jenkins-mp-full.cern.ch jenkins-singularity-full.cern.ch jenkins-mp-pool-full.cern.ch jenkins-mp-pool-singularity-full.cern.ch)
+  ces=(jenkins-full.cern.ch jenkins-mp-full.cern.ch jenkins-singularity-full.cern.ch jenkins-mp-pool-full.cern.ch jenkins-mp-pool-sudo-full.cern.ch jenkins-mp-pool-singularity-full.cern.ch)
   for ce in "${ces[@]}"; do
     # Then we run the full pilot, including the JobAgent, which should match the jobs we just submitted
     if ! mkdir "${PILOTINSTALLDIR}_${ce}"; then
