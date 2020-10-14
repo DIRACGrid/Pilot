@@ -15,7 +15,7 @@ jobs:
           - CHECK=pylintPY3K ./runPylint.sh
         python: 
           # - 2.6.9
-          - 2.7.5
+          # - 2.7.5
           - 2.7.13
           - 3.6.8
           - 3.8
