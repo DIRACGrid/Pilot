@@ -848,10 +848,10 @@ class LaunchAgent(CommandBase):
     """ c'tor
     """
     super(LaunchAgent, self).__init__(pilotParams)
-    self.inProcessOpts = []
+    self.innerCEOpts = []
     self.jobAgentOpts = []
 
-  def __setInProcessOpts(self):
+  def __setInnerCEOpts(self):
 
     localUid = os.getuid()
     try:
@@ -861,13 +861,21 @@ class LaunchAgent(CommandBase):
       localUser = 'Unknown'
     self.log.info('User Name  = %s' % localUser)
     self.log.info('User Id    = %s' % localUid)
-    self.inProcessOpts = ['-s /Resources/Computing/CEDefaults']
-    self.inProcessOpts.append('-o WorkingDirectory=%s' % self.pp.workingDir)
-    self.inProcessOpts.append('-o /LocalSite/CPUTime=%s' % (int(self.pp.jobCPUReq)))
-    self.jobAgentOpts = ['-o MaxCycles=%s' % self.pp.maxCycles,
-                         '-o PollingTime=%s' % self.pp.pollingTime,
-                         '-o StopOnApplicationFailure=%s' % self.pp.stopOnApplicationFailure,
-                         '-o StopAfterFailedMatches=%s' % self.pp.stopAfterFailedMatches]
+    self.innerCEOpts = ['-s /Resources/Computing/CEDefaults']
+    self.innerCEOpts.append('-o WorkingDirectory=%s' % self.pp.workingDir)
+    self.innerCEOpts.append('-o /LocalSite/CPUTime=%s' % (int(self.pp.jobCPUReq)))
+    if self.pp.ceType == 'Pool':
+      self.jobAgentOpts = ['-o MaxCycles=%s' % max(self.pp.pilotProcessors, self.pp.maxCycles),
+                           '-o PollingTime=%s' % min(5, self.pp.pollingTime),
+                           '-o StopOnApplicationFailure=False',
+                           '-o StopAfterFailedMatches=%s' % max(self.pp.pilotProcessors,
+                                                                self.pp.stopAfterFailedMatches),
+                           '-o FillingModeFlag=True']
+    else:
+      self.jobAgentOpts = ['-o MaxCycles=%s' % self.pp.maxCycles,
+                           '-o PollingTime=%s' % self.pp.pollingTime,
+                           '-o StopOnApplicationFailure=%s' % self.pp.stopOnApplicationFailure,
+                           '-o StopAfterFailedMatches=%s' % self.pp.stopAfterFailedMatches]
 
     if self.debugFlag:
       self.jobAgentOpts.append('-o LogLevel=DEBUG')
@@ -876,23 +884,23 @@ class LaunchAgent(CommandBase):
 
     if self.pp.userGroup:
       self.log.debug('Setting DIRAC Group to "%s"' % self.pp.userGroup)
-      self.inProcessOpts .append('-o OwnerGroup="%s"' % self.pp.userGroup)
+      self.innerCEOpts.append('-o OwnerGroup="%s"' % self.pp.userGroup)
 
     if self.pp.userDN:
       self.log.debug('Setting Owner DN to "%s"' % self.pp.userDN)
-      self.inProcessOpts.append('-o OwnerDN="%s"' % self.pp.userDN)
+      self.innerCEOpts.append('-o OwnerDN="%s"' % self.pp.userDN)
 
     if self.pp.useServerCertificate:
       self.log.debug('Setting UseServerCertificate flag')
-      self.inProcessOpts.append('-o /DIRAC/Security/UseServerCertificate=yes')
+      self.innerCEOpts.append('-o /DIRAC/Security/UseServerCertificate=yes')
 
     # The instancePath is where the agent works
-    self.inProcessOpts.append('-o /LocalSite/InstancePath=%s' % self.pp.workingDir)
+    self.innerCEOpts.append('-o /LocalSite/InstancePath=%s' % self.pp.workingDir)
 
     # The file pilot.cfg has to be created previously by ConfigureDIRAC
     if self.pp.localConfigFile:
-      self.inProcessOpts.append(' -o /AgentJobRequirements/ExtraOptions=%s' % self.pp.localConfigFile)
-      self.inProcessOpts.append(self.pp.localConfigFile)
+      self.innerCEOpts.append(' -o /AgentJobRequirements/ExtraOptions=%s' % self.pp.localConfigFile)
+      self.innerCEOpts.append(self.pp.localConfigFile)
 
   def __startJobAgent(self):
     """ Starting of the JobAgent (or of a user-defined command)
@@ -918,7 +926,7 @@ class LaunchAgent(CommandBase):
 
     jobAgent = '%s WorkloadManagement/JobAgent %s %s %s' % (diracAgentScript,
                                                             " ".join(self.jobAgentOpts),
-                                                            " ".join(self.inProcessOpts),
+                                                            " ".join(self.innerCEOpts),
                                                             " ".join(extraCFG))
 
     retCode, _output = self.executeAndGetOutput(jobAgent, self.pp.installEnv)
@@ -933,7 +941,7 @@ class LaunchAgent(CommandBase):
   def execute(self):
     """ What is called all the time
     """
-    self.__setInProcessOpts()
+    self.__setInnerCEOpts()
     self.__startJobAgent()
 
     sys.exit(0)
