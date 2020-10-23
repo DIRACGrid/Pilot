@@ -47,7 +47,7 @@ cleanPilot(){
     pilot="Pilot"
     for file in $VO$pilotFile
     do
-      rm -f "${file}" .
+      rm -f "${file}"
     done
   fi
 
