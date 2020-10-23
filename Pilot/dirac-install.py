@@ -144,6 +144,7 @@ import signal
 import time
 import stat
 import shutil
+import subprocess
 import ssl
 import hashlib
 import tarfile
@@ -157,10 +158,6 @@ try:
 except ImportError:
   # Fall back to Python 2's urllib2
   from urllib2 import urlopen, HTTPError, URLError
-try:
-  long
-except NameError:
-  long = int
 try:
   str_type = basestring
 except NameError:
@@ -224,7 +221,7 @@ cliParams = Params()
 
 class ReleaseConfig(object):
 
-  class CFG:
+  class CFG(object):
 
     def __init__(self, cfgData=""):
       """ c'tor
@@ -606,10 +603,14 @@ class ReleaseConfig(object):
     It loads the default configuration files
     """
 
-    self.__dbgMsg("Loading global defaults from: %s" % self.globalDefaultsURL)
-    result = self.__loadCFGFromURL(self.globalDefaultsURL)
+    globalDefaultsCVMFSPath = "/cvmfs/dirac.egi.eu/admin/globalDefaults.cfg"
+    self.__dbgMsg("Loading global defaults from: %s" % globalDefaultsCVMFSPath)
+    result = self.__loadCFGFromURL(globalDefaultsCVMFSPath)
     if not result['OK']:
-      return result
+      self.__dbgMsg("Loading global defaults from: %s" % self.globalDefaultsURL)
+      result = self.__loadCFGFromURL(self.globalDefaultsURL)
+      if not result['OK']:
+        return result
     self.globalDefaults = result['Value']
     for k in ("Installations", "Projects"):
       if not self.globalDefaults.isSection(k):
@@ -680,11 +681,16 @@ class ReleaseConfig(object):
     """
     Load the configuration file from a file
 
-    :param str args: the arguments in which to look for configuration filenames
+    :param str args: the arguments in which to look for configuration file names
     """
-    # at the end we load the local configuration and merge with the global cfg
-    for arg in args:
-      if len(arg) > 4 and arg.find(".cfg") == len(arg) - 4 and ':::' not in arg:
+
+    # at the end we load the local configuration and merge it with the global cfg
+    argList = list(args)
+    if os.path.exists('etc/dirac.cfg') and 'etc/dirac.cfg' not in args:
+      argList = ['etc/dirac.cfg'] + argList
+
+    for arg in argList:
+      if arg.endswith(".cfg") and ':::' not in arg:
         fileName = arg
       else:
         continue
@@ -692,7 +698,6 @@ class ReleaseConfig(object):
       logNOTICE("Defaults for LocalInstallation are in %s" % fileName)
       try:
         fd = open(fileName, "r")
-        # TODO: Merge with installation CFG
         cfg = ReleaseConfig.CFG().parse(fd.read())
         fd.close()
       except Exception as excp:
@@ -764,7 +769,6 @@ class ReleaseConfig(object):
   def getDiracOsLocation(self, useVanillaDiracOS=False):
     """
     Returns the location of the DIRAC os binary for a given project for example: LHCb or DIRAC, etc...
-
     :param bool useVanillaDiracOS: flag to take diracos distribution from the default location
     :return: the location of the tar balls
     """
@@ -1370,10 +1374,11 @@ def urlretrieveTimeout(url, fileName='', timeout=0, retries=3):
       # the keyword 'context' is present from 2.7.9+
     except AttributeError:
       remoteFD = urlopen(url)
+
     expectedBytes = 0
     # Sometimes repositories do not return Content-Length parameter
     try:
-      expectedBytes = long(remoteFD.info()['Content-Length'])
+      expectedBytes = int(remoteFD.info()['Content-Length'])
     except Exception:
       logWARN('Content-Length parameter not returned, skipping expectedBytes check')
 
@@ -1526,24 +1531,11 @@ def downloadAndExtractTarball(tarsURL, pkgName, pkgVer, checkHash=True, cache=Fa
   #  tf.extract( member )
   # os.chdir(cwd)
   if not isSource:
-    try:
-      with closing(tarfile.open(tarPath, mode="r:*")) as tar:
-        for tarinfo in tar:  # pylint: disable=not-an-iterable
-          try:
-            tar.extract(tarinfo, cliParams.targetPath)  # pylint: disable=no-member
-          except IOError:
-            os.remove(tarinfo.name)
-            tar.extract(tarinfo, cliParams.targetPath)  # pylint: disable=no-member
-          finally:
-            try:
-              os.chmod(tarinfo.name, tarinfo.mode)
-            except OSError:  # the file can be a link
-              pass
-    except Exception as e:
-      logWARN("Trying do extract using system tar: %s" % repr(e))
-      tarCmd = "tar xzf '%s' -C '%s'" % (tarPath, cliParams.targetPath)
-      os.system(tarCmd)
-
+    logNOTICE("Extract using system tar: %s" % tarPath)
+    tarCmd = "tar xzf '%s' -C '%s'" % (tarPath, cliParams.targetPath)
+    if os.system(tarCmd):
+      logERROR("Extraction of tarball %s failed" % tarPath)
+      raise RuntimeError("Failed to extract tarball")
     # Delete tar
     if cache:
       if not os.path.isdir(cacheDir):
@@ -2035,6 +2027,7 @@ def createPermanentDirLinks():
   """
   if cliParams.useVersionsDir:
     try:
+      # Directories
       for directory in ['startup', 'runit', 'data', 'work', 'control', 'sbin', 'etc', 'webRoot']:
         fake = os.path.join(cliParams.targetPath, directory)
         real = os.path.join(cliParams.basePath, directory)
@@ -2048,6 +2041,12 @@ def createPermanentDirLinks():
               if not os.path.exists(os.path.join(real, fd)):
                 os.makedirs(os.path.join(real, fd))
           os.rename(fake, fake + '.bak')
+        os.symlink(real, fake)
+
+      # Files
+      for filename in ['bashrc']:
+        fake = os.path.join(cliParams.targetPath, filename)
+        real = os.path.join(cliParams.basePath, filename)
         os.symlink(real, fake)
     except Exception as x:
       logERROR(str(x))
@@ -2209,7 +2208,7 @@ def createBashrc():
       lines.append('# export DIRAC_USE_M2CRYPTO=true')
       lines.append('# export DIRAC_USE_NEWTHREADPOOL=yes')
       lines.append('# export DIRAC_VOMSES=$DIRAC/etc/grid-security/vomses')
-
+      lines.append('# export DIRAC_NO_CFG=true')
       lines.append('')
       f = open(bashrcFile, 'w')
       f.write('\n'.join(lines))
@@ -2367,9 +2366,9 @@ def __getTerminfoLocations(defaultLocation=None):
 
 def installDiracOS(releaseConfig):
   """
-  Install the DIRAC os.
+  Install DIRAC OS.
 
-  :param str releaseConfig: the version of the DIRAC OS
+  :param ReleaseConfig releaseConfig: The ReleaseConfig object for configuring the installation
   """
   diracos, diracOSVersion = releaseConfig.getDiracOSVersion(cliParams.diracOSVersion)
   if not diracOSVersion:
@@ -2387,6 +2386,20 @@ def installDiracOS(releaseConfig):
   fixBuildPaths()
   logNOTICE("Running externals post install...")
   checkPlatformAliasLink()
+  return True
+
+
+def installDiracOSPython3(releaseConfig):
+  """
+  Install DIRAC OS for Python 3.
+
+  :param ReleaseConfig releaseConfig: The ReleaseConfig object for configuring the installation
+  """
+  url = "https://github.com/chrisburr/DIRACOS2/releases/latest/download/DIRACOS-Linux-x86_64.sh"
+  installerFn = os.path.join(cliParams.basePath, "DIRACOS-Linux-x86_64.sh")
+  if not urlretrieveTimeout(url, installerFn, cliParams.timeout):
+    raise Exception("Failed to download DIRACOS from " + url)
+  subprocess.check_call(["bash", installerFn, "-b", "-p", os.path.join(cliParams.basePath, "diracos")])
   return True
 
 
@@ -2679,8 +2692,12 @@ if __name__ == "__main__":
      or list(releaseConfig.prjRelCFG['DIRAC'])[0][1] not in '0123456789' \
      or int(list(releaseConfig.prjRelCFG['DIRAC'])[0][1]) > 6:
     logNOTICE("Installing DIRAC OS %s..." % cliParams.diracOSVersion)
-    if not installDiracOS(releaseConfig):
-      sys.exit(1)
+    if cliParams.pythonVersion.startswith("3"):
+      if not installDiracOSPython3(releaseConfig):
+        sys.exit(1)
+    else:
+      if not installDiracOS(releaseConfig):
+        sys.exit(1)
     if not createBashrcForDiracOS():
       sys.exit(1)
   else:
