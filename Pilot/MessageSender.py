@@ -18,6 +18,14 @@ from __future__ import division
 from __future__ import absolute_import
 
 import logging
+try:
+  import requests
+except ImportError:
+  requests = None
+try:
+  import stomp
+except ImportError:
+  stomp = None
 
 ############################
 # python 2 -> 3 "hacks"
@@ -41,26 +49,23 @@ def loadAndCreateObject(moduleName, className, params):
     obj: Created instance of the class or None in case of errors.
   """
   myObj = None
+  # In case of moduleName in the format of X.Y.Z, we have
+  # mods =['X','Y','Z']. We are really interested in loading
+  # 'Z' submodule.
+  mods = moduleName.split('.')
+  # The __import__ call with
+  # fromlist option set to mods[-1]  will load Z submodule as expected.
+  # Simpler X format will be also covered.
+  module = __import__(moduleName, globals(), locals(), mods[-1])
   try:
-    # In case of moduleName in the format of X.Y.Z, we have
-    # mods =['X','Y','Z']. We are really interested in loading
-    # 'Z' submodule.
-    mods = moduleName.split('.')
-    # The __import__ call with
-    # fromlist option set to mods[-1]  will load Z submodule as expected.
-    # Simpler X format will be also covered.
-    module = __import__(moduleName, globals(), locals(), mods[-1])
-    try:
-      myClass = getattr(module, className)
-      if params:
-        myObj = myClass(params)
-      else:
-        myObj = myClass()
+    myClass = getattr(module, className)
+    if params:
+      myObj = myClass(params)
+    else:
+      myObj = myClass()
 
-    except AttributeError:
-      logging.error('Class %s  not found', className)
-  except ImportError:
-    logging.error('Module %s not found', moduleName)
+  except AttributeError:
+    logging.error('Class %s  not found', className)
   return myObj
 
 
@@ -93,9 +98,17 @@ def messageSenderFactory(senderType, params):
   try:
     moduleName = typeToModuleAndClassName[senderType]['module']
     className = typeToModuleAndClassName[senderType]['class']
-    return loadAndCreateObject(moduleName, className, params)
+
+    logging.debug("Trying to load and create object of module: %s, class: %s, params: %s",
+                  str(moduleName), str(className), str(params))
+    try:
+      return loadAndCreateObject(moduleName, className, params)
+    except ImportError:
+      logging.warning('Module %s not found', moduleName)
+      return loadAndCreateObject('Pilot.' + moduleName, className, params)
+
   except ValueError:
-    logging.error("Error initializing the message sender")
+    logging.error("Error initializing the message sender of type %s", senderType)
   return None
 
 
@@ -131,10 +144,6 @@ class RESTSender(MessageSender):
   """ Message sender to a REST interface.
       It depends on requests module.
   """
-  try:
-    import requests
-  except ImportError:
-    requests = None
 
   REQUIRED_KEYS = ['HostKey', 'HostCertificate',
                    'CACertificate', 'Url', 'LocalOutputFile']
@@ -228,10 +237,6 @@ class StompSender(MessageSender):
   """ Stomp message sender.
       It depends on stomp module.
   """
-  try:
-    import stomp
-  except ImportError:
-    stomp = None
 
   REQUIRED_KEYS = ['HostKey', 'HostCertificate',
                    'CACertificate', 'QueuePath', 'LocalOutputFile']
@@ -306,8 +311,8 @@ class StompSender(MessageSender):
                          key_file=sslCfg['key_file'],
                          cert_file=sslCfg['cert_file'],
                          ca_certs=sslCfg['ca_certs'])
-      connection.start()
-      connection.connect()
+      connection.start()  # pylint: disable=no-member
+      connection.connect()  # pylint: disable=no-member
       return connection
     except stomp.exception.ConnectFailedException:  # pylint: disable=undefined-variable
       logging.error('Connection error')
