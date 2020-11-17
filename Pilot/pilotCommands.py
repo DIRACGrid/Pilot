@@ -357,6 +357,10 @@ class ConfigureBasics(CommandBase):
       self.cfg.append('-o /AgentJobRequirements/OwnerDN="%s"' % self.pp.userDN)
     self.cfg.append('-o /LocalSite/ReleaseVersion=%s' % self.pp.releaseVersion)
 
+    if self.pp.virtualOrganization:
+      self.cfg.append(
+          '-o "/Resources/Computing/CEDefaults/VirtualOrganization=%d"' % self.pp.virtualOrganization)
+
   def _getSecurityCFG(self):
     """ Nothing specific by default, but need to know host cert and key location in case they are needed
     """
