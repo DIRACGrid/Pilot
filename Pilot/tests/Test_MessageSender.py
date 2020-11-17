@@ -12,6 +12,14 @@ from mock import MagicMock
 from Pilot.MessageSender import LocalFileSender, StompSender, RESTSender, eraseFileContent, loadAndCreateObject
 import Pilot.MessageSender as module
 
+############################
+# python 2 -> 3 "hacks"
+try:
+  ModuleNotFoundError
+except NameError:
+  ModuleNotFoundError = ImportError
+############################
+
 
 def removeFile(filename):
   try:
@@ -48,12 +56,7 @@ class TestLoadAndCreateObject(unittest.TestCase):
     self.assertTrue(res)
 
   def test_fail(self):
-    res = loadAndCreateObject('MessageSender', 'NonExistingClass', '')
-    self.assertFalse(res)
-
-  def test_fail2(self):
-    res = loadAndCreateObject('Bla.Bla', 'NonExistingClass', '')
-    self.assertFalse(res)
+    self.assertRaises(ModuleNotFoundError, loadAndCreateObject, 'Bla.Bla', 'NonExistingClass', '')
 
 
 class TestLocalFileSender(unittest.TestCase):
@@ -93,7 +96,7 @@ class TestStompSender(unittest.TestCase):
     removeFile(self.testFile)
 
   def test_success(self):
-    params = {'HostKey': 'key', 'HostCertififcate': 'cert', 'CACertificate': 'caCert',
+    params = {'HostKey': 'key', 'HostCertificate': 'cert', 'CACertificate': 'caCert',
               'Host': 'test.host.ch', 'Port': '666', 'QueuePath': '/queue/myqueue', 'LocalOutputFile': self.testFile}
     msgSender = StompSender(params)
     res = msgSender.sendMessage(self.testMessage, 'info')
@@ -112,7 +115,7 @@ class TestRESTSender(unittest.TestCase):
     module.requests.post = MagicMock()
 
   def test_success(self):
-    params = {'HostKey': 'key', 'HostCertififcate': 'cert', 'CACertificate': 'caCert',
+    params = {'HostKey': 'key', 'HostCertificate': 'cert', 'CACertificate': 'caCert',
               'Url': 'https://some.host.ch/messages', 'LocalOutputFile': self.testFile}
     msgSender = RESTSender(params)
     res = msgSender.sendMessage(self.testMessage, 'info')

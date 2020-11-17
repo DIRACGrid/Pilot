@@ -13,7 +13,9 @@
 
     """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import logging
 
@@ -134,17 +136,19 @@ class RESTSender(MessageSender):
   except ImportError:
     requests = None
 
-  REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
+  REQUIRED_KEYS = ['HostKey', 'HostCertificate',
                    'CACertificate', 'Url', 'LocalOutputFile']
 
   def __init__(self, params):
     """
       Raises:
-        ValueError: If params are not correct.
+        ValueError: If params are not correct
     """
+    logging.debug("in init of RESTSender")
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
     self.params = params
     if not self._areParamsCorrect(self.params):
+      logging.error("Parameters missing needed to send messages! Parameters:%s", str(self.params))
       raise ValueError("Parameters missing needed to send messages")
 
   def sendMessage(self, msg, flag):
@@ -153,6 +157,7 @@ class RESTSender(MessageSender):
     hostCertificate = self.params.get('HostCertificate')
     CACertificate = self.params.get('CACertificate')
 
+    logging.debug("sending message from the REST Sender")
     try:
       requests.post(url,  # pylint: disable=undefined-variable
                     json=msg,
@@ -205,12 +210,15 @@ class LocalFileSender(MessageSender):
       Raises:
         ValueError: If params are not correct.
     """
+    logging.debug("in init of LocalFileSender")
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
     self.params = params
     if not self._areParamsCorrect(self.params):
+      logging.error("Parameters missing needed to send messages! Parameters:%s", str(self.params))
       raise ValueError("Parameters missing needed to send messages")
 
   def sendMessage(self, msg, flag):
+    logging.debug("in sendMessage of LocalFileSender")
     filename = self.params.get('LocalOutputFile')
     saveMessageToFile(msg, filename=filename)
     return True
@@ -225,7 +233,7 @@ class StompSender(MessageSender):
   except ImportError:
     stomp = None
 
-  REQUIRED_KEYS = ['HostKey', 'HostCertififcate',
+  REQUIRED_KEYS = ['HostKey', 'HostCertificate',
                    'CACertificate', 'QueuePath', 'LocalOutputFile']
 
   def __init__(self, params):
@@ -237,6 +245,7 @@ class StompSender(MessageSender):
     self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
     self.params = params
     if not self._areParamsCorrect(self.params):
+      logging.error("Parameters missing needed to send messages! Parameters:%s", str(self.params))
       raise ValueError("Parameters missing needed to send messages")
 
   def sendMessage(self, msg, flag):
