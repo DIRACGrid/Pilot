@@ -16,6 +16,7 @@ import imp
 import json
 import signal
 import subprocess
+from distutils.version import LooseVersion
 
 ############################
 # python 2 -> 3 "hacks"
@@ -370,6 +371,22 @@ class CommandBase(object):
         self.log.setDebug()
         self.debugFlag = True
     self.log.debug("\n\n Initialized command %s" % self.__class__)
+
+    self.cfgOptionDIRACVersion = self._getCFGOptionDIRACVersion()
+
+  def _getCFGOptionDIRACVersion(self):
+    """ Convenience method.
+
+        Reference vanilla DIRAC version from when we ask to use --cfg for cfg files
+
+        For extensions: the only way to know the vanilla DIRAC version
+        is to check releases.cfg. Not impossible, but cumbersome to do here.
+        Extensions could replace this function.
+    """
+    if not self.pp.releaseProject:
+      return LooseVersion('v7r0p29')
+    # just a trick to always evaluate comparisons in pilotCommands to False
+    return LooseVersion('z')
 
   def executeAndGetOutput(self, cmd, environDict=None):
     """ Execute a command on the worker node and get the output
