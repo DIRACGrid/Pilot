@@ -504,7 +504,7 @@ class PilotParams(object):
     self.useServerCertificate = False
     self.pilotScriptName = ''
     self.genericOption = ''
-    self.virtualOrganization = ''  # for binding the resource (WN) to a specific VO
+    self.wnVO = ''  # for binding the resource (WN) to a specific VO
     # DIRAC client installation environment
     self.diracInstalled = False
     self.diracExtensions = []
@@ -569,7 +569,7 @@ class PilotParams(object):
         ('', 'StopAfterFailedMatches=', 'Stop Job Agent after N failed matches'),
         ('N:', 'Name=', 'CE Name'),
         ('O:', 'OwnerDN=', 'Pilot OwnerDN (for private pilots)'),
-        ('', 'VirtualOrganization=', 'Bind the resource (WN) to a VO'),
+        ('', 'wnVO=', 'Bind the resource (WN) to a VO'),
         ('P:', 'pilotProcessors=', 'Number of processors allocated to this pilot'),
         ('Q:', 'Queue=', 'Queue name'),
         ('R:', 'reference=', 'Use this pilot reference'),
@@ -645,8 +645,8 @@ class PilotParams(object):
         self.executeCmd = v
       elif o in ('-O', '--OwnerDN'):
         self.userDN = v
-      elif o == '--VirtualOrganization':
-        self.virtualOrganization = v
+      elif o == '--wnVO':
+        self.wnVO = v
       elif o in ('-V', '--installation'):
         self.installation = v
       elif o == '-p' or o == '--platform':
