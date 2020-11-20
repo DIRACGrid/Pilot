@@ -65,6 +65,7 @@ source "${TESTCODE}/Pilot/tests/CI/utilities.sh"
 
 
 # Here the pilot is run in the current directory. This assumes that the pilot files are found locally.
+# This installation will use a certificate for authN/authZ. Such certificate should have the GenericPilot role
 PilotInstall(){
   echo '==> [PilotInstall]'
 
@@ -95,6 +96,11 @@ PilotInstall(){
   then
     pilotOptions+=" -l ${VO} -E ${VO}"
     pilotOptions+="Pilot"
+  fi
+  # shellcheck disable=SC2154
+  if [ "${wnVO}" ] # Bind the Worker Node to the VirtualOrganization
+  then
+    pilotOptions+=" --wnVO ${wnVO}"
   fi
   # shellcheck disable=SC2154
   if [[ "${modules}" ]]; then
