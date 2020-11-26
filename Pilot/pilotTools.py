@@ -1,7 +1,9 @@
 """ A set of common tools to be used in pilot commands
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 __RCSID__ = '$Id$'
 
@@ -14,6 +16,7 @@ import imp
 import json
 import signal
 import subprocess
+from distutils.version import LooseVersion
 
 ############################
 # python 2 -> 3 "hacks"
@@ -369,6 +372,22 @@ class CommandBase(object):
         self.debugFlag = True
     self.log.debug("\n\n Initialized command %s" % self.__class__)
 
+    self.cfgOptionDIRACVersion = self._getCFGOptionDIRACVersion()
+
+  def _getCFGOptionDIRACVersion(self):
+    """ Convenience method.
+
+        Reference vanilla DIRAC version from when we ask to use --cfg for cfg files
+
+        For extensions: the only way to know the vanilla DIRAC version
+        is to check releases.cfg. Not impossible, but cumbersome to do here.
+        Extensions could replace this function.
+    """
+    if not self.pp.releaseProject:
+      return LooseVersion('v7r0p29')
+    # just a trick to always evaluate comparisons in pilotCommands to False
+    return LooseVersion('z')
+
   def executeAndGetOutput(self, cmd, environDict=None):
     """ Execute a command on the worker node and get the output
     """
@@ -502,6 +521,7 @@ class PilotParams(object):
     self.useServerCertificate = False
     self.pilotScriptName = ''
     self.genericOption = ''
+    self.wnVO = ''  # for binding the resource (WN) to a specific VO
     # DIRAC client installation environment
     self.diracInstalled = False
     self.diracExtensions = []
@@ -529,53 +549,54 @@ class PilotParams(object):
       self.pilotProcessors = 1
 
     # Pilot command options
-    self.cmdOpts = (('', 'requiredTag=', 'extra required tags for resource description'),
-                    ('a:', 'gridCEType=', 'Grid CE Type (CREAM etc)'),
-                    ('b', 'build', 'Force local compilation'),
-                    ('c', 'cert', 'Use server certificate instead of proxy'),
-                    ('d', 'debug', 'Set debug flag'),
-                    ('e:', 'extraPackages=', 'Extra packages to install (comma separated)'),
-                    ('h', 'help', 'Show this help'),
-                    ('k', 'keepPP', 'Do not clear PYTHONPATH on start'),
-                    ('l:', 'project=', 'Project to install'),
-                    ('n:', 'name=', 'Set <Site> as Site Name'),
-                    ('o:', 'option=', 'Option=value to add'),
-                    ('p:', 'platform=', 'Use <platform> instead of local one'),
-                    ('m:', 'maxNumberOfProcessors=',
-                     'specify a max number of processors to use by the payload inside a pilot'),
-                    ('', 'modules=', 'for installing non-released code (see dirac-install "-m" option documentation)'),
-                    ('', 'userEnvVariables=',
-                     'User-requested environment variables (comma-separated, name and value separated by ":::")'),
-                    ('r:', 'release=', 'DIRAC release to install'),
-                    ('s:', 'section=', 'Set base section for relative parsed options'),
-                    ('t:', 'tag=', 'extra tags for resource description'),
-                    ('u:', 'url=', 'Use <url> to download tarballs'),
-                    ('x:', 'execute=', 'Execute instead of JobAgent'),
-                    ('y:', 'CEType=', 'CE Type (normally InProcess)'),
-                    ('z', 'pilotLogging', 'Activate pilot logging system'),
-                    ('C:', 'configurationServer=', 'Configuration servers to use'),
-                    ('D:', 'disk=', 'Require at least <space> MB available'),
-                    ('E:', 'commandExtensions=', 'Python modules with extra commands'),
-                    ('F:', 'pilotCFGFile=', 'Specify pilot CFG file'),
-                    ('G:', 'Group=', 'DIRAC Group to use'),
-                    ('K:', 'certLocation=', 'Specify server certificate location'),
-                    ('M:', 'MaxCycles=', 'Maximum Number of JobAgent cycles to run'),
-                    ('', 'PollingTime=', 'JobAgent execution frequency'),
-                    ('', 'StopOnApplicationFailure=', 'Stop Job Agent when encounter an application failure'),
-                    ('', 'StopAfterFailedMatches=', 'Stop Job Agent after N failed matches'),
-                    ('N:', 'Name=', 'CE Name'),
-                    ('O:', 'OwnerDN=', 'Pilot OwnerDN (for private pilots)'),
-                    ('P:', 'pilotProcessors=', 'Number of processors allocated to this pilot'),
-                    ('Q:', 'Queue=', 'Queue name'),
-                    ('R:', 'reference=', 'Use this pilot reference'),
-                    ('S:', 'setup=', 'DIRAC Setup to use'),
-                    ('T:', 'CPUTime=', 'Requested CPU Time'),
-                    ('U', 'Upload', 'Upload compiled distribution (if built)'),
-                    ('V:', 'installation=', 'Installation configuration file'),
-                    ('W:', 'gateway=', 'Configure <gateway> as DIRAC Gateway during installation'),
-                    ('X:', 'commands=', 'Pilot commands to execute'),
-                    ('Z:', 'commandOptions=', 'Options parsed by command modules')
-                    )
+    self.cmdOpts = (
+        ('', 'requiredTag=', 'extra required tags for resource description'),
+        ('a:', 'gridCEType=', 'Grid CE Type (CREAM etc)'),
+        ('b', 'build', 'Force local compilation'),
+        ('c', 'cert', 'Use server certificate instead of proxy'),
+        ('d', 'debug', 'Set debug flag'),
+        ('e:', 'extraPackages=', 'Extra packages to install (comma separated)'),
+        ('h', 'help', 'Show this help'),
+        ('k', 'keepPP', 'Do not clear PYTHONPATH on start'),
+        ('l:', 'project=', 'Project to install'),
+        ('n:', 'name=', 'Set <Site> as Site Name'),
+        ('o:', 'option=', 'Option=value to add'),
+        ('p:', 'platform=', 'Use <platform> instead of local one'),
+        ('m:', 'maxNumberOfProcessors=',
+         'specify a max number of processors to use by the payload inside a pilot'),
+        ('', 'modules=', 'for installing non-released code (see dirac-install "-m" option documentation)'),
+        ('', 'userEnvVariables=',
+         'User-requested environment variables (comma-separated, name and value separated by ":::")'),
+        ('r:', 'release=', 'DIRAC release to install'),
+        ('s:', 'section=', 'Set base section for relative parsed options'),
+        ('t:', 'tag=', 'extra tags for resource description'),
+        ('u:', 'url=', 'Use <url> to download tarballs'),
+        ('x:', 'execute=', 'Execute instead of JobAgent'),
+        ('y:', 'CEType=', 'CE Type (normally InProcess)'),
+        ('z', 'pilotLogging', 'Activate pilot logging system'),
+        ('C:', 'configurationServer=', 'Configuration servers to use'),
+        ('D:', 'disk=', 'Require at least <space> MB available'),
+        ('E:', 'commandExtensions=', 'Python modules with extra commands'),
+        ('F:', 'pilotCFGFile=', 'Specify pilot CFG file'),
+        ('G:', 'Group=', 'DIRAC Group to use'),
+        ('K:', 'certLocation=', 'Specify server certificate location'),
+        ('M:', 'MaxCycles=', 'Maximum Number of JobAgent cycles to run'),
+        ('', 'PollingTime=', 'JobAgent execution frequency'),
+        ('', 'StopOnApplicationFailure=', 'Stop Job Agent when encounter an application failure'),
+        ('', 'StopAfterFailedMatches=', 'Stop Job Agent after N failed matches'),
+        ('N:', 'Name=', 'CE Name'),
+        ('O:', 'OwnerDN=', 'Pilot OwnerDN (for private pilots)'),
+        ('', 'wnVO=', 'Bind the resource (WN) to a VO'),
+        ('P:', 'pilotProcessors=', 'Number of processors allocated to this pilot'),
+        ('Q:', 'Queue=', 'Queue name'),
+        ('R:', 'reference=', 'Use this pilot reference'),
+        ('S:', 'setup=', 'DIRAC Setup to use'),
+        ('T:', 'CPUTime=', 'Requested CPU Time'),
+        ('U', 'Upload', 'Upload compiled distribution (if built)'),
+        ('V:', 'installation=', 'Installation configuration file'),
+        ('W:', 'gateway=', 'Configure <gateway> as DIRAC Gateway during installation'),
+        ('X:', 'commands=', 'Pilot commands to execute'),
+        ('Z:', 'commandOptions=', 'Options parsed by command modules'))
 
     # Possibly get Setup and JSON URL/filename from command line
     self.__initCommandLine1()
@@ -641,6 +662,8 @@ class PilotParams(object):
         self.executeCmd = v
       elif o in ('-O', '--OwnerDN'):
         self.userDN = v
+      elif o == '--wnVO':
+        self.wnVO = v
       elif o in ('-V', '--installation'):
         self.installation = v
       elif o == '-p' or o == '--platform':
@@ -803,9 +826,11 @@ class PilotParams(object):
         except KeyError:
           try:
             if isinstance(self.pilotJSON['Defaults']['Commands']['Defaults'], basestring):
-              self.commands = [str(pv).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults'].split(',')]
+              self.commands = [
+                  str(pv).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults'].split(',')]
             else:
-              self.commands = [str(pv).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults']]
+              self.commands = [
+                  str(pv).strip() for pv in self.pilotJSON['Defaults']['Commands']['Defaults']]
           except KeyError:
             pass
     self.log.debug("Commands: %s" % self.commands)
@@ -817,7 +842,8 @@ class PilotParams(object):
         self.commandExtensions = [str(pv).strip() for pv in self.pilotJSON['Setups']
                                   [self.setup]['CommandExtensions'].split(',')]
       else:
-        self.commandExtensions = [str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
+        self.commandExtensions = [
+            str(pv).strip() for pv in self.pilotJSON['Setups'][self.setup]['CommandExtensions']]
     except KeyError:
       try:
         if isinstance(self.pilotJSON['Setups']['Defaults']['CommandExtensions'],
@@ -825,7 +851,8 @@ class PilotParams(object):
           self.commandExtensions = [str(pv).strip() for pv in self.pilotJSON['Setups']
                                     ['Defaults']['CommandExtensions'].split(',')]
         else:
-          self.commandExtensions = [str(pv).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
+          self.commandExtensions = [
+              str(pv).strip() for pv in self.pilotJSON['Setups']['Defaults']['CommandExtensions']]
       except KeyError:
         pass
     self.log.debug("Commands extesions: %s" % self.commandExtensions)

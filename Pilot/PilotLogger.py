@@ -1,7 +1,9 @@
 """ Pilot logger module for the remote logging system.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import os
 import logging
@@ -101,6 +103,7 @@ class PilotLogger(object):
       localOutputFile(str): Name of the file that can be used to store the log messages locally.
       fileWithUUID(str): Name of the file used to store the Pilot identifier.
     """
+    logging.debug("In init of PilotLogger")
     self.STATUSES = PilotLogger.STATUSES
 
     self.params = addMissingConfiguration(
@@ -140,6 +143,7 @@ class PilotLogger(object):
     Returns:
       bool: False in case of any errors, True otherwise
     """
+    logging.debug("In sendMessage of PilotLogger")
     if not self._isCorrectStatus(status):
       logging.error('status: ' + str(status) + ' is not correct')
       return False
@@ -156,8 +160,7 @@ class PilotLogger(object):
       logging.warning("Message format is not correct.")
       return False
     encodedMsg = encodeMessage(message)
-    self.messageSender.sendMessage(encodedMsg, flag=status)
-    return False
+    return self.messageSender.sendMessage(encodedMsg, flag=status)
 
 
 def main():
