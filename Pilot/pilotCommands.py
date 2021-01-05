@@ -154,6 +154,8 @@ class InstallDIRAC(CommandBase):
     self.pp.rootPath = self.pp.pilotRootPath
     self.installScriptName = 'dirac-install.py'
     self.installScript = ''
+    # This command is a "must-do", so it's assumed that the variable below is set
+    self.pp.installEnv['DIRACSYSCONFIG'] = 'pilot.cfg'
 
   def _setInstallOptions(self):
     """ Setup installation parameters
@@ -929,7 +931,6 @@ class LaunchAgent(CommandBase):
 
     # The file pilot.cfg has to be created previously by ConfigureDIRAC
     if self.pp.localConfigFile:
-      self.innerCEOpts.append(' -o /AgentJobRequirements/ExtraOptions=%s' % self.pp.localConfigFile)
       if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
         self.innerCEOpts.append('--cfg')
       self.innerCEOpts.append(self.pp.localConfigFile)
@@ -1032,7 +1033,6 @@ class MultiLaunchAgent(CommandBase):
 
     # The file pilot.cfg has to be created previously by ConfigureDIRAC
     if self.pp.localConfigFile:
-      self.inProcessOpts.append(' -o /AgentJobRequirements/ExtraOptions=%s' % self.pp.localConfigFile)
       if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
         self.inProcessOpts.append('--cfg')
       self.inProcessOpts.append(self.pp.localConfigFile)
