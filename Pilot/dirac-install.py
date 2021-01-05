@@ -2192,9 +2192,7 @@ def createBashrc():
       if cliParams.userEnvVariables:
         lines.extend(['# User-requested variables'])
         for envName, envValue in cliParams.userEnvVariables.items():
-          lines.extend(['( echo $%s | grep -q $%s ) || export %s=$%s:$%s' % (
-              envName, envValue,
-              envName, envName, envValue)])
+          lines.extend(['export %s=%s' % (envName, envValue)])
 
       # Add possible DIRAC environment variables
       lines.append('')
