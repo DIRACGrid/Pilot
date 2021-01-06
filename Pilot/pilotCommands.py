@@ -28,6 +28,7 @@ import os
 import time
 import stat
 import socket
+import filecmp
 from distutils.version import LooseVersion
 
 ############################
@@ -945,9 +946,9 @@ class LaunchAgent(CommandBase):
     extraCFG = []
     for i in os.listdir(self.pp.rootPath):
       cfg = os.path.join(self.pp.rootPath, i)
-      if os.path.isfile(cfg) and cfg.endswith('.cfg'):
+      if os.path.isfile(cfg) and cfg.endswith('.cfg') and not filecmp.cmp(self.pp.localConfigFile, cfg):
         if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
-          extraCFG.append('--cfg %s' % cfg)
+          extraCFG.append('--cfg')
         extraCFG.append(cfg)
 
     if self.pp.executeCmd:
