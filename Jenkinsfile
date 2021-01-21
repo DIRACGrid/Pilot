@@ -5,11 +5,11 @@ This is customized pipeline for running on jenkins-dirac.web.cern.ch
 */
 
 
-properties([parameters([string(name: 'projectVersion', defaultValue: 'v7r1', description: 'The DIRAC version to install'),
+properties([parameters([string(name: 'projectVersion', defaultValue: 'v7r2', description: 'The DIRAC version to install'),
                         string(name: 'Pilot_repo', defaultValue: 'DIRACGrid', description: 'The Pilot repo'),
                         string(name: 'Pilot_branch', defaultValue: 'master', description: 'The Pilot branch'),
                         string(name: 'DIRAC_test_repo', defaultValue: 'DIRACGrid', description: 'The DIRAC repo to use for getting the test code'),
-                        string(name: 'DIRAC_test_branch', defaultValue: 'rel-v7r1', description: 'The DIRAC branch to use for getting the test code'),
+                        string(name: 'DIRAC_test_branch', defaultValue: 'Integration', description: 'The DIRAC branch to use for getting the test code'),
                         string(name: 'JENKINS_CE', defaultValue: 'jenkins.cern.ch', description: 'The CE definition to use (of DIRAC.Jenkins.ch, see CS for others)'),
                         string(name: 'modules', defaultValue: '', description: 'to override what is installed, e.g. with https://github.com/$DIRAC_test_repo/DIRAC.git:::DIRAC:::$DIRAC_test_branch'),
                         string(name: 'pilot_options', defaultValue: '', description: 'any pilot option, e.g. --dirac-os')

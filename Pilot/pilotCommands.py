@@ -1,15 +1,15 @@
 """ Definitions of a standard set of pilot commands
 
-    Each commands is represented by a class inheriting CommandBase class.
+    Each command is represented by a class inheriting from CommandBase class.
     The command class constructor takes PilotParams object which is a data
     structure which keeps common parameters across all the pilot commands.
 
     The constructor must call the superclass constructor with the PilotParams
-    object and the command name as arguments, e.g. ::
+    object and the command name as arguments, e.g.::
 
-        class InstallDIRAC( CommandBase ):
+        class InstallDIRAC(CommandBase):
 
-          def __init__( self, pilotParams ):
+          def __init__(self, pilotParams):
             CommandBase.__init__(self, pilotParams, 'Install')
             ...
 
