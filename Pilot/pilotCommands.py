@@ -1,15 +1,15 @@
 """ Definitions of a standard set of pilot commands
 
-    Each commands is represented by a class inheriting CommandBase class.
+    Each command is represented by a class inheriting from CommandBase class.
     The command class constructor takes PilotParams object which is a data
     structure which keeps common parameters across all the pilot commands.
 
     The constructor must call the superclass constructor with the PilotParams
-    object and the command name as arguments, e.g. ::
+    object and the command name as arguments, e.g.::
 
-        class InstallDIRAC( CommandBase ):
+        class InstallDIRAC(CommandBase):
 
-          def __init__( self, pilotParams ):
+          def __init__(self, pilotParams):
             CommandBase.__init__(self, pilotParams, 'Install')
             ...
 
@@ -28,6 +28,7 @@ import os
 import time
 import stat
 import socket
+import filecmp
 from distutils.version import LooseVersion
 
 ############################
@@ -945,9 +946,9 @@ class LaunchAgent(CommandBase):
     extraCFG = []
     for i in os.listdir(self.pp.rootPath):
       cfg = os.path.join(self.pp.rootPath, i)
-      if os.path.isfile(cfg) and cfg.endswith('.cfg'):
+      if os.path.isfile(cfg) and cfg.endswith('.cfg') and not filecmp.cmp(self.pp.localConfigFile, cfg):
         if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
-          extraCFG.append('--cfg %s' % cfg)
+          extraCFG.append('--cfg')
         extraCFG.append(cfg)
 
     if self.pp.executeCmd:
