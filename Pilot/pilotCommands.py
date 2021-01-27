@@ -37,12 +37,12 @@ try:
   from http.client import HTTPSConnection
 except ImportError:
   from httplib import HTTPSConnection
-############################
 
 try:
   from Pilot.pilotTools import CommandBase
 except ImportError:
   from pilotTools import CommandBase
+############################
 
 
 class GetPilotVersion(CommandBase):
