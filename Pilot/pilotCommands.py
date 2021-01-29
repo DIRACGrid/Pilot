@@ -896,8 +896,7 @@ class LaunchAgent(CommandBase):
     self.innerCEOpts.append('-o WorkingDirectory=%s' % self.pp.workingDir)
     self.innerCEOpts.append('-o /LocalSite/CPUTime=%s' % (int(self.pp.jobCPUReq)))
     if self.pp.ceType == 'Pool':
-      self.jobAgentOpts = ['-o MaxCycles=%s' % max(self.pp.pilotProcessors, self.pp.maxCycles),
-                           '-o PollingTime=%s' % min(5, self.pp.pollingTime),
+      self.jobAgentOpts = ['-o PollingTime=%s' % min(10, self.pp.pollingTime),
                            '-o StopOnApplicationFailure=False',
                            '-o StopAfterFailedMatches=%s' % max(self.pp.pilotProcessors,
                                                                 self.pp.stopAfterFailedMatches),
