@@ -769,7 +769,7 @@ class PilotParams(object):
                      }
     }
 
-    The file must contains at least the Defaults section. Missing values are taken from the Defaults setup. """
+    The file must contain at least the Defaults section. Missing values are taken from the Defaults setup. """
     self.log.debug("JSON file loaded: %s" % self.pilotCFGFile)
     with open(self.pilotCFGFile, 'r') as fp:
       # We save the parsed JSON in case pilot commands need it
@@ -790,8 +790,14 @@ class PilotParams(object):
           self.gridCEType = str(self.pilotJSON['CEs'][self.ceName]['GridCEType'])
       except KeyError:
         pass
+      # This LocalCEType is like 'InProcess' or 'Pool' or 'Pool/Singularity' etc.
+      # It can be in the queue and/or the CE level
       try:
         self.ceType = str(self.pilotJSON['CEs'][self.ceName]['LocalCEType'])
+      except KeyError:
+        pass
+      try:
+        self.ceType = str(self.pilotJSON['CEs'][self.ceName][self.queueName]['LocalCEType'])
       except KeyError:
         pass
 

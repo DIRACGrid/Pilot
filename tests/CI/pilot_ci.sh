@@ -158,7 +158,7 @@ fullPilot(){
 
   echo -e '\n----python'
   python -V
-  which python
+  command -v python
 
 
   #Adding the LocalSE and the CPUTimeLeft, for the subsequent tests
