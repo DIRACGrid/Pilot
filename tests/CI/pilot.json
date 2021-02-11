@@ -75,33 +75,27 @@
   "CEs": {
     "jenkins.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
-      "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST"
     },
     "jenkins-full.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
-      "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-FULL"
     },
     "jenkins-mp.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
-      "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-MP"
     },
     "jenkins-mp-full.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
-      "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-FULL"
     },
     "jenkins-singularity.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
-      "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST",
       "LocalCEType": "Singularity"
     },
     "jenkins-singularity-full.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
-      "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-FULL",
       "LocalCEType": "Singularity"
     },
@@ -113,7 +107,6 @@
     },
     "jenkins-mp-pool-full.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
-      "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-FULL",
       "LocalCEType": "InProcess",
       "VAR_JENKINS_QUEUE": {
@@ -122,7 +115,6 @@
     },
     "jenkins-mp-pool-sudo.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
-      "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-MP",
       "VAR_JENKINS_QUEUE": {
         "LocalCEType": "Pool/Sudo"
@@ -130,7 +122,6 @@
     },
     "jenkins-mp-pool-sudo-full.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
-      "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-FULL",
       "VAR_JENKINS_QUEUE": {
         "LocalCEType": "Pool/Sudo"
@@ -138,7 +129,6 @@
     },
     "jenkins-mp-pool-singularity.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
-      "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-MP",
       "VAR_JENKINS_QUEUE": {
         "LocalCEType": "Pool/Singularity"
@@ -146,7 +136,6 @@
     },
     "jenkins-mp-pool-singularity-full.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
-      "Queue": "VAR_JENKINS_QUEUE",
       "GridCEType": "TEST-FULL",
       "VAR_JENKINS_QUEUE": {
         "LocalCEType": "Pool/Singularity"
