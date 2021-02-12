@@ -609,7 +609,7 @@ class PilotParams(object):
     self.__initCommandLine2()
 
   def __initCommandLine1(self):
-    """ Parses and interpret options on the command line: first pass
+    """ Parses and interpret options on the command line: first pass (essential things)
     """
 
     self.optList, __args__ = getopt.getopt(sys.argv[1:],
@@ -619,6 +619,8 @@ class PilotParams(object):
     for o, v in self.optList:
       if o == '-N' or o == '--Name':
         self.ceName = v
+      if o == '-Q' or o == '--Queue':
+        self.queueName = v
       elif o == '-a' or o == '--gridCEType':
         self.gridCEType = v
       elif o == '-d' or o == '--debug':
@@ -629,7 +631,9 @@ class PilotParams(object):
         self.pilotCFGFile = v
 
   def __initCommandLine2(self):
-    """ Parses and interpret options on the command line: second pass
+    """
+    Parses and interpret options on the command line: second pass
+    (overriding discovered parameters, for tests/debug)
     """
 
     self.optList, __args__ = getopt.getopt(sys.argv[1:],
@@ -649,8 +653,6 @@ class PilotParams(object):
         self.site = v
       elif o == '-y' or o == '--CEType':
         self.ceType = v
-      elif o == '-Q' or o == '--Queue':
-        self.queueName = v
       elif o == '-R' or o == '--reference':
         self.pilotReference = v
       elif o == '-k' or o == '--keepPP':
