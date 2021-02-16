@@ -7,7 +7,7 @@ channels:
 
 dependencies:
   # runtime
-  - python =2.7
+  - python =3.8
   - pip
   - requests
   - stomp.py

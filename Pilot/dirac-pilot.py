@@ -18,7 +18,9 @@
     But, as said, all the actions are actually configurable.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 __RCSID__ = "$Id$"
 
@@ -26,10 +28,13 @@ import os
 import sys
 import time
 
+############################
+# python 2 -> 3 "hacks"
 try:
   from Pilot.pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
 except ImportError:
   from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
+############################
 
 if __name__ == "__main__":
 

@@ -1,10 +1,15 @@
 """ Pilot logger module for the remote logging system.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import os
 import logging
+
+############################
+# python 2 -> 3 "hacks"
 try:
   from argparse import ArgumentTypeError
   from argparse import ArgumentParser
@@ -27,6 +32,7 @@ except ImportError:
   from PilotLoggerTools import readPilotJSONConfigFile
   from PilotLoggerTools import getUniqueIDAndSaveToFile
   from MessageSender import messageSenderFactory
+############################
 
 
 def getPilotUUIDFromFile(filename='PilotUUID'):
