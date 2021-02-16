@@ -147,9 +147,7 @@ import shutil
 import subprocess
 import ssl
 import hashlib
-import tarfile
 
-from contextlib import closing
 from distutils.version import LooseVersion   # pylint: disable=no-name-in-module,import-error
 
 try:
@@ -2106,16 +2104,23 @@ def createBashrc():
           # But this will have to be created at some point (dirac-configure)
           certDir = '%s/etc/grid-security/certificates' % proPath
       lines.extend(['# CAs path for SSL verification',
-                    'export X509_CERT_DIR=%s' % certDir,
-                    'export SSL_CERT_DIR=%s' % certDir])
+                    'export X509_CERT_DIR=${X509_CERT_DIR:-%s}' % certDir,
+                    'export SSL_CERT_DIR=${SSL_CERT_DIR:-%s}' % certDir])
 
       lines.append(
-          'export X509_VOMS_DIR=%s' %
+          'export X509_VOMS_DIR=${X509_VOMS_DIR:-%s}' %
           os.path.join(
               proPath,
               'etc',
               'grid-security',
               'vomsdir'))
+      lines.append(
+          'export X509_VOMSES=${X509_VOMSES:-%s}' %
+          os.path.join(
+              proPath,
+              'etc',
+              'grid-security',
+              'vomses'))
       lines.extend(
           [
               '# Some DIRAC locations',
@@ -2192,7 +2197,9 @@ def createBashrc():
       if cliParams.userEnvVariables:
         lines.extend(['# User-requested variables'])
         for envName, envValue in cliParams.userEnvVariables.items():
-          lines.extend(['export %s=%s' % (envName, envValue)])
+          lines.extend(['( echo $%s | grep -q $%s ) || export %s=$%s:$%s' % (
+              envName, envValue,
+              envName, envName, envValue)])
 
       # Add possible DIRAC environment variables
       lines.append('')
@@ -2207,7 +2214,6 @@ def createBashrc():
       lines.append('# export DIRAC_USE_JSON_ENCODE=no')
       lines.append('# export DIRAC_USE_M2CRYPTO=true')
       lines.append('# export DIRAC_USE_NEWTHREADPOOL=yes')
-      lines.append('# export DIRAC_VOMSES=$DIRAC/etc/grid-security/vomses')
       lines.append('# export DIRAC_NO_CFG=true')
       lines.append('')
       f = open(bashrcFile, 'w')
@@ -2258,6 +2264,13 @@ def createCshrc():
               'etc',
               'grid-security',
               'vomsdir'))
+      lines.append(
+          'setenv X509_VOMSES %s' %
+          os.path.join(
+              proPath,
+              'etc',
+              'grid-security',
+              'vomses'))
       lines.extend(['# Some DIRAC locations',
                     '( test $?DIRAC -eq 1 ) || setenv DIRAC %s' % proPath,
                     'setenv DIRACBIN %s' % os.path.join("$DIRAC", cliParams.platform, 'bin'),
@@ -2437,37 +2450,30 @@ def createBashrcForDiracOS():
           # But this will have to be created at some point (dirac-configure)
           certDir = '%s/etc/grid-security/certificates' % proPath
       lines.extend(['# CAs path for SSL verification',
-                    'export X509_CERT_DIR=%s' % certDir,
-                    'export SSL_CERT_DIR=%s' % certDir])
+                    'export X509_CERT_DIR=${X509_CERT_DIR:-%s}' % certDir,
+                    'export SSL_CERT_DIR=${SSL_CERT_DIR:-%s}' % certDir])
 
       lines.append(
-          'export X509_VOMS_DIR=%s' %
+          'export X509_VOMS_DIR=${X509_VOMS_DIR:-%s}' %
           os.path.join(
               proPath,
               'etc',
               'grid-security',
               'vomsdir'))
+      lines.append(
+          'export X509_VOMSES=${X509_VOMSES:-%s}' %
+          os.path.join(
+              proPath,
+              'etc',
+              'grid-security',
+              'vomses'))
       lines.extend(
           [
               '# Some DIRAC locations',
               'export DIRACSCRIPTS=%s' %
               os.path.join(
                   "$DIRAC",
-                  'scripts'),
-              'export TERMINFO=%s' %
-              __getTerminfoLocations(
-                  os.path.join(
-                      "$DIRACOS",
-                      'usr',
-                      'share',
-                      'terminfo')),
-              'export RRD_DEFAULT_FONT=%s' %
-              os.path.join(
-                  "$DIRACOS",
-                  'usr',
-                  'share',
-                  'fonts',
-                  'DejaVuSansMono-Roman.ttf')])
+                  'scripts')])
 
       lines.extend(['# Prepend the PATH and set the PYTHONPATH'])
 
@@ -2478,11 +2484,6 @@ def createBashrcForDiracOS():
       lines.extend(['# new OpenSSL version require OPENSSL_CONF to point to some accessible location',
                     'export OPENSSL_CONF=/tmp'])
 
-      # gfal2 requires some environment variables to be set
-      # Note: eventually this line should disappear as already set by diracosrc
-      lines.extend(['# Gfal2 configuration and plugins',
-                    'export GFAL_CONFIG_DIR=$DIRACOS/etc/gfal2.d',
-                    'export  GFAL_PLUGIN_DIR=$DIRACOS/usr/lib64/gfal2-plugins/'])
       # add DIRACPLAT environment variable for client installations
       if cliParams.externalsType == 'client':
         lines.extend(['# DIRAC platform',
@@ -2513,7 +2514,6 @@ def createBashrcForDiracOS():
       lines.append('# export DIRAC_USE_JSON_ENCODE=no')
       lines.append('# export DIRAC_USE_M2CRYPTO=true')
       lines.append('# export DIRAC_USE_NEWTHREADPOOL=yes')
-      lines.append('# export DIRAC_VOMSES=$DIRAC/etc/grid-security/vomses')
 
       # Add the lines required for further env variables requested
       if cliParams.userEnvVariables:
@@ -2665,6 +2665,9 @@ if __name__ == "__main__":
     if not os.path.isfile(ddeLocation):
       ddeLocation = os.path.join(cliParams.targetPath, "DIRAC", "Core",
                                  "scripts", "dirac_deploy_scripts.py")
+    if not os.path.isfile(ddeLocation):
+      ddeLocation = os.path.join(cliParams.targetPath, "DIRAC", "src", "DIRAC", "Core",
+                                 "scripts", "dirac_deploy_scripts.py")
     if os.path.isfile(ddeLocation):
       cmd = ddeLocation
 
@@ -2683,7 +2686,7 @@ if __name__ == "__main__":
 
       os.system(cmd)
     else:
-      logDEBUG("No dirac-deploy-scripts found. This doesn't look good")
+      logERROR("No dirac-deploy-scripts found. This doesn't look good")
   else:
     logNOTICE("Skipping installing DIRAC")
 
