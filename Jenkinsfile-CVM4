@@ -16,7 +16,7 @@ properties([parameters([string(name: 'projectVersion', defaultValue: 'v7r2', des
                        ])])
 
 
-node('lhcbci-cernvm4-01') {
+node('lhcbci-cernvm4-02') {
     // Clean workspace before doing anything
     deleteDir()
 
