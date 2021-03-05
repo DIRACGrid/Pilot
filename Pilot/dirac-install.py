@@ -2408,12 +2408,10 @@ def installDiracOSPython3(releaseConfig):
 
   :param ReleaseConfig releaseConfig: The ReleaseConfig object for configuring the installation
   """
-  url = "https://github.com/chrisburr/DIRACOS2/releases/latest/download/DIRACOS-Linux-x86_64.sh"
-  installerFn = os.path.join(cliParams.basePath, "DIRACOS-Linux-x86_64.sh")
-  if not urlretrieveTimeout(url, installerFn, cliParams.timeout):
-    raise Exception("Failed to download DIRACOS from " + url)
-  subprocess.check_call(["bash", installerFn, "-b", "-p", os.path.join(cliParams.basePath, "diracos")])
-  return True
+  raise NotImplementedError(
+      "Creating a python 3 based installation of DIRAC is not supported by dirac-install.py\n"
+      "See https://github.com/DIRACGrid/DIRAC/#install for details."
+  )
 
 
 def createBashrcForDiracOS():
