@@ -16,8 +16,12 @@ source "$TESTCODE/DIRAC/tests/Jenkins/utilities.sh"
 prepareForPilot(){
   echo '==> [prepareForPilot]'
 
+  #get dirac-install.py
+  curl -O -L https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
+  chmod +x dirac-install.py
+
   #get the pilot files from the Pilot
-  for file in PilotLogger.py PilotLoggerTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py MessageSender.py
+  for file in PilotLogger.py PilotLoggerTools.py dirac-pilot.py pilotCommands.py pilotTools.py MessageSender.py
   do
     cp "$TESTCODE/Pilot/Pilot/${file}" .
   done
