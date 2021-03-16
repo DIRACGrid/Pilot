@@ -475,7 +475,6 @@ class PilotParams(object):
     self.ceType = ""
     self.queueName = ""
     self.gridCEType = ""
-    self.platform = ""
     # maxNumberOfProcessors: the number of
     # processors allocated to the pilot which the pilot can allocate to one payload
     # used to set payloadProcessors unless other limits are reached (like the number of processors on the WN)
@@ -489,7 +488,6 @@ class PilotParams(object):
     self.stopOnApplicationFailure = True
     self.stopAfterFailedMatches = 10
     self.flavour = 'DIRAC'
-    self.gridVersion = ''
     self.pilotReference = ''
     self.releaseVersion = ''
     self.releaseProject = ''
@@ -525,7 +523,6 @@ class PilotParams(object):
     self.cmdOpts = (
         ('', 'requiredTag=', 'extra required tags for resource description'),
         ('a:', 'gridCEType=', 'Grid CE Type (CREAM etc)'),
-        ('b', 'build', 'Force local compilation'),
         ('c', 'cert', 'Use server certificate instead of proxy'),
         ('d', 'debug', 'Set debug flag'),
         ('e:', 'extraPackages=', 'Extra packages to install (comma separated)'),
@@ -534,7 +531,6 @@ class PilotParams(object):
         ('l:', 'project=', 'Project to install'),
         ('n:', 'name=', 'Set <Site> as Site Name'),
         ('o:', 'option=', 'Option=value to add'),
-        ('p:', 'platform=', 'Use <platform> instead of local one'),
         ('m:', 'maxNumberOfProcessors=',
          'specify a max number of processors to use by the payload inside a pilot'),
         ('', 'modules=', 'for installing non-released code (see dirac-install "-m" option documentation)'),
@@ -642,8 +638,6 @@ class PilotParams(object):
         self.wnVO = v
       elif o in ('-V', '--installation'):
         self.installation = v
-      elif o == '-p' or o == '--platform':
-        self.platform = v
       elif o == '-m' or o == '--maxNumberOfProcessors':
         self.maxNumberOfProcessors = int(v)
       elif o == '-D' or o == '--disk':

@@ -1,135 +1,6 @@
 #!/usr/bin/env python
 """
-The main DIRAC installer script. It can be used to install the main DIRAC software, its
-modules, web, rest etc. and DIRAC extensions.
-
-In order to deploy DIRAC you have to provide: globalDefaultsURL, which is by default:
-"http://diracproject.web.cern.ch/diracproject/configs/globalDefaults.cfg", but it can be
-in the local file system in a separate directory. The content of this file is the following::
-
-  Installations
-  {
-    DIRAC
-    {
-       DefaultsLocation =  http://diracproject.web.cern.ch/diracproject/dirac.cfg
-       LocalInstallation
-       {
-        PythonVersion = 27
-       }
-       # in case you have a DIRAC extension
-       LHCb
-      {
-      DefaultsLocation = http://lhcb-rpm.web.cern.ch/lhcb-rpm/lhcbdirac/lhcb.cfg
-      }
-    }
-  }
-  Projects
-  {
-    DIRAC
-    {
-      DefaultsLocation =  http://diracproject.web.cern.ch/diracproject/dirac.cfg
-    }
-    # in case you have a DIRAC extension
-    LHCb
-    {
-      DefaultsLocation = http://lhcb-rpm.web.cern.ch/lhcb-rpm/lhcbdirac/lhcb.cfg
-    }
-  }
-
-the DefaultsLocation for example::
-
-  DefaultsLocation = http://diracproject.web.cern.ch/diracproject/dirac.cfg
-
-must contain a minimal configuration. The following options must be in this
-file::
-
-  Releases=,UploadCommand=,BaseURL=
-
-In case you want to overwrite the global configuration file, you have to use --defaultsURL
-
-After providing the default configuration files, DIRAC or your extension can be installed from:
-
-1. in a directory you have to be present globalDefaults.cfg, dirac.cfg and all binaries.
-   For example::
-
-    zmathe@dzmathe zmathe]$ ls tars/
-    dirac.cfg  diracos-0.1.md5  diracos-0.1.tar.gz  DIRAC-v6r20-pre16.md5  DIRAC-v6r20-pre16.tar.gz
-    globalDefaults.cfg release-DIRAC-v6r20-pre16.cfg  release-DIRAC-v6r20-pre16.md5
-    zmathe@dzmathe zmathe]$
-
-   For example::
-
-    dirac-install -r v6r20-pre16 --dirac-os --dirac-os-version=0.0.1 -u /home/zmathe/tars
-
-   this command will use  /home/zmathe/tars directory for the source code.
-   It will install DIRAC v6r20-pre16, DIRAC OS 0.1 version
-
-2. You can use your dedicated web server or the official DIRAC web server
-
-   for example::
-
-    dirac-install -r v6r20-pre16 --dirac-os --dirac-os-version=0.0.1
-
-   It will install DIRAC v6r20-pre16
-
-   You can install an extension of diracos.
-
-   for example::
-
-     dirac-install -r v9r4-pre2 -l LHCb --dirac-os --dirac-os-version=LHCb:master
-
-3. You have possibility to install a not-yet-released DIRAC, module or extension using -m or --tag options.
-   The non release version can be specified.
-
-   for example::
-
-    dirac-install -l DIRAC -r v6r20-pre16 -g v14r0 -t client -m DIRAC --tag=integration
-
-   It will install DIRAC v6r20-pre16, where the DIRAC package based on integration, other other packages will be
-   the same what is specified in release.cfg file in v6r20-pre16 tarball.
-
-    dirac-install -l DIRAC -r v6r20-pre16 -g v14r0 -t client  -m DIRAC --tag=v6r20-pre22
-
-   It installs a specific tag
-
-   Note: If the source is not provided, DIRAC repository is used, which is defined in the global
-   configuration file.
-
-   We can provide the repository url:code repository:::Project:::branch. for example::
-
-     dirac-install -l DIRAC -r v6r20-pre16 -g v14r0 -t client \\
-     -m https://github.com/zmathe/DIRAC.git:::DIRAC:::dev_main_branch, \\
-     https://github.com/zmathe/WebAppDIRAC.git:::WebAppDIRAC:::extjs6 -e WebAppDIRAC
-
-   it will install DIRAC based on dev_main_branch and WebAppDIRAC based on extjs6::
-
-     dirac-install -l DIRAC -r v6r20-pre16 -g v14r0 -t client \\
-     -m WebAppDIRAC --tag=integration -e WebAppDIRAC
-
-   it will install DIRAC v6r20-pre16 and WebAppDIRAC integration branch
-
-You can use install.cfg configuration file::
-
-  DIRACOS = http://lhcb-rpm.web.cern.ch/lhcb-rpm/dirac/DIRACOS/
-  WebAppDIRAC = https://github.com/zmathe/WebAppDIRAC.git
-  DIRAC=https://github.com/DIRACGrid/DIRAC.git
-  LocalInstallation
-  {
-    # Project = LHCbDIRAC
-    # The project LHCbDIRAC is not defined in the globalsDefaults.cfg
-    Project = LHCb
-    Release = v9r2-pre8
-    Extensions = LHCb
-    ConfigurationServer = dips://lhcb-conf-dirac.cern.ch:9135/Configuration/Server
-    Setup = LHCb-Production
-    SkipCAChecks = True
-    SkipCADownload = True
-    WebAppDIRAC=extjs6
-    DIRAC=rel-v6r20
-  }
-
-  dirac-install -l LHCb -r v9r2-pre8 -t server --dirac-os --dirac-os-version=0.0.6 install.cfg
-
+dirac-install.py for Pilot (simplified)
 """
 
 #  pylint: skip-file
@@ -144,11 +15,8 @@ import signal
 import time
 import stat
 import shutil
-import subprocess
 import ssl
 import hashlib
-
-from distutils.version import LooseVersion   # pylint: disable=no-name-in-module,import-error
 
 try:
   # For Python 3.0 and later
@@ -185,26 +53,16 @@ class Params(object):
     self.project = 'DIRAC'
     self.installation = 'DIRAC'
     self.release = ""
-    self.externalsType = 'client'
-    self.pythonVersion = '27'
     self.platform = ""
     self.basePath = os.getcwd()
     self.targetPath = os.getcwd()
-    self.buildExternals = False
-    self.noAutoBuild = False
     self.debug = False
-    self.externalsOnly = False
-    self.lcgVer = ''
-    self.noLcg = False
-    self.useVersionsDir = False
     self.installSource = ""
     self.globalDefaults = False
     self.timeout = 300
     self.diracOSVersion = ''
-    self.diracOS = False
     self.tag = ""
     self.modules = {}
-    self.externalVersion = ""
     self.createLink = False
     self.scriptSymlink = False
     self.userEnvVariables = {}
@@ -518,12 +376,6 @@ class ReleaseConfig(object):
     self.instName = instName
     self.projectName = projectName
 
-  def setDebugCB(self, debFunc):
-    """
-    It is used by the dirac-distribution. It sets the debug function
-    """
-    self.debugCB = debFunc
-
   def __dbgMsg(self, msg):
     """
     :param str msg: the debug message
@@ -786,19 +638,6 @@ class ReleaseConfig(object):
       if location:
         logDEBUG("Using DIRACOS tarball URL from configuration key %s" % key)
         return location
-
-  def getUploadCommand(self, project=None):
-    """
-    It returns the command used to upload the binary
-
-    :param str project: the name of the project
-    """
-    if not project:
-      project = self.projectName
-    defLoc = self.globalDefaults.get("Projects/%s/UploadCommand" % project, "")
-    if defLoc:
-      return S_OK(defLoc)
-    return S_ERROR("No UploadCommand for %s" % project)
 
   def __loadReleaseConfig(self, project, release, releaseMode, sourceURL=None, relLocation=None):
     """
@@ -1125,24 +964,6 @@ class ReleaseConfig(object):
       return S_OK((False, modTpl[0]))
     return S_OK((modTpl[0], modTpl[1]))
 
-  def getExternalsVersion(self, release=None):
-    """
-    It returns the version of DIRAC Externals. If it is not provided,
-    uses the default cfg
-
-    :param str release: the release version
-    """
-
-    if 'DIRAC' not in self.prjRelCFG:
-      return False
-    if not release:
-      release = list(self.prjRelCFG['DIRAC'])
-      release = sorted(release, key=LooseVersion)[-1]
-    try:
-      return self.prjRelCFG['DIRAC'][release].get('Releases/%s/Externals' % release)
-    except KeyError:
-      return False
-
   def getDiracOSExtensionAndVersion(self, diracOSVersion):
     """
     This method return the diracos and version taking into
@@ -1178,20 +999,6 @@ class ReleaseConfig(object):
     except KeyError:
       pass
     return self.getDiracOSExtensionAndVersion(diracOSVersion)
-
-  def getLCGVersion(self, lcgVersion=None):
-    """
-    It returns the LCG version
-    :param str lcgVersion: LCG version
-    """
-    if lcgVersion:
-      return lcgVersion
-    try:
-      return self.prjRelCFG[self.projectName][cliParams.release].get(
-          "Releases/%s/LcgVer" % cliParams.release, lcgVersion)
-    except KeyError:
-      pass
-    return lcgVersion
 
   def getModulesToInstall(self, release, extensions=None):
     """
@@ -1594,44 +1401,6 @@ def fixPythonShebang():
     pass
 
 
-def runExternalsPostInstall():
-  """
-   If there are any postInstall in externals, run them
-  """
-  if cliParams.diracOS or cliParams.diracOSVersion:
-    postInstallPath = os.path.join(cliParams.targetPath, "postInstall")
-  else:
-    postInstallPath = os.path.join(cliParams.targetPath, cliParams.platform, "postInstall")
-  if not os.path.isdir(postInstallPath):
-    logDEBUG("There's no %s directory. Skipping postInstall step" % postInstallPath)
-    return
-  postInstallSuffix = "-postInstall"
-  for scriptName in os.listdir(postInstallPath):
-    if not scriptName.endswith(postInstallSuffix):
-      logDEBUG("%s does not have the %s suffix. Skipping.." % (scriptName, postInstallSuffix))
-      continue
-    scriptPath = os.path.join(postInstallPath, scriptName)
-    os.chmod(scriptPath, executablePerms)
-    logNOTICE("Executing %s..." % scriptPath)
-    if os.system("'%s' > '%s.out' 2> '%s.err'" % (scriptPath, scriptPath, scriptPath)):
-      logERROR("Post installation script %s failed. Check %s.err" % (scriptPath, scriptPath))
-      sys.exit(1)
-
-
-def fixMySQLScript():
-  """
-   Update the mysql.server script (if installed) to point to the proper datadir
-  """
-  scriptPath = os.path.join(cliParams.targetPath, 'scripts', 'dirac-fix-mysql-script')
-  bashrcFile = os.path.join(cliParams.targetPath, 'bashrc')
-  if cliParams.useVersionsDir:
-    bashrcFile = os.path.join(cliParams.basePath, 'bashrc')
-  command = 'source %s; %s > /dev/null' % (bashrcFile, scriptPath)
-  if os.path.exists(scriptPath):
-    logNOTICE("Executing %s..." % command)
-    os.system('bash -c "%s"' % command)
-
-
 def checkPlatformAliasLink():
   """
   Make a link if there's an alias
@@ -1639,23 +1408,6 @@ def checkPlatformAliasLink():
   if cliParams.platform in platformAlias:
     os.symlink(os.path.join(cliParams.targetPath, platformAlias[cliParams.platform]),
                os.path.join(cliParams.targetPath, cliParams.platform))
-
-
-def installExternalRequirements(extType):
-  """ Install the extension requirements if any
-  """
-  reqScript = os.path.join(cliParams.targetPath, "scripts", 'dirac-externals-requirements')
-  bashrcFile = os.path.join(cliParams.targetPath, 'bashrc')
-  if cliParams.useVersionsDir:
-    bashrcFile = os.path.join(cliParams.basePath, 'bashrc')
-  if os.path.isfile(reqScript):
-    os.chmod(reqScript, executablePerms)
-    logNOTICE("Executing %s..." % reqScript)
-    command = "%s -t '%s' > '%s.out' 2> '%s.err'" % (reqScript, extType, reqScript, reqScript)
-    if os.system('bash -c "source %s; %s"' % (bashrcFile, command)):
-      logERROR("Requirements installation script %s failed. Check %s.err" % (reqScript,
-                                                                             reqScript))
-  return True
 
 
 def discoverModules(modules):
@@ -1691,19 +1443,12 @@ def discoverModules(modules):
 cmdOpts = (('r:', 'release=', 'Release version to install'),
            ('l:', 'project=', 'Project to install'),
            ('e:', 'extensions=', 'Extensions to install (comma separated)'),
-           ('t:', 'installType=', 'Installation type (client/server)'),
-           ('i:', 'pythonVersion=', 'Python version to compile (27/26)'),
            ('p:', 'platform=', 'Platform to install'),
            ('P:', 'installationPath=', 'Path where to install (default current working dir)'),
            ('b', 'build', 'Force local compilation'),
-           ('g:', 'grid=', 'lcg tools package version'),
-           ('  ', 'no-lcg-bundle', 'lcg tools not to be installed'),
-           ('B', 'noAutoBuild', 'Do not build if not available'),
-           ('v', 'useVersionsDir', 'Use versions directory'),
            ('u:', 'baseURL=', "Use URL as the source for installation tarballs"),
            ('d', 'debug', 'Show debug messages'),
            ('V:', 'installation=', 'Installation from which to extract parameter values'),
-           ('X', 'externalsOnly', 'Only install external binaries'),
            ('M:', 'defaultsURL=', 'Where to retrieve the global defaults from'),
            ('h', 'help', 'Show this help'),
            ('T:', 'Timeout=', 'Timeout for downloads (default = %s)'),
@@ -1731,12 +1476,6 @@ def usage():
   for options in [('Release', cliParams.release),
                   ('Project', cliParams.project),
                   ('ModulesToInstall', []),
-                  ('ExternalsType', cliParams.externalsType),
-                  ('PythonVersion', cliParams.pythonVersion),
-                  ('LcgVer', cliParams.lcgVer),
-                  ('UseVersionsDir', cliParams.useVersionsDir),
-                  ('BuildExternals', cliParams.buildExternals),
-                  ('NoAutoBuild', cliParams.noAutoBuild),
                   ('Debug', cliParams.debug),
                   ('Timeout', cliParams.timeout)]:
     print(" %s = %s" % options)
@@ -1775,18 +1514,13 @@ def loadConfiguration():
 
   releaseConfig.loadInstallationLocalDefaults(args)
 
-  for opName in ('release', 'externalsType', 'installType', 'pythonVersion',
-                 'buildExternals', 'noAutoBuild', 'debug', 'globalDefaults',
-                 'lcgVer', 'useVersionsDir', 'targetPath',
-                 'project', 'release', 'extensions', 'timeout'):
+  for opName in ('release', 'debug', 'globalDefaults',
+                 'targetPath', 'project', 'release', 'extensions', 'timeout'):
     try:
       opVal = releaseConfig.getInstallationConfig(
           "LocalInstallation/%s" % (opName[0].upper() + opName[1:]))
     except KeyError:
       continue
-
-    if opName == 'installType':
-      opName = 'externalsType'
 
     if isinstance(getattr(cliParams, opName), str_type):
       setattr(cliParams, opName, opVal)
@@ -1805,18 +1539,10 @@ def loadConfiguration():
       for pkg in [p.strip() for p in v.split(",") if p.strip()]:
         if pkg not in cliParams.extensions:
           cliParams.extensions.append(pkg)
-    elif o in ('-t', '--installType'):
-      cliParams.externalsType = v
-    elif o in ('-i', '--pythonVersion'):
-      cliParams.pythonVersion = v
     elif o in ('-p', '--platform'):
       cliParams.platform = v
     elif o in ('-d', '--debug'):
       cliParams.debug = True
-    elif o in ('-g', '--grid'):
-      cliParams.lcgVer = v
-    elif o in ('--no-lcg-bundle'):
-      cliParams.noLcg = True
     elif o in ('-u', '--baseURL'):
       cliParams.installSource = v
     elif o in ('-P', '--installationPath'):
@@ -1825,14 +1551,6 @@ def loadConfiguration():
         os.makedirs(v)
       except BaseException:
         pass
-    elif o in ('-v', '--useVersionsDir'):
-      cliParams.useVersionsDir = True
-    elif o in ('-b', '--build'):
-      cliParams.buildExternals = True
-    elif o in ("-B", '--noAutoBuild'):
-      cliParams.noAutoBuild = True
-    elif o in ('-X', '--externalsOnly'):
-      cliParams.externalsOnly = True
     elif o in ('-T', '--Timeout'):
       try:
         cliParams.timeout = max(cliParams.timeout, int(v))
@@ -1841,14 +1559,10 @@ def loadConfiguration():
         pass
     elif o == '--dirac-os-version':
       cliParams.diracOSVersion = v
-    elif o == '--dirac-os':
-      cliParams.diracOS = True
     elif o == '--tag':
       cliParams.tag = v
     elif o in ('-m', '--module'):
       cliParams.modules = discoverModules(v)
-    elif o in ('-x', '--external'):
-      cliParams.externalVersion = v
     elif o == '--createLink':
       cliParams.createLink = True
     elif o == '--scriptSymlink':
@@ -1862,19 +1576,6 @@ def loadConfiguration():
     usage()
 
   cliParams.basePath = cliParams.targetPath
-  if cliParams.useVersionsDir:
-    # install under <installPath>/versions/<version>_<timestamp>
-    cliParams.targetPath = os.path.join(
-        cliParams.targetPath, 'versions', '%s_%s' % (cliParams.release, int(time.time())))
-    try:
-      os.makedirs(cliParams.targetPath)
-    except BaseException:
-      pass
-
-  # If we are running an update, DIRACOS will be set in the environment
-  if not cliParams.diracOS and 'DIRACOS' in os.environ:
-    logWARN("Forcing to install DIRACOS, because it is already installed!")
-    cliParams.diracOS = True
 
   logNOTICE("Destination path for installation is %s" % cliParams.targetPath)
   releaseConfig.projectName = cliParams.project
@@ -1892,428 +1593,6 @@ def loadConfiguration():
   releaseConfig.loadInstallationLocalDefaults(args)
 
   return S_OK(releaseConfig)
-
-
-def getPlatform():
-  """
-  It returns the platform, where this script is running using Platform.py
-  """
-  platformPath = os.path.join(cliParams.targetPath, "DIRAC", "Core", "Utilities", "Platform.py")
-  try:
-    platFD = open(platformPath, "r")
-  except IOError:
-    platformPath = os.path.join(cliParams.targetPath, "src", "DIRAC", "Core", "Utilities", "Platform.py")
-    try:
-      platFD = open(platformPath, "r")
-    except IOError:
-      platformPath = os.path.join(cliParams.targetPath, "DIRAC", "src", "DIRAC", "Core", "Utilities", "Platform.py")
-      try:
-        platFD = open(platformPath, "r")
-      except IOError:
-        logERROR("Cannot open Platform.py. Is DIRAC installed?")
-        return ''
-
-  Platform = imp.load_module("Platform", platFD, platformPath, ("", "r", imp.PY_SOURCE))
-  platFD.close()
-  return Platform.getPlatformString()
-
-
-def installExternals(releaseConfig):
-  """
-  It install the DIRAC external. The version of the external is provided by
-  the cmd or in the configuration file.
-
-  :param object releaseConfig:
-  """
-  if not releaseConfig:
-    externalsVersion = cliParams.externalVersion
-  else:
-    externalsVersion = releaseConfig.getExternalsVersion()
-  if not externalsVersion:
-    logERROR("No externals defined")
-    return False
-
-  if not cliParams.platform:
-    cliParams.platform = getPlatform()
-  if not cliParams.platform:
-    return False
-
-  if cliParams.installSource:
-    tarsURL = cliParams.installSource
-  else:
-    tarsURL = releaseConfig.getTarsLocation('DIRAC')['Value']
-
-  logDEBUG("Using platform: %s" % cliParams.platform)
-  extVer = "%s-%s-%s-python%s" % (cliParams.externalsType, externalsVersion,
-                                  cliParams.platform, cliParams.pythonVersion)
-  logDEBUG("Externals %s are to be installed" % extVer)
-  if not downloadAndExtractTarball(tarsURL, "Externals", extVer, cache=True):
-    return (not cliParams.noAutoBuild)
-  logNOTICE("Fixing externals paths...")
-  fixBuildPaths()
-  logNOTICE("Running externals post install...")
-  checkPlatformAliasLink()
-  return True
-
-
-def installLCGutils(releaseConfig):
-  """
-  DIRAC uses various tools from LCG area. This method install a given
-  lcg version.
-  :param object releaseConfig: the configuration file object (class ReleaseConfig)
-  """
-  if not cliParams.platform:
-    cliParams.platform = getPlatform()
-  if not cliParams.platform:
-    return False
-
-  if cliParams.installSource:
-    tarsURL = cliParams.installSource
-  else:
-    tarsURL = releaseConfig.getTarsLocation('DIRAC')['Value']
-
-  # lcg utils?
-  # LCG utils if required
-  if not releaseConfig:
-    lcgVer = cliParams.lcgVer
-  else:
-    lcgVer = releaseConfig.getLCGVersion(cliParams.lcgVer)
-  if lcgVer:
-    verString = "%s-%s-python%s" % (lcgVer, cliParams.platform, cliParams.pythonVersion)
-    # HACK: try to find a more elegant solution for the lcg bundles location
-    if not downloadAndExtractTarball(tarsURL + "/../lcgBundles", "DIRAC-lcg", verString, False, cache=True):
-      logERROR(
-          "\nThe requested LCG software version %s for the local operating system could not be downloaded." %
-          verString)
-      logERROR("Please, check the availability of the LCG software bindings for you \
-      platform 'DIRAC-lcg-%s' \n in the repository %s/lcgBundles/." %
-               (verString, os.path.dirname(tarsURL)))
-      logERROR(
-          "\nIf you would like to skip the installation of the LCG software, redo the installation with \
-          adding the option --no-lcg-bundle to the command line.")
-      return False
-
-  logNOTICE("Fixing Python Shebang...")
-  fixPythonShebang()
-  return True
-
-
-def createPermanentDirLinks():
-  """ Create links to permanent directories from within the version directory
-  """
-  if cliParams.useVersionsDir:
-    try:
-      # Directories
-      for directory in ['startup', 'runit', 'data', 'work', 'control', 'sbin', 'etc', 'webRoot']:
-        fake = os.path.join(cliParams.targetPath, directory)
-        real = os.path.join(cliParams.basePath, directory)
-        if not os.path.exists(real):
-          os.makedirs(real)
-        if os.path.exists(fake):
-          # Try to reproduce the directory structure to avoid lacking directories
-          fakeDirs = os.listdir(fake)
-          for fd in fakeDirs:
-            if os.path.isdir(os.path.join(fake, fd)):
-              if not os.path.exists(os.path.join(real, fd)):
-                os.makedirs(os.path.join(real, fd))
-          os.rename(fake, fake + '.bak')
-        os.symlink(real, fake)
-
-      # Files
-      for filename in ['bashrc']:
-        fake = os.path.join(cliParams.targetPath, filename)
-        real = os.path.join(cliParams.basePath, filename)
-        os.symlink(real, fake)
-    except Exception as x:
-      logERROR(str(x))
-      return False
-
-  return True
-
-
-def createOldProLinks():
-  """ Create links to permanent directories from within the version directory
-  """
-  proPath = cliParams.targetPath
-  if cliParams.useVersionsDir:
-    oldPath = os.path.join(cliParams.basePath, 'old')
-    proPath = os.path.join(cliParams.basePath, 'pro')
-    try:
-      if os.path.exists(proPath) or os.path.islink(proPath):
-        if os.path.exists(oldPath) or os.path.islink(oldPath):
-          os.unlink(oldPath)
-        os.rename(proPath, oldPath)
-      os.symlink(cliParams.targetPath, proPath)
-    except Exception as x:
-      logERROR(str(x))
-      return False
-
-  return True
-
-
-def createBashrc():
-  """ Create DIRAC environment setting script for the bash shell
-  """
-
-  proPath = cliParams.targetPath
-  # Now create bashrc at basePath
-  try:
-    bashrcFile = os.path.join(cliParams.targetPath, 'bashrc')
-    if cliParams.useVersionsDir:
-      bashrcFile = os.path.join(cliParams.basePath, 'bashrc')
-      proPath = os.path.join(cliParams.basePath, 'pro')
-    logNOTICE('Creating %s' % bashrcFile)
-    if not os.path.exists(bashrcFile):
-      lines = ['# DIRAC bashrc file, used by service and agent run scripts to set environment',
-               'export PYTHONUNBUFFERED=yes',
-               'export PYTHONOPTIMIZE=x']
-      if 'HOME' in os.environ:
-        lines.append('[ -z "$HOME" ] && export HOME=%s' % os.environ['HOME'])
-
-      # Determining where the CAs are...
-      if 'X509_CERT_DIR' in os.environ:
-        certDir = os.environ['X509_CERT_DIR']
-      else:
-        if os.path.isdir('/etc/grid-security/certificates') and \
-           os.listdir('/etc/grid-security/certificates'):
-          # Assuming that, if present, it is not empty, and has correct CAs
-          certDir = '/etc/grid-security/certificates'
-        else:
-          # But this will have to be created at some point (dirac-configure)
-          certDir = '%s/etc/grid-security/certificates' % proPath
-      lines.extend(['# CAs path for SSL verification',
-                    'export X509_CERT_DIR=${X509_CERT_DIR:-%s}' % certDir,
-                    'export SSL_CERT_DIR=${SSL_CERT_DIR:-%s}' % certDir])
-
-      lines.append(
-          'export X509_VOMS_DIR=${X509_VOMS_DIR:-%s}' %
-          os.path.join(
-              proPath,
-              'etc',
-              'grid-security',
-              'vomsdir'))
-      lines.append(
-          'export X509_VOMSES=${X509_VOMSES:-%s}' %
-          os.path.join(
-              proPath,
-              'etc',
-              'grid-security',
-              'vomses'))
-      lines.extend(
-          [
-              '# Some DIRAC locations',
-              '[ -z "$DIRAC" ] && export DIRAC=%s' %
-              proPath,
-              'export DIRACBIN=%s' %
-              os.path.join(
-                  "$DIRAC",
-                  cliParams.platform,
-                  'bin'),
-              'export DIRACSCRIPTS=%s' %
-              os.path.join(
-                  "$DIRAC",
-                  'scripts'),
-              'export DIRACLIB=%s' %
-              os.path.join(
-                  "$DIRAC",
-                  cliParams.platform,
-                  'lib'),
-              'export TERMINFO=%s' %
-              __getTerminfoLocations(
-                  os.path.join(
-                      "$DIRAC",
-                      cliParams.platform,
-                      'share',
-                      'terminfo')),
-              'export RRD_DEFAULT_FONT=%s' %
-              os.path.join(
-                  "$DIRAC",
-                  cliParams.platform,
-                  'share',
-                  'rrdtool',
-                  'fonts',
-                  'DejaVuSansMono-Roman.ttf')])
-
-      lines.extend(['# Prepend the PYTHONPATH, the LD_LIBRARY_PATH, and the DYLD_LIBRARY_PATH'])
-      lines.extend(['( echo $PATH | grep -q $DIRACBIN ) || export PATH=$DIRACBIN:$PATH',
-                    '( echo $PATH | grep -q $DIRACSCRIPTS ) || export PATH=$DIRACSCRIPTS:$PATH',
-                    '( echo $LD_LIBRARY_PATH | grep -q $DIRACLIB ) || \
-                    export LD_LIBRARY_PATH=$DIRACLIB:$LD_LIBRARY_PATH',
-                    '( echo $LD_LIBRARY_PATH | grep -q $DIRACLIB/mysql ) || \
-                    export LD_LIBRARY_PATH=$DIRACLIB/mysql:$LD_LIBRARY_PATH',
-                    '( echo $DYLD_LIBRARY_PATH | grep -q $DIRACLIB ) || \
-                    export DYLD_LIBRARY_PATH=$DIRACLIB:$DYLD_LIBRARY_PATH',
-                    '( echo $DYLD_LIBRARY_PATH | grep -q $DIRACLIB/mysql ) || \
-                    export DYLD_LIBRARY_PATH=$DIRACLIB/mysql:$DYLD_LIBRARY_PATH'])
-
-      lines.extend(['export PYTHONPATH=$DIRAC'])
-
-      lines.extend(['# new OpenSSL version require OPENSSL_CONF to point to some accessible location',
-                    'export OPENSSL_CONF=/tmp'])
-
-      # gfal2 requires some environment variables to be set
-      lines.extend(['# Gfal2 configuration and plugins', 'export GFAL_CONFIG_DIR=%s' %
-                    os.path.join("$DIRAC", cliParams.platform, 'etc/gfal2.d'), 'export  GFAL_PLUGIN_DIR=%s' %
-                    os.path.join("$DIRACLIB", 'gfal2-plugins')])
-      # add DIRACPLAT environment variable for client installations
-      if cliParams.externalsType == 'client':
-        lines.extend(['# DIRAC platform',
-                      '[ -z "$DIRACPLAT" ] && export DIRACPLAT=`$DIRAC/scripts/dirac-platform`'])
-      # Add the lines required for globus-* tools to use IPv6
-      lines.extend(['# IPv6 support',
-                    'export GLOBUS_IO_IPV6=TRUE',
-                    'export GLOBUS_FTP_CLIENT_IPV6=TRUE'])
-      # Add the lines required for ARC CE support
-      lines.extend(['# ARC Computing Element',
-                    'export ARC_PLUGIN_PATH=$DIRACLIB/arc'])
-
-      # Add the lines required for fork support for xrootd
-      lines.extend(['# Fork support for xrootd',
-                    'export XRD_RUNFORKHANDLER=1'])
-
-      # Add the lines required for further env variables requested
-      if cliParams.userEnvVariables:
-        lines.extend(['# User-requested variables'])
-        for envName, envValue in cliParams.userEnvVariables.items():
-          lines.extend(['( echo $%s | grep -q $%s ) || export %s=$%s:$%s' % (
-              envName, envValue,
-              envName, envName, envValue)])
-
-      # Add possible DIRAC environment variables
-      lines.append('')
-      lines.append('# before enabling any of these variables, please see the documentation ')
-      lines.append('# https://dirac.readthedocs.io/en/latest/AdministratorGuide/' +
-                   'ServerInstallations/environment_variable_configuration.html')
-      lines.append('# export DIRAC_DEBUG_DENCODE_CALLSTACK=1')
-      lines.append('# export DIRAC_DEBUG_STOMP=1')
-      lines.append('# export DIRAC_DEPRECATED_FAIL=1')
-      lines.append('# export DIRAC_GFAL_GRIDFTP_SESSION_REUSE=true')
-      lines.append('# export DIRAC_USE_JSON_DECODE=no')
-      lines.append('# export DIRAC_USE_JSON_ENCODE=no')
-      lines.append('# export DIRAC_USE_M2CRYPTO=true')
-      lines.append('# export DIRAC_USE_NEWTHREADPOOL=yes')
-      lines.append('# export DIRAC_NO_CFG=true')
-      lines.append('')
-      f = open(bashrcFile, 'w')
-      f.write('\n'.join(lines))
-      f.close()
-  except Exception as x:
-    logERROR(str(x))
-    return False
-
-  return True
-
-
-def createCshrc():
-  """ Create DIRAC environment setting script for the (t)csh shell
-  """
-  proPath = cliParams.targetPath
-  # Now create cshrc at basePath
-  try:
-    cshrcFile = os.path.join(cliParams.targetPath, 'cshrc')
-    if cliParams.useVersionsDir:
-      cshrcFile = os.path.join(cliParams.basePath, 'cshrc')
-      proPath = os.path.join(cliParams.basePath, 'pro')
-    logNOTICE('Creating %s' % cshrcFile)
-    if not os.path.exists(cshrcFile):
-      lines = ['# DIRAC cshrc file, used by clients to set up the environment',
-               'setenv PYTHONUNBUFFERED yes',
-               'setenv PYTHONOPTIMIZE x']
-
-      # Determining where the CAs are...
-      if 'X509_CERT_DIR' in os.environ:
-        certDir = os.environ['X509_CERT_DIR']
-      else:
-        if os.path.isdir('/etc/grid-security/certificates') and \
-           os.listdir('/etc/grid-security/certificates'):
-          # Assuming that, if present, it is not empty, and has correct CAs
-          certDir = '/etc/grid-security/certificates'
-        else:
-          # But this will have to be created at some point (dirac-configure)
-          certDir = '%s/etc/grid-security/certificates' % proPath
-      lines.extend(['# CAs path for SSL verification',
-                    'setenv X509_CERT_DIR %s' % certDir,
-                    'setenv SSL_CERT_DIR %s' % certDir])
-
-      lines.append(
-          'setenv X509_VOMS_DIR %s' %
-          os.path.join(
-              proPath,
-              'etc',
-              'grid-security',
-              'vomsdir'))
-      lines.append(
-          'setenv X509_VOMSES %s' %
-          os.path.join(
-              proPath,
-              'etc',
-              'grid-security',
-              'vomses'))
-      lines.extend(['# Some DIRAC locations',
-                    '( test $?DIRAC -eq 1 ) || setenv DIRAC %s' % proPath,
-                    'setenv DIRACBIN %s' % os.path.join("$DIRAC", cliParams.platform, 'bin'),
-                    'setenv DIRACSCRIPTS %s' % os.path.join("$DIRAC", 'scripts'),
-                    'setenv DIRACLIB %s' % os.path.join("$DIRAC", cliParams.platform, 'lib'),
-                    'setenv TERMINFO %s' % __getTerminfoLocations(os.path.join("$DIRAC",
-                                                                               cliParams.platform,
-                                                                               'share',
-                                                                               'terminfo'))])
-
-      lines.extend(['# Prepend the PYTHONPATH, the LD_LIBRARY_PATH, and the DYLD_LIBRARY_PATH'])
-
-      lines.extend(['( test $?PATH -eq 1 ) || setenv PATH ""',
-                    '( test $?LD_LIBRARY_PATH -eq 1 ) || setenv LD_LIBRARY_PATH ""',
-                    '( test $?DY_LD_LIBRARY_PATH -eq 1 ) || setenv DYLD_LIBRARY_PATH ""',
-                    '( test $?PYTHONPATH -eq 1 ) || setenv PYTHONPATH ""',
-                    '( echo $PATH | grep -q $DIRACBIN ) || setenv PATH ${DIRACBIN}:$PATH',
-                    '( echo $PATH | grep -q $DIRACSCRIPTS ) || setenv PATH ${DIRACSCRIPTS}:$PATH',
-                    '( echo $LD_LIBRARY_PATH | grep -q $DIRACLIB ) || \
-                    setenv LD_LIBRARY_PATH ${DIRACLIB}:$LD_LIBRARY_PATH',
-                    '( echo $LD_LIBRARY_PATH | grep -q $DIRACLIB/mysql ) || \
-                    setenv LD_LIBRARY_PATH ${DIRACLIB}/mysql:$LD_LIBRARY_PATH',
-                    '( echo $DYLD_LIBRARY_PATH | grep -q $DIRACLIB ) || \
-                    setenv DYLD_LIBRARY_PATH ${DIRACLIB}:$DYLD_LIBRARY_PATH',
-                    '( echo $DYLD_LIBRARY_PATH | grep -q $DIRACLIB/mysql ) || \
-                    setenv DYLD_LIBRARY_PATH ${DIRACLIB}/mysql:$DYLD_LIBRARY_PATH'])
-
-      lines.extend(['setenv PYTHONPATH ${DIRAC}'])
-
-      lines.extend(['# new OpenSSL version require OPENSSL_CONF to point to some accessible location',
-                    'setenv OPENSSL_CONF /tmp'])
-      lines.extend(['# IPv6 support',
-                    'setenv GLOBUS_IO_IPV6 TRUE',
-                    'setenv GLOBUS_FTP_CLIENT_IPV6 TRUE'])
-      # gfal2 requires some environment variables to be set
-      lines.extend(['# Gfal2 configuration and plugins', 'setenv GFAL_CONFIG_DIR %s' %
-                    os.path.join("$DIRAC", cliParams.platform, 'etc/gfal2.d'), 'setenv  GFAL_PLUGIN_DIR %s' %
-                    os.path.join("$DIRACLIB", 'gfal2-plugins')])
-      # add DIRACPLAT environment variable for client installations
-      if cliParams.externalsType == 'client':
-        lines.extend(['# DIRAC platform',
-                      'test $?DIRACPLAT -eq 1 || setenv DIRACPLAT `$DIRAC/scripts/dirac-platform`'])
-      # Add the lines required for ARC CE support
-      lines.extend(['# ARC Computing Element',
-                    'setenv ARC_PLUGIN_PATH $DIRACLIB/arc'])
-
-      # Add the lines required for fork support for xrootd
-      lines.extend(['# Fork support for xrootd',
-                    'setenv XRD_RUNFORKHANDLER 1'])
-
-      # Add the lines required for further env variables requested
-      if cliParams.userEnvVariables:
-        lines.extend(['# User-requested variables'])
-        for envName, envValue in cliParams.userEnvVariables.items():
-          lines.extend(['setenv %s %s' % (envName, envValue)])
-
-      lines.append('')
-      f = open(cshrcFile, 'w')
-      f.write('\n'.join(lines))
-      f.close()
-  except Exception as x:
-    logERROR(str(x))
-    return False
-
-  return True
 
 
 def writeDefaultConfiguration():
@@ -2339,20 +1618,6 @@ def writeDefaultConfiguration():
   except Exception as excp:
     logERROR("Could not write %s: %s" % (filePath, excp))
   logNOTICE("Defaults written to %s" % filePath)
-
-
-def __getTerminfoLocations(defaultLocation=None):
-  """returns the terminfo locations as a colon separated string"""
-
-  terminfoLocations = []
-  if defaultLocation:
-    terminfoLocations = [defaultLocation]
-
-  for termpath in ['/usr/share/terminfo', '/etc/terminfo']:
-    if os.path.exists(termpath):
-      terminfoLocations.append(termpath)
-
-  return ":".join(terminfoLocations)
 
 
 def installDiracOS(releaseConfig):
@@ -2388,9 +1653,6 @@ def createBashrcForDiracOS():
   # Now create bashrc at basePath
   try:
     bashrcFile = os.path.join(cliParams.targetPath, 'bashrc')
-    if cliParams.useVersionsDir:
-      bashrcFile = os.path.join(cliParams.basePath, 'bashrc')
-      proPath = os.path.join(cliParams.basePath, 'pro')
     logNOTICE('Creating %s' % bashrcFile)
     if not os.path.exists(bashrcFile):
       lines = ['# DIRAC bashrc file, used by service and agent run scripts to set environment',
@@ -2431,13 +1693,25 @@ def createBashrcForDiracOS():
               'etc',
               'grid-security',
               'vomses'))
-      lines.extend(
-          [
-              '# Some DIRAC locations',
-              'export DIRACSCRIPTS=%s' %
-              os.path.join(
-                  "$DIRAC",
-                  'scripts')])
+
+      if cliParams.modules:
+        lines.extend(
+            [
+                '# Some DIRAC locations',
+                'export DIRACSCRIPTS=%s' %
+                os.path.join(
+                    "$DIRAC",
+                    'DIRAC',
+                    'src',
+                    'scripts')])
+      else:
+        lines.extend(
+            [
+                '# Some DIRAC locations',
+                'export DIRACSCRIPTS=%s' %
+                os.path.join(
+                    "$DIRAC",
+                    'scripts')])
 
       lines.extend(['# Prepend the PATH and set the PYTHONPATH'])
 
@@ -2448,10 +1722,8 @@ def createBashrcForDiracOS():
       lines.extend(['# new OpenSSL version require OPENSSL_CONF to point to some accessible location',
                     'export OPENSSL_CONF=/tmp'])
 
-      # add DIRACPLAT environment variable for client installations
-      if cliParams.externalsType == 'client':
-        lines.extend(['# DIRAC platform',
-                      '[ -z "$DIRACPLAT" ] && export DIRACPLAT=`$DIRAC/scripts/dirac-platform`'])
+      lines.extend(['# DIRAC platform',
+                    '[ -z "$DIRACPLAT" ] && export DIRACPLAT=`$DIRAC/scripts/dirac-platform`'])
       # Add the lines required for globus-* tools to use IPv6
       lines.extend(['# IPv6 support',
                     'export GLOBUS_IO_IPV6=TRUE',
@@ -2464,20 +1736,6 @@ def createBashrcForDiracOS():
       # Add the lines required for fork support for xrootd
       lines.extend(['# Fork support for xrootd',
                     'export XRD_RUNFORKHANDLER=1'])
-
-      # Add possible DIRAC environment variables
-      lines.append('')
-      lines.append('# before enabling any of these variables, please see the documentation ')
-      lines.append('# https://dirac.readthedocs.io/en/latest/AdministratorGuide/' +
-                   'ServerInstallations/environment_variable_configuration.html')
-      lines.append('# export DIRAC_DEBUG_DENCODE_CALLSTACK=1')
-      lines.append('# export DIRAC_DEBUG_STOMP=1')
-      lines.append('# export DIRAC_DEPRECATED_FAIL=1')
-      lines.append('# export DIRAC_GFAL_GRIDFTP_SESSION_REUSE=true')
-      lines.append('# export DIRAC_USE_JSON_DECODE=no')
-      lines.append('# export DIRAC_USE_JSON_ENCODE=no')
-      lines.append('# export DIRAC_USE_M2CRYPTO=true')
-      lines.append('# export DIRAC_USE_NEWTHREADPOOL=yes')
 
       # Add the lines required for further env variables requested
       if cliParams.userEnvVariables:
@@ -2584,45 +1842,43 @@ if __name__ == "__main__":
       sys.exit(1)
   else:
     releaseConfig = result['Value']
-  if not createPermanentDirLinks():
-    sys.exit(1)
 
-  if not cliParams.externalsOnly:
-    logNOTICE("Discovering modules to install")
-    if releaseConfig:
-      result = releaseConfig.getModulesToInstall(cliParams.release, cliParams.extensions)
-      if not result['OK']:
-        logERROR(result['Message'])
-        sys.exit(1)
-      modsOrder, modsToInstall = result['Value']
-    if cliParams.debug and releaseConfig:
-      logNOTICE("Writing down the releases files")
-      releaseConfig.dumpReleasesToPath()
-    logNOTICE("Installing modules...")
-    for modName in set(modsOrder):
-      tarsURL, modVersion = modsToInstall[modName]
-      if cliParams.installSource and not cliParams.modules:
-        # we install not release version of DIRAC
-        tarsURL = cliParams.installSource
-      if modName in cliParams.modules:
-        sourceURL = cliParams.modules[modName].get('sourceUrl')
-        if 'Version' in cliParams.modules[modName]:
-          modVersion = cliParams.modules[modName]['Version']
-        if not sourceURL:
-          retVal = releaseConfig.getModSource(cliParams.release, modName)
-          if retVal['OK']:
-            tarsURL = retVal['Value'][1]  # this is the git repository url
-            modVersion = cliParams.tag
-        else:
-          tarsURL = sourceURL
-        retVal = checkoutFromGit(modName, tarsURL, modVersion)
-        if not retVal['OK']:
-          logERROR("Cannot checkout %s" % retVal['Message'])
-          sys.exit(1)
+  logNOTICE("Discovering modules to install")
+  if releaseConfig:
+    result = releaseConfig.getModulesToInstall(cliParams.release, cliParams.extensions)
+    if not result['OK']:
+      logERROR(result['Message'])
+      sys.exit(1)
+    modsOrder, modsToInstall = result['Value']
+  if cliParams.debug and releaseConfig:
+    logNOTICE("Writing down the releases files")
+    releaseConfig.dumpReleasesToPath()
+  logNOTICE("Installing modules...")
+  for modName in set(modsOrder):
+    tarsURL, modVersion = modsToInstall[modName]
+    if cliParams.installSource and not cliParams.modules:
+      # we install not release version of DIRAC
+      tarsURL = cliParams.installSource
+    if modName in cliParams.modules:
+      sourceURL = cliParams.modules[modName].get('sourceUrl')
+      if 'Version' in cliParams.modules[modName]:
+        modVersion = cliParams.modules[modName]['Version']
+      if not sourceURL:
+        retVal = releaseConfig.getModSource(cliParams.release, modName)
+        if retVal['OK']:
+          tarsURL = retVal['Value'][1]  # this is the git repository url
+          modVersion = cliParams.tag
       else:
-        logNOTICE("Installing %s:%s" % (modName, modVersion))
-        if not downloadAndExtractTarball(tarsURL, modName, modVersion):
-          sys.exit(1)
+        tarsURL = sourceURL
+      retVal = checkoutFromGit(modName, tarsURL, modVersion)
+      if not retVal['OK']:
+        logERROR("Cannot checkout %s" % retVal['Message'])
+        sys.exit(1)
+    else:
+      logNOTICE("Installing %s:%s" % (modName, modVersion))
+      if not downloadAndExtractTarball(tarsURL, modName, modVersion):
+        sys.exit(1)
+
     logNOTICE("Deploying scripts...")
     ddeLocation = os.path.join(cliParams.targetPath, "DIRAC", "Core",
                                "scripts", "dirac-deploy-scripts.py")
@@ -2646,35 +1902,13 @@ if __name__ == "__main__":
     logNOTICE("Skipping installing DIRAC")
 
   # we install with DIRACOS from v7rX DIRAC release
-  if cliParams.diracOS \
-     or list(releaseConfig.prjRelCFG['DIRAC'])[0][1] not in '0123456789' \
-     or int(list(releaseConfig.prjRelCFG['DIRAC'])[0][1]) > 6:
-    logNOTICE("Installing DIRAC OS %s..." % cliParams.diracOSVersion)
-    if not installDiracOS(releaseConfig):
-      sys.exit(1)
-    if not createBashrcForDiracOS():
-      sys.exit(1)
-  else:
-    logNOTICE("Installing %s externals..." % cliParams.externalsType)
-    if not installExternals(releaseConfig):
-      sys.exit(1)
-    if cliParams.noLcg:
-      logNOTICE("Skipping installation of LCG software...")
-    else:
-      logNOTICE("Installing LCG software...")
-      if not installLCGutils(releaseConfig):
-        sys.exit(1)
-    if not createBashrc():
-      sys.exit(1)
-    if not createCshrc():
-      sys.exit(1)
-  if not createOldProLinks():
+  logNOTICE("Installing DIRAC OS %s..." % cliParams.diracOSVersion)
+  if not installDiracOS(releaseConfig):
     sys.exit(1)
-  runExternalsPostInstall()
+  if not createBashrcForDiracOS():
+    sys.exit(1)
+
   writeDefaultConfiguration()
-  if cliParams.externalsType == "server":
-    fixMySQLScript()
-  installExternalRequirements(cliParams.externalsType)
   if cliParams.createLink:
     createSymbolicLink()
   logNOTICE("%s properly installed" % cliParams.installation)

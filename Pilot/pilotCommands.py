@@ -163,16 +163,10 @@ class InstallDIRAC(CommandBase):
     """
 
     for o, v in self.pp.optList:
-      if o in ('-b', '--build'):
-        self.installOpts.append('-b')
-      elif o == '-d' or o == '--debug':
+      if o == '-d' or o == '--debug':
         self.installOpts.append('-d')
       elif o == '-e' or o == '--extraPackages':
         self.installOpts.append('-e "%s"' % v)
-      elif o == '-g' or o == '--grid':
-        self.pp.gridVersion = v
-      elif o == '-p' or o == '--platform':
-        self.pp.platform = v
       elif o == '-u' or o == '--url':
         self.installOpts.append('-u "%s"' % v)
       elif o in ('-P', '--path'):
@@ -180,13 +174,7 @@ class InstallDIRAC(CommandBase):
         self.pp.rootPath = v
       elif o in ('-V', '--installation'):
         self.installOpts.append('-V "%s"' % v)
-      elif o == '-t' or o == '--server':
-        self.installOpts.append('-t "server"')
 
-    if self.pp.gridVersion:
-      self.installOpts.append("-g '%s'" % self.pp.gridVersion)
-    if self.pp.platform:
-      self.installOpts.append('-p "%s"' % self.pp.platform)
     if self.pp.releaseProject:
       self.installOpts.append("-l '%s'" % self.pp.releaseProject)
     if self.pp.modules:
