@@ -36,16 +36,14 @@ from distutils.version import LooseVersion
 try:
   # For Python 3.0 and later
   from http.client import HTTPSConnection
-  from urllib.request import urlopen
 except ImportError:
   # Fall back to Python 2
   from httplib import HTTPSConnection
-  from urllib2 import urlopen
 
 try:
-  from Pilot.pilotTools import CommandBase
+  from Pilot.pilotTools import CommandBase, retrieveUrlTimeout
 except ImportError:
-  from pilotTools import CommandBase
+  from pilotTools import CommandBase, retrieveUrlTimeout
 ############################
 
 
@@ -268,13 +266,12 @@ class InstallDIRAC(CommandBase):
       machine = os.uname()[4]  # py2
 
     # FIXME: we should have a (set of) different location(s)
-    response = urlopen(
-        "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-%s.sh" % machine
-    )
-    code = response.getcode()
-    if code > 200 or code >= 300:
-      self.log.error("Failed to download DIRACOS-Linux-%s.sh [ERROR %d]" % (machine, code))
-      self.exitWithError(code)
+    if not retrieveUrlTimeout(
+        "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-%s.sh" % machine,
+        "DIRACOS-Linux-%s.sh" % machine,
+        self.log
+    ):
+      self.exitWithError(1)
 
     # 2. bash DIRACOS-Linux-$(uname -m).sh
     retCode, _ = self.executeAndGetOutput("bash DIRACOS-Linux-%s.sh" % machine, self.pp.installEnv)
