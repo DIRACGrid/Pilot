@@ -1273,7 +1273,6 @@ class ReleaseConfig(object):
 #################################################################################
 
 
-# platformAlias = { 'Darwin_i386_10.6' : 'Darwin_i386_10.5' }
 platformAlias = {}
 
 ####
@@ -1895,32 +1894,6 @@ def loadConfiguration():
   return S_OK(releaseConfig)
 
 
-def compileExternals(extVersion):
-  """
-  It is used to compile the external for a given platform
-
-  :param str extVersion: the external version
-  """
-  logNOTICE("Compiling externals %s" % extVersion)
-  buildCmd = os.path.join(
-      cliParams.targetPath,
-      "DIRAC",
-      "Core",
-      "scripts",
-      "dirac-compile-externals.py")
-  buildCmd = "%s -t '%s' -D '%s' -v '%s' -i '%s'" % (buildCmd,
-                                                     cliParams.externalsType,
-                                                     os.path.join(
-                                                         cliParams.targetPath,
-                                                         cliParams.platform),
-                                                     extVersion,
-                                                     cliParams.pythonVersion)
-  if os.system(buildCmd):
-    logERROR("Could not compile binaries")
-    return False
-  return True
-
-
 def getPlatform():
   """
   It returns the platform, where this script is running using Platform.py
@@ -1929,8 +1902,16 @@ def getPlatform():
   try:
     platFD = open(platformPath, "r")
   except IOError:
-    logERROR("Cannot open Platform.py. Is DIRAC installed?")
-    return ''
+    platformPath = os.path.join(cliParams.targetPath, "src", "DIRAC", "Core", "Utilities", "Platform.py")
+    try:
+      platFD = open(platformPath, "r")
+    except IOError:
+      platformPath = os.path.join(cliParams.targetPath, "DIRAC", "src", "DIRAC", "Core", "Utilities", "Platform.py")
+      try:
+        platFD = open(platformPath, "r")
+      except IOError:
+        logERROR("Cannot open Platform.py. Is DIRAC installed?")
+        return ''
 
   Platform = imp.load_module("Platform", platFD, platformPath, ("", "r", imp.PY_SOURCE))
   platFD.close()
@@ -1962,17 +1943,14 @@ def installExternals(releaseConfig):
   else:
     tarsURL = releaseConfig.getTarsLocation('DIRAC')['Value']
 
-  if cliParams.buildExternals:
-    compileExternals(externalsVersion)
-  else:
-    logDEBUG("Using platform: %s" % cliParams.platform)
-    extVer = "%s-%s-%s-python%s" % (cliParams.externalsType, externalsVersion,
-                                    cliParams.platform, cliParams.pythonVersion)
-    logDEBUG("Externals %s are to be installed" % extVer)
-    if not downloadAndExtractTarball(tarsURL, "Externals", extVer, cache=True):
-      return (not cliParams.noAutoBuild) and compileExternals(externalsVersion)
-    logNOTICE("Fixing externals paths...")
-    fixBuildPaths()
+  logDEBUG("Using platform: %s" % cliParams.platform)
+  extVer = "%s-%s-%s-python%s" % (cliParams.externalsType, externalsVersion,
+                                  cliParams.platform, cliParams.pythonVersion)
+  logDEBUG("Externals %s are to be installed" % extVer)
+  if not downloadAndExtractTarball(tarsURL, "Externals", extVer, cache=True):
+    return (not cliParams.noAutoBuild)
+  logNOTICE("Fixing externals paths...")
+  fixBuildPaths()
   logNOTICE("Running externals post install...")
   checkPlatformAliasLink()
   return True
@@ -2677,10 +2655,6 @@ if __name__ == "__main__":
       # as an argument to the dirac-deploy-scripts
       if not cliParams.platform:
         cliParams.platform = getPlatform()
-      if "Darwin" in cliParams.platform:
-        binaryPath = os.path.join(cliParams.targetPath, cliParams.platform)
-        logNOTICE("For MacOS (Darwin) use explicit binary path %s" % binaryPath)
-        cmd += ' %s' % binaryPath
 
       os.system(cmd)
     else:
