@@ -209,14 +209,6 @@ def getCommand(params, commandName, log):
 
       1. <CommandExtension>Commands
       2. pilotCommands
-      3. <Extension>.WorkloadManagementSystem.PilotAgent.<CommandExtension>Commands
-      4. <Extension>.WorkloadManagementSystem.PilotAgent.pilotCommands
-      5. DIRAC.WorkloadManagementSystem.PilotAgent.<CommandExtension>Commands
-      6. DIRAC.WorkloadManagementSystem.PilotAgent.pilotCommands
-
-      Note that commands in 3.-6. can only be used of the the DIRAC installation
-      has been done. DIRAC extensions are taken from -e ( --extraPackages ) option
-      of the pilot script.
   """
   extensions = params.commandExtensions
   modules = [m + 'Commands' for m in extensions + ['pilot']]
@@ -233,23 +225,7 @@ def getCommand(params, commandName, log):
     if commandObject:
       return commandObject(params), module
 
-  if params.diracInstalled:
-    diracExtensions = []
-    for ext in params.extensions:
-      if not ext.endswith('DIRAC'):
-        diracExtensions.append(ext + 'DIRAC')
-      else:
-        diracExtensions.append(ext)
-    diracExtensions += ['DIRAC']
-    ol = ObjectLoader(diracExtensions, log)
-    for module in modules:
-      commandObject, modulePath = ol.loadObject('WorkloadManagementSystem.PilotAgent',
-                                                module,
-                                                commandName)
-      if commandObject:
-        return commandObject(params), modulePath
-
-  # No command could be instantitated
+  # No command could be instantiated
   return None, None
 
 
@@ -522,9 +498,6 @@ class PilotParams(object):
     self.pilotScriptName = ''
     self.genericOption = ''
     self.wnVO = ''  # for binding the resource (WN) to a specific VO
-    # DIRAC client installation environment
-    self.diracInstalled = False
-    self.diracExtensions = []
     # Some commands can define environment necessary to execute subsequent commands
     self.installEnv = os.environ
     # If DIRAC is preinstalled this file will receive the updates of the local configuration
