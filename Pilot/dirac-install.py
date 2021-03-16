@@ -2380,18 +2380,6 @@ def installDiracOS(releaseConfig):
   return True
 
 
-def installDiracOSPython3(releaseConfig):
-  """
-  Install DIRAC OS for Python 3.
-
-  :param ReleaseConfig releaseConfig: The ReleaseConfig object for configuring the installation
-  """
-  raise NotImplementedError(
-      "Creating a python 3 based installation of DIRAC is not supported by dirac-install.py\n"
-      "See https://github.com/DIRACGrid/DIRAC/#install for details."
-  )
-
-
 def createBashrcForDiracOS():
   """ Create DIRAC environment setting script for the bash shell
   """
@@ -2651,11 +2639,6 @@ if __name__ == "__main__":
       if cliParams.scriptSymlink:
         cmd += ' --symlink'
 
-      # In MacOS /usr/bin/env does not find python in the $PATH, passing binary path
-      # as an argument to the dirac-deploy-scripts
-      if not cliParams.platform:
-        cliParams.platform = getPlatform()
-
       os.system(cmd)
     else:
       logERROR("No dirac-deploy-scripts found. This doesn't look good")
@@ -2667,12 +2650,8 @@ if __name__ == "__main__":
      or list(releaseConfig.prjRelCFG['DIRAC'])[0][1] not in '0123456789' \
      or int(list(releaseConfig.prjRelCFG['DIRAC'])[0][1]) > 6:
     logNOTICE("Installing DIRAC OS %s..." % cliParams.diracOSVersion)
-    if cliParams.pythonVersion.startswith("3"):
-      if not installDiracOSPython3(releaseConfig):
-        sys.exit(1)
-    else:
-      if not installDiracOS(releaseConfig):
-        sys.exit(1)
+    if not installDiracOS(releaseConfig):
+      sys.exit(1)
     if not createBashrcForDiracOS():
       sys.exit(1)
   else:
