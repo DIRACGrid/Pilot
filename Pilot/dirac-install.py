@@ -62,7 +62,6 @@ class Params(object):
     self.tag = ""
     self.modules = {}
     self.createLink = False
-    self.scriptSymlink = False
     self.userEnvVariables = {}
 
 
@@ -1406,7 +1405,6 @@ cmdOpts = (('r:', 'release=', 'Release version to install'),
            ('x:', 'external=', 'external version'),
            ('  ', 'createLink', 'create version symbolic link from the versions directory. This is equivalent to the \
            following command: ln -s /opt/dirac/versions/vArBpC vArBpC'),
-           ('  ', 'scriptSymlink', 'Symlink the scripts instead of creating wrapper'),
            ('  ', 'userEnvVariables=',
             'User-requested environment variables (comma-separated, name and value separated by ":::")')
            )
@@ -1509,8 +1507,6 @@ def loadConfiguration():
       cliParams.modules = discoverModules(v)
     elif o == '--createLink':
       cliParams.createLink = True
-    elif o == '--scriptSymlink':
-      cliParams.scriptSymlink = True
     elif o == '--userEnvVariables':
       cliParams.userEnvVariables = dict(zip([name.split(':::')[0] for name in v.replace(' ', '').split(',')],
                                             [value.split(':::')[1] for value in v.replace(' ', '').split(',')]))
@@ -1634,24 +1630,13 @@ def createBashrcForDiracOS():
               'grid-security',
               'vomses'))
 
-      if cliParams.modules:
-        lines.extend(
-            [
-                '# Some DIRAC locations',
-                'export DIRACSCRIPTS=%s' %
-                os.path.join(
-                    "$DIRAC",
-                    'DIRAC',
-                    'src',
-                    'scripts')])
-      else:
-        lines.extend(
-            [
-                '# Some DIRAC locations',
-                'export DIRACSCRIPTS=%s' %
-                os.path.join(
-                    "$DIRAC",
-                    'scripts')])
+      lines.extend(
+          [
+              '# Some DIRAC locations',
+              'export DIRACSCRIPTS=%s' %
+              os.path.join(
+                  "$DIRAC",
+                  'scripts')])
 
       lines.extend(['# Prepend the PATH and set the PYTHONPATH'])
 
@@ -1735,10 +1720,16 @@ def checkoutFromGit(moduleName, sourceURL, tagVersion, destinationDir=None):
   # replacing the code
   if os.path.exists(fDirName + '/' + moduleName):
     cmd = "ln -s %s/%s %s" % (codeRepo, moduleName, os.path.join(cliParams.targetPath, moduleName))
+    logNOTICE("Executing: %s" % cmd)
+    retVal = os.system(cmd)
   else:
-    cmd = "mv %s %s" % (fDirName, os.path.join(cliParams.targetPath, moduleName))
-  logNOTICE("Executing: %s" % cmd)
-  retVal = os.system(cmd)
+    cmd = "mv %s/src/DIRAC %s" % (fDirName, os.path.join(cliParams.targetPath, moduleName))
+    logNOTICE("Executing: %s" % cmd)
+    retVal = os.system(cmd)
+    if not retVal:
+      cmd = "mv %s %s" % (fDirName, os.path.join(cliParams.targetPath, moduleName))
+      logNOTICE("The above failed, now executing: %s" % cmd)
+      retVal = os.system(cmd)
 
   if retVal:
     return S_ERROR("Error while creating module: %s" % (moduleName))
@@ -1829,9 +1820,8 @@ if __name__ == "__main__":
     if os.path.isfile(ddeLocation):
       cmd = ddeLocation
 
-      # if specified, create symlink instead of wrapper.
-      if cliParams.scriptSymlink:
-        cmd += ' --symlink'
+      if cliParams.modules:
+        cmd += ' '
 
       os.system(cmd)
     else:
