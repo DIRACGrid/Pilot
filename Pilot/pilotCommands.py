@@ -34,9 +34,13 @@ from distutils.version import LooseVersion
 ############################
 # python 2 -> 3 "hacks"
 try:
+  # For Python 3.0 and later
   from http.client import HTTPSConnection
+  from urllib.request import urlopen
 except ImportError:
+  # Fall back to Python 2
   from httplib import HTTPSConnection
+  from urllib2 import urlopen
 
 try:
   from Pilot.pilotTools import CommandBase
@@ -169,8 +173,6 @@ class InstallDIRAC(CommandBase):
         self.installOpts.append('-e "%s"' % v)
       elif o == '-g' or o == '--grid':
         self.pp.gridVersion = v
-      elif o == '-i' or o == '--python':
-        self.pp.pythonVersion = v
       elif o == '-p' or o == '--platform':
         self.pp.platform = v
       elif o == '-u' or o == '--url':
@@ -185,8 +187,6 @@ class InstallDIRAC(CommandBase):
 
     if self.pp.gridVersion:
       self.installOpts.append("-g '%s'" % self.pp.gridVersion)
-    if self.pp.pythonVersion:
-      self.installOpts.append("-i '%s'" % self.pp.pythonVersion)
     if self.pp.platform:
       self.installOpts.append('-p "%s"' % self.pp.platform)
     if self.pp.releaseProject:
@@ -256,14 +256,66 @@ class InstallDIRAC(CommandBase):
       except (IndexError, ValueError):
         continue
     # At this point self.pp.installEnv should contain all content of bashrc, sourced "on top" of (maybe) os.environ
-    self.pp.diracInstalled = True
+
+  def _installDIRACpy3(self):
+    """ Install python3 version of DIRAC client
+    """
+
+    # 1. Download DIRACOS
+    try:
+      machine = os.uname().machine  # py3
+    except AttributeError:
+      machine = os.uname()[4]  # py2
+
+    # FIXME: we should have a (set of) different location(s)
+    response = urlopen(
+        "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-%s.sh" % machine
+    )
+    code = response.getcode()
+    if code > 200 or code >= 300:
+      self.log.error("Failed to download DIRACOS-Linux-%s.sh [ERROR %d]" % (machine, code))
+      self.exitWithError(code)
+
+    # 2. bash DIRACOS-Linux-$(uname -m).sh
+    retCode, _ = self.executeAndGetOutput("bash DIRACOS-Linux-%s.sh" % machine, self.pp.installEnv)
+    if retCode:
+      self.log.error("Could not install DIRACOS [ERROR %d]" % retCode)
+      self.exitWithError(retCode)
+
+    # 3. rm DIRACOS-Linux-$(uname -m).sh
+    os.remove("DIRACOS-Linux-%s.sh" % machine)
+
+    # 4. source diracos/diracosrc then add its content to installEnv
+    retCode, output = self.executeAndGetOutput('bash -c "source diracos/diracosrc && env"', self.pp.installEnv)
+    if retCode:
+      self.log.error("Could not parse the diracos/diracosrc file [ERROR %d]" % retCode)
+      self.exitWithError(retCode)
+    for line in output.split('\n'):
+      try:
+        var, value = [vx.strip() for vx in line.split('=', 1)]
+        if var == '_' or 'SSH' in var or '{' in value or '}' in value:  # Avoiding useless/confusing stuff
+          continue
+        self.pp.installEnv[var] = value
+      except (IndexError, ValueError):
+        continue
+
+    # 5. pip install DIRAC==version
+    retCode, output = self.executeAndGetOutput(
+        'pip install DIRAC==%s' % self.pp.releaseVersion,
+        self.pp.installEnv)
+    if retCode:
+      self.log.error("Could not pip install DIRAC [ERROR %d]" % retCode)
+      self.exitWithError(retCode)
 
   def execute(self):
     """ What is called all the time
     """
-    self._setInstallOptions()
-    self._locateInstallationScript()
-    self._installDIRAC()
+    if self.pp.pythonVersion == '27':
+      self._setInstallOptions()
+      self._locateInstallationScript()
+      self._installDIRAC()
+    else:  # python3 is requested
+      self._installDIRACpy3()
 
 
 class ConfigureBasics(CommandBase):
