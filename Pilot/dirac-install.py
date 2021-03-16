@@ -10,7 +10,6 @@ from __future__ import unicode_literals, absolute_import, division, print_functi
 import sys
 import os
 import getopt
-import imp
 import signal
 import time
 import stat
@@ -53,7 +52,6 @@ class Params(object):
     self.project = 'DIRAC'
     self.installation = 'DIRAC'
     self.release = ""
-    self.platform = ""
     self.basePath = os.getcwd()
     self.targetPath = os.getcwd()
     self.debug = False
@@ -1080,8 +1078,6 @@ class ReleaseConfig(object):
 #################################################################################
 
 
-platformAlias = {}
-
 ####
 # Start of helper functions
 ####
@@ -1361,55 +1357,6 @@ def downloadAndExtractTarball(tarsURL, pkgName, pkgVer, checkHash=True, cache=Fa
   return True
 
 
-def fixBuildPaths():
-  """
-  At compilation time many scripts get the building directory inserted,
-  this needs to be changed to point to the current installation path:
-  cliParams.targetPath
-"""
-
-  # Locate build path (from header of pydoc)
-  binaryPath = os.path.join(cliParams.targetPath, cliParams.platform)
-  pydocPath = os.path.join(binaryPath, 'bin', 'pydoc')
-  try:
-    fd = open(pydocPath)
-    line = fd.readline()
-    fd.close()
-    buildPath = line[2:line.find(cliParams.platform) - 1]
-    replaceCmd = "grep -rIl '%s' %s | xargs sed -i'.org' 's:%s:%s:g'" % (buildPath,
-                                                                         binaryPath,
-                                                                         buildPath,
-                                                                         cliParams.targetPath)
-    os.system(replaceCmd)
-
-  except BaseException:
-    pass
-
-
-def fixPythonShebang():
-  """
-  Some scripts (like the gfal2 scripts) come with a shebang pointing to the system python.
-  We replace it with the environment one
- """
-
-  binaryPath = os.path.join(cliParams.targetPath, cliParams.platform)
-  try:
-    replaceCmd = "grep -rIl '#!/usr/bin/python' %s/bin |\
-     xargs sed -i'.org' 's:#!/usr/bin/python:#!/usr/bin/env python:g'" % binaryPath
-    os.system(replaceCmd)
-  except BaseException:
-    pass
-
-
-def checkPlatformAliasLink():
-  """
-  Make a link if there's an alias
-  """
-  if cliParams.platform in platformAlias:
-    os.symlink(os.path.join(cliParams.targetPath, platformAlias[cliParams.platform]),
-               os.path.join(cliParams.targetPath, cliParams.platform))
-
-
 def discoverModules(modules):
   """
   Created the dictionary which contains all modules, which can be installed
@@ -1443,7 +1390,6 @@ def discoverModules(modules):
 cmdOpts = (('r:', 'release=', 'Release version to install'),
            ('l:', 'project=', 'Project to install'),
            ('e:', 'extensions=', 'Extensions to install (comma separated)'),
-           ('p:', 'platform=', 'Platform to install'),
            ('P:', 'installationPath=', 'Path where to install (default current working dir)'),
            ('b', 'build', 'Force local compilation'),
            ('u:', 'baseURL=', "Use URL as the source for installation tarballs"),
@@ -1539,8 +1485,6 @@ def loadConfiguration():
       for pkg in [p.strip() for p in v.split(",") if p.strip()]:
         if pkg not in cliParams.extensions:
           cliParams.extensions.append(pkg)
-    elif o in ('-p', '--platform'):
-      cliParams.platform = v
     elif o in ('-d', '--debug'):
       cliParams.debug = True
     elif o in ('-u', '--baseURL'):
@@ -1638,10 +1582,6 @@ def installDiracOS(releaseConfig):
     logWARN("DIRACOS location is not specified using %s" % tarsURL)
   if not downloadAndExtractTarball(tarsURL, diracos, diracOSVersion, cache=True):
     return False
-  logNOTICE("Fixing externals paths...")
-  fixBuildPaths()
-  logNOTICE("Running externals post install...")
-  checkPlatformAliasLink()
   return True
 
 
@@ -1722,8 +1662,6 @@ def createBashrcForDiracOS():
       lines.extend(['# new OpenSSL version require OPENSSL_CONF to point to some accessible location',
                     'export OPENSSL_CONF=/tmp'])
 
-      lines.extend(['# DIRAC platform',
-                    '[ -z "$DIRACPLAT" ] && export DIRACPLAT=`$DIRAC/scripts/dirac-platform`'])
       # Add the lines required for globus-* tools to use IPv6
       lines.extend(['# IPv6 support',
                     'export GLOBUS_IO_IPV6=TRUE',
