@@ -291,9 +291,9 @@ class InstallDIRAC(CommandBase):
     if self.pp.modules:
       # https://github.com/$DIRAC_test_repo/DIRAC.git:::DIRAC:::$DIRAC_test_branch
       url, _, branch = self.pp.modules.split(":::")
-      # pip install git+https://github.com/fstagni/DIRAC@v7r2-fixes33
+      # git+https://github.com/fstagni/DIRAC.git@v7r2-fixes33#egg=DIRAC[pilot]
       retCode, output = self.executeAndGetOutput(
-          'pip install git+%s@%s[pilot]' % (url, branch),
+          'pip install git+%s@%s#egg=DIRAC[pilot]' % (url, branch),
           self.pp.installEnv)
       if retCode:
         self.log.error("Could not pip install DIRAC [ERROR %d]" % retCode)

@@ -81,6 +81,7 @@ node('lhcbci-cernvm4-02') {
                             dir(env.WORKSPACE+"/PilotInstallDIR"){
                                 sh '''
                                     bash -c "source bashrc;\
+                                    source diracos/diracosrc;\
                                     source \$WORKSPACE/TestCode/Pilot/tests/CI/pilot_ci.sh;\
                                     downloadProxy;\
                                     export PYTHONPATH=\$PYTHONPATH:\$WORKSPACE/TestCode:\$WORKSPACE/TestCode/DIRAC:\$WORKSPACE/TestCode/Pilot;\
@@ -111,6 +112,7 @@ node('lhcbci-cernvm4-02') {
                             dir(env.WORKSPACE+"/PilotInstallDIR"){
                                 sh '''
                                     bash -c "source bashrc;\
+                                    source diracos/diracosrc;\
                                     source \$WORKSPACE/TestCode/Pilot/tests/CI/pilot_ci.sh;\
                                     downloadProxy;\
                                     export PYTHONPATH=\$PYTHONPATH:\$WORKSPACE/TestCode:\$WORKSPACE/TestCode/DIRAC:\$WORKSPACE/TestCode/Pilot;\
@@ -133,3 +135,4 @@ node('lhcbci-cernvm4-02') {
         }
     }
 }
+
