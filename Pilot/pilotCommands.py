@@ -285,7 +285,7 @@ class InstallDIRAC(CommandBase):
       except (IndexError, ValueError):
         continue
 
-    # 5. pip install DIRAC==version
+    # 5. pip install DIRAC[pilot]==version
     # FIXME: also for extensions
 
     if self.pp.modules:
@@ -293,7 +293,7 @@ class InstallDIRAC(CommandBase):
       url, _, branch = self.pp.modules.split(":::")
       # pip install git+https://github.com/fstagni/DIRAC@v7r2-fixes33
       retCode, output = self.executeAndGetOutput(
-          'pip install git+%s@%s' % (url.replace('.git', ''), branch),
+          'pip install git+%s@%s[pilot]' % (url, branch),
           self.pp.installEnv)
       if retCode:
         self.log.error("Could not pip install DIRAC [ERROR %d]" % retCode)
@@ -301,7 +301,7 @@ class InstallDIRAC(CommandBase):
 
     else:
       retCode, output = self.executeAndGetOutput(
-          'pip install DIRAC==%s' % self.pp.releaseVersion,
+          'pip install DIRAC[pilot]==%s' % self.pp.releaseVersion,
           self.pp.installEnv)
       if retCode:
         self.log.error("Could not pip install DIRAC [ERROR %d]" % retCode)
