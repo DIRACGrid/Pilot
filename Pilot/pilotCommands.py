@@ -1005,7 +1005,10 @@ class LaunchAgent(CommandBase):
     if self.pp.executeCmd:
       # Execute user command
       self.log.info("Executing user defined command: %s" % self.pp.executeCmd)
-      self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
+      if self.pp.pythonVersion == '27':
+        self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
+      else:
+        self.exitWithError(int(os.system("source diracos/diracosrc; %s" % self.pp.executeCmd) / 256))
 
     self.log.info('Starting JobAgent')
     os.environ['PYTHONUNBUFFERED'] = 'yes'
@@ -1105,7 +1108,10 @@ class MultiLaunchAgent(CommandBase):
     if self.pp.executeCmd:
       # Execute user command
       self.log.info("Executing user defined command: %s" % self.pp.executeCmd)
-      self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
+      if self.pp.pythonVersion == '27':
+        self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
+      else:
+        self.exitWithError(int(os.system("source diracos/diracosrc; %s" % self.pp.executeCmd) / 256))
 
     self.log.info('Starting JobAgent')
     os.environ['PYTHONUNBUFFERED'] = 'yes'

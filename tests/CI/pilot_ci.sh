@@ -147,8 +147,11 @@ fullPilot(){
   #this should have been created, we source it so that we can continue
   # shellcheck source=/dev/null
   if ! source "${PILOTINSTALLDIR}/bashrc"; then
-    echo "ERROR: cannot source bashrc" >&2
-    exit 1
+    echo "WARN: cannot source bashrc, trying with diracosrc" >&2
+    if ! source "${PILOTINSTALLDIR}/diracos/diracosrc"; then
+      echo "ERROR: cannot source diracosrc" >&2
+      exit 1
+    fi
   fi
 
   echo -e "\n----PATH:${PATH}\n----" | tr ":" "\n"
