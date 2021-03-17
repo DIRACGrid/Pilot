@@ -1358,8 +1358,8 @@ def downloadAndExtractTarball(tarsURL, pkgName, pkgVer, checkHash=True, cache=Fa
 
 def discoverModules(modules):
   """
-  Created the dictionary which contains all modules, which can be installed
-  for example: {"DIRAC:{"sourceUrl":"https://github.com/zmathe/DIRAC.git","Vesrion:v6r20p11"}}
+  Creates the dictionary which contains all modules to install
+  for example: {"DIRAC:{"sourceUrl":"https://github.com/zmathe/DIRAC.git","Version:v6r20p11"}}
 
   :param: str modules: it contains meta information for the module,
   which will be installed: https://github.com/zmathe/DIRAC.git:::DIRAC:::dev_main_branch
@@ -1398,11 +1398,9 @@ cmdOpts = (('r:', 'release=', 'Release version to install'),
            ('h', 'help', 'Show this help'),
            ('T:', 'Timeout=', 'Timeout for downloads (default = %s)'),
            ('  ', 'dirac-os-version=', 'the version of the DIRAC OS'),
-           ('  ', 'dirac-os', 'Enable installation of DIRAC OS'),
            ('  ', 'tag=', 'release version to install from git, http or local'),
            ('m:', 'module=',
             'Module to be installed. for example: -m DIRAC or -m git://github.com/DIRACGrid/DIRAC.git:DIRAC'),
-           ('x:', 'external=', 'external version'),
            ('  ', 'createLink', 'create version symbolic link from the versions directory. This is equivalent to the \
            following command: ln -s /opt/dirac/versions/vArBpC vArBpC'),
            ('  ', 'userEnvVariables=',

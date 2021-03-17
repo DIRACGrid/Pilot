@@ -248,6 +248,7 @@ class InstallDIRAC(CommandBase):
     """
 
     # 1. Download DIRACOS
+    # curl -O -L https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-$(uname -m).sh
     try:
       machine = os.uname().machine  # py3
     except AttributeError:
@@ -285,12 +286,26 @@ class InstallDIRAC(CommandBase):
         continue
 
     # 5. pip install DIRAC==version
-    retCode, output = self.executeAndGetOutput(
-        'pip install DIRAC==%s' % self.pp.releaseVersion,
-        self.pp.installEnv)
-    if retCode:
-      self.log.error("Could not pip install DIRAC [ERROR %d]" % retCode)
-      self.exitWithError(retCode)
+    # FIXME: also for extensions
+
+    if self.pp.modules:
+      # https://github.com/$DIRAC_test_repo/DIRAC.git:::DIRAC:::$DIRAC_test_branch
+      url, _, branch = self.pp.modules.split(":::")
+      # pip install git+https://github.com/fstagni/DIRAC@v7r2-fixes33
+      retCode, output = self.executeAndGetOutput(
+          'pip install git+%s@%s' % (url.replace('.git', ''), branch),
+          self.pp.installEnv)
+      if retCode:
+        self.log.error("Could not pip install DIRAC [ERROR %d]" % retCode)
+        self.exitWithError(retCode)
+
+    else:
+      retCode, output = self.executeAndGetOutput(
+          'pip install DIRAC==%s' % self.pp.releaseVersion,
+          self.pp.installEnv)
+      if retCode:
+        self.log.error("Could not pip install DIRAC [ERROR %d]" % retCode)
+        self.exitWithError(retCode)
 
   def execute(self):
     """ What is called all the time
