@@ -254,7 +254,7 @@ class InstallDIRAC(CommandBase):
     except AttributeError:
       machine = os.uname()[4]  # py2
 
-    # FIXME: we should have a (set of) different location(s)
+    # FIXME: we should have a (set of) different location(s), starting from CVMFS
     if not retrieveUrlTimeout(
         "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-%s.sh" % machine,
         "DIRACOS-Linux-%s.sh" % machine,
@@ -285,27 +285,31 @@ class InstallDIRAC(CommandBase):
       except (IndexError, ValueError):
         continue
 
-    # 5. pip install DIRAC[pilot]==version
-    # FIXME: also for extensions
+    # 5. pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
 
-    if self.pp.modules:
+    retCode, output = self.executeAndGetOutput(
+        # Examples of what expecting in self.pp.releaseVersion:
+        # DIRAC[pilot]==7.2.0
+        # or
+        # DIRAC[pilot]==7.2.0 ExtDIRAC[pilot]==10.2.0a4
+        'pip install %s' % self.pp.releaseVersion,
+        self.pp.installEnv)
+    if retCode:
+      self.log.error("Could not pip install %s [ERROR %d]" % (self.pp.releaseVersion, retCode))
+      self.exitWithError(retCode)
+
+    if self.pp.modules:  # possibly overwrite
       # https://github.com/$DIRAC_test_repo/DIRAC.git:::DIRAC:::$DIRAC_test_branch
-      url, _, branch = self.pp.modules.split(":::")
-      # git+https://github.com/fstagni/DIRAC.git@v7r2-fixes33#egg=DIRAC[pilot]
-      retCode, output = self.executeAndGetOutput(
-          'pip install git+%s@%s#egg=DIRAC[pilot]' % (url, branch),
-          self.pp.installEnv)
-      if retCode:
-        self.log.error("Could not pip install DIRAC [ERROR %d]" % retCode)
-        self.exitWithError(retCode)
-
-    else:
-      retCode, output = self.executeAndGetOutput(
-          'pip install DIRAC[pilot]==%s' % self.pp.releaseVersion,
-          self.pp.installEnv)
-      if retCode:
-        self.log.error("Could not pip install DIRAC [ERROR %d]" % retCode)
-        self.exitWithError(retCode)
+      for modules in self.pp.modules.split(','):
+        url, project, branch = modules.split(":::")
+        # git+https://github.com/fstagni/DIRAC.git@v7r2-fixes33#egg=DIRAC[pilot]
+        pipInstalling = 'pip install git+%s@%s#egg=%s[pilot]' % (url, branch, project)
+        retCode, output = self.executeAndGetOutput(
+            pipInstalling,
+            self.pp.installEnv)
+        if retCode:
+          self.log.error("Could not %s [ERROR %d]" % (pipInstalling, retCode))
+          self.exitWithError(retCode)
 
   def execute(self):
     """ What is called all the time
