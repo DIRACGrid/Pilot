@@ -1721,7 +1721,7 @@ def checkoutFromGit(moduleName, sourceURL, tagVersion, destinationDir=None):
     logNOTICE("Executing: %s" % cmd)
     retVal = os.system(cmd)
   else:
-    cmd = "mv %s/src/DIRAC %s" % (fDirName, os.path.join(cliParams.targetPath, moduleName))
+    cmd = "mv %s/src/%s %s" % (fDirName, moduleName, os.path.join(cliParams.targetPath, moduleName))
     logNOTICE("Executing: %s" % cmd)
     retVal = os.system(cmd)
     if not retVal:
