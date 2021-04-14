@@ -5,7 +5,7 @@ This is customized pipeline for running on jenkins-dirac.web.cern.ch
 */
 
 
-properties([parameters([string(name: 'projectVersion', defaultValue: 'v7r2', description: 'The DIRAC version to install'),
+properties([parameters([string(name: 'projectVersion', defaultValue: 'v7r2', description: 'The DIRAC version to install. For py3 use e.g. DIRAC[pilot]==7.2.0'),
                         string(name: 'Pilot_repo', defaultValue: 'DIRACGrid', description: 'The Pilot repo'),
                         string(name: 'Pilot_branch', defaultValue: 'master', description: 'The Pilot branch'),
                         string(name: 'DIRAC_test_repo', defaultValue: 'DIRACGrid', description: 'The DIRAC repo to use for getting the test code'),
@@ -81,9 +81,9 @@ node('lhcbci-cernvm4-02') {
                             dir(env.WORKSPACE+"/PilotInstallDIR"){
                                 sh '''
                                     bash -c "source bashrc;\
+                                    source diracos/diracosrc;\
                                     source \$WORKSPACE/TestCode/Pilot/tests/CI/pilot_ci.sh;\
                                     downloadProxy;\
-                                    export PYTHONPATH=\$PYTHONPATH:\$WORKSPACE/TestCode:\$WORKSPACE/TestCode/DIRAC:\$WORKSPACE/TestCode/Pilot;\
                                     python \$WORKSPACE/TestCode/DIRAC/tests/Workflow/Integration/Test_UserJobs.py pilot.cfg -o /DIRAC/Security/UseServerCertificate=no -ddd"
                                 '''
                             }
@@ -111,9 +111,9 @@ node('lhcbci-cernvm4-02') {
                             dir(env.WORKSPACE+"/PilotInstallDIR"){
                                 sh '''
                                     bash -c "source bashrc;\
+                                    source diracos/diracosrc;\
                                     source \$WORKSPACE/TestCode/Pilot/tests/CI/pilot_ci.sh;\
                                     downloadProxy;\
-                                    export PYTHONPATH=\$PYTHONPATH:\$WORKSPACE/TestCode:\$WORKSPACE/TestCode/DIRAC:\$WORKSPACE/TestCode/Pilot;\
                                     python \$WORKSPACE/TestCode/DIRAC/tests/Workflow/Regression/Test_RegressionUserJobs.py pilot.cfg -o /DIRAC/Security/UseServerCertificate=no -ddd"
                                 '''
                             }
@@ -133,3 +133,4 @@ node('lhcbci-cernvm4-02') {
         }
     }
 }
+

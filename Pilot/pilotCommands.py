@@ -34,14 +34,16 @@ from distutils.version import LooseVersion
 ############################
 # python 2 -> 3 "hacks"
 try:
+  # For Python 3.0 and later
   from http.client import HTTPSConnection
 except ImportError:
+  # Fall back to Python 2
   from httplib import HTTPSConnection
 
 try:
-  from Pilot.pilotTools import CommandBase
+  from Pilot.pilotTools import CommandBase, retrieveUrlTimeout
 except ImportError:
-  from pilotTools import CommandBase
+  from pilotTools import CommandBase, retrieveUrlTimeout
 ############################
 
 
@@ -161,18 +163,10 @@ class InstallDIRAC(CommandBase):
     """
 
     for o, v in self.pp.optList:
-      if o in ('-b', '--build'):
-        self.installOpts.append('-b')
-      elif o == '-d' or o == '--debug':
+      if o == '-d' or o == '--debug':
         self.installOpts.append('-d')
       elif o == '-e' or o == '--extraPackages':
         self.installOpts.append('-e "%s"' % v)
-      elif o == '-g' or o == '--grid':
-        self.pp.gridVersion = v
-      elif o == '-i' or o == '--python':
-        self.pp.pythonVersion = v
-      elif o == '-p' or o == '--platform':
-        self.pp.platform = v
       elif o == '-u' or o == '--url':
         self.installOpts.append('-u "%s"' % v)
       elif o in ('-P', '--path'):
@@ -180,15 +174,7 @@ class InstallDIRAC(CommandBase):
         self.pp.rootPath = v
       elif o in ('-V', '--installation'):
         self.installOpts.append('-V "%s"' % v)
-      elif o == '-t' or o == '--server':
-        self.installOpts.append('-t "server"')
 
-    if self.pp.gridVersion:
-      self.installOpts.append("-g '%s'" % self.pp.gridVersion)
-    if self.pp.pythonVersion:
-      self.installOpts.append("-i '%s'" % self.pp.pythonVersion)
-    if self.pp.platform:
-      self.installOpts.append('-p "%s"' % self.pp.platform)
     if self.pp.releaseProject:
       self.installOpts.append("-l '%s'" % self.pp.releaseProject)
     if self.pp.modules:
@@ -256,14 +242,84 @@ class InstallDIRAC(CommandBase):
       except (IndexError, ValueError):
         continue
     # At this point self.pp.installEnv should contain all content of bashrc, sourced "on top" of (maybe) os.environ
-    self.pp.diracInstalled = True
+
+  def _installDIRACpy3(self):
+    """ Install python3 version of DIRAC client
+    """
+
+    # 1. Download DIRACOS
+    # curl -O -L https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-$(uname -m).sh
+    try:
+      machine = os.uname().machine  # py3
+    except AttributeError:
+      machine = os.uname()[4]  # py2
+
+    # FIXME: we should have a (set of) different location(s), starting from CVMFS
+    if not retrieveUrlTimeout(
+        "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-%s.sh" % machine,
+        "DIRACOS-Linux-%s.sh" % machine,
+        self.log
+    ):
+      self.exitWithError(1)
+
+    # 2. bash DIRACOS-Linux-$(uname -m).sh
+    retCode, _ = self.executeAndGetOutput("bash DIRACOS-Linux-%s.sh" % machine, self.pp.installEnv)
+    if retCode:
+      self.log.error("Could not install DIRACOS [ERROR %d]" % retCode)
+      self.exitWithError(retCode)
+
+    # 3. rm DIRACOS-Linux-$(uname -m).sh
+    os.remove("DIRACOS-Linux-%s.sh" % machine)
+
+    # 4. source diracos/diracosrc then add its content to installEnv
+    retCode, output = self.executeAndGetOutput('bash -c "source diracos/diracosrc && env"', self.pp.installEnv)
+    if retCode:
+      self.log.error("Could not parse the diracos/diracosrc file [ERROR %d]" % retCode)
+      self.exitWithError(retCode)
+    for line in output.split('\n'):
+      try:
+        var, value = [vx.strip() for vx in line.split('=', 1)]
+        if var == '_' or 'SSH' in var or '{' in value or '}' in value:  # Avoiding useless/confusing stuff
+          continue
+        self.pp.installEnv[var] = value
+      except (IndexError, ValueError):
+        continue
+
+    # 5. pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
+
+    retCode, output = self.executeAndGetOutput(
+        # Examples of what expecting in self.pp.releaseVersion:
+        # DIRAC[pilot]==7.2.0
+        # or
+        # DIRAC[pilot]==7.2.0 ExtDIRAC[pilot]==10.2.0a4
+        'pip install %s' % self.pp.releaseVersion,
+        self.pp.installEnv)
+    if retCode:
+      self.log.error("Could not pip install %s [ERROR %d]" % (self.pp.releaseVersion, retCode))
+      self.exitWithError(retCode)
+
+    if self.pp.modules:  # possibly overwrite
+      # https://github.com/$DIRAC_test_repo/DIRAC.git:::DIRAC:::$DIRAC_test_branch
+      for modules in self.pp.modules.split(','):
+        url, project, branch = modules.split(":::")
+        # git+https://github.com/fstagni/DIRAC.git@v7r2-fixes33#egg=DIRAC[pilot]
+        pipInstalling = 'pip install git+%s@%s#egg=%s[pilot]' % (url, branch, project)
+        retCode, output = self.executeAndGetOutput(
+            pipInstalling,
+            self.pp.installEnv)
+        if retCode:
+          self.log.error("Could not %s [ERROR %d]" % (pipInstalling, retCode))
+          self.exitWithError(retCode)
 
   def execute(self):
     """ What is called all the time
     """
-    self._setInstallOptions()
-    self._locateInstallationScript()
-    self._installDIRAC()
+    if self.pp.pythonVersion == '27':
+      self._setInstallOptions()
+      self._locateInstallationScript()
+      self._installDIRAC()
+    else:  # python3 is requested
+      self._installDIRACpy3()
 
 
 class ConfigureBasics(CommandBase):
@@ -953,7 +1009,10 @@ class LaunchAgent(CommandBase):
     if self.pp.executeCmd:
       # Execute user command
       self.log.info("Executing user defined command: %s" % self.pp.executeCmd)
-      self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
+      if self.pp.pythonVersion == '27':
+        self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
+      else:
+        self.exitWithError(int(os.system("source diracos/diracosrc; %s" % self.pp.executeCmd) / 256))
 
     self.log.info('Starting JobAgent')
     os.environ['PYTHONUNBUFFERED'] = 'yes'
@@ -1053,7 +1112,10 @@ class MultiLaunchAgent(CommandBase):
     if self.pp.executeCmd:
       # Execute user command
       self.log.info("Executing user defined command: %s" % self.pp.executeCmd)
-      self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
+      if self.pp.pythonVersion == '27':
+        self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
+      else:
+        self.exitWithError(int(os.system("source diracos/diracosrc; %s" % self.pp.executeCmd) / 256))
 
     self.log.info('Starting JobAgent')
     os.environ['PYTHONUNBUFFERED'] = 'yes'
