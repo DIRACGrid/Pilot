@@ -147,8 +147,11 @@ fullPilot(){
   #this should have been created, we source it so that we can continue
   # shellcheck source=/dev/null
   if ! source "${PILOTINSTALLDIR}/bashrc"; then
-    echo "ERROR: cannot source bashrc" >&2
-    exit 1
+    echo "WARN: cannot source bashrc, trying with diracosrc" >&2
+    if ! source "${PILOTINSTALLDIR}/diracos/diracosrc"; then
+      echo "ERROR: cannot source diracosrc" >&2
+      exit 1
+    fi
   fi
 
   echo -e "\n----PATH:${PATH}\n----" | tr ":" "\n"
@@ -225,9 +228,9 @@ installStompRequestsIfNecessary()
       local PIP_LOC=$USER_SITE_PACKAGE_BASE/bin/pip
       echo "PIP_LOC: $PIP_LOC"
       if [ "${PYTHON_VERSION}" = '2.6' ]; then
-        curl https://bootstrap.pypa.io/2.6/get-pip.py -o get-pip.py
+        curl https://bootstrap.pypa.io/pip/2.6/get-pip.py -o get-pip.py
       else 
-        curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
       fi
       python get-pip.py --user --upgrade
       echo "${PIP_LOC} install --user 'stomp.py==4.1.11'"

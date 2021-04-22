@@ -98,7 +98,7 @@ def retrieveUrlTimeout(url, fileName, log, timeout=0):
       expectedBytes = 0
     data = remoteFD.read()
     if fileName:
-      with open(fileName + '-local', "wb") as localFD:
+      with open(fileName, "wb") as localFD:
         localFD.write(data)
     else:
       urlData += data
@@ -209,14 +209,6 @@ def getCommand(params, commandName, log):
 
       1. <CommandExtension>Commands
       2. pilotCommands
-      3. <Extension>.WorkloadManagementSystem.PilotAgent.<CommandExtension>Commands
-      4. <Extension>.WorkloadManagementSystem.PilotAgent.pilotCommands
-      5. DIRAC.WorkloadManagementSystem.PilotAgent.<CommandExtension>Commands
-      6. DIRAC.WorkloadManagementSystem.PilotAgent.pilotCommands
-
-      Note that commands in 3.-6. can only be used of the the DIRAC installation
-      has been done. DIRAC extensions are taken from -e ( --extraPackages ) option
-      of the pilot script.
   """
   extensions = params.commandExtensions
   modules = [m + 'Commands' for m in extensions + ['pilot']]
@@ -233,23 +225,7 @@ def getCommand(params, commandName, log):
     if commandObject:
       return commandObject(params), module
 
-  if params.diracInstalled:
-    diracExtensions = []
-    for ext in params.extensions:
-      if not ext.endswith('DIRAC'):
-        diracExtensions.append(ext + 'DIRAC')
-      else:
-        diracExtensions.append(ext)
-    diracExtensions += ['DIRAC']
-    ol = ObjectLoader(diracExtensions, log)
-    for module in modules:
-      commandObject, modulePath = ol.loadObject('WorkloadManagementSystem.PilotAgent',
-                                                module,
-                                                commandName)
-      if commandObject:
-        return commandObject(params), modulePath
-
-  # No command could be instantitated
+  # No command could be instantiated
   return None, None
 
 
@@ -499,7 +475,6 @@ class PilotParams(object):
     self.ceType = ""
     self.queueName = ""
     self.gridCEType = ""
-    self.platform = ""
     # maxNumberOfProcessors: the number of
     # processors allocated to the pilot which the pilot can allocate to one payload
     # used to set payloadProcessors unless other limits are reached (like the number of processors on the WN)
@@ -513,7 +488,6 @@ class PilotParams(object):
     self.stopOnApplicationFailure = True
     self.stopAfterFailedMatches = 10
     self.flavour = 'DIRAC'
-    self.gridVersion = ''
     self.pilotReference = ''
     self.releaseVersion = ''
     self.releaseProject = ''
@@ -522,9 +496,6 @@ class PilotParams(object):
     self.pilotScriptName = ''
     self.genericOption = ''
     self.wnVO = ''  # for binding the resource (WN) to a specific VO
-    # DIRAC client installation environment
-    self.diracInstalled = False
-    self.diracExtensions = []
     # Some commands can define environment necessary to execute subsequent commands
     self.installEnv = os.environ
     # If DIRAC is preinstalled this file will receive the updates of the local configuration
@@ -553,7 +524,6 @@ class PilotParams(object):
     self.cmdOpts = (
         ('', 'requiredTag=', 'extra required tags for resource description'),
         ('a:', 'gridCEType=', 'Grid CE Type (CREAM etc)'),
-        ('b', 'build', 'Force local compilation'),
         ('c', 'cert', 'Use server certificate instead of proxy'),
         ('d', 'debug', 'Set debug flag'),
         ('e:', 'extraPackages=', 'Extra packages to install (comma separated)'),
@@ -562,7 +532,6 @@ class PilotParams(object):
         ('l:', 'project=', 'Project to install'),
         ('n:', 'name=', 'Set <Site> as Site Name'),
         ('o:', 'option=', 'Option=value to add'),
-        ('p:', 'platform=', 'Use <platform> instead of local one'),
         ('m:', 'maxNumberOfProcessors=',
          'specify a max number of processors to use by the payload inside a pilot'),
         ('', 'modules=', 'for installing non-released code (see dirac-install "-m" option documentation)'),
@@ -670,8 +639,6 @@ class PilotParams(object):
         self.wnVO = v
       elif o in ('-V', '--installation'):
         self.installation = v
-      elif o == '-p' or o == '--platform':
-        self.platform = v
       elif o == '-m' or o == '--maxNumberOfProcessors':
         self.maxNumberOfProcessors = int(v)
       elif o == '-D' or o == '--disk':

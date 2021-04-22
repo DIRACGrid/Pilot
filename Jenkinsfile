@@ -5,30 +5,30 @@ This is customized pipeline for running on jenkins-dirac.web.cern.ch
 */
 
 
-properties([parameters([string(name: 'projectVersion', defaultValue: 'v7r2', description: 'The DIRAC version to install'),
+properties([parameters([string(name: 'projectVersion', defaultValue: 'v7r2', description: 'The DIRAC version to install. For py3 use e.g. DIRAC[pilot]==7.2.0'),
                         string(name: 'Pilot_repo', defaultValue: 'DIRACGrid', description: 'The Pilot repo'),
                         string(name: 'Pilot_branch', defaultValue: 'devel', description: 'The Pilot branch'),
                         string(name: 'DIRAC_test_repo', defaultValue: 'DIRACGrid', description: 'The DIRAC repo to use for getting the test code'),
-                        string(name: 'DIRAC_test_branch', defaultValue: 'Integration', description: 'The DIRAC branch to use for getting the test code'),
+                        string(name: 'DIRAC_test_branch', defaultValue: 'integration', description: 'The DIRAC branch to use for getting the test code'),
                         string(name: 'JENKINS_CE', defaultValue: 'jenkins.cern.ch', description: 'The CE definition to use (of DIRAC.Jenkins.ch, see CS for others)'),
                         string(name: 'modules', defaultValue: '', description: 'to override what is installed, e.g. with https://github.com/$DIRAC_test_repo/DIRAC.git:::DIRAC:::$DIRAC_test_branch'),
-                        string(name: 'pilot_options', defaultValue: '', description: 'any pilot option, e.g. --dirac-os')
+                        string(name: 'pilot_options', defaultValue: '', description: 'any pilot option, e.g. --pythonVersion=3')
                        ])])
 
 
-node('lhcbci-cernvm03') {
+node('lhcbci-cernvm4-02') {
     // Clean workspace before doing anything
     deleteDir()
 
     withEnv([
         "DIRACSETUP=DIRAC-Certification",
-        "CSURL=dips://lbcertifdirac70.cern.ch:9135/Configuration/Server",
+        "CSURL=https://lbcertifdirac70.cern.ch:9135/Configuration/Server",
         "PILOTCFG=pilot.cfg",
         "DIRACSE=CERN-SWTEST",
         "JENKINS_QUEUE=jenkins-queue_not_important",
         "JENKINS_SITE=DIRAC.Jenkins.ch",
         "DIRACUSERDN=/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=cburr/CN=761704/CN=Chris Burr",
-        "DIRACUSERROLE=dteam_user"]){
+        "DIRACUSERROLE=dirac_user"]){
 
         stage('GET') {
 
@@ -69,7 +69,7 @@ node('lhcbci-cernvm03') {
             parallel(
 
                 "Integration" : {
-                    node('lhcbci-cernvm04') {
+                    node('lhcbci-cernvm4-03') {
 
                         cleanWs()
 
@@ -80,9 +80,9 @@ node('lhcbci-cernvm03') {
                             dir(env.WORKSPACE+"/PilotInstallDIR"){
                                 sh '''
                                     bash -c "source bashrc;\
+                                    source diracos/diracosrc;\
                                     source \$WORKSPACE/TestCode/Pilot/tests/CI/pilot_ci.sh;\
                                     downloadProxy;\
-                                    export PYTHONPATH=\$PYTHONPATH:\$WORKSPACE/TestCode:\$WORKSPACE/TestCode/DIRAC:\$WORKSPACE/TestCode/Pilot;\
                                     python \$WORKSPACE/TestCode/DIRAC/tests/Workflow/Integration/Test_UserJobs.py pilot.cfg -o /DIRAC/Security/UseServerCertificate=no -ddd"
                                 '''
                             }
@@ -99,7 +99,7 @@ node('lhcbci-cernvm03') {
                 },
 
                 "Regression" : {
-                    node('lhcbci-cernvm05') {
+                    node('lhcbci-cernvm4-03') {
 
                         cleanWs()
 
@@ -110,9 +110,9 @@ node('lhcbci-cernvm03') {
                             dir(env.WORKSPACE+"/PilotInstallDIR"){
                                 sh '''
                                     bash -c "source bashrc;\
+                                    source diracos/diracosrc;\
                                     source \$WORKSPACE/TestCode/Pilot/tests/CI/pilot_ci.sh;\
                                     downloadProxy;\
-                                    export PYTHONPATH=\$PYTHONPATH:\$WORKSPACE/TestCode:\$WORKSPACE/TestCode/DIRAC:\$WORKSPACE/TestCode/Pilot;\
                                     python \$WORKSPACE/TestCode/DIRAC/tests/Workflow/Regression/Test_RegressionUserJobs.py pilot.cfg -o /DIRAC/Security/UseServerCertificate=no -ddd"
                                 '''
                             }
@@ -132,3 +132,4 @@ node('lhcbci-cernvm03') {
         }
     }
 }
+

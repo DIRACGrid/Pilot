@@ -16,11 +16,12 @@ source "$TESTCODE/DIRAC/tests/Jenkins/utilities.sh"
 prepareForPilot(){
   echo '==> [prepareForPilot]'
 
-  #get the pilot files from the Pilot
-  for file in PilotLogger.py PilotLoggerTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py MessageSender.py
+  #get the pilot files from the Pilot, including dirac-install.py
+  for file in PilotLogger.py PilotLoggerTools.py dirac-pilot.py pilotCommands.py pilotTools.py MessageSender.py dirac-install.py
   do
     cp "$TESTCODE/Pilot/Pilot/${file}" .
   done
+  chmod +x dirac-install.py
 
   #get possible extensions
   if [[ "$VO" ]]; then
@@ -59,7 +60,7 @@ preparePythonEnvironment()
    exit 1
   fi
   USER_SITE_PACKAGE_BASE=$(python -m site --user-base)
-  wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py --user --upgrade
+  wget https://bootstrap.pypa.io/pip/2.7/get-pip.py && python get-pip.py --user --upgrade
   INSTALL_COMMAND="$USER_SITE_PACKAGE_BASE/bin/pip install --upgrade --user -r $TESTCODE/Pilot/requirements.txt"
   eval "$INSTALL_COMMAND"
 }
