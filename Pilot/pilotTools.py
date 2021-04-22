@@ -295,22 +295,22 @@ class ExtendedLogger(Logger):
       self.pilotLogger = None
     self.isPilotLoggerOn = isPilotLoggerOn
 
-  def debug(self, msg, header=True, sendPilotLog=True):
+  def debug(self, msg, header=True, sendPilotLog=False):
     super(ExtendedLogger, self).debug(msg, header)
     if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="debug")
 
-  def error(self, msg, header=True, sendPilotLog=True):
+  def error(self, msg, header=True, sendPilotLog=False):
     super(ExtendedLogger, self).error(msg, header)
     if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="error")
 
-  def warn(self, msg, header=True, sendPilotLog=True):
+  def warn(self, msg, header=True, sendPilotLog=False):
     super(ExtendedLogger, self).warn(msg, header)
     if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="warning")
 
-  def info(self, msg, header=True, sendPilotLog=True):
+  def info(self, msg, header=True, sendPilotLog=False):
     super(ExtendedLogger, self).info(msg, header)
     if self.isPilotLoggerOn and sendPilotLog:
         self.pilotLogger.sendMessage(msg, status="info")
@@ -505,8 +505,7 @@ class PilotParams(object):
     self.architectureScript = 'dirac-platform'
     self.certsLocation = '%s/etc/grid-security' % self.workingDir
     self.pilotCFGFile = 'pilot.json'
-    # self.pilotLogging = False
-    self.pilotLogging = True
+    self.pilotLogging = False
     self.modules = ''  # see dirac-install "-m" option documentation
     self.userEnvVariables = ''  # see dirac-install "--userEnvVariables" option documentation
 

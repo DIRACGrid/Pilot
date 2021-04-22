@@ -36,12 +36,8 @@
         ]
       },
       "Logging": {
-        "LoggingType":"REST_API", 
-        "LocalOutputFile":"myFile",
-        "HostKey":"/home/dirac/certs/hostkey.pem", 
-        "HostCertificate":"/home/dirac/certs/hostcert.pem",
-        "CACertificate":"/etc/pki/tls/certs/ca-bundle.crt", 
-        "Url":"https://pilotloggerrest.cern.ch:8888"
+        "LoggingType":"LOCAL_FILE", 
+        "LocalOutputFile":"myFile"
       },
       "NagiosProbes": "WN-mjf, WN-sft-csh, WN-sft-voms, WN-sft-vo-swdir",
       "Version": "VAR_DIRAC_VERSION",

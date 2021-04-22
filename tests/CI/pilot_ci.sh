@@ -85,8 +85,8 @@ PilotInstall(){
 
   #installStompRequestsIfNecessary
   #preparePythonEnvironment
-  python PilotLoggerTools.py PilotUUID
-  python PilotLogger.py "Hello I am THE best pilot"
+  #python PilotLoggerTools.py PilotUUID
+  #python PilotLogger.py "Hello I am THE best pilot"
 
   # launch the pilot script
   # shellcheck disable=SC2154
