@@ -17,23 +17,30 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import sys
 import logging
-try:
+
+def isPython2_6():
+  return sys.version_info[0]==2 and sys.version_info[1]==6
+
+if isPython2_6():
+  try:
+    import Pilot.backportRequests as requests
+  except ImportError:
+    import backportRequests as requests
+else:
   import requests
-except ImportError:
-  requests = None
+
 try:
   import stomp
 except ImportError:
   stomp = None
 
-############################
 # python 2 -> 3 "hacks"
 try:
   import Queue as queue
 except ImportError:
   import queue
-############################
 
 
 def loadAndCreateObject(moduleName, className, params):
@@ -91,9 +98,9 @@ def messageSenderFactory(senderType, params):
 
   """
   typeToModuleAndClassName = {
-      'LOCAL_FILE': {'module': 'MessageSender', 'class': 'LocalFileSender'},
-      'MQ': {'module': 'MessageSender', 'class': 'StompSender'},
-      'REST_API': {'module': 'MessageSender', 'class': 'RESTSender'}
+    'LOCAL_FILE': {'module': 'MessageSender', 'class': 'LocalFileSender'},
+    'MQ': {'module': 'MessageSender', 'class': 'StompSender'},
+    'REST_API': {'module': 'MessageSender', 'class': 'RESTSender'}
   }
   try:
     moduleName = typeToModuleAndClassName[senderType]['module']
@@ -165,14 +172,10 @@ class RESTSender(MessageSender):
     hostKey = self.params.get('HostKey')
     hostCertificate = self.params.get('HostCertificate')
     CACertificate = self.params.get('CACertificate')
-
-    logging.debug("sending message from the REST Sender")
     try:
-      requests.post(url,  # pylint: disable=undefined-variable
-                    json=msg,
-                    cert=(hostCertificate, hostKey),
+      requests.post(url, json=msg, cert=(hostCertificate, hostKey),
                     verify=CACertificate)
-    except (requests.exceptions.RequestException, IOError) as e:  # pylint: disable=undefined-variable
+    except (requests.exceptions.RequestException,IOError) as e:
       logging.error(e)
       return False
     return True
