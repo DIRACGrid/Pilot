@@ -1736,7 +1736,7 @@ def checkoutFromGit(moduleName, sourceURL, tagVersion, destinationDir=None):
   else:
     cmd = "mv %s %s" % (fDirName, os.path.join(cliParams.targetPath, moduleName))
     logNOTICE("Executing: %s" % cmd)
-      retVal = os.system(cmd)
+    retVal = os.system(cmd)
 
   if retVal:
     return S_ERROR("Error while creating module: %s" % (moduleName))
