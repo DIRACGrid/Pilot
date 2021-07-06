@@ -1669,10 +1669,6 @@ def createBashrcForDiracOS():
                     'export GLOBUS_IO_IPV6=TRUE',
                     'export GLOBUS_FTP_CLIENT_IPV6=TRUE'])
 
-      # Add the lines required for fork support for xrootd
-      lines.extend(['# Fork support for xrootd',
-                    'export XRD_RUNFORKHANDLER=1'])
-
       # Add the lines required for further env variables requested
       if cliParams.userEnvVariables:
         lines.extend(['# User-requested variables'])
