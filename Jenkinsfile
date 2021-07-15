@@ -5,7 +5,7 @@ This is customized pipeline for running on jenkins-dirac.web.cern.ch
 */
 
 
-properties([parameters([string(name: 'projectVersion', defaultValue: 'v7r2', description: 'The DIRAC version to install. For py3 use e.g. DIRAC[pilot]==7.2.0'),
+properties([parameters([string(name: 'projectVersion', defaultValue: '7.3.0a15', description: 'The DIRAC version to install. Use py2 or py3 syntax'),
                         string(name: 'Pilot_repo', defaultValue: 'DIRACGrid', description: 'The Pilot repo'),
                         string(name: 'Pilot_branch', defaultValue: 'devel', description: 'The Pilot branch'),
                         string(name: 'DIRAC_test_repo', defaultValue: 'DIRACGrid', description: 'The DIRAC repo to use for getting the test code'),
