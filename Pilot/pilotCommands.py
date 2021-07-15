@@ -561,6 +561,10 @@ class CheckWNCapabilities(CommandBase):
       result = result.split('\n')[-1].split(' ')
       numberOfProcessorsOnWN = int(result[0])
       maxRAM = int(result[1])
+      try:
+        numberOfGPUs = int(result[2])
+      except IndexError:
+        numberOfGPUs = 0
     except ValueError:
       self.log.error("Wrong Command output %s" % result)
       sys.exit(1)
@@ -597,6 +601,11 @@ class CheckWNCapabilities(CommandBase):
     else:
       self.log.warn(
           "Could not retrieve MaxRAM, this parameter won't be filled")
+
+    if numberOfGPUs:
+      self.log.info("numberOfGPUs = %d" % int(numberOfGPUs))
+      self.cfg.append(
+          '-o "/Resources/Computing/CEDefaults/NumberOfGPUs=%d"' % int(numberOfGPUs))
 
     # Add normal and required tags to the configuration
     self.pp.tags = list(set(self.pp.tags))
