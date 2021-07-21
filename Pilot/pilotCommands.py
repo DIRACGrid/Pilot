@@ -773,7 +773,7 @@ class ConfigureSite(CommandBase):
     # Batch host SSH tunnel submission (SSHBatch CE)
     if 'SSHBATCH_JOBID' in os.environ and 'SSH_NODE_HOST' in os.environ:
       self.pp.flavour = 'SSHBATCH'
-      pilotRef = 'sshbatchhost://' + self.pp.ceName + '/' +  os.environ['SSH_NODE_HOST'] + \
+      pilotRef = 'sshbatchhost://' + self.pp.ceName + '/' + os.environ['SSH_NODE_HOST'] + \
                  '/' + os.environ['SSHBATCH_JOBID']
 
     # ARC case
