@@ -770,6 +770,11 @@ class ConfigureSite(CommandBase):
       self.pp.flavour = 'SSH'
       pilotRef = 'ssh://' + self.pp.ceName + '/' + os.environ['SSHCE_JOBID']
 
+    # Batch host SSH tunnel submission (SSHBatch CE)
+    if 'SSHBATCH_JOBID' in os.environ:
+      self.pp.flavour = 'SSHBATCH'
+      pilotRef = 'sshbatchhost://' + self.pp.ceName + '/' + os.environ['SSHBATCH_JOBID']
+
     # ARC case
     if 'GRID_GLOBAL_JOBID' in os.environ:
       self.pp.flavour = 'ARC'
