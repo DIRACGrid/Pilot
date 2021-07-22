@@ -260,7 +260,7 @@ class InstallDIRAC(CommandBase):
     # try to find the installer in CVMFS first
     installer = '/cvmfs/dirac.egi.eu/installSource/%s' % installerName
     if not os.path.exists(installer):
-      # Try to copy it locally if we are lucky
+      # Try to copy it locally if it is just not yet in the local CVMFS cache
       shutil.copyfile(installer, installerName)
       if not os.path.exists(installerName):
         # Get it from GitHub otherwise
