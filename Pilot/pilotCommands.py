@@ -23,6 +23,7 @@ from __future__ import absolute_import
 
 __RCSID__ = "$Id$"
 
+import shutil
 import sys
 import os
 import time
@@ -247,29 +248,39 @@ class InstallDIRAC(CommandBase):
     """ Install python3 version of DIRAC client
     """
 
-    # 1. Download DIRACOS
+    # 1. Get the DIRACOS installer
     # curl -O -L https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-$(uname -m).sh
     try:
       machine = os.uname().machine  # py3
     except AttributeError:
       machine = os.uname()[4]  # py2
 
-    # FIXME: we should have a (set of) different location(s), starting from CVMFS
-    if not retrieveUrlTimeout(
-        "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-%s.sh" % machine,
-        "DIRACOS-Linux-%s.sh" % machine,
-        self.log
-    ):
-      self.exitWithError(1)
+    installerName = "DIRACOS-Linux-%s.sh" % machine
+
+    # try to find the installer in CVMFS first
+    installer = '/cvmfs/dirac.egi.eu/installSource/%s' % installerName
+    if not os.path.exists(installer):
+      # Try to copy it locally if we are lucky
+      shutil.copyfile(installer, installerName)
+      if not os.path.exists(installerName):
+        # Get it from GitHub otherwise
+        if not retrieveUrlTimeout(
+            "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/%s" % installerName,
+            installerName,
+            self.log
+        ):
+          self.exitWithError(1)
+      installer = installerName
 
     # 2. bash DIRACOS-Linux-$(uname -m).sh
-    retCode, _ = self.executeAndGetOutput("bash DIRACOS-Linux-%s.sh" % machine, self.pp.installEnv)
+    retCode, _ = self.executeAndGetOutput(installer, self.pp.installEnv)
     if retCode:
       self.log.error("Could not install DIRACOS [ERROR %d]" % retCode)
       self.exitWithError(retCode)
 
     # 3. rm DIRACOS-Linux-$(uname -m).sh
-    os.remove("DIRACOS-Linux-%s.sh" % machine)
+    if os.path.exists(installerName):
+      os.remove(installerName)
 
     # 4. source diracos/diracosrc then add its content to installEnv
     retCode, output = self.executeAndGetOutput('bash -c "source diracos/diracosrc && env"', self.pp.installEnv)
