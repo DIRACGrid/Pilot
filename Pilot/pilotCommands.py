@@ -248,7 +248,7 @@ class InstallDIRAC(CommandBase):
     """ Install python3 version of DIRAC client
     """
 
-    # 1. Get the DIRACOS installer
+    # 1. Get the DIRACOS installer name
     # curl -O -L https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-$(uname -m).sh
     try:
       machine = os.uname().machine  # py3
@@ -257,32 +257,32 @@ class InstallDIRAC(CommandBase):
 
     installerName = "DIRACOS-Linux-%s.sh" % machine
 
-    # try to find the installer in CVMFS first
+    # 2. Try to install from CVMFS
+
     installer = '/cvmfs/dirac.egi.eu/installSource/%s' % installerName
-    if not os.path.exists(installer):
-      # Try to copy it locally if it is just not yet in the local CVMFS cache
-      shutil.copyfile(installer, installerName)
-      if not os.path.exists(installerName):
-        # Get it from GitHub otherwise
-        if not retrieveUrlTimeout(
-            "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/%s" % installerName,
-            installerName,
-            self.log
+    retCode, _ = self.executeAndGetOutput( installer, self.pp.installEnv )
+    if retCode:
+      self.log.warn( "Could not install DIRACOS from CVMFS [ERROR %d]" % retCode )
+
+      # 3. Get the installer from GitHub otherwise
+      if not retrieveUrlTimeout(
+          "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/%s" % installerName,
+          installerName,
+          self.log
         ):
           self.exitWithError(1)
-      installer = installerName
 
-    # 2. bash DIRACOS-Linux-$(uname -m).sh
-    retCode, _ = self.executeAndGetOutput(installer, self.pp.installEnv)
-    if retCode:
-      self.log.error("Could not install DIRACOS [ERROR %d]" % retCode)
-      self.exitWithError(retCode)
+      # 4. bash DIRACOS-Linux-$(uname -m).sh
+      retCode, _ = self.executeAndGetOutput(installerName, self.pp.installEnv)
+      if retCode:
+        self.log.error("Could not install DIRACOS [ERROR %d]" % retCode)
+        self.exitWithError(retCode)
 
-    # 3. rm DIRACOS-Linux-$(uname -m).sh
-    if os.path.exists(installerName):
-      os.remove(installerName)
+      # 5. rm DIRACOS-Linux-$(uname -m).sh
+      if os.path.exists(installerName):
+        os.remove(installerName)
 
-    # 4. source diracos/diracosrc then add its content to installEnv
+    # 6. source diracos/diracosrc then add its content to installEnv
     retCode, output = self.executeAndGetOutput('bash -c "source diracos/diracosrc && env"', self.pp.installEnv)
     if retCode:
       self.log.error("Could not parse the diracos/diracosrc file [ERROR %d]" % retCode)
@@ -296,7 +296,7 @@ class InstallDIRAC(CommandBase):
       except (IndexError, ValueError):
         continue
 
-    # 5. pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
+    # 7. pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
 
     retCode, output = self.executeAndGetOutput(
         # Examples of what expecting in self.pp.releaseVersion:
