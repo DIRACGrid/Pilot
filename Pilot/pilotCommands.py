@@ -266,11 +266,11 @@ class InstallDIRAC(CommandBase):
 
       # 3. Get the installer from GitHub otherwise
       if not retrieveUrlTimeout(
-            "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/%s" % installerName,
-            installerName,
-            self.log
+          "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/%s" % installerName,
+          installerName,
+          self.log
           ):
-          self.exitWithError(1)
+        self.exitWithError(1)
 
       # 4. bash DIRACOS-Linux-$(uname -m).sh
       retCode, _ = self.executeAndGetOutput(installerName, self.pp.installEnv)
