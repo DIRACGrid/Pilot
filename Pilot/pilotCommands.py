@@ -260,16 +260,16 @@ class InstallDIRAC(CommandBase):
     # 2. Try to install from CVMFS
 
     installer = '/cvmfs/dirac.egi.eu/installSource/%s' % installerName
-    retCode, _ = self.executeAndGetOutput( installer, self.pp.installEnv )
+    retCode, _ = self.executeAndGetOutput(installer, self.pp.installEnv)
     if retCode:
-      self.log.warn( "Could not install DIRACOS from CVMFS [ERROR %d]" % retCode )
+      self.log.warn("Could not install DIRACOS from CVMFS [ERROR %d]" % retCode)
 
       # 3. Get the installer from GitHub otherwise
       if not retrieveUrlTimeout(
-          "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/%s" % installerName,
-          installerName,
-          self.log
-        ):
+            "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/%s" % installerName,
+            installerName,
+            self.log
+          ):
           self.exitWithError(1)
 
       # 4. bash DIRACOS-Linux-$(uname -m).sh
