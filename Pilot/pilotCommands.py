@@ -269,7 +269,7 @@ class InstallDIRAC(CommandBase):
           "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/%s" % installerName,
           installerName,
           self.log
-          ):
+      ):
         self.exitWithError(1)
 
       # 4. bash DIRACOS-Linux-$(uname -m).sh
