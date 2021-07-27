@@ -260,7 +260,7 @@ class InstallDIRAC(CommandBase):
     # 2. Try to install from CVMFS
 
     installer = '/cvmfs/dirac.egi.eu/installSource/%s' % installerName
-    retCode, _ = self.executeAndGetOutput(installer, self.pp.installEnv)
+    retCode, _ = self.executeAndGetOutput("bash %s" % installer, self.pp.installEnv)
     if retCode:
       self.log.warn("Could not install DIRACOS from CVMFS [ERROR %d]" % retCode)
 
