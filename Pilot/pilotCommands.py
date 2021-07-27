@@ -287,9 +287,11 @@ class InstallDIRAC(CommandBase):
 
     # 5. pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
 
-    retCode, output = self.executeAndGetOutput(
-        'pip install %sDIRAC[pilot]==%s' % (self.pp.releaseProject, self.releaseVersion),
-        self.pp.installEnv)
+    if not self.releaseVersion or self.releaseVersion == "integration":
+      cmd = "pip install %sDIRAC[pilot]"
+    else:
+      cmd = 'pip install %sDIRAC[pilot]==%s' % (self.pp.releaseProject, self.releaseVersion)
+    retCode, output = self.executeAndGetOutput(cmd, self.pp.installEnv)
     if retCode:
       self.log.error("Could not pip install %s [ERROR %d]" % (self.releaseVersion, retCode))
       self.exitWithError(retCode)
