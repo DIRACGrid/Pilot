@@ -14,6 +14,7 @@ import pickle
 import getopt
 import imp
 import json
+import re
 import signal
 import subprocess
 from distutils.version import LooseVersion
@@ -30,13 +31,41 @@ try:
   basestring
 except NameError:
   basestring = str
-############################
 
 try:
   from Pilot.PilotLogger import PilotLogger
 except ImportError:
   from PilotLogger import PilotLogger
+############################
 
+# Utilities functions
+
+
+def parseVersion(releaseVersion, useLegacyStyle):
+  """Convert the releaseVersion into a legacy or PEP-440 style string
+
+  :param str releaseVersion: The software version to use
+  :param bool useLegacyStyle: True to return a vXrYpZ-preN style version else vX.Y.ZaN
+  """
+  VERSION_PATTERN = re.compile(r"^(?:v)?(\d+)[r\.](\d+)(?:[p\.](\d+))?(?:(?:-pre|a)?(\d+))?$")
+
+  match = VERSION_PATTERN.match(releaseVersion)
+  # If the regex fails just return the original version
+  if not match:
+    return releaseVersion
+  major, minor, patch, pre = match.groups()
+  if useLegacyStyle:
+    version = "v" + major + "r" + minor
+    if patch:
+      version += "p" + patch
+    if pre:
+      version += "-pre" + pre
+  else:
+    version = major + "." + minor
+    version += "." + (patch or "0")
+    if pre:
+      version += "a" + pre
+  return version
 
 def printVersion(log):
 
@@ -360,9 +389,9 @@ class CommandBase(object):
         Extensions could replace this function.
     """
     if not self.pp.releaseProject:
-      return LooseVersion('v7r0p29')
+      return LooseVersion(parseVersion('v7r0p29', self.pp.pythonVersion == '27'))
     # just a trick to always evaluate comparisons in pilotCommands to False
-    return LooseVersion('z')
+    return LooseVersion('z') if self.pp.pythonVersion == '27' else LooseVersion('1000')
 
   def executeAndGetOutput(self, cmd, environDict=None):
     """ Execute a command on the worker node and get the output
@@ -437,6 +466,10 @@ class CommandBase(object):
         returnCode = 99
 
     sys.exit(returnCode)
+
+  @property
+  def releaseVersion(self):
+    return parseVersion(self.pp.releaseVersion, self.pp.pythonVersion == '27')
 
 
 class PilotParams(object):

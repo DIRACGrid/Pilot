@@ -59,7 +59,7 @@ class GetPilotVersion(CommandBase):
   def execute(self):
     """ Just returns what was obtained by pilotTools.py
     """
-    return self.pp.releaseVersion
+    return self.releaseVersion
 
 
 class CheckWorkerNode(CommandBase):
@@ -183,7 +183,7 @@ class InstallDIRAC(CommandBase):
       self.installOpts.append("--userEnvVariables=%s" % self.pp.userEnvVariables)
 
     # The release version to install is a requirement
-    self.installOpts.append('-r "%s"' % self.pp.releaseVersion)
+    self.installOpts.append('-r "%s"' % self.releaseVersion)
 
     self.log.debug('INSTALL OPTIONS [%s]' % ', '.join(map(str, self.installOpts)))
 
@@ -287,15 +287,13 @@ class InstallDIRAC(CommandBase):
 
     # 5. pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
 
-    retCode, output = self.executeAndGetOutput(
-        # Examples of what expecting in self.pp.releaseVersion:
-        # DIRAC[pilot]==7.2.0
-        # or
-        # DIRAC[pilot]==7.2.0 ExtDIRAC[pilot]==10.2.0a4
-        'pip install %s' % self.pp.releaseVersion,
-        self.pp.installEnv)
+    if not self.releaseVersion or self.releaseVersion == "integration":
+      cmd = "pip install %sDIRAC[pilot]"
+    else:
+      cmd = 'pip install %sDIRAC[pilot]==%s' % (self.pp.releaseProject, self.releaseVersion)
+    retCode, output = self.executeAndGetOutput(cmd, self.pp.installEnv)
     if retCode:
-      self.log.error("Could not pip install %s [ERROR %d]" % (self.pp.releaseVersion, retCode))
+      self.log.error("Could not pip install %s [ERROR %d]" % (self.releaseVersion, retCode))
       self.exitWithError(retCode)
 
     if self.pp.modules:  # possibly overwrite
@@ -413,7 +411,7 @@ class ConfigureBasics(CommandBase):
       self.cfg.append('-o /AgentJobRequirements/OwnerGroup="%s"' % self.pp.userGroup)
     if self.pp.userDN:
       self.cfg.append('-o /AgentJobRequirements/OwnerDN="%s"' % self.pp.userDN)
-    self.cfg.append('-o /LocalSite/ReleaseVersion=%s' % self.pp.releaseVersion)
+    self.cfg.append('-o /LocalSite/ReleaseVersion=%s' % self.releaseVersion)
 
     if self.pp.wnVO:
       self.cfg.append(
@@ -448,7 +446,7 @@ class CheckCECapabilities(CommandBase):
     if self.pp.useServerCertificate:
       self.cfg.append('-o  /DIRAC/Security/UseServerCertificate=yes')
     if self.pp.localConfigFile:
-      if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
+      if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
         self.cfg.append('--cfg')
       self.cfg.append(self.pp.localConfigFile)  # this file is as input
 
@@ -506,7 +504,7 @@ class CheckCECapabilities(CommandBase):
 
     if self.pp.localConfigFile:
       cfg.append('-O %s' % self.pp.localConfigFile)  # this file is as output
-      if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
+      if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
         cfg.append('--cfg')
       cfg.append(self.pp.localConfigFile)  # this file is as input
 
@@ -544,7 +542,7 @@ class CheckWNCapabilities(CommandBase):
     if self.pp.useServerCertificate:
       self.cfg.append('-o /DIRAC/Security/UseServerCertificate=yes')
     if self.pp.localConfigFile:
-      if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
+      if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
         self.cfg.append('--cfg')
       self.cfg.append(self.pp.localConfigFile)  # this file is as input
     # Get the worker node parameters
@@ -622,7 +620,7 @@ class CheckWNCapabilities(CommandBase):
 
     if self.pp.localConfigFile:
       self.cfg.append('-O %s' % self.pp.localConfigFile)  # this file is as output
-      if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
+      if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
         self.cfg.append('--cfg')
       self.cfg.append(self.pp.localConfigFile)  # this file is as input
 
@@ -683,7 +681,7 @@ class ConfigureSite(CommandBase):
     self.cfg.append('-FDMH')
     if self.pp.localConfigFile:
       self.cfg.append('-O %s' % self.pp.localConfigFile)
-      if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
+      if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
         self.cfg.append('--cfg')
       self.cfg.append(self.pp.localConfigFile)
 
@@ -811,7 +809,7 @@ class ConfigureArchitecture(CommandBase):
     if self.pp.useServerCertificate:
       cfg.append('-o  /DIRAC/Security/UseServerCertificate=yes')
     if self.pp.localConfigFile:
-      if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
+      if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
         cfg.append('--cfg')
       cfg.append(self.pp.localConfigFile)  # this file is as input
 
@@ -829,7 +827,7 @@ class ConfigureArchitecture(CommandBase):
       cfg.append('--UseServerCertificate')
     if self.pp.localConfigFile:
       cfg.append('-O %s' % self.pp.localConfigFile)  # our target file for pilots
-      if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
+      if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
         cfg.append('--cfg')
       cfg.append(self.pp.localConfigFile)  # this file is also an input
     if self.pp.debugFlag:
@@ -866,7 +864,7 @@ class ConfigureCPURequirements(CommandBase):
     if self.pp.useServerCertificate:
       configFileArg = '-o /DIRAC/Security/UseServerCertificate=yes'
     if self.pp.localConfigFile:
-      if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
+      if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
         configFileArg = '%s -R %s --cfg %s' % (configFileArg, self.pp.localConfigFile, self.pp.localConfigFile)
       else:
         configFileArg = '%s -R %s %s' % (configFileArg, self.pp.localConfigFile, self.pp.localConfigFile)
@@ -890,7 +888,7 @@ class ConfigureCPURequirements(CommandBase):
     configFileArg = ''
     if self.pp.useServerCertificate:
       configFileArg = '-o /DIRAC/Security/UseServerCertificate=yes'
-    if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
+    if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
       cfgFile = '--cfg %s' % self.pp.localConfigFile
     else:
       cfgFile = self.pp.localConfigFile
@@ -924,7 +922,7 @@ class ConfigureCPURequirements(CommandBase):
       cfg.append('-o  /DIRAC/Security/UseServerCertificate=yes')
     if self.pp.localConfigFile:
       cfg.append('-O %s' % self.pp.localConfigFile)  # our target file for pilots
-      if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
+      if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
         cfg.append('--cfg')
       cfg.append(self.pp.localConfigFile)  # this file is also input
     cfg.append('-o /LocalSite/CPUTimeLeft=%s' % str(int(self.pp.jobCPUReq)))  # the only real option
@@ -995,7 +993,7 @@ class LaunchAgent(CommandBase):
     # The file pilot.cfg has to be created previously by ConfigureDIRAC
     if self.pp.localConfigFile:
       self.innerCEOpts.append(' -o /AgentJobRequirements/ExtraOptions=%s' % self.pp.localConfigFile)
-      if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
+      if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
         self.innerCEOpts.append('--cfg')
       self.innerCEOpts.append(self.pp.localConfigFile)
 
@@ -1011,7 +1009,7 @@ class LaunchAgent(CommandBase):
     for i in os.listdir(self.pp.rootPath):
       cfg = os.path.join(self.pp.rootPath, i)
       if os.path.isfile(cfg) and cfg.endswith('.cfg') and not filecmp.cmp(self.pp.localConfigFile, cfg):
-        if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
+        if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
           extraCFG.append('--cfg')
         extraCFG.append(cfg)
 
@@ -1101,7 +1099,7 @@ class MultiLaunchAgent(CommandBase):
     # The file pilot.cfg has to be created previously by ConfigureDIRAC
     if self.pp.localConfigFile:
       self.inProcessOpts.append(' -o /AgentJobRequirements/ExtraOptions=%s' % self.pp.localConfigFile)
-      if LooseVersion(self.pp.releaseVersion) >= self.cfgOptionDIRACVersion:
+      if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
         self.inProcessOpts.append('--cfg')
       self.inProcessOpts.append(self.pp.localConfigFile)
 
