@@ -273,7 +273,7 @@ class InstallDIRAC(CommandBase):
         self.exitWithError(1)
 
       # 4. bash DIRACOS-Linux-$(uname -m).sh
-      retCode, _ = self.executeAndGetOutput(installerName, self.pp.installEnv)
+      retCode, _ = self.executeAndGetOutput("bash %s" % installerName, self.pp.installEnv)
       if retCode:
         self.log.error("Could not install DIRACOS [ERROR %d]" % retCode)
         self.exitWithError(retCode)
