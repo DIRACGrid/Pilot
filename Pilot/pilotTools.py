@@ -469,7 +469,9 @@ class CommandBase(object):
 
   @property
   def releaseVersion(self):
-    return parseVersion(self.pp.releaseVersion, self.pp.pythonVersion == '27')
+    parsedVersion = parseVersion(self.pp.releaseVersion, self.pp.pythonVersion == '27')
+    # strip what is not strictly the version number (e.g. if it is DIRAC[pilot]==7.3.4])
+    return parsedVersion.split('==')[1] if '==' in parsedVersion else parsedVersion
 
 
 class PilotParams(object):
