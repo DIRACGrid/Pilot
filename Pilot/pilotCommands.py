@@ -23,6 +23,7 @@ from __future__ import absolute_import
 
 __RCSID__ = "$Id$"
 
+import shutil
 import sys
 import os
 import time
@@ -247,31 +248,41 @@ class InstallDIRAC(CommandBase):
     """ Install python3 version of DIRAC client
     """
 
-    # 1. Download DIRACOS
+    # 1. Get the DIRACOS installer name
     # curl -O -L https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-$(uname -m).sh
     try:
       machine = os.uname().machine  # py3
     except AttributeError:
       machine = os.uname()[4]  # py2
 
-    # FIXME: we should have a (set of) different location(s), starting from CVMFS
-    if not retrieveUrlTimeout(
-        "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-%s.sh" % machine,
-        "DIRACOS-Linux-%s.sh" % machine,
-        self.log
-    ):
-      self.exitWithError(1)
+    installerName = "DIRACOS-Linux-%s.sh" % machine
 
-    # 2. bash DIRACOS-Linux-$(uname -m).sh
-    retCode, _ = self.executeAndGetOutput("bash DIRACOS-Linux-%s.sh" % machine, self.pp.installEnv)
+    # 2. Try to install from CVMFS
+
+    installer = '/cvmfs/dirac.egi.eu/installSource/%s' % installerName
+    retCode, _ = self.executeAndGetOutput("bash %s" % installer, self.pp.installEnv)
     if retCode:
-      self.log.error("Could not install DIRACOS [ERROR %d]" % retCode)
-      self.exitWithError(retCode)
+      self.log.warn("Could not install DIRACOS from CVMFS [ERROR %d]" % retCode)
 
-    # 3. rm DIRACOS-Linux-$(uname -m).sh
-    os.remove("DIRACOS-Linux-%s.sh" % machine)
+      # 3. Get the installer from GitHub otherwise
+      if not retrieveUrlTimeout(
+          "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/%s" % installerName,
+          installerName,
+          self.log
+      ):
+        self.exitWithError(1)
 
-    # 4. source diracos/diracosrc then add its content to installEnv
+      # 4. bash DIRACOS-Linux-$(uname -m).sh
+      retCode, _ = self.executeAndGetOutput("bash %s" % installerName, self.pp.installEnv)
+      if retCode:
+        self.log.error("Could not install DIRACOS [ERROR %d]" % retCode)
+        self.exitWithError(retCode)
+
+      # 5. rm DIRACOS-Linux-$(uname -m).sh
+      if os.path.exists(installerName):
+        os.remove(installerName)
+
+    # 6. source diracos/diracosrc then add its content to installEnv
     retCode, output = self.executeAndGetOutput('bash -c "source diracos/diracosrc && env"', self.pp.installEnv)
     if retCode:
       self.log.error("Could not parse the diracos/diracosrc file [ERROR %d]" % retCode)
@@ -285,7 +296,7 @@ class InstallDIRAC(CommandBase):
       except (IndexError, ValueError):
         continue
 
-    # 5. pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
+    # 7. pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
 
     retCode, output = self.executeAndGetOutput(
         # Examples of what expecting in self.pp.releaseVersion:
@@ -769,6 +780,12 @@ class ConfigureSite(CommandBase):
     if 'SSHCE_JOBID' in os.environ:
       self.pp.flavour = 'SSH'
       pilotRef = 'ssh://' + self.pp.ceName + '/' + os.environ['SSHCE_JOBID']
+
+    # Batch host SSH tunnel submission (SSHBatch CE)
+    if 'SSHBATCH_JOBID' in os.environ and 'SSH_NODE_HOST' in os.environ:
+      self.pp.flavour = 'SSHBATCH'
+      pilotRef = 'sshbatchhost://' + self.pp.ceName + '/' + os.environ['SSH_NODE_HOST'] + \
+                 '/' + os.environ['SSHBATCH_JOBID']
 
     # ARC case
     if 'GRID_GLOBAL_JOBID' in os.environ:
