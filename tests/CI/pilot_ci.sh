@@ -83,11 +83,6 @@ PilotInstall(){
   sed -i "s#VAR_CS#${CSURL}#g" pilot.json
   sed -i "s#VAR_USERDN#${DIRACUSERDN}#g" pilot.json
 
-  #installStompRequestsIfNecessary
-  #preparePythonEnvironment
-  #python PilotLoggerTools.py PilotUUID
-  #python PilotLogger.py "Hello I am THE best pilot"
-
   # launch the pilot script
   # shellcheck disable=SC2154
   pilotOptions="${pilot_options}"
@@ -206,44 +201,6 @@ fullPilot(){
   echo '==> [Done fullPilot]'
 }
 
-
-installStompRequestsIfNecessary()
-{
-  echo '==> [installStompRequestsIfNecessary]'
-
-  # shellcheck disable=SC2155
-  local PYTHON_VERSION=$(python -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
-  #checking if stomp is installed
-  if ! python -c 'import stomp' > /dev/null 2>&1; then
-      #checking if pip is installed
-      #if ! type python -m pip > /dev/null 2>&1; then
-          #type yum > /dev/null 2>&1 || { echo >&2 "yum installer is required. Aborting"; exit 1; }
-          #yum -y install python-pip
-      #fi
-      mkdir myLocal
-      export PYTHONUSERBASE=${PWD}/myLocal
-      python -c 'import site' # crazy hack to setup sys.path with the local directories 
-      # shellcheck disable=SC2155
-      local USER_SITE_PACKAGE_BASE=$(python -m site --user-base)
-      local PIP_LOC=$USER_SITE_PACKAGE_BASE/bin/pip
-      echo "PIP_LOC: $PIP_LOC"
-      if [ "${PYTHON_VERSION}" = '2.6' ]; then
-        curl https://bootstrap.pypa.io/pip/2.6/get-pip.py -o get-pip.py
-      else 
-        curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
-      fi
-      python get-pip.py --user --upgrade
-      echo "${PIP_LOC} install --user 'stomp.py==4.1.11'"
-      ${PIP_LOC} install --user 'stomp.py==4.1.11'
-      ${PIP_LOC} install --user 'requests'
-  fi
-  #stomp should be installed now
-  python -c 'import stomp' > /dev/null 2>&1 ||{ echo >&2 "stomp installation failure. Aborting"; exit 1; }
-  #requests should be installed now
-  python -c 'import requests' > /dev/null 2>&1 ||{ echo >&2 "requests installation failure. Aborting"; exit 1; }
-
-  echo '==> [Done installStompRequestsIfNecessary]'
-}
 
 ####################################################################################
 # submitAndMatch
