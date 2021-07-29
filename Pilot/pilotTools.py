@@ -45,7 +45,7 @@ def parseVersion(releaseVersion, useLegacyStyle):
   """Convert the releaseVersion into a legacy or PEP-440 style string
 
   :param str releaseVersion: The software version to use
-  :param bool useLegacyStyle: True to return a vXrYpZ-preN style version else vX.Y.ZaN
+  :param bool useLegacyStyle: True to return a vXrY(pZ)(-preN) style version else vX.Y.ZaN
   """
   VERSION_PATTERN = re.compile(r"^(?:v)?(\d+)[r\.](\d+)(?:[p\.](\d+))?(?:(?:-pre|a)?(\d+))?$")
 
@@ -56,7 +56,7 @@ def parseVersion(releaseVersion, useLegacyStyle):
   major, minor, patch, pre = match.groups()
   if useLegacyStyle:
     version = "v" + major + "r" + minor
-    if patch:
+    if patch and int(patch):
       version += "p" + patch
     if pre:
       version += "-pre" + pre

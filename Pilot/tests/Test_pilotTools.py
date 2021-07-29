@@ -38,11 +38,12 @@ def rmFiles():
 @pytest.mark.parametrize("releaseVersion, useLegacyStyle, expected", [
     ("invalid-version", True, "invalid-version"),
     ("invalid-version", False, "invalid-version"),
+    # starting from legacy style
     ("v10r2-pre9", True, "v10r2-pre9"),
     ("v10r2-pre9", False, "10.2.0a9"),
     ("v10r2", True, "v10r2"),
     ("v10r2", False, "10.2.0"),
-    ("v10r2p0", True, "v10r2p0"),
+    ("v10r2p0", True, "v10r2"),
     ("v10r2p0", False, "10.2.0"),
     ("v10r2p1", True, "v10r2p1"),
     ("v10r2p1", False, "10.2.1"),
@@ -60,6 +61,23 @@ def rmFiles():
     ("v11r0", False, "11.0.0"),
     ("v11r1", True, "v11r1"),
     ("v11r1", False, "11.1.0"),
+    # starting from PEP440 style
+    ("7.3.0a17", True, "v7r3-pre17"),
+    ("7.3.0a17", False, "7.3.0a17"),
+    ("7.3", True, "v7r3"),
+    ("7.3", False, "7.3.0"),
+    ("7.3.0", True, "v7r3"),
+    ("7.3.0", False, "7.3.0"),
+    ("7.3.1", True, "v7r3p1"),
+    ("7.3.1", False, "7.3.1"),
+    ("7.3.15", True, "v7r3p15"),
+    ("7.3.15", False, "7.3.15"),
+    ("7.13.15", True, "v7r13p15"),
+    ("7.13.15", False, "7.13.15"),
+    ("7.0.0", True, "v7r0"),
+    ("7.0.0", False, "7.0.0"),
+    ("7.0.0a1", True, "v7r0-pre1"),
+    ("7.0.0a1", False, "7.0.0a1"),
 ])
 def test_version_conversion(releaseVersion, useLegacyStyle, expected):
     assert parseVersion(releaseVersion, useLegacyStyle) == expected

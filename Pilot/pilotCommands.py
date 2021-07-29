@@ -23,7 +23,6 @@ from __future__ import absolute_import
 
 __RCSID__ = "$Id$"
 
-import shutil
 import sys
 import os
 import time
