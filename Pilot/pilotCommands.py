@@ -297,8 +297,8 @@ class InstallDIRAC(CommandBase):
 
     # 7. pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
 
-    if not self.releaseVersion or self.releaseVersion == "integration":
-      cmd = "pip install %sDIRAC[pilot]"
+    if not self.releaseVersion or self.releaseVersion in ["master", "main", "integration"]:
+      cmd = "pip install %sDIRAC[pilot]" % self.pp.releaseProject
     else:
       cmd = 'pip install %sDIRAC[pilot]==%s' % (self.pp.releaseProject, self.releaseVersion)
     retCode, output = self.executeAndGetOutput(cmd, self.pp.installEnv)
