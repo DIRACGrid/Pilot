@@ -478,8 +478,6 @@ class CheckCECapabilities(CommandBase):
 
     self.pp.queueParameters = resourceDict
 
-    cfg = []
-
     # Pick up all the relevant resource parameters that will be used in the job matching
     if "WholeNode" in resourceDict:
       self.pp.tags.append('WholeNode')
@@ -492,23 +490,13 @@ class CheckCECapabilities(CommandBase):
     if resourceDict.get('RequiredTag'):
       self.pp.reqtags += resourceDict['RequiredTag']
 
-    # If there is anything to be added to the local configuration, let's do it
-    if self.pp.useServerCertificate:
-      cfg.append('-o /DIRAC/Security/UseServerCertificate=yes')
-
-    if self.pp.localConfigFile:
-      cfg.append('-O %s' % self.pp.localConfigFile)  # this file is as output
-      if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
-        cfg.append('--cfg')
-      cfg.append(self.pp.localConfigFile)  # this file is as input
-
-    if cfg:
-      cfg.append('-FDMH')
+    if self.cfg:
+      self.cfg.append('-FDMH')
 
       if self.debugFlag:
-        cfg.append('-ddd')
+        self.cfg.append('-ddd')
 
-      configureCmd = "%s %s" % (self.pp.configureScript, " ".join(cfg))
+      configureCmd = "%s %s" % (self.pp.configureScript, " ".join(self.cfg))
       retCode, _configureOutData = self.executeAndGetOutput(configureCmd, self.pp.installEnv)
       if retCode:
         self.log.error("Could not configure DIRAC [ERROR %d]" % retCode)
