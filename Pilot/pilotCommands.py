@@ -492,22 +492,6 @@ class CheckCECapabilities(CommandBase):
     if resourceDict.get('RequiredTag'):
       self.pp.reqtags += resourceDict['RequiredTag']
 
-    # LocalCE type for singularity
-    if resourceDict.get('Container') in ["Singularity", "singularity"]:
-      self.cfg.append('-o "/LocalSite/LocalCE=Singularity"')
-
-    # LocalCE for Container options
-    if resourceDict.get('ContainerBin'):
-      self.cfg.append('-o "/LocalSite/ContainerBin=%s"' % resourceDict['ContainerBin'])
-    if resourceDict.get('ContainerRoot'):
-      self.cfg.append('-o "/LocalSite/ContainerRoot=%s"' % resourceDict['ContainerRoot'])
-    if resourceDict.get('ContainerBind'):
-      self.cfg.append('-o "/LocalSite/ContainerBind=%s"' % resourceDict['ContainerBind'])
-    if resourceDict.get('ContainerOptions'):
-      self.cfg.append('-o "/LocalSite/ContainerOptions=%s"' % resourceDict['ContainerOptions'])
-    if resourceDict.get('ContainerExtraOpts'):
-      self.cfg.append('-o "/LocalSite/ContainerExtraOpts=%s"' % resourceDict['ContainerExtraOpts'])
-
     # If there is anything to be added to the local configuration, let's do it
     if self.pp.useServerCertificate:
       cfg.append('-o /DIRAC/Security/UseServerCertificate=yes')
