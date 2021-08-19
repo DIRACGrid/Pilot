@@ -477,6 +477,8 @@ class CheckCECapabilities(CommandBase):
       sys.exit(1)
 
     self.pp.queueParameters = resourceDict
+    for queueParamName, queueParamValue in self.pp.queueParameters.items():
+      self.cfg.append('-o "/LocalSite/%s=%s "' % (queueParamName, queueParamValue))
 
     # Pick up all the relevant resource parameters that will be used in the job matching
     if "WholeNode" in resourceDict:
