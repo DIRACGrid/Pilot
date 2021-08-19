@@ -477,8 +477,8 @@ class CheckCECapabilities(CommandBase):
       sys.exit(1)
 
     self.pp.queueParameters = resourceDict
-
-    cfg = []
+    for queueParamName, queueParamValue in self.pp.queueParameters.items():
+      self.cfg.append('-o "/LocalSite/%s=%s "' % (queueParamName, queueParamValue))
 
     # Pick up all the relevant resource parameters that will be used in the job matching
     if "WholeNode" in resourceDict:
@@ -492,39 +492,13 @@ class CheckCECapabilities(CommandBase):
     if resourceDict.get('RequiredTag'):
       self.pp.reqtags += resourceDict['RequiredTag']
 
-    # LocalCE type for singularity
-    if resourceDict.get('Container') in ["Singularity", "singularity"]:
-      self.cfg.append('-o "/LocalSite/LocalCE=Singularity"')
-
-    # LocalCE for Container options
-    if resourceDict.get('ContainerBin'):
-      self.cfg.append('-o "/LocalSite/ContainerBin=%s"' % resourceDict['ContainerBin'])
-    if resourceDict.get('ContainerRoot'):
-      self.cfg.append('-o "/LocalSite/ContainerRoot=%s"' % resourceDict['ContainerRoot'])
-    if resourceDict.get('ContainerBind'):
-      self.cfg.append('-o "/LocalSite/ContainerBind=%s"' % resourceDict['ContainerBind'])
-    if resourceDict.get('ContainerOptions'):
-      self.cfg.append('-o "/LocalSite/ContainerOptions=%s"' % resourceDict['ContainerOptions'])
-    if resourceDict.get('ContainerExtraOpts'):
-      self.cfg.append('-o "/LocalSite/ContainerExtraOpts=%s"' % resourceDict['ContainerExtraOpts'])
-
-    # If there is anything to be added to the local configuration, let's do it
-    if self.pp.useServerCertificate:
-      cfg.append('-o /DIRAC/Security/UseServerCertificate=yes')
-
-    if self.pp.localConfigFile:
-      cfg.append('-O %s' % self.pp.localConfigFile)  # this file is as output
-      if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
-        cfg.append('--cfg')
-      cfg.append(self.pp.localConfigFile)  # this file is as input
-
-    if cfg:
-      cfg.append('-FDMH')
+    if self.cfg:
+      self.cfg.append('-FDMH')
 
       if self.debugFlag:
-        cfg.append('-ddd')
+        self.cfg.append('-ddd')
 
-      configureCmd = "%s %s" % (self.pp.configureScript, " ".join(cfg))
+      configureCmd = "%s %s" % (self.pp.configureScript, " ".join(self.cfg))
       retCode, _configureOutData = self.executeAndGetOutput(configureCmd, self.pp.installEnv)
       if retCode:
         self.log.error("Could not configure DIRAC [ERROR %d]" % retCode)
