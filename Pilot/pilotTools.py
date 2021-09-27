@@ -516,6 +516,7 @@ class PilotParams(object):
     self.maxNumberOfProcessors = 0
     self.minDiskSpace = 2560  # MB
     self.pythonVersion = '27'
+    self.defaultsURL = None
     self.userGroup = ""
     self.userDN = ""
     self.maxCycles = 10
@@ -601,7 +602,9 @@ class PilotParams(object):
         ('W:', 'gateway=', 'Configure <gateway> as DIRAC Gateway during installation'),
         ('X:', 'commands=', 'Pilot commands to execute'),
         ('Z:', 'commandOptions=', 'Options parsed by command modules'),
-        ('', 'pythonVersion=', 'Python version of DIRAC client to install'))
+        ('', 'pythonVersion=', 'Python version of DIRAC client to install'),
+        ('', 'defaultsURL=', 'user-defined URL for global config'),
+    )
 
     # Possibly get Setup and JSON URL/filename from command line
     self.__initCommandLine1()
@@ -728,6 +731,8 @@ class PilotParams(object):
         self.userEnvVariables = v
       elif o == '--pythonVersion':
         self.pythonVersion = v
+      elif o == '--defaultsURL':
+        self.defaultsURL = v
 
   def __initJSON(self):
     """Retrieve pilot parameters from the content of json file. The file should be something like:
