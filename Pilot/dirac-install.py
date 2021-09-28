@@ -1728,8 +1728,8 @@ def checkoutFromGit(moduleName, sourceURL, tagVersion, destinationDir=None):
     cmd = "ln -s %s/%s %s" % (codeRepo, moduleName, os.path.join(cliParams.targetPath, moduleName))
   else:
     cmd = "mv %s %s" % (fDirName, os.path.join(cliParams.targetPath, moduleName))
-    logNOTICE("Executing: %s" % cmd)
-    retVal = os.system(cmd)
+  logNOTICE("Executing: %s" % cmd)
+  retVal = os.system(cmd)
 
   if retVal:
     return S_ERROR("Error while creating module: %s" % (moduleName))
