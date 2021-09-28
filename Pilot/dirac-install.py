@@ -357,10 +357,7 @@ class ReleaseConfig(object):
     :param str projectName: the name of the project
     :param str globalDefaultsURL: the default url
     """
-    if globalDefaultsURL:
-      self.globalDefaultsURL = globalDefaultsURL
-    else:
-      self.globalDefaultsURL = "http://diracproject.web.cern.ch/diracproject/configs/globalDefaults.cfg"
+    self.user_globalDefaultsURL = globalDefaultsURL
     self.globalDefaults = ReleaseConfig.CFG()
     self.loadedCfgs = []
     self.prjDepends = {}
@@ -450,12 +447,13 @@ class ReleaseConfig(object):
     It loads the default configuration files
     """
 
-    globalDefaultsCVMFSPath = "/cvmfs/dirac.egi.eu/admin/globalDefaults.cfg"
-    self.__dbgMsg("Loading global defaults from: %s" % globalDefaultsCVMFSPath)
-    result = self.__loadCFGFromURL(globalDefaultsCVMFSPath)
+    globalDefaultsURL = self.user_globalDefaultsURL or "/cvmfs/dirac.egi.eu/admin/globalDefaults.cfg"
+    self.__dbgMsg("Loading global defaults from: %s" % globalDefaultsURL)
+    result = self.__loadCFGFromURL(globalDefaultsURL)
     if not result['OK']:
-      self.__dbgMsg("Loading global defaults from: %s" % self.globalDefaultsURL)
-      result = self.__loadCFGFromURL(self.globalDefaultsURL)
+      default_globalDefaultsURL = "http://diracproject.web.cern.ch/diracproject/configs/globalDefaults.cfg"
+      self.__dbgMsg("Loading global defaults from: %s" % default_globalDefaultsURL)
+      result = self.__loadCFGFromURL(default_globalDefaultsURL)
       if not result['OK']:
         return result
     self.globalDefaults = result['Value']
@@ -1390,7 +1388,6 @@ cmdOpts = (('r:', 'release=', 'Release version to install'),
            ('l:', 'project=', 'Project to install'),
            ('e:', 'extensions=', 'Extensions to install (comma separated)'),
            ('P:', 'installationPath=', 'Path where to install (default current working dir)'),
-           ('b', 'build', 'Force local compilation'),
            ('u:', 'baseURL=', "Use URL as the source for installation tarballs"),
            ('d', 'debug', 'Show debug messages'),
            ('V:', 'installation=', 'Installation from which to extract parameter values'),

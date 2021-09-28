@@ -169,9 +169,6 @@ class InstallDIRAC(CommandBase):
         self.installOpts.append('-e "%s"' % v)
       elif o == '-u' or o == '--url':
         self.installOpts.append('-u "%s"' % v)
-      elif o in ('-P', '--path'):
-        self.installOpts.append('-P "%s"' % v)
-        self.pp.rootPath = v
       elif o in ('-V', '--installation'):
         self.installOpts.append('-V "%s"' % v)
 
@@ -181,6 +178,8 @@ class InstallDIRAC(CommandBase):
       self.installOpts.append("-m '%s'" % self.pp.modules)
     if self.pp.userEnvVariables:
       self.installOpts.append("--userEnvVariables=%s" % self.pp.userEnvVariables)
+    if self.pp.defaultsURL:
+      self.installOpts.append("--defaultsURL=%s" % self.pp.defaultsURL)
 
     # The release version to install is a requirement
     self.installOpts.append('-r "%s"' % self.releaseVersion)
