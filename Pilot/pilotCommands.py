@@ -95,29 +95,32 @@ class CheckWorkerNode(CommandBase):
       with open(fileName, 'r') as f:
         cpu = f.readlines()
       nCPU = 0
+      freq = 0
       for line in cpu:
         if line.find('cpu MHz') == 0:
           nCPU += 1
           freq = line.split()[3]
         elif line.find('model name') == 0:
-          CPUmodel = line.split(': ')[1].strip()
-      self.log.info('CPU (model)    = %s' % CPUmodel)
+          self.log.info('CPU (model)    = %s' % line.split(': ')[1].strip())
       self.log.info('CPU (MHz)      = %s x %s' % (nCPU, freq))
 
     fileName = '/proc/meminfo'
     if os.path.exists(fileName):
       with open(fileName, 'r') as f:
         mem = f.readlines()
+      totalMem = 0
       freeMem = 0
       for line in mem:
         if line.find('MemTotal:') == 0:
-          totalMem = int(line.split()[1])
+          totalMem += int(line.split()[1])
         if line.find('MemFree:') == 0:
           freeMem += int(line.split()[1])
         if line.find('Cached:') == 0:
           freeMem += int(line.split()[1])
-      self.log.info('Memory (kB)    = %s' % totalMem)
-      self.log.info('FreeMem. (kB)  = %s' % freeMem)
+      if totalMem:
+        self.log.info('Memory (kB)    = %s' % totalMem)
+      if freeMem:
+        self.log.info('FreeMem. (kB)  = %s' % freeMem)
 
     ###########################################################################
     # Disk space check
