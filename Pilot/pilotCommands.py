@@ -303,7 +303,7 @@ class InstallDIRAC(CommandBase):
         lines.extend(["export %s=%s" % (envName, envValue)])
       lines.append("")
       with open("diracos/diracosrc", "a") as diracosrc:
-        diracosrc.write("/n".join(lines))
+        diracosrc.write("\n".join(lines))
 
     # 6. source diracos/diracosrc then add its content to installEnv
     retCode, output = self.executeAndGetOutput('bash -c "source diracos/diracosrc && env"', self.pp.installEnv)
