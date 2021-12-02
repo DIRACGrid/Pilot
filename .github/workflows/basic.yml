@@ -18,7 +18,7 @@ jobs:
           # - 2.7.5
           - 2.7.13
           - 3.6.8
-          - 3.8
+          - 3.9
 
     steps:
     - uses: actions/checkout@v2
@@ -65,15 +65,15 @@ jobs:
     - name: Prepare environment
       run: |
         conda config --set add_pip_as_python_dependency false
-        conda create -c conda-forge -c free -n python_3.8 python=3.8
+        conda create -c conda-forge -c free -n python_3.9 python=3.9
         source "${CONDA}/bin/activate"
-        conda activate python_3.8
+        conda activate python_3.9
         conda install pytest pytest-mock pylint autopep8 docopt mock requests pip
         pip install stomp.py
     - name: Run pycodestyle
       run: |
             source "${CONDA}/bin/activate"
-            conda activate python_3.8
+            conda activate python_3.9
             set -euxo pipefail
             export PYTHONPATH=${PWD%/*}
             git remote add GH https://github.com/DIRACGrid/Pilot.git

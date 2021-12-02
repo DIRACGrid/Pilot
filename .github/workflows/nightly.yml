@@ -29,9 +29,9 @@ jobs:
           ref: ${{ matrix.branch }}
       - name: upload
         run: |
-          echo ${{ secrets.DOCKER_HUB_PASSWORD }} | docker login docker.pkg.github.com --username ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
-          docker pull docker.pkg.github.com/diracgrid/management/dirac-distribution:latest
-          contID=$(docker run -dt docker.pkg.github.com/diracgrid/management/dirac-distribution:latest)
+          echo ${{ secrets.packages_rw }} | docker login ghcr.io --username ${{ github.actor }} --password-stdin;
+          docker pull ghcr.io/diracgrid/management/dirac-distribution:latest
+          contID=$(docker run -dt ghcr.io/diracgrid/management/dirac-distribution:latest)
           docker exec ${contID} mkdir Pilot
           docker cp Pilot ${contID}:.
           docker cp tests ${contID}:.
