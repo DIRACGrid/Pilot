@@ -31,44 +31,44 @@ import time
 ############################
 # python 2 -> 3 "hacks"
 try:
-  from Pilot.pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
+    from Pilot.pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
 except ImportError:
-  from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
+    from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
 ############################
 
 if __name__ == "__main__":
 
-  pilotStartTime = int(time.time())
+    pilotStartTime = int(time.time())
 
-  log = Logger('Pilot', debugFlag=True)
+    log = Logger("Pilot", debugFlag=True)
 
-  pilotParams = PilotParams()
-  if pilotParams.debugFlag:
-    log.setDebug()
-  if pilotParams.keepPythonPath:
-    pythonPathCheck()
-  else:
-    log.info("Clearing PYTHONPATH for child processes.")
-    if "PYTHONPATH" in os.environ:
-      os.environ["PYTHONPATH_SAVE"] = os.environ["PYTHONPATH"]
-      os.environ["PYTHONPATH"] = ""
-
-  pilotParams.pilotStartTime = pilotStartTime
-  pilotParams.pilotRootPath = os.getcwd()
-  pilotParams.pilotScript = os.path.realpath(sys.argv[0])
-  pilotParams.pilotScriptName = os.path.basename(pilotParams.pilotScript)
-  log.debug('PARAMETER [%s]' % ', '.join(map(str, pilotParams.optList)))
-
-  if pilotParams.commandExtensions:
-    log.info("Requested command extensions: %s" % str(pilotParams.commandExtensions))
-
-  log.info("Executing commands: %s" % str(pilotParams.commands))
-
-  for commandName in pilotParams.commands:
-    command, module = getCommand(pilotParams, commandName, log)
-    if command is not None:
-      log.info("Command %s instantiated from %s" % (commandName, module))
-      command.execute()
+    pilotParams = PilotParams()
+    if pilotParams.debugFlag:
+        log.setDebug()
+    if pilotParams.keepPythonPath:
+        pythonPathCheck()
     else:
-      log.error("Command %s could not be instantiated" % commandName)
-      sys.exit(-1)
+        log.info("Clearing PYTHONPATH for child processes.")
+        if "PYTHONPATH" in os.environ:
+            os.environ["PYTHONPATH_SAVE"] = os.environ["PYTHONPATH"]
+            os.environ["PYTHONPATH"] = ""
+
+    pilotParams.pilotStartTime = pilotStartTime
+    pilotParams.pilotRootPath = os.getcwd()
+    pilotParams.pilotScript = os.path.realpath(sys.argv[0])
+    pilotParams.pilotScriptName = os.path.basename(pilotParams.pilotScript)
+    log.debug("PARAMETER [%s]" % ", ".join(map(str, pilotParams.optList)))
+
+    if pilotParams.commandExtensions:
+        log.info("Requested command extensions: %s" % str(pilotParams.commandExtensions))
+
+    log.info("Executing commands: %s" % str(pilotParams.commands))
+
+    for commandName in pilotParams.commands:
+        command, module = getCommand(pilotParams, commandName, log)
+        if command is not None:
+            log.info("Command %s instantiated from %s" % (commandName, module))
+            command.execute()
+        else:
+            log.error("Command %s could not be instantiated" % commandName)
+            sys.exit(-1)
