@@ -278,6 +278,22 @@ class InstallDIRAC(CommandBase):
             if os.path.exists(installerName):
                 os.remove(installerName)
 
+        # is there some user-defined environment variable to add? then add them to diracosrc
+        if self.pp.userEnvVariables:
+            userEnvVariables = dict(
+                zip(
+                    [name.split(":::")[0] for name in self.pp.userEnvVariables.replace(" ", "").split(",")],
+                    [value.split(":::")[1] for value in self.pp.userEnvVariables.replace(" ", "").split(",")],
+                )
+            )
+            lines = []
+            lines.extend(["# User-requested variables"])
+            for envName, envValue in userEnvVariables.items():
+                lines.extend(["export %s=%s" % (envName, envValue)])
+            lines.append("")
+            with open("diracos/diracosrc", "a") as diracosrc:
+                diracosrc.write("\n".join(lines))
+
         # 6. source diracos/diracosrc then add its content to installEnv
         retCode, output = self.executeAndGetOutput('bash -c "source diracos/diracosrc && env"', self.pp.installEnv)
         if retCode:
@@ -468,7 +484,9 @@ class CheckCECapabilities(CommandBase):
 
         self.pp.queueParameters = resourceDict
         for queueParamName, queueParamValue in self.pp.queueParameters.items():
-            self.cfg.append('-o "/LocalSite/%s=%s "' % (queueParamName, queueParamValue))
+            if isinstance(queueParamValue, list):  # for the tags
+                queueParamValue = ','.join([str(qpv).strip() for qpv in queueParamValue])
+            self.cfg.append("-o /LocalSite/%s=%s" % (queueParamName, queueParamValue))
 
         # Pick up all the relevant resource parameters that will be used in the job matching
         if "WholeNode" in resourceDict:
