@@ -308,27 +308,41 @@ class InstallDIRAC(CommandBase):
             except (IndexError, ValueError):
                 continue
 
-        # 7. pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
+        # 7. pip install DIRAC[pilot]
 
-        if not self.releaseVersion or self.releaseVersion in ["master", "main", "integration"]:
-            cmd = "pip install %sDIRAC[pilot]" % self.pp.releaseProject
-        else:
-            cmd = "pip install %sDIRAC[pilot]==%s" % (self.pp.releaseProject, self.releaseVersion)
-        retCode, output = self.executeAndGetOutput(cmd, self.pp.installEnv)
-        if retCode:
-            self.log.error("Could not pip install %s [ERROR %d]" % (self.releaseVersion, retCode))
-            self.exitWithError(retCode)
-
-        if self.pp.modules:  # possibly overwrite
-            # https://github.com/$DIRAC_test_repo/DIRAC.git:::DIRAC:::$DIRAC_test_branch
+        if self.pp.modules:  # do not take from PyPi
             for modules in self.pp.modules.split(","):
-                url, project, branch = modules.split(":::")
-                # git+https://github.com/fstagni/DIRAC.git@v7r2-fixes33#egg=DIRAC[pilot]
-                pipInstalling = "pip install git+%s@%s#egg=%s[pilot]" % (url, branch, project)
+                branch = project = ""
+                elements = modules.split(":::")
+                if len(elements) == 3:
+                    # e.g.: https://github.com/$DIRAC_test_repo/DIRAC.git:::DIRAC:::$DIRAC_test_branch
+                    url, project, branch = elements
+                elif len(elements) == 1:
+                    url = elements[0]
+                pipInstalling = "pip install "
+                if url.endswith(".git"):
+                    pipInstalling += "git+"
+                pipInstalling += url
+                if branch and project:
+                    # e.g. git+https://github.com/fstagni/DIRAC.git@v7r2-fixes33#egg=DIRAC[pilot]
+                    pipInstalling += "@%s#egg=%s" % (branch, project)
+                pipInstalling += "[pilot]"
+
+                # pipInstalling = "pip install %s%s@%s#egg=%s[pilot]" % (prefix, url, branch, project)
                 retCode, output = self.executeAndGetOutput(pipInstalling, self.pp.installEnv)
                 if retCode:
                     self.log.error("Could not %s [ERROR %d]" % (pipInstalling, retCode))
                     self.exitWithError(retCode)
+        else:
+            # pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
+            if not self.releaseVersion or self.releaseVersion in ["master", "main", "integration"]:
+                cmd = "pip install %sDIRAC[pilot]" % self.pp.releaseProject
+            else:
+                cmd = "pip install %sDIRAC[pilot]==%s" % (self.pp.releaseProject, self.releaseVersion)
+            retCode, output = self.executeAndGetOutput(cmd, self.pp.installEnv)
+            if retCode:
+                self.log.error("Could not pip install %s [ERROR %d]" % (self.releaseVersion, retCode))
+                self.exitWithError(retCode)
 
     def execute(self):
         """What is called all the time"""
