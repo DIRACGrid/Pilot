@@ -30,23 +30,23 @@ jobs:
         conda activate python_${{ matrix.python }}
         conda install pytest pytest-mock pylint autopep8 docopt mock requests pip
 
-        if [[ "${{ matrix.python }}" == "3.6.8" ]]
+        if [[ "${{ matrix.python }}" == "2.7.13" ]]
         then
-            pip install stomp.py
-        else
             pip install caniusepython3 stomp.py
+        else
+            pip install stomp.py
         fi
     - name: Run tests
       run: |
-        if [[ "${{ matrix.python }}" == "3.6.8" ]] && [[ "${{ matrix.command }}" == "CHECK=pylintPY3K ./runPylint.sh" ]]
+        if [[ "${{ matrix.python }}" == "2.7.13" ]] && [[ "${{ matrix.command }}" == "CHECK=pylintPY3K ./runPylint.sh" ]]
         then
-            echo "skipped"
-        else
             source "${CONDA}/bin/activate"
             conda activate python_${{ matrix.python }}
             set -euxo pipefail
             export PYTHONPATH=${PWD%/*}
             ${{ matrix.command }}
+        else
+            echo "skipped"
         fi
 
   shellcheck:
