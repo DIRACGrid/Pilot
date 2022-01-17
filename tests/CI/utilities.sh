@@ -16,12 +16,11 @@ source "$TESTCODE/DIRAC/tests/Jenkins/utilities.sh"
 prepareForPilot(){
   echo '==> [prepareForPilot]'
 
-  #get the pilot files from the Pilot, including dirac-install.py
-  for file in PilotLogger.py PilotLoggerTools.py dirac-pilot.py pilotCommands.py pilotTools.py MessageSender.py dirac-install.py
+  #get the pilot files from the Pilot
+  for file in PilotLogger.py PilotLoggerTools.py dirac-pilot.py pilotCommands.py pilotTools.py MessageSender.py
   do
     cp "$TESTCODE/Pilot/Pilot/${file}" .
   done
-  chmod +x dirac-install.py
 
   #get possible extensions
   if [[ "$VO" ]]; then

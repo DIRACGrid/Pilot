@@ -92,7 +92,8 @@
     "jenkins-singularity.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
       "GridCEType": "TEST",
-      "LocalCEType": "Singularity"
+      "LocalCEType": "Singularity",
+      "InstallDIRACInContainer": "True"
     },
     "jenkins-singularity-full.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
