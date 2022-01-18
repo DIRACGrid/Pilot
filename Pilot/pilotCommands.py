@@ -41,6 +41,11 @@ except ImportError:
     from httplib import HTTPSConnection
 
 try:
+    from shlex import quote
+except ImportError:
+    from pipes import quote
+
+try:
     from Pilot.pilotTools import CommandBase, retrieveUrlTimeout
 except ImportError:
     from pilotTools import CommandBase, retrieveUrlTimeout
@@ -486,7 +491,7 @@ class CheckCECapabilities(CommandBase):
         for queueParamName, queueParamValue in self.pp.queueParameters.items():
             if isinstance(queueParamValue, list):  # for the tags
                 queueParamValue = ','.join([str(qpv).strip() for qpv in queueParamValue])
-            self.cfg.append("-o /LocalSite/%s=%s" % (queueParamName, queueParamValue))
+            self.cfg.append("-o /LocalSite/%s=%s" % (queueParamName, quote(queueParamValue)))
 
         # Pick up all the relevant resource parameters that will be used in the job matching
         if "WholeNode" in resourceDict:
