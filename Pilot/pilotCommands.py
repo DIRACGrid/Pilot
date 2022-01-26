@@ -29,6 +29,7 @@ import time
 import stat
 import socket
 import filecmp
+from collections import Counter
 from distutils.version import LooseVersion
 
 ############################
@@ -93,15 +94,17 @@ class CheckWorkerNode(CommandBase):
         if os.path.exists(fileName):
             with open(fileName, "r") as f:
                 cpu = f.readlines()
-            nCPU = 0
-            freq = 0
+            models = Counter()
+            freqs = Counter()
             for line in cpu:
                 if line.find("cpu MHz") == 0:
-                    nCPU += 1
-                    freq = line.split()[3]
+                    freqs[line.split()[3]] += 1
                 elif line.find("model name") == 0:
-                    self.log.info("CPU (model)    = %s" % line.split(": ")[1].strip())
-            self.log.info("CPU (MHz)      = %s x %s" % (nCPU, freq))
+                    models[line.split(": ")[1].strip()] += 1
+            for model, count in models.items():
+                self.log.info("CPU (model)    = %s x %s" % (count, model))
+            for freq, count in freqs.items():
+                self.log.info("CPU (MHz)      = %s x %s" % (count, freq))
 
         fileName = "/proc/meminfo"
         if os.path.exists(fileName):
