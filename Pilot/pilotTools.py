@@ -593,7 +593,6 @@ class PilotParams(object):
             ("R:", "reference=", "Use this pilot reference"),
             ("S:", "setup=", "DIRAC Setup to use"),
             ("T:", "CPUTime=", "Requested CPU Time"),
-            ("U", "Upload", "Upload compiled distribution (if built)"),
             ("V:", "installation=", "Installation configuration file"),
             ("W:", "gateway=", "Configure <gateway> as DIRAC Gateway during installation"),
             ("X:", "commands=", "Pilot commands to execute"),
