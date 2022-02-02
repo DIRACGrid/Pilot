@@ -318,7 +318,7 @@ class InstallDIRAC(CommandBase):
                 continue
 
         # 7. pip install DIRAC[pilot]
-        pipInstalling = "pip install %s " % self.pipInstallOptions
+        pipInstalling = "pip install %s " % self.pp.pipInstallOptions
 
         if self.pp.modules:  # install a non-released (on pypi) version
             for modules in self.pp.modules.split(","):
