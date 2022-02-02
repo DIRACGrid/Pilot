@@ -263,8 +263,9 @@ class InstallDIRAC(CommandBase):
 
         # 2. Try to install from CVMFS
 
-        installer = "/cvmfs/dirac.egi.eu/installSource/%s" % installerName
-        retCode, _ = self.executeAndGetOutput("bash %s" % installer, self.pp.installEnv)
+        retCode, _ = self.executeAndGetOutput(
+            "bash /cvmfs/dirac.egi.eu/installSource/%s" % installerName, self.pp.installEnv
+        )
         if retCode:
             self.log.warn("Could not install DIRACOS from CVMFS [ERROR %d]" % retCode)
 
@@ -317,8 +318,9 @@ class InstallDIRAC(CommandBase):
                 continue
 
         # 7. pip install DIRAC[pilot]
+        pipInstalling = "pip install %s " % self.pp.pipInstallOptions
 
-        if self.pp.modules:  # do not take from PyPi
+        if self.pp.modules:  # install a non-released (on pypi) version
             for modules in self.pp.modules.split(","):
                 branch = project = ""
                 elements = modules.split(":::")
@@ -327,7 +329,6 @@ class InstallDIRAC(CommandBase):
                     url, project, branch = elements
                 elif len(elements) == 1:
                     url = elements[0]
-                pipInstalling = "pip install "
                 if url.endswith(".git"):
                     pipInstalling += "git+"
                 pipInstalling += url
@@ -344,9 +345,9 @@ class InstallDIRAC(CommandBase):
         else:
             # pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
             if not self.releaseVersion or self.releaseVersion in ["master", "main", "integration"]:
-                cmd = "pip install %sDIRAC[pilot]" % self.pp.releaseProject
+                cmd = "%s %sDIRAC[pilot]" % (pipInstalling, self.pp.releaseProject)
             else:
-                cmd = "pip install %sDIRAC[pilot]==%s" % (self.pp.releaseProject, self.releaseVersion)
+                cmd = "%s %sDIRAC[pilot]==%s" % (pipInstalling, self.pp.releaseProject, self.releaseVersion)
             retCode, output = self.executeAndGetOutput(cmd, self.pp.installEnv)
             if retCode:
                 self.log.error("Could not pip install %s [ERROR %d]" % (self.releaseVersion, retCode))
@@ -507,7 +508,7 @@ class CheckCECapabilities(CommandBase):
         self.pp.queueParameters = resourceDict
         for queueParamName, queueParamValue in self.pp.queueParameters.items():
             if isinstance(queueParamValue, list):  # for the tags
-                queueParamValue = ','.join([str(qpv).strip() for qpv in queueParamValue])
+                queueParamValue = ",".join([str(qpv).strip() for qpv in queueParamValue])
             self.cfg.append("-o /LocalSite/%s=%s" % (queueParamName, quote(queueParamValue)))
 
         # Pick up all the relevant resource parameters that will be used in the job matching

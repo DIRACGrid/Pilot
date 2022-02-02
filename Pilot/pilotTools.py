@@ -536,6 +536,7 @@ class PilotParams(object):
         self.pilotLogging = False
         self.modules = ""  # see dirac-install "-m" option documentation
         self.userEnvVariables = ""  # see dirac-install "--userEnvVariables" option documentation
+        self.pipInstallOptions = ""
 
         # Parameters that can be determined at runtime only
         self.queueParameters = {}  # from CE description
@@ -566,6 +567,7 @@ class PilotParams(object):
                 "userEnvVariables=",
                 'User-requested environment variables (comma-separated, name and value separated by ":::")',
             ),
+            ("", "pipInstallOptions=", "Options to pip install"),
             ("r:", "release=", "DIRAC release to install"),
             ("s:", "section=", "Set base section for relative parsed options"),
             ("t:", "tag=", "extra tags for resource description"),
@@ -591,7 +593,6 @@ class PilotParams(object):
             ("R:", "reference=", "Use this pilot reference"),
             ("S:", "setup=", "DIRAC Setup to use"),
             ("T:", "CPUTime=", "Requested CPU Time"),
-            ("U", "Upload", "Upload compiled distribution (if built)"),
             ("V:", "installation=", "Installation configuration file"),
             ("W:", "gateway=", "Configure <gateway> as DIRAC Gateway during installation"),
             ("X:", "commands=", "Pilot commands to execute"),
@@ -722,6 +723,8 @@ class PilotParams(object):
                 self.modules = v
             elif o == "--userEnvVariables":
                 self.userEnvVariables = v
+            elif o == "--pipInstallOptions":
+                self.pipInstallOptions = v
             elif o == "--pythonVersion":
                 self.pythonVersion = v
             elif o == "--defaultsURL":
