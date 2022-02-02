@@ -12,7 +12,7 @@ properties([parameters([string(name: 'projectVersion', defaultValue: '8.0.0a14',
                         string(name: 'DIRAC_test_branch', defaultValue: 'integration', description: 'The DIRAC branch to use for getting the test code'),
                         string(name: 'JENKINS_CE', defaultValue: 'jenkins.cern.ch', description: 'The CE definition to use (of DIRAC.Jenkins.ch, see CS for others)'),
                         string(name: 'modules', defaultValue: '', description: 'to override what is installed, e.g. with https://github.com/$DIRAC_test_repo/DIRAC.git:::DIRAC:::$DIRAC_test_branch'),
-                        string(name: 'pip_install_options', defaultValue: '', description: 'options to pip install (e.g. --index-url https://lhcb-repository.web.cern.ch/repository/pypi/simple)'),
+                        string(name: 'pip_install_options', defaultValue: '', description: 'options to pip install (e.g. --index-url=https://lhcb-repository.web.cern.ch/repository/pypi/simple)'),
                         string(name: 'pilot_options', defaultValue: '--pythonVersion=3', description: 'any pilot option, e.g. --pythonVersion=2'),
                         string(name: 'CSURL', defaultValue: 'https://lbcertifdirac70.cern.ch:9135/Configuration/Server', description: 'URL for CS'),
                         string(name: 'DIRACSETUP', defaultValue: 'DIRAC-Certification', description: 'DIRAC setup')

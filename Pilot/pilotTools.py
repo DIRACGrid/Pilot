@@ -567,7 +567,7 @@ class PilotParams(object):
                 "userEnvVariables=",
                 'User-requested environment variables (comma-separated, name and value separated by ":::")',
             ),
-            ("", "pipInstallOptions=", "Options to pip install")
+            ("", "pipInstallOptions=", "Options to pip install"),
             ("r:", "release=", "DIRAC release to install"),
             ("s:", "section=", "Set base section for relative parsed options"),
             ("t:", "tag=", "extra tags for resource description"),

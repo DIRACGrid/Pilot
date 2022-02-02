@@ -99,11 +99,11 @@ PilotInstall(){
   fi
   # shellcheck disable=SC2154
   if [[ "${modules}" ]]; then
-    pilotOptions+=" --modules=""${modules}"
+    pilotOptions+=" --modules=${modules}"
   fi
   # shellcheck disable=SC2154
   if [[ "${pip_install_options}" ]]; then
-    pilotOptions+=" --pipInstallOptions=""${pip_install_options}"
+    pilotOptions+=" --pipInstallOptions=${pip_install_options}"
   fi
   pilotOptions+=" --debug"
 
