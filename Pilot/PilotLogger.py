@@ -108,7 +108,8 @@ class PilotLogger(object):
           localOutputFile(str): Name of the file that can be used to store the log messages locally.
           fileWithUUID(str): Name of the file used to store the Pilot identifier.
         """
-        logging.debug("In init of PilotLogger")
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.debug("In init of PilotLogger")
         self.STATUSES = PilotLogger.STATUSES
 
         self.params = addMissingConfiguration(
@@ -122,14 +123,20 @@ class PilotLogger(object):
 
         fileWithID = self.params["FileWithID"]
         if os.path.isfile(fileWithID):
-            logging.warning("The file: " + fileWithID + " already exists. The content will be used to get UUID.")
+            self.logger.warning(
+                "The file: "
+                + fileWithID
+                + " already exists. The content will be used to get UUID."
+            )
         else:
             result = getUniqueIDAndSaveToFile(filename=fileWithID)
             if not result:
-                logging.error("Error while generating pilot logger id.")
-        self.messageSender = messageSenderFactory(senderType=self.params["LoggingType"], params=self.params)
+                self.logger.error("Error while generating pilot logger id.")
+        self.messageSender = messageSenderFactory(
+            senderType=self.params["LoggingType"], params=self.params
+        )
         if not self.messageSender:
-            logging.error("Something went wrong - no messageSender created.")
+            self.logger.error("Something went wrong - no messageSender created.")
 
     def _isCorrectStatus(self, status):
         """Checks if the flag corresponds to one of the predefined
@@ -137,25 +144,49 @@ class PilotLogger(object):
         """
         return status in self.STATUSES
 
-    def sendMessage(self, messageContent, source="unspecified", phase="unspecified", status="info"):
-        """Sends the message after
-            creating the correct format:
-            including content, timestamp, status, source, phase and the uuid
-            of the pilot.
-        Returns:
-          bool: False in case of any errors, True otherwise
+    def sendMessage(
+        self, messageContent, source="unspecified", phase="unspecified", status="info"
+    ):
         """
-        logging.debug("In sendMessage of PilotLogger")
+        Sends a message after creating the correct JSON format including content, timestamp, status,
+        source, phase and the UUID of the pilot.
+
+        :param messageContent: actual human-readable message
+        :type messageContent: str
+        :param source: source of the message (unused)
+        :type source: str
+        :param phase: phase of the pilot (unused)
+        :type phase: str
+        :param status: message status( level)
+        :type status: str
+        :return: false in case of any errors, True otherwise
+        :rtype: bool
+        """
+
         if not self._isCorrectStatus(status):
-            logging.error("status: " + str(status) + " is not correct")
+            self.logger.error("status: %s is not correct", str(status))
             return False
         myUUID = getPilotUUIDFromFile(self.params["FileWithID"])
-        message = generateDict(myUUID, generateTimeStamp(), source, phase, status, messageContent)
+        message = generateDict(
+            myUUID, generateTimeStamp(), source, phase, status, messageContent
+        )
         if not isMessageFormatCorrect(message):
-            logging.warning("Message format is not correct.")
+            self.logger.warning("Message format is not correct.")
             return False
+        self.logger.debug("sendMessage: %s ", message)
         encodedMsg = encodeMessage(message)
         return self.messageSender.sendMessage(encodedMsg, flag=status)
+
+    def finaliseLogs(self):
+        """
+        Finalise logs. For the REST logger trigger a 'os.rename file file.log' command to indicate that
+        the target file is final (not necessarily complete in case when errors in pilot commands execution occur).
+
+        :return: True if successful  of False
+        :rtype:  bool
+        """
+        myUUID = getPilotUUIDFromFile(self.params["FileWithID"])
+        return self.messageSender.finaliseLogs(myUUID)
 
 
 def main():
@@ -202,12 +233,18 @@ def main():
         nargs="?",
         choices=PilotLogger.STATUSES,
         default="info",
-        help="Allowed values are: " + ", ".join(PilotLogger.STATUSES) + '. If not specified it is set to "info".',
+        help="Allowed values are: "
+        + ", ".join(PilotLogger.STATUSES)
+        + '. If not specified it is set to "info".',
         metavar="status ",
     )
-    parser.add_argument("message", nargs="+", help="Human readable content of the message. ")
     parser.add_argument(
-        "--output", help="Log the content to the specified file" + " instead of sending it to the Message Queue server."
+        "message", nargs="+", help="Human readable content of the message. "
+    )
+    parser.add_argument(
+        "--output",
+        help="Log the content to the specified file"
+        + " instead of sending it to the Message Queue server.",
     )
     args = parser.parse_args()
 
@@ -217,7 +254,12 @@ def main():
         logger = PilotLogger(localOutputFile=args.output)
     else:
         logger = PilotLogger()
-    logger.sendMessage(messageContent=" ".join(args.message), source=args.source, phase=args.phase, status=args.status)
+    logger.sendMessage(
+        messageContent=" ".join(args.message),
+        source=args.source,
+        phase=args.phase,
+        status=args.status,
+    )
 
 
 if __name__ == "__main__":

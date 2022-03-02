@@ -60,7 +60,9 @@ if __name__ == "__main__":
     log.debug("PARAMETER [%s]" % ", ".join(map(str, pilotParams.optList)))
 
     if pilotParams.commandExtensions:
-        log.info("Requested command extensions: %s" % str(pilotParams.commandExtensions))
+        log.info(
+            "Requested command extensions: %s" % str(pilotParams.commandExtensions)
+        )
 
     log.info("Executing commands: %s" % str(pilotParams.commands))
 

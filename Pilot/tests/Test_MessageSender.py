@@ -9,7 +9,13 @@ import sys
 import unittest
 import os
 from mock import MagicMock
-from Pilot.MessageSender import LocalFileSender, StompSender, RESTSender, eraseFileContent, loadAndCreateObject
+from Pilot.MessageSender import (
+    LocalFileSender,
+    StompSender,
+    RESTSender,
+    eraseFileContent,
+    loadAndCreateObject,
+)
 import Pilot.MessageSender as module
 
 ############################
@@ -52,11 +58,15 @@ class TestLoadAndCreateObject(unittest.TestCase):
         pass
 
     def test_success(self):
-        res = loadAndCreateObject("Pilot.MessageSender", "LocalFileSender", {"LocalOutputFile": "blabla"})
+        res = loadAndCreateObject(
+            "Pilot.MessageSender", "LocalFileSender", {"LocalOutputFile": "blabla"}
+        )
         self.assertTrue(res)
 
     def test_fail(self):
-        self.assertRaises(ModuleNotFoundError, loadAndCreateObject, "Bla.Bla", "NonExistingClass", "")
+        self.assertRaises(
+            ModuleNotFoundError, loadAndCreateObject, "Bla.Bla", "NonExistingClass", ""
+        )
 
 
 class TestLocalFileSender(unittest.TestCase):
@@ -116,17 +126,10 @@ class TestRESTSender(unittest.TestCase):
     def setUp(self):
         self.testFile = "myFile"
         self.testMessage = "my test message"
-        module.requests = MagicMock()
-        module.requests.post = MagicMock()
+        module.urlopen = MagicMock()
 
     def test_success(self):
-        params = {
-            "HostKey": "key",
-            "HostCertificate": "cert",
-            "CACertificate": "caCert",
-            "Url": "https://some.host.ch/messages",
-            "LocalOutputFile": self.testFile,
-        }
+        params = {"Host": "https://some.host.ch/messages", "Port": 8444}
         msgSender = RESTSender(params)
         res = msgSender.sendMessage(self.testMessage, "info")
         self.assertTrue(res)
@@ -139,6 +142,10 @@ if __name__ == "__main__":
     suite = unittest.defaultTestLoader.loadTestsFromTestCase(TestLocalFileSender)
     suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestStompSender))
     suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestRESTSender))
-    suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestMessageSenderEraseFileContent))
+    suite.addTest(
+        unittest.defaultTestLoader.loadTestsFromTestCase(
+            TestMessageSenderEraseFileContent
+        )
+    )
     testResult = unittest.TextTestRunner(verbosity=2).run(suite)
     sys.exit(not testResult.wasSuccessful())
