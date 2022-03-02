@@ -18,10 +18,9 @@ from __future__ import absolute_import
 
 import logging
 
-try:
-    import requests
-except ImportError:
-    requests = None
+import json
+import os
+
 try:
     import stomp
 except ImportError:
@@ -33,7 +32,20 @@ try:
     import Queue as queue
 except ImportError:
     import queue
-############################
+
+
+try:
+    from urlparse import urlunsplit
+except:
+    from urllib.parse import urlunsplit
+try:
+    from urllib2 import urlopen
+    from urllib import urlencode
+except:
+    from urllib.request import urlopen
+    from urllib.parse import urlencode
+
+import ssl
 
 
 def loadAndCreateObject(moduleName, className, params):
@@ -73,6 +85,10 @@ class MessageSender(object):
     """General interface of message sender."""
 
     def sendMessage(self, msg, flag):
+        """Must be implemented by children classes."""
+        raise NotImplementedError
+
+    def finaliseLogs(self, myUUID):
         """Must be implemented by children classes."""
         raise NotImplementedError
 
@@ -144,52 +160,97 @@ def createParamChecker(requiredKeys):
 
 
 class RESTSender(MessageSender):
-    """Message sender to a REST interface.
-    It depends on requests module.
+    """
+     Message sender to a REST interface.
     """
 
-    REQUIRED_KEYS = [
-        "HostKey",
-        "HostCertificate",
-        "CACertificate",
-        "Url",
-        "LocalOutputFile",
-    ]
+    REQUIRED_KEYS = ["Port", "Host"]
 
     def __init__(self, params):
         """
         Raises:
           ValueError: If params are not correct
         """
-        logging.debug("in init of RESTSender")
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.debug("in init of RESTSender")
         self._areParamsCorrect = createParamChecker(self.REQUIRED_KEYS)
         self.params = params
         if not self._areParamsCorrect(self.params):
-            logging.error(
+            self.logger.error(
                 "Parameters missing needed to send messages! Parameters:%s",
                 str(self.params),
             )
             raise ValueError("Parameters missing needed to send messages")
 
     def sendMessage(self, msg, flag):
-        url = self.params.get("Url")
-        hostKey = self.params.get("HostKey")
-        hostCertificate = self.params.get("HostCertificate")
+        """
+        Send JSON encoded message.
+
+        :param msg: JSON encoded python dict
+        :type msg: str
+        :param flag: an optional flag
+        :type flag: str
+        :return: True or False
+        :rtype: bool
+        """
+        return self.invokeRemoteMethod("sendMessage", msg, flag)
+
+    def finaliseLogs(self, myUUID):
+        """
+        Send pilot UUID (log file name) to the server. The server will mark a file as ready to
+        be moved to a final location. A file might not be complete in a case when a pilot command
+        exits with a code !=0, but it will still be saved.
+
+        :param myUUID: pilot UUID (== temporary log file name)
+        :type myUUID: string
+        :return: True or False
+        :rtype: bool
+        """
+        payload = json.dumps(myUUID)
+        return self.invokeRemoteMethod("finaliseLogs", payload)
+
+    def invokeRemoteMethod(self, method, msg, flag=None):
+        """
+        Invoke a remote method using REST interface.
+
+        :param method: method name
+        :type method: str
+        :param msg: paylod (JSON encoded)
+        :type msg: str
+        :param flag: an optional flag
+        :type flag: str
+        :return: True on success or False
+        :rtype: bool
+        """
+
+        # url might look like this: 'https://diractest.grid.hep.ph.ic.ac.uk:8444/WorkloadManagement/TornadoPilotLogging'
+        host = self.params.get("Host")
+        port = self.params.get("Port")
+        netloc = ":".join((host, port))
+        scheme = self.params.get("Scheme", "https")
+        path = self.params.get("Path", "WorkloadManagement/TornadoPilotLogging")
+
+        # hostKey = self.params.get('HostKey')
+        # hostCertificate = self.params.get('HostCertificate')
         CACertificate = self.params.get("CACertificate")
 
-        logging.debug("sending message from the REST Sender")
+        self.logger.debug("Sending message from the REST Sender %s", str(msg))
         try:
-            requests.post(
-                url,  # pylint: disable=undefined-variable
-                json=msg,
-                cert=(hostCertificate, hostKey),
-                verify=CACertificate,
-            )
-        except (
-            requests.exceptions.RequestException,
-            IOError,
-        ) as e:  # pylint: disable=undefined-variable
-            logging.error(e)
+            # msg already encoded in json format
+            # need to pass a single argument, as a json representation of a tuple:
+            data = urlencode({"method": method, "args": json.dumps((msg,))})
+            proxyLocation = os.environ.get("X509_USER_PROXY")
+            caCertPath = os.environ.get("X509_CERT_DIR")
+            context = ssl.create_default_context()
+            context.load_verify_locations(capath=caCertPath)
+            context.load_cert_chain(proxyLocation)
+            url = urlunsplit((scheme, netloc, path, "", ""))
+            res = urlopen(url, data, context=context)
+            if res:
+                result = res.read()
+                self.logger.debug("Server response: %s ", str(result))
+        except (IOError) as e:  # pylint: disable=undefined-variable
+            self.logger.error(str(e))
             return False
         return True
 
