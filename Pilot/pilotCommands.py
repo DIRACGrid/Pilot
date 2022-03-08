@@ -29,6 +29,7 @@ import time
 import stat
 import socket
 import filecmp
+import shutil
 from collections import Counter
 from distutils.version import LooseVersion
 
@@ -263,6 +264,9 @@ class InstallDIRAC(CommandBase):
 
         # 2. Try to install from CVMFS
 
+        if os.path.exists("diracos"):
+            shutil.rmtree("diracos")
+
         retCode, _ = self.executeAndGetOutput(
             "bash /cvmfs/dirac.egi.eu/installSource/%s 2>&1" % installerName, self.pp.installEnv
         )
@@ -276,6 +280,9 @@ class InstallDIRAC(CommandBase):
                 self.log,
             ):
                 self.exitWithError(1)
+
+            if os.path.exists("diracos"):
+                shutil.rmtree("diracos")
 
             # 4. bash DIRACOS-Linux-$(uname -m).sh
             retCode, _ = self.executeAndGetOutput("bash %s 2>&1" % installerName, self.pp.installEnv)
