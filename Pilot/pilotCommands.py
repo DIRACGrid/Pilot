@@ -264,7 +264,7 @@ class InstallDIRAC(CommandBase):
         # 2. Try to install from CVMFS
 
         retCode, _ = self.executeAndGetOutput(
-            "bash /cvmfs/dirac.egi.eu/installSource/%s" % installerName, self.pp.installEnv
+            "bash /cvmfs/dirac.egi.eu/installSource/%s 2>&1" % installerName, self.pp.installEnv
         )
         if retCode:
             self.log.warn("Could not install DIRACOS from CVMFS [ERROR %d]" % retCode)
@@ -278,7 +278,7 @@ class InstallDIRAC(CommandBase):
                 self.exitWithError(1)
 
             # 4. bash DIRACOS-Linux-$(uname -m).sh
-            retCode, _ = self.executeAndGetOutput("bash %s" % installerName, self.pp.installEnv)
+            retCode, _ = self.executeAndGetOutput("bash %s 2>&1" % installerName, self.pp.installEnv)
             if retCode:
                 self.log.error("Could not install DIRACOS [ERROR %d]" % retCode)
                 self.exitWithError(retCode)
