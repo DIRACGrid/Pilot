@@ -893,11 +893,24 @@ class ConfigureCPURequirements(CommandBase):
             else:
                 configFileArg = "%s -R %s %s" % (configFileArg, self.pp.localConfigFile, self.pp.localConfigFile)
         retCode, cpuNormalizationFactorOutput = self.executeAndGetOutput(
-            "dirac-wms-cpu-normalization -U %s -d" % configFileArg, self.pp.installEnv
+            "dirac-wms-cpu-normalization --NumberOfProcessors=%d -U %s -d" % (self.pp.pilotProcessors, configFileArg),
+            self.pp.installEnv
         )
         if retCode:
-            self.log.error("Failed to determine cpu normalization [ERROR %d]" % retCode)
-            self.exitWithError(retCode)
+            # Probably failed because NumberOfProcessors was not recognized: tried a last time without the argument.
+            retCode, cpuNormalizationFactorOutput = self.executeAndGetOutput(
+                "dirac-wms-cpu-normalization -U %s -d" % configFileArg,
+                self.pp.installEnv
+            )
+            if retCode:
+                self.log.error("Failed to determine cpu normalization [ERROR %d]" % retCode)
+                self.exitWithError(retCode)
+
+            if int(self.pp.pilotProcessors) > 1:
+                self.log.warning(
+                    "Normalized CPU computed might be higher than expected: NumberOfProcessors option was not recognized."
+                )
+
         # HS06 benchmark
         for line in cpuNormalizationFactorOutput.split("\n"):
             if "Estimated CPU power is" in line:
