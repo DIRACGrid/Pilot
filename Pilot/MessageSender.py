@@ -198,7 +198,7 @@ class RESTSender(MessageSender):
     def finaliseLogs(self, myUUID):
         """
         Send pilot UUID (log file name) to the server. The server will mark a file as ready to
-        be moved to a final location. A file might not be complete in a case when a pilot command
+        be moved to the final location. The file might not be complete in the case when a pilot command
         exits with a code !=0, but it will still be saved.
 
         :param myUUID: pilot UUID (== temporary log file name)
