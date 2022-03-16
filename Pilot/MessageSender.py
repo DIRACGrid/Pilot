@@ -36,12 +36,12 @@ except ImportError:
 
 try:
     from urlparse import urlunsplit
-except:
+except ImportError:
     from urllib.parse import urlunsplit
 try:
     from urllib2 import urlopen
     from urllib import urlencode
-except:
+except ImportError:
     from urllib.request import urlopen
     from urllib.parse import urlencode
 

@@ -319,7 +319,8 @@ class InstallDIRAC(CommandBase):
             shutil.rmtree("diracos")
 
         retCode, _ = self.executeAndGetOutput(
-            "bash /cvmfs/dirac.egi.eu/installSource/%s 2>&1" % installerName, self.pp.installEnv
+            "bash /cvmfs/dirac.egi.eu/installSource/%s 2>&1" % installerName,
+            self.pp.installEnv,
         )
         if retCode:
             self.log.warn("Could not install DIRACOS from CVMFS [ERROR %d]" % retCode)
@@ -337,7 +338,9 @@ class InstallDIRAC(CommandBase):
                 shutil.rmtree("diracos")
 
             # 4. bash DIRACOS-Linux-$(uname -m).sh
-            retCode, _ = self.executeAndGetOutput("bash %s 2>&1" % installerName, self.pp.installEnv)
+            retCode, _ = self.executeAndGetOutput(
+                "bash %s 2>&1" % installerName, self.pp.installEnv
+            )
             if retCode:
                 self.log.error("Could not install DIRACOS [ERROR %d]" % retCode)
                 self.exitWithError(retCode)
@@ -488,8 +491,8 @@ class ConfigureBasics(CommandBase):
         super(ConfigureBasics, self).__init__(pilotParams)
         self.cfg = []
 
-   @logFinalizer
-   def execute(self):
+    @logFinalizer
+    def execute(self):
         """What is called all the times.
 
         VOs may want to replace/extend the _getBasicsCFG and _getSecurityCFG functions
