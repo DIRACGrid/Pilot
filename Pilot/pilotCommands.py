@@ -81,7 +81,7 @@ def logFinalizer(func):
                     myUUID = getPilotUUIDFromFile(
                         self.log.pilotLogger.params["FileWithID"]
                     )
-                    self.log.info("Finalising the remote logger for pilot: %s" % myUUID)
+                    self.log.info("Finalising the remote logger for pilot: %s", myUUID)
                     self.log.pilotLogger.finaliseLogs()
                     self.log.info(
                         "messageSender params :%s "
