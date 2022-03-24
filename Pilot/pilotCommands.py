@@ -81,7 +81,7 @@ def logFinalizer(func):
                     myUUID = getPilotUUIDFromFile(
                         self.log.pilotLogger.params["FileWithID"]
                     )
-                    self.log.info("Finalising the remote logger for pilot: %s", myUUID)
+                    self.log.info("Finalising the remote logger for pilot: %s" % myUUID)
                     self.log.pilotLogger.finaliseLogs()
                     self.log.info(
                         "messageSender params :%s "
@@ -114,6 +114,7 @@ class CheckWorkerNode(CommandBase):
         """c'tor"""
         super(CheckWorkerNode, self).__init__(pilotParams)
 
+    @logFinalizer
     def execute(self):
         """Get host and local user info, and other basic checks, e.g. space available"""
 
