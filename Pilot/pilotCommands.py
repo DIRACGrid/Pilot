@@ -114,7 +114,6 @@ class CheckWorkerNode(CommandBase):
         """c'tor"""
         super(CheckWorkerNode, self).__init__(pilotParams)
 
-    @logFinalizer
     def execute(self):
         """Get host and local user info, and other basic checks, e.g. space available"""
 
