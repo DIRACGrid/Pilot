@@ -195,19 +195,20 @@ class RESTSender(MessageSender):
         """
         return self.invokeRemoteMethod("sendMessage", msg, flag)
 
-    def finaliseLogs(self, myUUID):
+    def finaliseLogs(self, payload):
         """
-        Send pilot UUID (log file name) to the server. The server will mark a file as ready to
-        be moved to the final location. The file might not be complete in the case when a pilot command
+        Send pilot UUID to the server. The server will use it to mark log records as finalised.
+        In case of the file cache, the file will be marked as ready to be moved to the final location.
+        The file might not be complete in the case when a pilot command
         exits with a code !=0, but it will still be saved.
 
-        :param myUUID: pilot UUID (== temporary log file name)
-        :type myUUID: string
+        :param payload: containing at least pilot UUID {'pilotUUID': uuid}
+        :type payload: dict
         :return: True or False
         :rtype: bool
         """
-        payload = json.dumps(myUUID)
-        return self.invokeRemoteMethod("finaliseLogs", payload)
+        payloadStr = json.dumps(payload)
+        return self.invokeRemoteMethod("finaliseLogs", payloadStr)
 
     def invokeRemoteMethod(self, method, msg, flag=None):
         """

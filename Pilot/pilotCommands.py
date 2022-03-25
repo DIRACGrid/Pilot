@@ -82,11 +82,11 @@ def logFinalizer(func):
                         self.log.pilotLogger.params["FileWithID"]
                     )
                     self.log.info("Finalising the remote logger for pilot: %s" % myUUID)
-                    self.log.pilotLogger.finaliseLogs()
                     self.log.info(
                         "messageSender params :%s "
                         % self.log.pilotLogger.messageSender.params
                     )
+                    self.log.pilotLogger.finaliseLogs()  # don't log beyond this point.
                 except Exception as exc:
                     self.log.error("Remote logger couldn't be finalised %s " % str(exc))
             raise

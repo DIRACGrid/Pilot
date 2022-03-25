@@ -179,14 +179,14 @@ class PilotLogger(object):
 
     def finaliseLogs(self):
         """
-        Finalise logs. For the REST logger trigger a 'os.rename file file.log' command to indicate that
+        Finalise logs. For the file cache server plugin trigger a 'os.rename file file.log' command to indicate that
         the target file is final (not necessarily complete in case when errors in pilot commands execution occur).
 
-        :return: True if successful  of False
+        :return: True if successful or False otherwise
         :rtype:  bool
         """
         myUUID = getPilotUUIDFromFile(self.params["FileWithID"])
-        return self.messageSender.finaliseLogs(myUUID)
+        return self.messageSender.finaliseLogs({"pilotUUID": myUUID})
 
 
 def main():
