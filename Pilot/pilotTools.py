@@ -17,6 +17,7 @@ import json
 import re
 import signal
 import subprocess
+import select
 from distutils.version import LooseVersion
 
 ############################
@@ -395,18 +396,43 @@ class CommandBase(object):
                 "%s" % cmd, shell=True, env=environDict, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=False
             )
 
-            # standard output
-            outData = _p.stdout.read()
-            # always interpret the output as ascii
-            outData = outData.decode("ascii", "replace")
-            # replace any invalid characters with "?" to avoid having unicode output
-            outData = str(outData.replace(u"\ufffd", "?").strip())
-            # write to stdout for debugging
-            sys.stdout.write(outData + "\n")
+            # simple filter to strip out non-ascii characters
+            def ascii_filter(in_chr):
+                if ord(in_chr) < 128:
+                    return in_chr
+                else:
+                    return ''
 
-            for line in _p.stderr:
-                sys.stderr.write(str(line))
+            outData = ""
+            isRunning = True
+            while isRunning:
+                readfd, _, _ = select.select([_p.stdout, _p.stderr], [], [])
+                if not readfd:
+                    # not sure if this error is possible
+                    break
+                for stream in readfd:
+                    # ignore codepoint splitting problems; not worth it
+                    outChunk = stream.read(1024).decode("ascii", "replace")
+                    outChunk = ''.join(filter(ascii_filter, outChunk))
+                    if not outChunk:
+                        # file has reached EOF, program finished
+                        isRunning = False
+                        # Finish processing FDs in case there is still some
+                        # remaining data on other file handle...
+                        continue
+                    if stream == _p.stderr:
+                        sys.stderr.write(outChunk)
+                        sys.stderr.flush()
+                    else:
+                        sys.stdout.write(outChunk)
+                        sys.stdout.flush()
+                        outData += outChunk
+
+            # Ensure output ends on a newline
+            sys.stdout.write("\n")
+            sys.stdout.flush()
             sys.stderr.write("\n")
+            sys.stderr.flush()
 
             # return code
             returnCode = _p.wait()
