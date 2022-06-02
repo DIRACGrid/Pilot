@@ -310,8 +310,9 @@ class InstallDIRAC(CommandBase):
             with open("diracos/diracosrc", "a") as diracosrc:
                 diracosrc.write("\n".join(lines))
 
-        # 6. source diracos/diracosrc then add its content to installEnv
+        # 6. source diracos/diracosrc then replace the content in installEnv
         retCode, output = self.executeAndGetOutput('bash -c "source diracos/diracosrc && env"', self.pp.installEnv)
+        self.pp.installEnv = {}
         if retCode:
             self.log.error("Could not parse the diracos/diracosrc file [ERROR %d]" % retCode)
             self.exitWithError(retCode)
