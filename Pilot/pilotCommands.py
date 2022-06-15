@@ -797,9 +797,15 @@ class ConfigureSite(CommandBase):
             )
 
         # ARC case
+        # JOBID does not provide the full url in recent versions of ARC
+        # JOBURL has been introduced recently and should be preferred when present
         if "GRID_GLOBAL_JOBID" in os.environ:
             self.pp.flavour = "ARC"
             pilotRef = os.environ["GRID_GLOBAL_JOBID"]
+
+        if "GRID_GLOBAL_JOBURL" in os.environ:
+            self.pp.flavour = "ARC"
+            pilotRef = os.environ["GRID_GLOBAL_JOBURL"]
 
         # # DIRAC specific
 
