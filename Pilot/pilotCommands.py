@@ -507,7 +507,7 @@ class CheckCECapabilities(CommandBase):
         try:
             import json
 
-            resourceDict = json.loads(resourceDict.split("\n")[-1])
+            resourceDict = json.loads(resourceDict.strip().split("\n")[-1])
         except ValueError:
             self.log.error("The pilot command output is not json compatible.")
             sys.exit(1)
