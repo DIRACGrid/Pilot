@@ -578,7 +578,7 @@ class CheckWNCapabilities(CommandBase):
             self.exitWithError(retCode)
 
         try:
-            result = result.split("\n")[-1].split(" ")
+            result = result.strip().split("\n")[-1].split(" ")
             numberOfProcessorsOnWN = int(result[0])
             maxRAM = int(result[1])
             try:
@@ -846,7 +846,7 @@ class ConfigureArchitecture(CommandBase):
         if retCode:
             self.log.error("There was an error updating the platform [ERROR %d]" % retCode)
             self.exitWithError(retCode)
-        self.log.info("Architecture determined: %s" % localArchitecture.split("\n")[-1])
+        self.log.info("Architecture determined: %s" % localArchitecture.strip().split("\n")[-1])
 
         # standard options
         cfg = ["-FDMH"]  # force update, skip CA checks, skip CA download, skip VOMS
@@ -861,7 +861,7 @@ class ConfigureArchitecture(CommandBase):
             cfg.append("-ddd")
 
         # real options added here
-        localArchitecture = localArchitecture.split("\n")[-1].strip()
+        localArchitecture = localArchitecture.strip().split("\n")[-1].strip()
         cfg.append('-S "%s"' % self.pp.setup)
         cfg.append("-o /LocalSite/Architecture=%s" % localArchitecture)
 
