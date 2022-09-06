@@ -310,8 +310,9 @@ class InstallDIRAC(CommandBase):
             with open("diracos/diracosrc", "a") as diracosrc:
                 diracosrc.write("\n".join(lines))
 
-        # 6. source diracos/diracosrc then add its content to installEnv
+        # 6. source diracos/diracosrc then replace the content in installEnv
         retCode, output = self.executeAndGetOutput('bash -c "source diracos/diracosrc && env"', self.pp.installEnv)
+        self.pp.installEnv = {}
         if retCode:
             self.log.error("Could not parse the diracos/diracosrc file [ERROR %d]" % retCode)
             self.exitWithError(retCode)
@@ -796,9 +797,15 @@ class ConfigureSite(CommandBase):
             )
 
         # ARC case
+        # JOBID does not provide the full url in recent versions of ARC
+        # JOBURL has been introduced recently and should be preferred when present
         if "GRID_GLOBAL_JOBID" in os.environ:
             self.pp.flavour = "ARC"
             pilotRef = os.environ["GRID_GLOBAL_JOBID"]
+
+        if "GRID_GLOBAL_JOBURL" in os.environ:
+            self.pp.flavour = "ARC"
+            pilotRef = os.environ["GRID_GLOBAL_JOBURL"]
 
         # # DIRAC specific
 
@@ -984,7 +991,8 @@ class LaunchAgent(CommandBase):
         self.innerCEOpts.append("-o /LocalSite/CPUTime=%s" % (int(self.pp.jobCPUReq)))
         if self.pp.ceType.split("/")[0] == "Pool":
             self.jobAgentOpts = [
-                "-o PollingTime=%s" % min(10, self.pp.pollingTime),
+                "-o MaxCycles=5000",
+                "-o PollingTime=%s" % min(20, self.pp.pollingTime),
                 "-o StopOnApplicationFailure=False",
                 "-o StopAfterFailedMatches=%s" % max(self.pp.pilotProcessors, self.pp.stopAfterFailedMatches),
                 "-o FillingModeFlag=True",
