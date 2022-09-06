@@ -28,13 +28,14 @@ import os
 import sys
 import time
 
+############################
+# python 2 -> 3 "hacks"
+
 try:
     from cStringIO import StringIO
 except ImportError:
     from io import StringIO
 
-############################
-# python 2 -> 3 "hacks"
 try:
     from Pilot.pilotTools import (
         Logger,
