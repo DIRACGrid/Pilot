@@ -77,8 +77,7 @@ def logFinalizer(func):
         except SystemExit as exCode:  # or Exception ?
             pRef = self.pp.pilotReference
             self.log.info(
-                "Flushing the remote logger buffer for pilot on sys.exit(): %s (exit code:%s)"
-                % (pRef, str(exCode))
+                "Flushing the remote logger buffer for pilot on sys.exit(): %s (exit code:%s)" % (pRef, str(exCode))
             )
             raise
         finally:
@@ -117,9 +116,7 @@ class CheckWorkerNode(CommandBase):
         self.log.info("Uname      = %s" % " ".join(os.uname()))
         self.log.info("Host Name  = %s" % socket.gethostname())
         self.log.info("Host FQDN  = %s" % socket.getfqdn())
-        self.log.info(
-            "WorkingDir = %s" % self.pp.workingDir
-        )  # this could be different than rootPath
+        self.log.info("WorkingDir = %s" % self.pp.workingDir)  # this could be different than rootPath
 
         fileName = "/etc/redhat-release"
         if os.path.exists(fileName):
@@ -185,8 +182,7 @@ class CheckWorkerNode(CommandBase):
 
         if diskSpace < self.pp.minDiskSpace:
             self.log.error(
-                "%s MB < %s MB, not enough local disk space available, exiting"
-                % (diskSpace, self.pp.minDiskSpace)
+                "%s MB < %s MB, not enough local disk space available, exiting" % (diskSpace, self.pp.minDiskSpace)
             )
             sys.exit(1)
 
@@ -271,26 +267,20 @@ class InstallDIRAC(CommandBase):
         retCode, _output = self.executeAndGetOutput(installCmd, self.pp.installEnv)
 
         if retCode:
-            self.log.error(
-                "Could not make a proper DIRAC installation [ERROR %d]" % retCode
-            )
+            self.log.error("Could not make a proper DIRAC installation [ERROR %d]" % retCode)
             self.exitWithError(retCode)
         self.log.info("%s completed successfully" % self.installScriptName)
 
         # Parsing the bashrc then adding its content to the installEnv
         # at this point self.pp.installEnv may still coincide with os.environ
-        retCode, output = self.executeAndGetOutput(
-            'bash -c "source bashrc && env"', self.pp.installEnv
-        )
+        retCode, output = self.executeAndGetOutput('bash -c "source bashrc && env"', self.pp.installEnv)
         if retCode:
             self.log.error("Could not parse the bashrc file [ERROR %d]" % retCode)
             self.exitWithError(retCode)
         for line in output.split("\n"):
             try:
                 var, value = [vx.strip() for vx in line.split("=", 1)]
-                if (
-                    var == "_" or "SSH" in var or "{" in value or "}" in value
-                ):  # Avoiding useless/confusing stuff
+                if var == "_" or "SSH" in var or "{" in value or "}" in value:  # Avoiding useless/confusing stuff
                     continue
                 self.pp.installEnv[var] = value
             except (IndexError, ValueError):
@@ -315,16 +305,14 @@ class InstallDIRAC(CommandBase):
             shutil.rmtree("diracos")
 
         retCode, _ = self.executeAndGetOutput(
-            "bash /cvmfs/dirac.egi.eu/installSource/%s 2>&1" % installerName,
-            self.pp.installEnv,
+            "bash /cvmfs/dirac.egi.eu/installSource/%s 2>&1" % installerName, self.pp.installEnv
         )
         if retCode:
             self.log.warn("Could not install DIRACOS from CVMFS [ERROR %d]" % retCode)
 
             # 3. Get the installer from GitHub otherwise
             if not retrieveUrlTimeout(
-                "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/%s"
-                % installerName,
+                "https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/%s" % installerName,
                 installerName,
                 self.log,
             ):
@@ -334,9 +322,7 @@ class InstallDIRAC(CommandBase):
                 shutil.rmtree("diracos")
 
             # 4. bash DIRACOS-Linux-$(uname -m).sh
-            retCode, _ = self.executeAndGetOutput(
-                "bash %s 2>&1" % installerName, self.pp.installEnv
-            )
+            retCode, _ = self.executeAndGetOutput("bash %s 2>&1" % installerName, self.pp.installEnv)
             if retCode:
                 self.log.error("Could not install DIRACOS [ERROR %d]" % retCode)
                 self.exitWithError(retCode)
@@ -349,16 +335,8 @@ class InstallDIRAC(CommandBase):
         if self.pp.userEnvVariables:
             userEnvVariables = dict(
                 zip(
-                    [
-                        name.split(":::")[0]
-                        for name in self.pp.userEnvVariables.replace(" ", "").split(",")
-                    ],
-                    [
-                        value.split(":::")[1]
-                        for value in self.pp.userEnvVariables.replace(" ", "").split(
-                            ","
-                        )
-                    ],
+                    [name.split(":::")[0] for name in self.pp.userEnvVariables.replace(" ", "").split(",")],
+                    [value.split(":::")[1] for value in self.pp.userEnvVariables.replace(" ", "").split(",")],
                 )
             )
             lines = []
@@ -373,16 +351,12 @@ class InstallDIRAC(CommandBase):
         retCode, output = self.executeAndGetOutput('bash -c "source diracos/diracosrc && env"', self.pp.installEnv)
         self.pp.installEnv = {}
         if retCode:
-            self.log.error(
-                "Could not parse the diracos/diracosrc file [ERROR %d]" % retCode
-            )
+            self.log.error("Could not parse the diracos/diracosrc file [ERROR %d]" % retCode)
             self.exitWithError(retCode)
         for line in output.split("\n"):
             try:
                 var, value = [vx.strip() for vx in line.split("=", 1)]
-                if (
-                    var == "_" or "SSH" in var or "{" in value or "}" in value
-                ):  # Avoiding useless/confusing stuff
+                if var == "_" or "SSH" in var or "{" in value or "}" in value:  # Avoiding useless/confusing stuff
                     continue
                 self.pp.installEnv[var] = value
             except (IndexError, ValueError):
@@ -409,32 +383,19 @@ class InstallDIRAC(CommandBase):
                 pipInstalling += "[pilot]"
 
                 # pipInstalling = "pip install %s%s@%s#egg=%s[pilot]" % (prefix, url, branch, project)
-                retCode, output = self.executeAndGetOutput(
-                    pipInstalling, self.pp.installEnv
-                )
+                retCode, output = self.executeAndGetOutput(pipInstalling, self.pp.installEnv)
                 if retCode:
                     self.log.error("Could not %s [ERROR %d]" % (pipInstalling, retCode))
                     self.exitWithError(retCode)
         else:
             # pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
-            if not self.releaseVersion or self.releaseVersion in [
-                "master",
-                "main",
-                "integration",
-            ]:
+            if not self.releaseVersion or self.releaseVersion in ["master", "main", "integration"]:
                 cmd = "%s %sDIRAC[pilot]" % (pipInstalling, self.pp.releaseProject)
             else:
-                cmd = "%s %sDIRAC[pilot]==%s" % (
-                    pipInstalling,
-                    self.pp.releaseProject,
-                    self.releaseVersion,
-                )
+                cmd = "%s %sDIRAC[pilot]==%s" % (pipInstalling, self.pp.releaseProject, self.releaseVersion)
             retCode, output = self.executeAndGetOutput(cmd, self.pp.installEnv)
             if retCode:
-                self.log.error(
-                    "Could not pip install %s [ERROR %d]"
-                    % (self.releaseVersion, retCode)
-                )
+                self.log.error("Could not pip install %s [ERROR %d]" % (self.releaseVersion, retCode))
                 self.exitWithError(retCode)
 
     @logFinalizer
@@ -503,9 +464,7 @@ class ConfigureBasics(CommandBase):
 
         configureCmd = "%s %s" % (self.pp.configureScript, " ".join(self.cfg))
 
-        retCode, _configureOutData = self.executeAndGetOutput(
-            configureCmd, self.pp.installEnv
-        )
+        retCode, _configureOutData = self.executeAndGetOutput(configureCmd, self.pp.installEnv)
 
         if retCode:
             self.log.error("Could not configure DIRAC basics [ERROR %d]" % retCode)
@@ -537,29 +496,20 @@ class ConfigureBasics(CommandBase):
         if self.pp.gateway:
             self.cfg.append('-W "%s"' % self.pp.gateway)
         if self.pp.userGroup:
-            self.cfg.append(
-                '-o /AgentJobRequirements/OwnerGroup="%s"' % self.pp.userGroup
-            )
+            self.cfg.append('-o /AgentJobRequirements/OwnerGroup="%s"' % self.pp.userGroup)
         if self.pp.userDN:
             self.cfg.append('-o /AgentJobRequirements/OwnerDN="%s"' % self.pp.userDN)
         self.cfg.append("-o /LocalSite/ReleaseVersion=%s" % self.releaseVersion)
 
         if self.pp.wnVO:
-            self.cfg.append(
-                '-o "/Resources/Computing/CEDefaults/VirtualOrganization=%s"'
-                % self.pp.wnVO
-            )
+            self.cfg.append('-o "/Resources/Computing/CEDefaults/VirtualOrganization=%s"' % self.pp.wnVO)
 
     def _getSecurityCFG(self):
         """Nothing specific by default, but need to know host cert and key location in case they are needed"""
         if self.pp.useServerCertificate:
             self.cfg.append("--UseServerCertificate")
-            self.cfg.append(
-                "-o /DIRAC/Security/CertFile=%s/hostcert.pem" % self.pp.certsLocation
-            )
-            self.cfg.append(
-                "-o /DIRAC/Security/KeyFile=%s/hostkey.pem" % self.pp.certsLocation
-            )
+            self.cfg.append("-o /DIRAC/Security/CertFile=%s/hostcert.pem" % self.pp.certsLocation)
+            self.cfg.append("-o /DIRAC/Security/KeyFile=%s/hostkey.pem" % self.pp.certsLocation)
 
 
 class CheckCECapabilities(CommandBase):
@@ -606,12 +556,8 @@ class CheckCECapabilities(CommandBase):
         self.pp.queueParameters = resourceDict
         for queueParamName, queueParamValue in self.pp.queueParameters.items():
             if isinstance(queueParamValue, list):  # for the tags
-                queueParamValue = ",".join(
-                    [str(qpv).strip() for qpv in queueParamValue]
-                )
-            self.cfg.append(
-                "-o /LocalSite/%s=%s" % (queueParamName, quote(queueParamValue))
-            )
+                queueParamValue = ",".join([str(qpv).strip() for qpv in queueParamValue])
+            self.cfg.append("-o /LocalSite/%s=%s" % (queueParamName, quote(queueParamValue)))
 
         # Pick up all the relevant resource parameters that will be used in the job matching
         if "WholeNode" in resourceDict:
@@ -632,18 +578,13 @@ class CheckCECapabilities(CommandBase):
                 self.cfg.append("-ddd")
 
             configureCmd = "%s %s" % (self.pp.configureScript, " ".join(self.cfg))
-            retCode, _configureOutData = self.executeAndGetOutput(
-                configureCmd, self.pp.installEnv
-            )
+            retCode, _configureOutData = self.executeAndGetOutput(configureCmd, self.pp.installEnv)
             if retCode:
                 self.log.error("Could not configure DIRAC [ERROR %d]" % retCode)
                 self.exitWithError(retCode)
 
         else:
-            self.log.debug(
-                "No CE parameters (tags) defined for %s/%s"
-                % (self.pp.ceName, self.pp.queueName)
-            )
+            self.log.debug("No CE parameters (tags) defined for %s/%s" % (self.pp.ceName, self.pp.queueName))
 
 
 class CheckWNCapabilities(CommandBase):
@@ -703,27 +644,17 @@ class CheckWNCapabilities(CommandBase):
         if "WholeNode" in self.pp.tags:
             self.pp.payloadProcessors = self.pp.pilotProcessors
         if self.pp.maxNumberOfProcessors > 0:
-            self.pp.payloadProcessors = min(
-                self.pp.pilotProcessors, self.pp.maxNumberOfProcessors
-            )
+            self.pp.payloadProcessors = min(self.pp.pilotProcessors, self.pp.maxNumberOfProcessors)
 
         self.log.info("pilotProcessors = %d" % self.pp.pilotProcessors)
         self.log.info("payloadProcessors = %d" % self.pp.payloadProcessors)
-        self.cfg.append(
-            '-o "/Resources/Computing/CEDefaults/NumberOfProcessors=%d"'
-            % self.pp.pilotProcessors
-        )
-        self.cfg.append(
-            '-o "/Resources/Computing/CEDefaults/NumberOfPayloadProcessors=%d"'
-            % self.pp.payloadProcessors
-        )
+        self.cfg.append('-o "/Resources/Computing/CEDefaults/NumberOfProcessors=%d"' % self.pp.pilotProcessors)
+        self.cfg.append('-o "/Resources/Computing/CEDefaults/NumberOfPayloadProcessors=%d"' % self.pp.payloadProcessors)
 
         maxRAM = self.pp.queueParameters.get("MaxRAM", maxRAM)
         if maxRAM:
             try:
-                self.cfg.append(
-                    '-o "/Resources/Computing/CEDefaults/MaxRAM=%d"' % int(maxRAM)
-                )
+                self.cfg.append('-o "/Resources/Computing/CEDefaults/MaxRAM=%d"' % int(maxRAM))
             except ValueError:
                 self.log.warn("MaxRAM is not an integer, will not fill it")
         else:
@@ -731,24 +662,17 @@ class CheckWNCapabilities(CommandBase):
 
         if numberOfGPUs:
             self.log.info("numberOfGPUs = %d" % int(numberOfGPUs))
-            self.cfg.append(
-                '-o "/Resources/Computing/CEDefaults/NumberOfGPUs=%d"'
-                % int(numberOfGPUs)
-            )
+            self.cfg.append('-o "/Resources/Computing/CEDefaults/NumberOfGPUs=%d"' % int(numberOfGPUs))
 
         # Add normal and required tags to the configuration
         self.pp.tags = list(set(self.pp.tags))
         if self.pp.tags:
-            self.cfg.append(
-                '-o "/Resources/Computing/CEDefaults/Tag=%s"'
-                % ",".join((str(x) for x in self.pp.tags))
-            )
+            self.cfg.append('-o "/Resources/Computing/CEDefaults/Tag=%s"' % ",".join((str(x) for x in self.pp.tags)))
 
         self.pp.reqtags = list(set(self.pp.reqtags))
         if self.pp.reqtags:
             self.cfg.append(
-                '-o "/Resources/Computing/CEDefaults/RequiredTag=%s"'
-                % ",".join((str(x) for x in self.pp.reqtags))
+                '-o "/Resources/Computing/CEDefaults/RequiredTag=%s"' % ",".join((str(x) for x in self.pp.reqtags))
             )
 
         if self.pp.useServerCertificate:
@@ -767,9 +691,7 @@ class CheckWNCapabilities(CommandBase):
             self.cfg.append("-FDMH")
 
             configureCmd = "%s %s" % (self.pp.configureScript, " ".join(self.cfg))
-            retCode, _configureOutData = self.executeAndGetOutput(
-                configureCmd, self.pp.installEnv
-            )
+            retCode, _configureOutData = self.executeAndGetOutput(configureCmd, self.pp.installEnv)
             if retCode:
                 self.log.error("Could not configure DIRAC [ERROR %d]" % retCode)
                 self.exitWithError(retCode)
@@ -810,12 +732,8 @@ class ConfigureSite(CommandBase):
 
         if self.pp.useServerCertificate:
             self.cfg.append("--UseServerCertificate")
-            self.cfg.append(
-                "-o /DIRAC/Security/CertFile=%s/hostcert.pem" % self.pp.certsLocation
-            )
-            self.cfg.append(
-                "-o /DIRAC/Security/KeyFile=%s/hostkey.pem" % self.pp.certsLocation
-            )
+            self.cfg.append("-o /DIRAC/Security/CertFile=%s/hostcert.pem" % self.pp.certsLocation)
+            self.cfg.append("-o /DIRAC/Security/KeyFile=%s/hostkey.pem" % self.pp.certsLocation)
 
         # these are needed as this is not the first time we call dirac-configure
         self.cfg.append("-FDMH")
@@ -830,9 +748,7 @@ class ConfigureSite(CommandBase):
 
         configureCmd = "%s %s" % (self.pp.configureScript, " ".join(self.cfg))
 
-        retCode, _configureOutData = self.executeAndGetOutput(
-            configureCmd, self.pp.installEnv
-        )
+        retCode, _configureOutData = self.executeAndGetOutput(configureCmd, self.pp.installEnv)
 
         if retCode:
             self.log.error("Could not configure DIRAC [ERROR %d]" % retCode)
@@ -854,12 +770,7 @@ class ConfigureSite(CommandBase):
         # Take the reference from the Torque batch system
         if "PBS_JOBID" in os.environ:
             self.pp.flavour = "SSHTorque"
-            pilotRef = (
-                "sshtorque://"
-                + self.pp.ceName
-                + "/"
-                + os.environ["PBS_JOBID"].split(".")[0]
-            )
+            pilotRef = "sshtorque://" + self.pp.ceName + "/" + os.environ["PBS_JOBID"].split(".")[0]
 
         # Take the reference from the OAR batch system
         if "OAR_JOBID" in os.environ:
@@ -888,18 +799,14 @@ class ConfigureSite(CommandBase):
         # Condor
         if "CONDOR_JOBID" in os.environ:
             self.pp.flavour = "SSHCondor"
-            pilotRef = (
-                "sshcondor://" + self.pp.ceName + "/" + os.environ["CONDOR_JOBID"]
-            )
+            pilotRef = "sshcondor://" + self.pp.ceName + "/" + os.environ["CONDOR_JOBID"]
 
         # # CEs
 
         # HTCondor
         if "HTCONDOR_JOBID" in os.environ:
             self.pp.flavour = "HTCondorCE"
-            pilotRef = (
-                "htcondorce://" + self.pp.ceName + "/" + os.environ["HTCONDOR_JOBID"]
-            )
+            pilotRef = "htcondorce://" + self.pp.ceName + "/" + os.environ["HTCONDOR_JOBID"]
 
         # This is the CREAM direct submission case
         if "CREAM_JOBID" in os.environ:
@@ -957,9 +864,7 @@ class ConfigureSite(CommandBase):
         if self.pp.pilotReference:
             pilotRef = self.pp.pilotReference
 
-        self.log.debug(
-            "Flavour: %s; pilot reference: %s " % (self.pp.flavour, pilotRef)
-        )
+        self.log.debug("Flavour: %s; pilot reference: %s " % (self.pp.flavour, pilotRef))
 
         self.pp.pilotReference = pilotRef
 
@@ -987,13 +892,9 @@ class ConfigureArchitecture(CommandBase):
 
         architectureCmd = "%s %s -d" % (self.pp.architectureScript, " ".join(cfg))
 
-        retCode, localArchitecture = self.executeAndGetOutput(
-            architectureCmd, self.pp.installEnv
-        )
+        retCode, localArchitecture = self.executeAndGetOutput(architectureCmd, self.pp.installEnv)
         if retCode:
-            self.log.error(
-                "There was an error updating the platform [ERROR %d]" % retCode
-            )
+            self.log.error("There was an error updating the platform [ERROR %d]" % retCode)
             self.exitWithError(retCode)
         self.log.info("Architecture determined: %s" % localArchitecture.strip().split("\n")[-1])
 
@@ -1015,9 +916,7 @@ class ConfigureArchitecture(CommandBase):
         cfg.append("-o /LocalSite/Architecture=%s" % localArchitecture)
 
         configureCmd = "%s %s" % (self.pp.configureScript, " ".join(cfg))
-        retCode, _configureOutData = self.executeAndGetOutput(
-            configureCmd, self.pp.installEnv
-        )
+        retCode, _configureOutData = self.executeAndGetOutput(configureCmd, self.pp.installEnv)
         if retCode:
             self.log.error("Configuration error [ERROR %d]" % retCode)
             self.exitWithError(retCode)
@@ -1041,17 +940,9 @@ class ConfigureCPURequirements(CommandBase):
             configFileArg = "-o /DIRAC/Security/UseServerCertificate=yes"
         if self.pp.localConfigFile:
             if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
-                configFileArg = "%s -R %s --cfg %s" % (
-                    configFileArg,
-                    self.pp.localConfigFile,
-                    self.pp.localConfigFile,
-                )
+                configFileArg = "%s -R %s --cfg %s" % (configFileArg, self.pp.localConfigFile, self.pp.localConfigFile)
             else:
-                configFileArg = "%s -R %s %s" % (
-                    configFileArg,
-                    self.pp.localConfigFile,
-                    self.pp.localConfigFile,
-                )
+                configFileArg = "%s -R %s %s" % (configFileArg, self.pp.localConfigFile, self.pp.localConfigFile)
         retCode, cpuNormalizationFactorOutput = self.executeAndGetOutput(
             "dirac-wms-cpu-normalization -U %s -d" % configFileArg, self.pp.installEnv
         )
@@ -1084,9 +975,7 @@ class ConfigureCPURequirements(CommandBase):
         )
 
         if retCode:
-            self.log.error(
-                "Failed to determine cpu time left in the queue [ERROR %d]" % retCode
-            )
+            self.log.error("Failed to determine cpu time left in the queue [ERROR %d]" % retCode)
             self.exitWithError(retCode)
 
         for line in cpuTimeOutput.split("\n"):
@@ -1099,10 +988,7 @@ class ConfigureCPURequirements(CommandBase):
         try:
             # determining the CPU time left (in HS06s)
             self.pp.jobCPUReq = float(cpuTime) * float(cpuNormalizationFactor)
-            self.log.info(
-                "Queue length (which is also set as CPUTimeLeft) is %f"
-                % self.pp.jobCPUReq
-            )
+            self.log.info("Queue length (which is also set as CPUTimeLeft) is %f" % self.pp.jobCPUReq)
         except ValueError:
             self.log.error("Pilot command output does not have the correct format")
             sys.exit(1)
@@ -1115,18 +1001,12 @@ class ConfigureCPURequirements(CommandBase):
             if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
                 cfg.append("--cfg")
             cfg.append(self.pp.localConfigFile)  # this file is also input
-        cfg.append(
-            "-o /LocalSite/CPUTimeLeft=%s" % str(int(self.pp.jobCPUReq))
-        )  # the only real option
+        cfg.append("-o /LocalSite/CPUTimeLeft=%s" % str(int(self.pp.jobCPUReq)))  # the only real option
 
         configureCmd = "%s %s" % (self.pp.configureScript, " ".join(cfg))
-        retCode, _configureOutData = self.executeAndGetOutput(
-            configureCmd, self.pp.installEnv
-        )
+        retCode, _configureOutData = self.executeAndGetOutput(configureCmd, self.pp.installEnv)
         if retCode:
-            self.log.error(
-                "Failed to update CFG file for CPUTimeLeft [ERROR %d]" % retCode
-            )
+            self.log.error("Failed to update CFG file for CPUTimeLeft [ERROR %d]" % retCode)
             self.exitWithError(retCode)
 
 
@@ -1158,8 +1038,7 @@ class LaunchAgent(CommandBase):
                 "-o MaxCycles=5000",
                 "-o PollingTime=%s" % min(20, self.pp.pollingTime),
                 "-o StopOnApplicationFailure=False",
-                "-o StopAfterFailedMatches=%s"
-                % max(self.pp.pilotProcessors, self.pp.stopAfterFailedMatches),
+                "-o StopAfterFailedMatches=%s" % max(self.pp.pilotProcessors, self.pp.stopAfterFailedMatches),
                 "-o FillingModeFlag=True",
             ]
         else:
@@ -1192,9 +1071,7 @@ class LaunchAgent(CommandBase):
 
         # The file pilot.cfg has to be created previously by ConfigureDIRAC
         if self.pp.localConfigFile:
-            self.innerCEOpts.append(
-                " -o /AgentJobRequirements/ExtraOptions=%s" % self.pp.localConfigFile
-            )
+            self.innerCEOpts.append(" -o /AgentJobRequirements/ExtraOptions=%s" % self.pp.localConfigFile)
             if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
                 self.innerCEOpts.append("--cfg")
             self.innerCEOpts.append(self.pp.localConfigFile)
@@ -1209,11 +1086,7 @@ class LaunchAgent(CommandBase):
         extraCFG = []
         for i in os.listdir(self.pp.rootPath):
             cfg = os.path.join(self.pp.rootPath, i)
-            if (
-                os.path.isfile(cfg)
-                and cfg.endswith(".cfg")
-                and not filecmp.cmp(self.pp.localConfigFile, cfg)
-            ):
+            if os.path.isfile(cfg) and cfg.endswith(".cfg") and not filecmp.cmp(self.pp.localConfigFile, cfg):
                 if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
                     extraCFG.append("--cfg")
                 extraCFG.append(cfg)
@@ -1222,16 +1095,9 @@ class LaunchAgent(CommandBase):
             # Execute user command
             self.log.info("Executing user defined command: %s" % self.pp.executeCmd)
             if self.pp.pythonVersion == "27":
-                self.exitWithError(
-                    int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256)
-                )
+                self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
             else:
-                self.exitWithError(
-                    int(
-                        os.system("source diracos/diracosrc; %s" % self.pp.executeCmd)
-                        / 256
-                    )
-                )
+                self.exitWithError(int(os.system("source diracos/diracosrc; %s" % self.pp.executeCmd) / 256))
 
         self.log.info("Starting JobAgent")
         os.environ["PYTHONUNBUFFERED"] = "yes"
@@ -1313,9 +1179,7 @@ class MultiLaunchAgent(CommandBase):
 
         # The file pilot.cfg has to be created previously by ConfigureDIRAC
         if self.pp.localConfigFile:
-            self.inProcessOpts.append(
-                " -o /AgentJobRequirements/ExtraOptions=%s" % self.pp.localConfigFile
-            )
+            self.inProcessOpts.append(" -o /AgentJobRequirements/ExtraOptions=%s" % self.pp.localConfigFile)
             if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
                 self.inProcessOpts.append("--cfg")
             self.inProcessOpts.append(self.pp.localConfigFile)
@@ -1336,16 +1200,9 @@ class MultiLaunchAgent(CommandBase):
             # Execute user command
             self.log.info("Executing user defined command: %s" % self.pp.executeCmd)
             if self.pp.pythonVersion == "27":
-                self.exitWithError(
-                    int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256)
-                )
+                self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
             else:
-                self.exitWithError(
-                    int(
-                        os.system("source diracos/diracosrc; %s" % self.pp.executeCmd)
-                        / 256
-                    )
-                )
+                self.exitWithError(int(os.system("source diracos/diracosrc; %s" % self.pp.executeCmd) / 256))
 
         self.log.info("Starting JobAgent")
         os.environ["PYTHONUNBUFFERED"] = "yes"
@@ -1358,10 +1215,7 @@ class MultiLaunchAgent(CommandBase):
 
             if self.pp.ceType == "Sudo":
                 # Available within the SudoComputingElement as BaseUsername in the ceParameters
-                sudoOpts = "-o /LocalSite/BaseUsername=%s%02dp00" % (
-                    os.environ["USER"],
-                    i,
-                )
+                sudoOpts = "-o /LocalSite/BaseUsername=%s%02dp00" % (os.environ["USER"], i)
             else:
                 sudoOpts = ""
 
@@ -1374,9 +1228,7 @@ class MultiLaunchAgent(CommandBase):
             )
 
             pid[i] = self.forkAndExecute(
-                jobAgent,
-                os.path.join(self.pp.workingDir, "jobagent.%02d.log" % i),
-                self.pp.installEnv,
+                jobAgent, os.path.join(self.pp.workingDir, "jobagent.%02d.log" % i), self.pp.installEnv
             )
 
             if not pid[i]:
@@ -1384,12 +1236,7 @@ class MultiLaunchAgent(CommandBase):
             else:
                 self.log.info(
                     "Forked JobAgent %02d (%d/%d) with PID %d"
-                    % (
-                        i,
-                        i + 1,
-                        int(self.pp.pilotProcessors / self.pp.payloadProcessors),
-                        pid[i],
-                    )
+                    % (i, i + 1, int(self.pp.pilotProcessors / self.pp.payloadProcessors), pid[i])
                 )
 
         # Not very subtle this. How about a time limit??
@@ -1397,19 +1244,13 @@ class MultiLaunchAgent(CommandBase):
             os.waitpid(pid[i], 0)
 
         for i in range(int(self.pp.pilotProcessors / self.pp.payloadProcessors)):
-            shutdownMessage = self.__parseJobAgentLog(
-                os.path.join(self.pp.workingDir, "jobagent.%02d.log" % i)
-            )
-            open(
-                os.path.join(self.pp.workingDir, "shutdown_message.%02d" % i), "w"
-            ).write(shutdownMessage)
+            shutdownMessage = self.__parseJobAgentLog(os.path.join(self.pp.workingDir, "jobagent.%02d.log" % i))
+            open(os.path.join(self.pp.workingDir, "shutdown_message.%02d" % i), "w").write(shutdownMessage)
             print(shutdownMessage)
 
         # FIX ME: this effectively picks one at random. Should be the last one to finish chronologically.
         # Not in order of being started.
-        open(os.path.join(self.pp.workingDir, "shutdown_message"), "w").write(
-            shutdownMessage
-        )
+        open(os.path.join(self.pp.workingDir, "shutdown_message"), "w").write(shutdownMessage)
 
         fs = os.statvfs(self.pp.workingDir)
         diskSpace = int(fs[4] * fs[0] / 1024 / 1024)
@@ -1427,17 +1268,11 @@ class MultiLaunchAgent(CommandBase):
             ######################################################################
             # There are other errors from the TimeLeft handling, but we let those go
             # to the 600 Failed default
-            [
-                'INFO: JobAgent will stop with message "No time left for slot',
-                "100 No time left for slot",
-            ],
+            ['INFO: JobAgent will stop with message "No time left for slot', "100 No time left for slot"],
             # Variants of: "200 Intended work completed ok"
             ###############################################
             # Our work is done. More work available in the queue? Who knows!
-            [
-                'INFO: JobAgent will stop with message "Filling Mode is Disabled',
-                "200 Filling Mode is Disabled",
-            ],
+            ['INFO: JobAgent will stop with message "Filling Mode is Disabled', "200 Filling Mode is Disabled"],
             ["NOTICE:  Cycle was successful", "200 Success"],
             #
             # !!! Codes 300-699 trigger Vac/Vcycle backoff procedure !!!
@@ -1445,20 +1280,14 @@ class MultiLaunchAgent(CommandBase):
             # Variants of: "300 No more work available from task queue"
             ###########################################################
             # We asked, but nothing more from the matcher.
-            [
-                'INFO: JobAgent will stop with message "Nothing to do for more than',
-                "300 Nothing to do",
-            ],
+            ['INFO: JobAgent will stop with message "Nothing to do for more than', "300 Nothing to do"],
             ["Job request OK: No match found", "300 Nothing to do"],
             # Variants of: "400 Site/host/VM is currently banned/disabled from receiving more work"
             #######################################################################################
             # Variants of: "500 Problem detected with environment/VM/contextualization provided by the site"
             ################################################################################################
             # This detects using an RFC proxy to talk to legacy-only DIRAC
-            [
-                'Error while handshaking [("Remote certificate hasn',
-                "500 Certificate/proxy not acceptable",
-            ],
+            ['Error while handshaking [("Remote certificate hasn', "500 Certificate/proxy not acceptable"],
             # Variants of: "600 Grid-wide problem with job agent or application within VM"
             ##############################################################################
             [
@@ -1469,23 +1298,11 @@ class MultiLaunchAgent(CommandBase):
             ########################################################################
             # Some of the ways the JobAgent/Application can stop with errors.
             # Otherwise we just get the default 700 Failed message.
-            [
-                'INFO: JobAgent will stop with message "Job Rescheduled',
-                "600 Problem so job rescheduled",
-            ],
-            [
-                'INFO: JobAgent will stop with message "Matcher Failed',
-                "600 Matcher Failed",
-            ],
+            ['INFO: JobAgent will stop with message "Job Rescheduled', "600 Problem so job rescheduled"],
+            ['INFO: JobAgent will stop with message "Matcher Failed', "600 Matcher Failed"],
             ['INFO: JobAgent will stop with message "JDL Problem', "600 JDL Problem"],
-            [
-                'INFO: JobAgent will stop with message "Payload Proxy Not Found',
-                "600 Payload Proxy Not Found",
-            ],
-            [
-                'INFO: JobAgent will stop with message "Problem Rescheduling Job',
-                "600 Problem Rescheduling Job",
-            ],
+            ['INFO: JobAgent will stop with message "Payload Proxy Not Found', "600 Payload Proxy Not Found"],
+            ['INFO: JobAgent will stop with message "Problem Rescheduling Job', "600 Problem Rescheduling Job"],
             [
                 'INFO: JobAgent will stop with message "Payload execution failed with error code',
                 "600 Payload execution failed with error",
@@ -1540,31 +1357,21 @@ class NagiosProbes(CommandBase):
 
         try:
             self.nagiosProbes = [
-                str(pv).strip()
-                for pv in self.pp.pilotJSON["Setups"][self.pp.setup][
-                    "NagiosProbes"
-                ].split(",")
+                str(pv).strip() for pv in self.pp.pilotJSON["Setups"][self.pp.setup]["NagiosProbes"].split(",")
             ]
         except KeyError:
             try:
                 self.nagiosProbes = [
-                    str(pv).strip()
-                    for pv in self.pp.pilotJSON["Setups"]["Defaults"][
-                        "NagiosProbes"
-                    ].split(",")
+                    str(pv).strip() for pv in self.pp.pilotJSON["Setups"]["Defaults"]["NagiosProbes"].split(",")
                 ]
             except KeyError:
                 pass
 
         try:
-            self.nagiosPutURL = str(
-                self.pp.pilotJSON["Setups"][self.pp.setup]["NagiosPutURL"]
-            )
+            self.nagiosPutURL = str(self.pp.pilotJSON["Setups"][self.pp.setup]["NagiosPutURL"])
         except KeyError:
             try:
-                self.nagiosPutURL = str(
-                    self.pp.pilotJSON["Setups"]["Defaults"]["NagiosPutURL"]
-                )
+                self.nagiosPutURL = str(self.pp.pilotJSON["Setups"]["Defaults"]["NagiosPutURL"])
             except KeyError:
                 pass
 
@@ -1597,9 +1404,7 @@ class NagiosProbes(CommandBase):
                 retStatus = "warning"
             else:
                 # retCode could be 2 (error) or 3 (unknown) or something we haven't thought of
-                self.log.error(
-                    "Return code = %d: %s" % (retCode, str(output).split("\n", 1)[0])
-                )
+                self.log.error("Return code = %d: %s" % (retCode, str(output).split("\n", 1)[0]))
                 retStatus = "error"
 
             # report results to pilot logger too. Like this:
@@ -1608,18 +1413,9 @@ class NagiosProbes(CommandBase):
             if self.nagiosPutURL:
                 # Alternate logging of results to HTTPS PUT service too
                 hostPort = self.nagiosPutURL.split("/")[2]
-                path = (
-                    "/"
-                    + "/".join(self.nagiosPutURL.split("/")[3:])
-                    + self.pp.ceName
-                    + "/"
-                    + probeCmd
-                )
+                path = "/" + "/".join(self.nagiosPutURL.split("/")[3:]) + self.pp.ceName + "/" + probeCmd
 
-                self.log.info(
-                    "Putting %s Nagios output to https://%s%s"
-                    % (probeCmd, hostPort, path)
-                )
+                self.log.info("Putting %s Nagios output to https://%s%s" % (probeCmd, hostPort, path))
 
                 try:
                     connection = HTTPSConnection(
@@ -1629,29 +1425,21 @@ class NagiosProbes(CommandBase):
                         cert_file=os.environ["X509_USER_PROXY"],
                     )
 
-                    connection.request(
-                        "PUT",
-                        path,
-                        str(retCode) + " " + str(int(time.time())) + "\n" + output,
-                    )
+                    connection.request("PUT", path, str(retCode) + " " + str(int(time.time())) + "\n" + output)
 
                 except Exception as e:
-                    self.log.error(
-                        "PUT of %s Nagios output fails with %s" % (probeCmd, str(e))
-                    )
+                    self.log.error("PUT of %s Nagios output fails with %s" % (probeCmd, str(e)))
 
                 else:
                     result = connection.getresponse()
 
                     if int(result.status / 100) == 2:
                         self.log.info(
-                            "PUT of %s Nagios output succeeds with %d %s"
-                            % (probeCmd, result.status, result.reason)
+                            "PUT of %s Nagios output succeeds with %d %s" % (probeCmd, result.status, result.reason)
                         )
                     else:
                         self.log.error(
-                            "PUT of %s Nagios output fails with %d %s"
-                            % (probeCmd, result.status, result.reason)
+                            "PUT of %s Nagios output fails with %d %s" % (probeCmd, result.status, result.reason)
                         )
 
     @logFinalizer

@@ -37,21 +37,9 @@ except ImportError:
     from io import StringIO
 
 try:
-    from Pilot.pilotTools import (
-        Logger,
-        RemoteLogger,
-        pythonPathCheck,
-        PilotParams,
-        getCommand,
-    )
+    from Pilot.pilotTools import Logger, RemoteLogger, pythonPathCheck, PilotParams, getCommand
 except ImportError:
-    from pilotTools import (
-        Logger,
-        RemoteLogger,
-        pythonPathCheck,
-        PilotParams,
-        getCommand,
-    )
+    from pilotTools import Logger, RemoteLogger, pythonPathCheck, PilotParams, getCommand
 ############################
 
 if __name__ == "__main__":
@@ -67,10 +55,7 @@ if __name__ == "__main__":
 
     if pilotParams.pilotLogging:
         log = RemoteLogger(
-            pilotParams.loggerURL,
-            "Pilot",
-            pilotUUID=pilotParams.pilotUUID,
-            debugFlag=pilotParams.debugFlag,
+            pilotParams.loggerURL, "Pilot", pilotUUID=pilotParams.pilotUUID, debugFlag=pilotParams.debugFlag
         )
         log.buffer.write(bufContent)
     else:
@@ -91,9 +76,7 @@ if __name__ == "__main__":
     log.debug("PARAMETER [%s]" % ", ".join(map(str, pilotParams.optList)))
 
     if pilotParams.commandExtensions:
-        log.info(
-            "Requested command extensions: %s" % str(pilotParams.commandExtensions)
-        )
+        log.info("Requested command extensions: %s" % str(pilotParams.commandExtensions))
 
     log.info("Executing commands: %s" % str(pilotParams.commands))
     if pilotParams.pilotLogging:
