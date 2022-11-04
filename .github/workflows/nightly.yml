@@ -1,10 +1,10 @@
 name: Nightly
 
-on: push
-# on: 
-#   schedule:
-#     # every night at midnight
-#     - cron:  '0 0 * * *'
+# on: push
+on: 
+  schedule:
+    # every night at midnight
+    - cron:  '0 0 * * *'
 
 
 jobs:
