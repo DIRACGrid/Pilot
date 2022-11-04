@@ -538,7 +538,7 @@ class PilotParams(object):
         self.userGroup = ""
         self.userDN = ""
         self.maxCycles = 10
-        self.pollingTime = 120
+        self.pollingTime = 20
         self.stopOnApplicationFailure = True
         self.stopAfterFailedMatches = 10
         self.flavour = "DIRAC"
