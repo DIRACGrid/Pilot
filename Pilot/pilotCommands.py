@@ -54,6 +54,41 @@ except ImportError:
 ############################
 
 
+def logFinalizer(func):
+    """
+    PilotCammand decorator. It marks a log file as final so no more messages should be written to it .
+    Finalising is triggered by a return statement or any sys.exit() call, so a file might be incomplete
+    if a command throws SystemExit exception with a code =! 0.
+
+    :param func: method to be decorated
+    :type func: method object
+    :return: None
+    :rtype: None
+    """
+
+    def wrapper(self):
+
+        if not self.log.isPilotLoggerOn:
+            self.log.debug("Remote logger is not active, not log flushing performed")
+            return func(self)
+
+        try:
+            return func(self)
+        except SystemExit as exCode:  # or Exception ?
+            pRef = self.pp.pilotReference
+            self.log.info(
+                "Flushing the remote logger buffer for pilot on sys.exit(): %s (exit code:%s)" % (pRef, str(exCode))
+            )
+            raise
+        finally:
+            try:
+                self.log.buffer.flush()  # flush the buffer unconditionally (on sys.exit() and return.
+            except Exception as exc:
+                self.log.error("Remote logger couldn't be finalised %s " % str(exc))
+
+    return wrapper
+
+
 class GetPilotVersion(CommandBase):
     """Now just returns what was obtained by pilotTools.py"""
 
@@ -61,6 +96,7 @@ class GetPilotVersion(CommandBase):
         """c'tor"""
         super(GetPilotVersion, self).__init__(pilotParams)
 
+    @logFinalizer
     def execute(self):
         """Just returns what was obtained by pilotTools.py"""
         return self.releaseVersion
@@ -73,6 +109,7 @@ class CheckWorkerNode(CommandBase):
         """c'tor"""
         super(CheckWorkerNode, self).__init__(pilotParams)
 
+    @logFinalizer
     def execute(self):
         """Get host and local user info, and other basic checks, e.g. space available"""
 
@@ -361,6 +398,7 @@ class InstallDIRAC(CommandBase):
                 self.log.error("Could not pip install %s [ERROR %d]" % (self.releaseVersion, retCode))
                 self.exitWithError(retCode)
 
+    @logFinalizer
     def execute(self):
         """What is called all the time"""
         if self.pp.pythonVersion == "27":
@@ -409,6 +447,7 @@ class ConfigureBasics(CommandBase):
         super(ConfigureBasics, self).__init__(pilotParams)
         self.cfg = []
 
+    @logFinalizer
     def execute(self):
         """What is called all the times.
 
@@ -484,6 +523,7 @@ class CheckCECapabilities(CommandBase):
         # and that will fill the local dirac.cfg file
         self.cfg = []
 
+    @logFinalizer
     def execute(self):
         """Setup CE/Queue Tags and other relevant parameters."""
 
@@ -557,6 +597,7 @@ class CheckWNCapabilities(CommandBase):
         super(CheckWNCapabilities, self).__init__(pilotParams)
         self.cfg = []
 
+    @logFinalizer
     def execute(self):
         """Discover NumberOfProcessors and RAM"""
 
@@ -667,6 +708,7 @@ class ConfigureSite(CommandBase):
         # and that will fill the local dirac.cfg file
         self.cfg = []
 
+    @logFinalizer
     def execute(self):
         """Setup configuration parameters"""
         self.__setFlavour()
@@ -832,6 +874,7 @@ class ConfigureArchitecture(CommandBase):
     Separated from the ConfigureDIRAC command for easier extensibility.
     """
 
+    @logFinalizer
     def execute(self):
         """This is a simple command to call the dirac-platform utility to get the platform,
         and add it to the configuration
@@ -888,6 +931,7 @@ class ConfigureCPURequirements(CommandBase):
         """c'tor"""
         super(ConfigureCPURequirements, self).__init__(pilotParams)
 
+    @logFinalizer
     def execute(self):
         """Get job CPU requirement and queue normalization"""
         # Determining the CPU normalization factor and updating pilot.cfg with it
@@ -1074,6 +1118,7 @@ class LaunchAgent(CommandBase):
         diskSpace = int(fs[4] * fs[0] / 1024 / 1024)
         self.log.info("DiskSpace (MB) = %s" % diskSpace)
 
+    @logFinalizer
     def execute(self):
         """What is called all the time"""
         self.__setInnerCEOpts()
@@ -1279,6 +1324,7 @@ class MultiLaunchAgent(CommandBase):
 
         return shutdownMessage
 
+    @logFinalizer
     def execute(self):
         """What is called all the time"""
         self.__setInProcessOpts()
@@ -1396,6 +1442,7 @@ class NagiosProbes(CommandBase):
                             "PUT of %s Nagios output fails with %d %s" % (probeCmd, result.status, result.reason)
                         )
 
+    @logFinalizer
     def execute(self):
         """Standard entry point to a pilot command"""
         self._setNagiosOptions()

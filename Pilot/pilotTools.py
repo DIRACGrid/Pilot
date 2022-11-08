@@ -8,16 +8,18 @@ from __future__ import absolute_import
 __RCSID__ = "$Id$"
 
 import sys
-import time
 import os
 import pickle
 import getopt
 import imp
 import json
 import re
+import select
 import signal
 import subprocess
-import select
+import ssl
+from datetime import datetime
+from functools import partial
 from distutils.version import LooseVersion
 
 ############################
@@ -25,19 +27,21 @@ from distutils.version import LooseVersion
 try:
     from urllib.request import urlopen
     from urllib.error import HTTPError, URLError
+    from urllib.parse import urlencode
 except ImportError:
     from urllib2 import urlopen, HTTPError, URLError
+    from urllib import urlencode
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 try:
     basestring
 except NameError:
     basestring = str
 
-try:
-    from Pilot.PilotLogger import PilotLogger
-except ImportError:
-    from PilotLogger import PilotLogger
-############################
 
 # Utilities functions
 
@@ -262,18 +266,27 @@ class Logger(object):
         self.debugFlag = debugFlag
         self.name = name
         self.out = pilotOutput
+        self._headerTemplate = "{datestamp} {{level}} [{name}] {{message}}"
+
+    @property
+    def messageTemplate(self):
+        """
+        Message template in ISO-8601 format.
+
+        :return: template string
+        :rtype: str
+        """
+        return self._headerTemplate.format(
+            datestamp=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            name=self.name,
+        )
 
     def __outputMessage(self, msg, level, header):
         if self.out:
             with open(self.out, "a") as outputFile:
                 for _line in str(msg).split("\n"):
                     if header:
-                        outLine = "%s UTC %s [%s] %s" % (
-                            time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
-                            level,
-                            self.name,
-                            _line,
-                        )
+                        outLine = self.messageTemplate.format(level=level, message=_line)
                         print(outLine)
                         if self.out:
                             outputFile.write(outLine + "\n")
@@ -300,74 +313,199 @@ class Logger(object):
         self.__outputMessage(msg, "INFO", header)
 
 
-class ExtendedLogger(Logger):
-    """The logger object, for use inside the pilot. It prints messages.
-    But can be also used to send messages to the queue
+class RemoteLogger(Logger):
+    """
+    The remote logger object, for use inside the pilot. It prints messages,
+    but can be also used to send messages to an external service.
     """
 
     def __init__(
-        self, name="Pilot", debugFlag=False, pilotOutput="pilot.out", isPilotLoggerOn=True, setup="DIRAC-Certification"
+        self,
+        url,
+        name="Pilot",
+        debugFlag=False,
+        pilotOutput="pilot.out",
+        isPilotLoggerOn=True,
+        pilotUUID="unknown",
+        setup="DIRAC-Certification",
     ):
-        """c'tor
+        """
+        c'tor
         If flag PilotLoggerOn is not set, the logger will behave just like
         the original Logger object, that means it will just print logs locally on the screen
         """
-        super(ExtendedLogger, self).__init__(name, debugFlag, pilotOutput)
-        if isPilotLoggerOn:
-            self.pilotLogger = PilotLogger(setup=setup)
-        else:
-            self.pilotLogger = None
+        super(RemoteLogger, self).__init__(name, debugFlag, pilotOutput)
+        self.url = url
         self.isPilotLoggerOn = isPilotLoggerOn
+        sendToURL = partial(sendMessage, url, pilotUUID)
+        self.buffer = FixedSizeBuffer(sendToURL)
 
     def debug(self, msg, header=True, sendPilotLog=False):
-        super(ExtendedLogger, self).debug(msg, header)
-        if self.isPilotLoggerOn and sendPilotLog:
-            self.pilotLogger.sendMessage(msg, status="debug")
+        super(RemoteLogger, self).debug(msg, header)
+        if (
+            self.isPilotLoggerOn and self.debugFlag
+        ):  # the -d flag activates this debug flag in CommandBase via PilotParams
+            self.sendMessage(self.messageTemplate.format(level="DEBUG", message=msg))
 
     def error(self, msg, header=True, sendPilotLog=False):
-        super(ExtendedLogger, self).error(msg, header)
-        if self.isPilotLoggerOn and sendPilotLog:
-            self.pilotLogger.sendMessage(msg, status="error")
+        super(RemoteLogger, self).error(msg, header)
+        if self.isPilotLoggerOn:
+            self.sendMessage(self.messageTemplate.format(level="ERROR", message=msg))
 
     def warn(self, msg, header=True, sendPilotLog=False):
-        super(ExtendedLogger, self).warn(msg, header)
-        if self.isPilotLoggerOn and sendPilotLog:
-            self.pilotLogger.sendMessage(msg, status="warning")
+        super(RemoteLogger, self).warn(msg, header)
+        if self.isPilotLoggerOn:
+            self.sendMessage(self.messageTemplate.format(level="WARNING", message=msg))
 
     def info(self, msg, header=True, sendPilotLog=False):
-        super(ExtendedLogger, self).info(msg, header)
-        if self.isPilotLoggerOn and sendPilotLog:
-            self.pilotLogger.sendMessage(msg, status="info")
+        super(RemoteLogger, self).info(msg, header)
+        if self.isPilotLoggerOn:
+            self.sendMessage(self.messageTemplate.format(level="INFO", message=msg))
 
-    def sendMessage(self, msg, source, phase, status="info", sendPilotLog=True):
-        if self.isPilotLoggerOn and sendPilotLog:
-            self.pilotLogger.sendMessage(messageContent=msg, source=source, phase=phase, status=status)
+    def sendMessage(self, msg):
+        """
+        Buffered message sender.
+
+        :param msg: message to send
+        :type msg: str
+        :return: None
+        :rtype: None
+        """
+        try:
+            self.buffer.write(msg + "\n")
+        except Exception as err:
+            super(RemoteLogger, self).error("Message not sent")
+            super(RemoteLogger, self).error(str(err))
+
+
+class FixedSizeBuffer(object):
+    """
+    A buffer with a (preferred) fixed number of lines.
+    Once it's full, a message is sent to a remote server and the buffer is renewed.
+    """
+
+    def __init__(self, senderFunc, bufsize=10):
+        """
+        Constructor.
+
+        :param senderFunc: a function used to send a message
+        :type senderFunc: func
+        :param bufsize: size of the buffer (in lines)
+        :type bufsize: int
+        """
+        self.output = StringIO()
+        self.bufsize = bufsize
+        self.__nlines = 0
+        self.senderFunc = senderFunc
+
+    def write(self, text):
+        """
+        Write text to a string buffer. Newline characters are counted and number of lines in the buffer
+        is increased accordingly.
+
+        :param text: text string to write
+        :type text: str
+        :return: None
+        :rtype: None
+        """
+        # reopen the buffer in a case we had to flush a partially filled buffer
+        if self.output.closed:
+            self.output = StringIO()
+        self.output.write(text)
+        self.__nlines += max(1, text.count("\n"))
+        self.sendFullBuffer()
+
+    def getValue(self):
+        content = self.output.getvalue()
+        return content
+
+    def sendFullBuffer(self):
+        """
+        Get the buffer content, send a message, close the current buffer and re-create a new one for subsequent writes.
+
+        """
+
+        if self.__nlines >= self.bufsize:
+            self.flush()
+            self.output = StringIO()
+
+    def flush(self):
+        """
+        Flush the buffer and send log records to a remote server. The buffer is closed as well.
+
+        :return: None
+        :rtype:  None
+        """
+
+        self.output.flush()
+        buf = self.getValue()
+        self.senderFunc(buf)
+        self.__nlines = 0
+        self.output.close()
+
+
+def sendMessage(url, pilotUUID, rawMessage):
+    """
+    Send a message to Tornado.
+
+    :param url:
+    :type url:
+    :param pilotUUID:
+    :type pilotUUID:
+    :param rawMessage:
+    :type rawMessage:
+    :return:
+    :rtype:
+    """
+
+    message = json.dumps((json.dumps(rawMessage), pilotUUID))
+    major, minor, micro, _, _ = sys.version_info
+    if major >= 3:
+        data = urlencode({"method": "sendMessage", "args": message}).encode("utf-8")  # encode to bytes ! for python3
+    else:
+        data = urlencode({"method": "sendMessage", "args": message})
+    caPath = os.getenv("X509_CERT_DIR")
+    cert = os.getenv("X509_USER_PROXY")
+
+    context = ssl.create_default_context()
+    context.load_verify_locations(capath=caPath)
+    context.load_cert_chain(cert)
+    res = urlopen(url, data, context=context)
+    res.close()
 
 
 class CommandBase(object):
     """CommandBase is the base class for every command in the pilot commands toolbox"""
 
     def __init__(self, pilotParams, dummy=""):
-        """c'tor
-
-        Defines the logger and the pilot parameters
         """
-        self.pp = pilotParams
-        self.log = ExtendedLogger(
-            name=self.__class__.__name__,
-            debugFlag=False,
-            pilotOutput="pilot.out",
-            isPilotLoggerOn=self.pp.pilotLogging,
-            setup=self.pp.setup,
-        )
-        # self.log = Logger( self.__class__.__name__ )
-        self.debugFlag = False
-        for o, _ in self.pp.optList:
-            if o == "-d" or o == "--debug":
-                self.log.setDebug()
-                self.debugFlag = True
-        self.log.debug("\n\n Initialized command %s" % self.__class__)
+        Defines the classic pilot logger and the pilot parameters.
+        Debug level of the Logger is controlled by the -d flag in pilotParams.
 
+        :param pilotParams: a dictionary of pilot parameters.
+        :type pilotParams: dict
+        :param dummy:
+        """
+
+        self.pp = pilotParams
+        isPilotLoggerOn = pilotParams.pilotLogging
+        self.debugFlag = pilotParams.debugFlag
+        loggerURL = pilotParams.loggerURL
+
+        if loggerURL is None:
+            self.log = Logger(self.__class__.__name__, debugFlag=self.debugFlag)
+        else:
+            # remote logger
+            self.log = RemoteLogger(
+                loggerURL, self.__class__.__name__, pilotUUID=pilotParams.pilotUUID, debugFlag=self.debugFlag
+            )
+
+        self.log.isPilotLoggerOn = isPilotLoggerOn
+        if self.debugFlag:
+            self.log.setDebug()
+
+        self.log.debug("Initialized command %s" % self.__class__.__name__)
+        self.log.debug("pilotParams option list: %s" % self.pp.optList)
         self.cfgOptionDIRACVersion = self._getCFGOptionDIRACVersion()
 
     def _getCFGOptionDIRACVersion(self):
@@ -401,7 +539,7 @@ class CommandBase(object):
                 if ord(in_chr) < 128:
                     return in_chr
                 else:
-                    return ''
+                    return ""
 
             outData = ""
             isRunning = True
@@ -413,7 +551,7 @@ class CommandBase(object):
                 for stream in readfd:
                     # ignore codepoint splitting problems; not worth it
                     outChunk = stream.read(1024).decode("ascii", "replace")
-                    outChunk = ''.join(filter(ascii_filter, outChunk))
+                    outChunk = "".join(filter(ascii_filter, outChunk))
                     if not outChunk:
                         # file has reached EOF, program finished
                         isRunning = False
@@ -426,11 +564,17 @@ class CommandBase(object):
                     else:
                         sys.stdout.write(outChunk)
                         sys.stdout.flush()
+                        # add outChunk to an existing buffer of the remote logger, if enabled.
+                        if hasattr(self.log, "buffer") and self.log.isPilotLoggerOn:
+                            self.log.buffer.write(outChunk)
                         outData += outChunk
 
             # Ensure output ends on a newline
             sys.stdout.write("\n")
             sys.stdout.flush()
+            if hasattr(self.log, "buffer") and self.log.isPilotLoggerOn:
+                if not self.log.buffer.getValue().endswith("\n"):
+                    self.log.buffer.write("\n")
             sys.stderr.write("\n")
             sys.stderr.flush()
 
@@ -560,6 +704,8 @@ class PilotParams(object):
         self.certsLocation = "%s/etc/grid-security" % self.workingDir
         self.pilotCFGFile = "pilot.json"
         self.pilotLogging = False
+        self.loggerURL = None
+        self.pilotUUID = "unknown"
         self.modules = ""  # see dirac-install "-m" option documentation
         self.userEnvVariables = ""  # see dirac-install "--userEnvVariables" option documentation
         self.pipInstallOptions = ""
@@ -581,6 +727,7 @@ class PilotParams(object):
             ("c", "cert", "Use server certificate instead of proxy"),
             ("d", "debug", "Set debug flag"),
             ("e:", "extraPackages=", "Extra packages to install (comma separated)"),
+            ("g:", "loggerURL=", "Remote Logger service URL"),
             ("h", "help", "Show this help"),
             ("k", "keepPP", "Do not clear PYTHONPATH on start"),
             ("l:", "project=", "Project to install"),
@@ -625,6 +772,7 @@ class PilotParams(object):
             ("Z:", "commandOptions=", "Options parsed by command modules"),
             ("", "pythonVersion=", "Python version of DIRAC client to install"),
             ("", "defaultsURL=", "user-defined URL for global config"),
+            ("", "pilotUUID=", "pilot UUID"),
         )
 
         # Possibly get Setup and JSON URL/filename from command line
@@ -739,6 +887,10 @@ class PilotParams(object):
                     pass
             elif o == "-z" or o == "--pilotLogging":
                 self.pilotLogging = True
+            elif o == "-g" or o == "--loggerURL":
+                self.loggerURL = v
+            elif o == "--pilotUUID":
+                self.pilotUUID = v
             elif o in ("-o", "--option"):
                 self.genericOption = v
             elif o in ("-t", "--tag"):

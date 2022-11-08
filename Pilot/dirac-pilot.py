@@ -30,21 +30,37 @@ import time
 
 ############################
 # python 2 -> 3 "hacks"
+
 try:
-    from Pilot.pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
+    from cStringIO import StringIO
 except ImportError:
-    from pilotTools import Logger, pythonPathCheck, PilotParams, getCommand
+    from io import StringIO
+
+try:
+    from Pilot.pilotTools import Logger, RemoteLogger, pythonPathCheck, PilotParams, getCommand
+except ImportError:
+    from pilotTools import Logger, RemoteLogger, pythonPathCheck, PilotParams, getCommand
 ############################
 
 if __name__ == "__main__":
 
     pilotStartTime = int(time.time())
 
-    log = Logger("Pilot", debugFlag=True)
-
+    sys.stdout, oldstdout = StringIO(), sys.stdout
     pilotParams = PilotParams()
-    if pilotParams.debugFlag:
-        log.setDebug()
+    sys.stdout, buffer = oldstdout, sys.stdout
+    bufContent = buffer.getvalue()
+    buffer.close()
+    sys.stdout.write(bufContent)
+
+    if pilotParams.pilotLogging:
+        log = RemoteLogger(
+            pilotParams.loggerURL, "Pilot", pilotUUID=pilotParams.pilotUUID, debugFlag=pilotParams.debugFlag
+        )
+        log.buffer.write(bufContent)
+    else:
+        log = Logger("Pilot", debugFlag=pilotParams.debugFlag)
+
     if pilotParams.keepPythonPath:
         pythonPathCheck()
     else:
@@ -63,12 +79,17 @@ if __name__ == "__main__":
         log.info("Requested command extensions: %s" % str(pilotParams.commandExtensions))
 
     log.info("Executing commands: %s" % str(pilotParams.commands))
+    if pilotParams.pilotLogging:
+        log.buffer.flush()
 
     for commandName in pilotParams.commands:
         command, module = getCommand(pilotParams, commandName, log)
         if command is not None:
-            log.info("Command %s instantiated from %s" % (commandName, module))
+            command.log.info("Command %s instantiated from %s" % (commandName, module))
             command.execute()
         else:
             log.error("Command %s could not be instantiated" % commandName)
+            # send the last message and abandon ship.
+            if pilotParams.pilotLogging:
+                log.buffer.flush()
             sys.exit(-1)
