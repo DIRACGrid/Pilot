@@ -17,7 +17,7 @@ prepareForPilot(){
   echo '==> [prepareForPilot]'
 
   #get the pilot files from the Pilot
-  for file in PilotLogger.py PilotLoggerTools.py dirac-pilot.py pilotCommands.py pilotTools.py MessageSender.py
+  for file in dirac-pilot.py pilotCommands.py pilotTools.py
   do
     cp "$TESTCODE/Pilot/Pilot/${file}" .
   done
@@ -36,7 +36,7 @@ prepareForPilot(){
 }
 
 cleanPilot(){
-  for file in PilotLogger.py PilotLoggerTools.py dirac-install.py dirac-pilot.py pilotCommands.py pilotTools.py MessageSender.py pilot.cfg pilot.json
+  for file in dirac-pilot.py pilotCommands.py pilotTools.py pilot.cfg pilot.json
   do
     rm -f "${file}"
   done

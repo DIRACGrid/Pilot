@@ -222,6 +222,8 @@ submitAndMatch(){
     exit 1
   fi
 
+  sleep 10
+
   # This submits the jobs
   if ! submitJob; then
     echo 'ERROR: failure submitting the jobs' >&2
