@@ -677,7 +677,7 @@ class PilotParams(object):
         # used to set payloadProcessors unless other limits are reached (like the number of processors on the WN)
         self.maxNumberOfProcessors = 0
         self.minDiskSpace = 2560  # MB
-        self.pythonVersion = "27"
+        self.pythonVersion = "3"
         self.defaultsURL = None
         self.userGroup = ""
         self.userDN = ""
