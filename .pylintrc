@@ -113,7 +113,7 @@ max-module-lines=1200
 
 # String used as indentation unit. This is usually " " (4 spaces) or "\t" (1
 # tab).
-indent-string='  '
+indent-string='    '
 
 [MISCELLANEOUS]
 
