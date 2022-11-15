@@ -70,7 +70,7 @@ node('lhcbci-cernvm4-02') {
             parallel(
 
                 "Integration" : {
-                    node('lhcbci-cernvm4-02') {
+                    node('lhcbci-cernvm4-03') {
 
                         cleanWs()
 
@@ -80,7 +80,8 @@ node('lhcbci-cernvm4-02') {
                         try {
                             dir(env.WORKSPACE+"/PilotInstallDIR"){
                                 sh '''
-                                    bash -c "source bashrc;\
+                                    bash -c "DEBUG=True;\
+                                    source bashrc;\
                                     source diracos/diracosrc;\
                                     source \$WORKSPACE/TestCode/Pilot/tests/CI/pilot_ci.sh;\
                                     downloadProxy;\
@@ -100,7 +101,7 @@ node('lhcbci-cernvm4-02') {
                 },
 
                 "Regression" : {
-                    node('lhcbci-cernvm4-02') {
+                    node('lhcbci-cernvm4-03') {
 
                         cleanWs()
 
@@ -110,7 +111,8 @@ node('lhcbci-cernvm4-02') {
                         try {
                             dir(env.WORKSPACE+"/PilotInstallDIR"){
                                 sh '''
-                                    bash -c "source bashrc;\
+                                    bash -c "DEBUG=True;\
+                                    source bashrc;\
                                     source diracos/diracosrc;\
                                     source \$WORKSPACE/TestCode/Pilot/tests/CI/pilot_ci.sh;\
                                     downloadProxy;\
