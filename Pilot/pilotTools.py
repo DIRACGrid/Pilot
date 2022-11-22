@@ -18,6 +18,7 @@ import re
 import signal
 import subprocess
 import select
+import fcntl
 from distutils.version import LooseVersion
 
 ############################
@@ -396,30 +397,22 @@ class CommandBase(object):
                 "%s" % cmd, shell=True, env=environDict, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=False
             )
 
-            # simple filter to strip out non-ascii characters
-            def ascii_filter(in_chr):
-                if ord(in_chr) < 128:
-                    return in_chr
-                else:
-                    return ''
+            # Use non-blocking I/O on the process pipes
+            for fd in [_p.stdout.fileno(), _p.stderr.fileno()]:
+                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
             outData = ""
-            isRunning = True
-            while isRunning:
+            while True:
                 readfd, _, _ = select.select([_p.stdout, _p.stderr], [], [])
-                if not readfd:
-                    # not sure if this error is possible
-                    break
+                dataWasRead = False
                 for stream in readfd:
-                    # ignore codepoint splitting problems; not worth it
-                    outChunk = stream.read(1024).decode("ascii", "replace")
-                    outChunk = ''.join(filter(ascii_filter, outChunk))
+                    outChunk = stream.read().decode("ascii", "replace")
                     if not outChunk:
-                        # file has reached EOF, program finished
-                        isRunning = False
-                        # Finish processing FDs in case there is still some
-                        # remaining data on other file handle...
                         continue
+                    dataWasRead = True
+                    # Strip unicode replacement characters
+                    outChunk = outChunk.replace("\ufffd", "")
                     if stream == _p.stderr:
                         sys.stderr.write(outChunk)
                         sys.stderr.flush()
@@ -427,6 +420,9 @@ class CommandBase(object):
                         sys.stdout.write(outChunk)
                         sys.stdout.flush()
                         outData += outChunk
+                # If no data was read on any of the pipes then the process has finished
+                if not dataWasRead:
+                    break
 
             # Ensure output ends on a newline
             sys.stdout.write("\n")
