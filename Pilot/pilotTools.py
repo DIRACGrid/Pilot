@@ -389,54 +389,48 @@ class CommandBase(object):
         """Execute a command on the worker node and get the output"""
 
         self.log.info("Executing command %s" % cmd)
-        try:
-            # spawn new processes, connect to their input/output/error pipes, and obtain their return codes.
-            import subprocess
+        _p = subprocess.Popen(
+            "%s" % cmd, shell=True, env=environDict, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=False
+        )
 
-            _p = subprocess.Popen(
-                "%s" % cmd, shell=True, env=environDict, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=False
-            )
+        # Use non-blocking I/O on the process pipes
+        for fd in [_p.stdout.fileno(), _p.stderr.fileno()]:
+            fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+            fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
-            # Use non-blocking I/O on the process pipes
-            for fd in [_p.stdout.fileno(), _p.stderr.fileno()]:
-                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-                fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+        outData = ""
+        while True:
+            readfd, _, _ = select.select([_p.stdout, _p.stderr], [], [])
+            dataWasRead = False
+            for stream in readfd:
+                outChunk = stream.read().decode("ascii", "replace")
+                if not outChunk:
+                    continue
+                dataWasRead = True
+                # Strip unicode replacement characters
+                outChunk = outChunk.replace("\ufffd", "")
+                if stream == _p.stderr:
+                    sys.stderr.write(outChunk)
+                    sys.stderr.flush()
+                else:
+                    sys.stdout.write(outChunk)
+                    sys.stdout.flush()
+                    outData += outChunk
+            # If no data was read on any of the pipes then the process has finished
+            if not dataWasRead:
+                break
 
-            outData = ""
-            while True:
-                readfd, _, _ = select.select([_p.stdout, _p.stderr], [], [])
-                dataWasRead = False
-                for stream in readfd:
-                    outChunk = stream.read().decode("ascii", "replace")
-                    if not outChunk:
-                        continue
-                    dataWasRead = True
-                    # Strip unicode replacement characters
-                    outChunk = outChunk.replace("\ufffd", "")
-                    if stream == _p.stderr:
-                        sys.stderr.write(outChunk)
-                        sys.stderr.flush()
-                    else:
-                        sys.stdout.write(outChunk)
-                        sys.stdout.flush()
-                        outData += outChunk
-                # If no data was read on any of the pipes then the process has finished
-                if not dataWasRead:
-                    break
+        # Ensure output ends on a newline
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+        sys.stderr.write("\n")
+        sys.stderr.flush()
 
-            # Ensure output ends on a newline
-            sys.stdout.write("\n")
-            sys.stdout.flush()
-            sys.stderr.write("\n")
-            sys.stderr.flush()
+        # return code
+        returnCode = _p.wait()
+        self.log.debug("Return code of %s: %d" % (cmd, returnCode))
 
-            # return code
-            returnCode = _p.wait()
-            self.log.debug("Return code of %s: %d" % (cmd, returnCode))
-
-            return (returnCode, outData)
-        except ImportError:
-            self.log.error("Error importing subprocess")
+        return (returnCode, outData)
 
     def exitWithError(self, errorCode):
         """Wrapper around sys.exit()"""
