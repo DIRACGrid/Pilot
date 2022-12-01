@@ -45,18 +45,26 @@ except ImportError:
 if __name__ == "__main__":
 
     pilotStartTime = int(time.time())
+    # we would usually have some classic logger content from a wrapper, which we passed in:
+    receivedContent = sys.stdin.read()
 
     sys.stdout, oldstdout = StringIO(), sys.stdout
+    # so PilotParams are writing to a StingIO buffer now.
     pilotParams = PilotParams()
     sys.stdout, buffer = oldstdout, sys.stdout
     bufContent = buffer.getvalue()
     buffer.close()
+    # print the buffer, so we have a "classic' logger back in sync.
     sys.stdout.write(bufContent)
 
+    # now the remote logger.
     if pilotParams.pilotLogging:
         log = RemoteLogger(
             pilotParams.loggerURL, "Pilot", pilotUUID=pilotParams.pilotUUID, debugFlag=pilotParams.debugFlag
         )
+        log.info("Remote logger activated")
+        log.buffer.write(receivedContent)
+        log.buffer.flush()
         log.buffer.write(bufContent)
     else:
         log = Logger("Pilot", debugFlag=pilotParams.debugFlag)

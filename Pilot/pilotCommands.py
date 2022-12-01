@@ -48,9 +48,9 @@ except ImportError:
     from pipes import quote
 
 try:
-    from Pilot.pilotTools import CommandBase, retrieveUrlTimeout
+    from Pilot.pilotTools import CommandBase, retrieveUrlTimeout, sendMessage
 except ImportError:
-    from pilotTools import CommandBase, retrieveUrlTimeout
+    from pilotTools import CommandBase, retrieveUrlTimeout, sendMessage
 ############################
 
 
@@ -69,7 +69,7 @@ def logFinalizer(func):
     def wrapper(self):
 
         if not self.log.isPilotLoggerOn:
-            self.log.debug("Remote logger is not active, not log flushing performed")
+            self.log.debug("Remote logger is not active, no log flushing performed")
             return func(self)
 
         try:
@@ -82,7 +82,8 @@ def logFinalizer(func):
             raise
         finally:
             try:
-                self.log.buffer.flush()  # flush the buffer unconditionally (on sys.exit() and return.
+                self.log.buffer.flush()  # flush the buffer unconditionally (on sys.exit() and return).
+                sendMessage(self.log.url, self.log.pilotUUID, "finaliseLogs", {"retCode": str(exCode)})
             except Exception as exc:
                 self.log.error("Remote logger couldn't be finalised %s " % str(exc))
 

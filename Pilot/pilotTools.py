@@ -337,8 +337,9 @@ class RemoteLogger(Logger):
         """
         super(RemoteLogger, self).__init__(name, debugFlag, pilotOutput)
         self.url = url
+        self.pilotUUID = pilotUUID
         self.isPilotLoggerOn = isPilotLoggerOn
-        sendToURL = partial(sendMessage, url, pilotUUID)
+        sendToURL = partial(sendMessage, url, pilotUUID, "sendMessage")
         self.buffer = FixedSizeBuffer(sendToURL)
 
     def debug(self, msg, header=True, sendPilotLog=False):
@@ -445,26 +446,22 @@ class FixedSizeBuffer(object):
         self.output.close()
 
 
-def sendMessage(url, pilotUUID, rawMessage):
+def sendMessage(url, pilotUUID, method, rawMessage):
     """
-    Send a message to Tornado.
+    Invoke a remote method on a Tornado server and pass a JSON message to it.
 
-    :param url:
-    :type url:
-    :param pilotUUID:
-    :type pilotUUID:
-    :param rawMessage:
-    :type rawMessage:
-    :return:
-    :rtype:
+    :param str url: Server URL
+    :param str pilotUUID: pilot unique ID
+    :param str method: a method to be invoked
+    :param str rawMessage: a message to be sent, in JSON format
+    :return: None.
     """
-
     message = json.dumps((json.dumps(rawMessage), pilotUUID))
     major, minor, micro, _, _ = sys.version_info
     if major >= 3:
-        data = urlencode({"method": "sendMessage", "args": message}).encode("utf-8")  # encode to bytes ! for python3
+        data = urlencode({"method": method, "args": message}).encode("utf-8")  # encode to bytes ! for python3
     else:
-        data = urlencode({"method": "sendMessage", "args": message})
+        data = urlencode({"method": method, "args": message})
     caPath = os.getenv("X509_CERT_DIR")
     cert = os.getenv("X509_USER_PROXY")
 
@@ -762,8 +759,12 @@ class PilotParams(object):
         # Possibly get Setup and JSON URL/filename from command line
         self.__initCommandLine1()
 
-        # Get main options from the JSON file
-        self.__initJSON()
+        # Get main options from the JSON file. Load JSON first to determine the format used.
+        self.__loadJSON()
+        if "Setups" in self.pilotJSON:
+            self.__initJSON()
+        else:
+            self.__initJSON2()
 
         # Command line can override options from JSON
         self.__initCommandLine2()
@@ -892,6 +893,126 @@ class PilotParams(object):
             elif o == "--defaultsURL":
                 self.defaultsURL = v
 
+    def __loadJSON(self):
+        """
+        Load JSON file and return a dict content.
+
+        :return:
+        :rtype:
+        """
+
+        self.log.debug("JSON file loaded: %s" % self.pilotCFGFile)
+        with open(self.pilotCFGFile, "r") as fp:
+            # We save the parsed JSON in case pilot commands need it
+            # to read their own options
+            self.pilotJSON = json.load(fp)
+
+    def __initJSON2(self):
+        """
+        Retrieve pilot parameters from the content of JSON dict using a new format, which closer follows the
+        CS Operations section. The CE JSON section remains the same. The first difference is present in Commands,
+        followed by a new VO-specific sections.
+
+        :return: None
+        """
+
+        self.__ceType()
+        # Commands first. In the new format they can be either in a self.setup/Pilot section in Defaults/Pilot
+        # section or in a VO section (voname/self.setup/Pilot). They are published as a string.
+        pilotOptions = self.getPilotOptionsDict()
+        # remote logging
+        self.pilotLogging = pilotOptions.get("RemoteLogging", self.pilotLogging)
+        self.loggerURL = pilotOptions.get("RemoteLoggerURL")
+        pilotLogLevel = pilotOptions.get("PilotLogLevel", "INFO")
+        if pilotLogLevel.lower() == "debug":
+            self.debugFlag = True
+        self.log.debug("JSON: Remote logging: %s" % self.pilotLogging)
+        self.log.debug("JSON: Remote logging URL: %s" % self.loggerURL)
+        self.log.debug("JSON: Remote/local logging debug flag: %s" % self.debugFlag)
+
+        # CE type if present, then Defaults, otherwise as defined in the code:
+        if "Commands" in pilotOptions:
+            for key in [self.gridCEType, "Defaults"]:
+                commands = pilotOptions["Commands"].get(key)
+                if commands is not None:
+                    self.commands = [elem.strip() for elem in commands.split(",")]
+                    self.log.debug("Selecting commands from JSON for Grid CE type %s" % key)
+                    break
+        else:
+            key = "CodeDefaults"
+
+        self.log.debug("Commands[%s]: %s" % (key, self.commands))
+
+        # Command extensions for the commands above:
+        commandExtOptions = pilotOptions.get("CommandExtensions")
+        if commandExtOptions:
+            self.commandExtensions = [elem.strip() for elem in commandExtOptions.split(",")]
+        # Configuration server (the synchroniser looks into gConfig.getServersList(), as before
+        # the generic one (a list):
+        self.configServer = ",".join([str(pv).strip() for pv in self.pilotJSON["ConfigurationServers"]])
+
+        # version(a comma separated values in a string). We take the first one. (the default value defined in the code)
+        dVersion = pilotOptions.get("Version", self.releaseVersion)
+        if dVersion:
+            dVersion = [dv.strip() for dv in dVersion.split(",", 1)]
+            self.releaseVersion = str(dVersion[0])
+        else:
+            self.log.warn("Could not find a version in the JSON file configuration")
+
+        self.log.debug("Version: %s -> (release) %s" % (str(dVersion), self.releaseVersion))
+
+        self.releaseProject = pilotOptions.get("Project", self.releaseProject)  # default from the code.
+        self.log.debug("Release project: %s" % self.releaseProject)
+
+    def getPilotOptionsDict(self):
+        """
+        Get pilot option dictionary by searching paths in a certain order (commands, logging etc.).
+
+        :return: option dict
+        :rtype: dict
+        """
+
+        return self.__getOptionForPaths(self.__getSearchPaths(), self.pilotJSON)
+
+    def __getVOFromProxy(self):
+
+        return "gridpp"
+
+    def __getSearchPaths(self):
+        """
+        Paths to search for a given VO
+
+        :return: list paths to search in JSON derived dict.
+        """
+
+        vo = self.__getVOFromProxy()
+        paths = [
+            "/Defaults/Pilot",
+            "/%s/Pilot" % self.setup,
+            "/%s/Defaults/Pilot" % vo,
+            "/%s/%s/Pilot" % (vo, self.setup),
+        ]
+
+        return paths
+
+    def __getOptionForPaths(self, paths, inDict):
+        """
+        Get the preferred option from an input dict passed on a path list. It modifies the inDict.
+
+        :param list paths: list of paths to walk through to get a preferred option. The option in
+        the last path has preference over earlier options.
+        :param dict inDict:
+        :return: dict
+        """
+
+        outDict = {}
+        for path in paths:
+            target = inDict
+            for elem in path.strip("/").split("/"):
+                target = target.setdefault(elem, {})
+            outDict.update(target)
+        return outDict
+
     def __initJSON(self):
         """Retrieve pilot parameters from the content of json file. The file should be something like:
 
@@ -937,44 +1058,8 @@ class PilotParams(object):
         }
 
         The file must contain at least the Defaults section. Missing values are taken from the Defaults setup."""
-        self.log.debug("JSON file loaded: %s" % self.pilotCFGFile)
-        with open(self.pilotCFGFile, "r") as fp:
-            # We save the parsed JSON in case pilot commands need it
-            # to read their own options
-            self.pilotJSON = json.load(fp)
 
-        self.log.debug("CE name: %s" % self.ceName)
-        if self.ceName:
-            # Try to get the site name and grid CEType from the CE name
-            # GridCEType is like "CREAM" or "HTCondorCE" not "InProcess" etc
-            try:
-                self.site = str(self.pilotJSON["CEs"][self.ceName]["Site"])
-            except KeyError:
-                pass
-            try:
-                if not self.gridCEType:
-                    # We don't override a grid CEType given on the command line!
-                    self.gridCEType = str(self.pilotJSON["CEs"][self.ceName]["GridCEType"])
-            except KeyError:
-                pass
-            # This LocalCEType is like 'InProcess' or 'Pool' or 'Pool/Singularity' etc.
-            # It can be in the queue and/or the CE level
-            try:
-                self.ceType = str(self.pilotJSON["CEs"][self.ceName]["LocalCEType"])
-            except KeyError:
-                pass
-            try:
-                self.ceType = str(self.pilotJSON["CEs"][self.ceName][self.queueName]["LocalCEType"])
-            except KeyError:
-                pass
-
-        self.log.debug("Setup: %s" % self.setup)
-        if not self.setup:
-            # We don't use the default to override an explicit value from command line!
-            try:
-                self.setup = str(self.pilotJSON["DefaultSetup"])
-            except KeyError:
-                pass
+        self.__ceType()
 
         # Commands first
         # FIXME: pilotSynchronizer() should publish these as comma-separated lists. We are ready for that.
@@ -1118,3 +1203,41 @@ class PilotParams(object):
             except KeyError:
                 pass
         self.log.debug("Release project: %s" % self.releaseProject)
+
+    def __ceType(self):
+        """
+        Set CE type and setup.
+
+        """
+        self.log.debug("CE name: %s" % self.ceName)
+        if self.ceName:
+            # Try to get the site name and grid CEType from the CE name
+            # GridCEType is like "CREAM" or "HTCondorCE" not "InProcess" etc
+            try:
+                self.site = str(self.pilotJSON["CEs"][self.ceName]["Site"])
+            except KeyError:
+                pass
+            try:
+                if not self.gridCEType:
+                    # We don't override a grid CEType given on the command line!
+                    self.gridCEType = str(self.pilotJSON["CEs"][self.ceName]["GridCEType"])
+            except KeyError:
+                pass
+            # This LocalCEType is like 'InProcess' or 'Pool' or 'Pool/Singularity' etc.
+            # It can be in the queue and/or the CE level
+            try:
+                self.ceType = str(self.pilotJSON["CEs"][self.ceName]["LocalCEType"])
+            except KeyError:
+                pass
+            try:
+                self.ceType = str(self.pilotJSON["CEs"][self.ceName][self.queueName]["LocalCEType"])
+            except KeyError:
+                pass
+
+                self.log.debug("Setup: %s" % self.setup)
+        if not self.setup:
+            # We don't use the default to override an explicit value from command line!
+            try:
+                self.setup = str(self.pilotJSON["DefaultSetup"])
+            except KeyError:
+                pass
