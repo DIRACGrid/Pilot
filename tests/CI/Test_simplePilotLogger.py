@@ -108,13 +108,9 @@ class TestPilotParams(unittest.TestCase):
 
 class TestCommandBase(unittest.TestCase):
     def setUp(self):
-        # These temporary files, opened in text mode, will act as standard stream pipes for `Popen`
-        if sys.version_info.major == 3:
-            self.stdout_mock = tempfile.NamedTemporaryFile(mode="rb+", delete=False)
-            self.stderr_mock = tempfile.NamedTemporaryFile(mode="rb+", delete=False)
-        else:
-            self.stdout_mock = tempfile.NamedTemporaryFile(mode="r+", delete=False)
-            self.stderr_mock = tempfile.NamedTemporaryFile(mode="r+", delete=False)
+        # These temporary files, opened in a binary mode, will act as standard stream pipes for `Popen`
+        self.stdout_mock = tempfile.NamedTemporaryFile(mode="rb+", delete=False)
+        self.stderr_mock = tempfile.NamedTemporaryFile(mode="rb+", delete=False)
 
     def tearDown(self):
         # At the end of the test, we'll close and remove the created files

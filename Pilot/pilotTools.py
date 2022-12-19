@@ -23,6 +23,11 @@ from datetime import datetime
 from functools import partial
 from distutils.version import LooseVersion
 
+try:
+    from Pilot.proxyTools import getVO
+except ImportError:
+    from pilotTools import getVO
+
 ############################
 # python 2 -> 3 "hacks"
 try:
@@ -43,6 +48,10 @@ try:
 except NameError:
     basestring = str
 
+try:
+    from Pilot.proxyTools import getVO
+except ImportError:
+    from pilotTools import getVO
 
 # Utilities functions
 
@@ -543,7 +552,7 @@ class CommandBase(object):
                     continue
                 dataWasRead = True
                 # Strip unicode replacement characters
-                outChunk = str(outChunk.replace(u"\ufffd", ""))
+                outChunk = str(outChunk.replace("\ufffd", ""))
                 if stream == _p.stderr:
                     sys.stderr.write(outChunk)
                     sys.stderr.flush()
@@ -975,8 +984,25 @@ class PilotParams(object):
         return self.__getOptionForPaths(self.__getSearchPaths(), self.pilotJSON)
 
     def __getVOFromProxy(self):
+        """
+        Get a VO from a proxy. In case of problems return a value 'unknown", which would get pilot logging
+        properties from a Defaults section of the CS.
 
-        return "gridpp"
+        :return: VO name
+        :rtype: str
+        """
+
+        cert = os.getenv("X509_USER_PROXY")
+        vo = "unknown"
+        if cert:
+            try:
+                with open(cert, "rb") as fp:
+                    vo = getVO(fp.read())
+            except IOError as err:
+                self.log.error("Could not read a proxy, setting vo to 'unknown': ", os.strerror(err.errno))
+        else:
+            self.log.error("Could not locate a proxy via X509_USER_PROXY, setting vo to 'unknown' ")
+        return vo
 
     def __getSearchPaths(self):
         """
