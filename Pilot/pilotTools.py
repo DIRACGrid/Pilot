@@ -26,7 +26,7 @@ from distutils.version import LooseVersion
 try:
     from Pilot.proxyTools import getVO
 except ImportError:
-    from pilotTools import getVO
+    from proxyTools import getVO
 
 ############################
 # python 2 -> 3 "hacks"
