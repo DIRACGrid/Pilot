@@ -1,12 +1,10 @@
-import os
-
 import re
 from base64 import b16decode
 from subprocess import check_output, Popen, PIPE
 
 VOMS_FQANS_OID = b"1.3.6.1.4.1.8005.100.100.4"
 VOMS_EXTENSION_OID = b"1.3.6.1.4.1.8005.100.100.5"
-RE_OPENSSL_ANS1_FORMAT = re.compile(rb"^\s*\d+:d=(\d+)\s+hl=")
+RE_OPENSSL_ANS1_FORMAT = re.compile(br"^\s*\d+:d=(\d+)\s+hl=")
 
 
 def parseASN1(data):
@@ -23,7 +21,7 @@ def findExtension(oid, lines):
 
 
 def getVO(proxy_data):
-    chain = re.findall(rb"-----BEGIN CERTIFICATE-----\n.+?\n-----END CERTIFICATE-----", proxy_data, flags=re.DOTALL)
+    chain = re.findall(br"-----BEGIN CERTIFICATE-----\n.+?\n-----END CERTIFICATE-----", proxy_data, flags=re.DOTALL)
     for cert in chain:
         proc = Popen(["openssl", "x509", "-outform", "der"], stdin=PIPE, stdout=PIPE)
         cert_info = parseASN1(proc.communicate(cert)[0])
@@ -40,7 +38,7 @@ def getVO(proxy_data):
             if depth <= initial_depth:
                 break
             # Look for a role, if it exists the VO is the first element
-            match = re.search(rb"OCTET STRING\s+:/([a-zA-Z0-9]+)/Role=", line)
+            match = re.search(br"OCTET STRING\s+:/([a-zA-Z0-9]+)/Role=", line)
             if match:
                 return match.groups()[0].decode()
     raise NotImplementedError("Something went very wrong")
@@ -53,7 +51,7 @@ if __name__ == "__main__":
     vo = "unknown"
     if cert:
         try:
-            with open(cert, "rb") as fp:
+            with open(cert, "br") as fp:
                 vo = getVO(fp.read())
         except IOError as err:
             print("Proxy not found: ", os.strerror(err.errno))
