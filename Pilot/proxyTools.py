@@ -42,18 +42,3 @@ def getVO(proxy_data):
             if match:
                 return match.groups()[0].decode()
     raise NotImplementedError("Something went very wrong")
-
-
-if __name__ == "__main__":
-    import os
-
-    cert = os.getenv("X509_USER_PROXY")
-    vo = "unknown"
-    if cert:
-        try:
-            with open(cert, "br") as fp:
-                vo = getVO(fp.read())
-        except IOError as err:
-            print("Proxy not found: ", os.strerror(err.errno))
-
-    print(vo)
