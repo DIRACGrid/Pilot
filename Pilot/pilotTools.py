@@ -552,7 +552,7 @@ class CommandBase(object):
                     continue
                 dataWasRead = True
                 # Strip unicode replacement characters
-                outChunk = str(outChunk.replace("\ufffd", ""))
+                outChunk = str(outChunk.replace(u"\ufffd", ""))
                 if stream == _p.stderr:
                     sys.stderr.write(outChunk)
                     sys.stderr.flush()
