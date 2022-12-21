@@ -552,13 +552,15 @@ class CommandBase(object):
                     continue
                 dataWasRead = True
                 # Strip unicode replacement characters
-                outChunk = str(outChunk.replace(u"\ufffd", ""))
+                outChunk = str(outChunk.replace("\ufffd", ""))
                 if stream == _p.stderr:
                     sys.stderr.write(outChunk)
                     sys.stderr.flush()
                 else:
                     sys.stdout.write(outChunk)
                     sys.stdout.flush()
+                    if hasattr(self.log, "buffer") and self.log.isPilotLoggerOn:
+                        self.log.buffer.write(outChunk)
                     outData += outChunk
             # If no data was read on any of the pipes then the process has finished
             if not dataWasRead:
