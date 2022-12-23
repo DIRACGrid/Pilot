@@ -11,6 +11,8 @@ def parseASN1(data):
     cmd = ["openssl", "asn1parse", "-inform", "der"]
     proc = Popen(cmd, stdin=PIPE, stdout=PIPE)
     out, err = proc.communicate(data)
+    if proc.returncode != 0:
+        raise Exception("Error when invoking openssl asn1parse")
     return out.split(b"\n")
 
 
@@ -24,7 +26,10 @@ def getVO(proxy_data):
     chain = re.findall(br"-----BEGIN CERTIFICATE-----\n.+?\n-----END CERTIFICATE-----", proxy_data, flags=re.DOTALL)
     for cert in chain:
         proc = Popen(["openssl", "x509", "-outform", "der"], stdin=PIPE, stdout=PIPE)
-        cert_info = parseASN1(proc.communicate(cert)[0])
+        out, err = proc.communicate(cert)
+        if proc.returncode != 0:
+            raise Exception("Error when invoking openssl X509")
+        cert_info = parseASN1(out)
         # Look for the VOMS extension
         idx_voms_line = findExtension(VOMS_EXTENSION_OID, cert_info)
         if idx_voms_line is None:
