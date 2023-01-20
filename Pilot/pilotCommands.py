@@ -198,18 +198,13 @@ class CheckWorkerNode(CommandBase):
 
 
 class InstallDIRAC(CommandBase):
-    """Basically, this is used to call dirac-install with the passed parameters.
-
-    It requires dirac-install script to be sitting in the same directory.
+    """Installs DIRAC client
     """
 
     def __init__(self, pilotParams):
         """c'tor"""
         super(InstallDIRAC, self).__init__(pilotParams)
-        self.installOpts = []
         self.pp.rootPath = self.pp.pilotRootPath
-        self.installScriptName = "dirac-install.py"
-        self.installScript = ""
 
     def _sourceEnvironmentFile(self):
         """source the $DIRAC_RC_FILE and save the created environment in self.pp.installEnv
@@ -246,61 +241,6 @@ class InstallDIRAC(CommandBase):
                 fd.write(bl)
 
 
-    def _setInstallOptions(self):
-        """Setup installation parameters"""
-
-        for o, v in self.pp.optList:
-            if o == "-d" or o == "--debug":
-                self.installOpts.append("-d")
-            elif o == "-e" or o == "--extraPackages":
-                self.installOpts.append('-e "%s"' % v)
-            elif o == "-u" or o == "--url":
-                self.installOpts.append('-u "%s"' % v)
-            elif o in ("-V", "--installation"):
-                self.installOpts.append('-V "%s"' % v)
-
-        if self.pp.releaseProject:
-            self.installOpts.append("-l '%s'" % self.pp.releaseProject)
-        if self.pp.modules:
-            self.installOpts.append("-m '%s'" % self.pp.modules)
-        if self.pp.userEnvVariables:
-            self.installOpts.append("--userEnvVariables=%s" % self.pp.userEnvVariables)
-        if self.pp.defaultsURL:
-            self.installOpts.append("--defaultsURL=%s" % self.pp.defaultsURL)
-
-        # The release version to install is a requirement
-        self.installOpts.append('-r "%s"' % self.releaseVersion)
-
-        self.log.debug("INSTALL OPTIONS [%s]" % ", ".join(map(str, self.installOpts)))
-
-    def _locateInstallationScript(self):
-        """Locate installation script"""
-        installScript = ""
-        for path in (self.pp.pilotRootPath, self.pp.originalRootPath, self.pp.rootPath):
-            installScript = os.path.join(path, self.installScriptName)
-            if os.path.isfile(installScript):
-                break
-        self.installScript = installScript
-
-        if not os.path.isfile(installScript):
-            self.log.error(
-                "%s requires %s to exist in one of: %s, %s, %s"
-                % (
-                    self.pp.pilotScriptName,
-                    self.installScriptName,
-                    self.pp.pilotRootPath,
-                    self.pp.originalRootPath,
-                    self.pp.rootPath,
-                )
-            )
-            sys.exit(1)
-
-        try:
-            # change permission of the script
-            os.chmod(self.installScript, stat.S_IRWXU)
-        except OSError:
-            pass
-
     def _getPreinstalledEnvScript(self):
         """ Get preinstalled environment script if any """
 
@@ -319,35 +259,11 @@ class InstallDIRAC(CommandBase):
                 self.pp.preinstalledEnv = preinstalledEnvScript
                 self.pp.installEnv["DIRAC_RC_PATH"] = preinstalledEnvScript
 
-    def _installDIRACpy2(self):
-        """ Install python2 DIRAC or its extension,
-            then parse the environment file created, and use it for subsequent calls
-        """
-        
-        # Installing
-        installCmd = "%s %s" % (self.installScript, " ".join(self.installOpts))
-        self.log.debug("Installing with: %s" % installCmd)
-
-        # At this point self.pp.installEnv may coincide with os.environ
-        # If extensions want to pass in a modified environment, it's easy to set self.pp.installEnv in an extended command
-        retCode, _output = self.executeAndGetOutput(installCmd, self.pp.installEnv)
-
-        if retCode:
-            self.log.error("Could not make a proper DIRAC installation [ERROR %d]" % retCode)
-            self.exitWithError(retCode)
-        self.log.info("%s completed successfully" % self.installScriptName)
-
-        # Parsing the bashrc then adding its content to the installEnv
-        # at this point self.pp.installEnv may still coincide with os.environ
-        self.pp.installEnv["DIRAC_RC_PATH"] = os.path.join(os.getcwd(), "bashrc")
-
-        self._sourceEnvironmentFile()
-        # At this point self.pp.installEnv should contain all content of bashrc, sourced "on top" of (maybe) os.environ
-        self._saveEnvInFile()
-
     def _installDIRACpy3(self):
         """Install python3 version of DIRAC client"""
         # default to limit the resources used during installation to what the pilot owns
+        self.log.info("Installing DIRAC locally")
+
         installEnv = {
             # see https://github.com/DIRACGrid/Pilot/issues/189
             "MAMBA_EXTRACT_THREADS": str(self.pp.maxNumberOfProcessors or 1),
@@ -452,15 +368,6 @@ class InstallDIRAC(CommandBase):
                 self.log.error("Could not pip install %s [ERROR %d]" % (self.releaseVersion, retCode))
                 self.exitWithError(retCode)
 
-    def _localInstallDIRAC(self):
-        self.log.info("Installing DIRAC locally")
-        if self.pp.pythonVersion == "27":
-            self._setInstallOptions()
-            self._locateInstallationScript()
-            self._installDIRACpy2()
-        else:  # python3 is requested
-            self._installDIRACpy3()
-
     @logFinalizer
     def execute(self):
         """What is called all the time"""
@@ -469,13 +376,13 @@ class InstallDIRAC(CommandBase):
             # In case we want to force local installation (in absence of CVMFS or for test reasons)
             if "diracInstallOnly" in self.pp.genericOption:
                 self.log.info("NOT sourcing: starting traditional DIRAC installation")
-                self._localInstallDIRAC()
+                self._installDIRACpy3()
                 return
             
             # Try sourcing from CVMFS
             self._getPreinstalledEnvScript()
             if not self.pp.preinstalledEnv:
-                self._localInstallDIRAC()
+                self._installDIRACpy3()
                 return
             # if we are here, we have a preinstalled environment
             self._sourceEnvironmentFile()
@@ -527,16 +434,6 @@ class ConfigureBasics(CommandBase):
 
         * executables (scripts)
         * DIRAC python code
-
-    If the pilot has installed DIRAC (and extensions) in the traditional way, so using the dirac-install.py script,
-    simply the current directory is used, and:
-
-        * scripts will be in $CWD/scripts.
-        * DIRAC python code will be all sitting in $CWD
-        * the local dirac.cfg file will be found in $CWD/etc
-
-    For a more general case of non-traditional installations, we should use the PATH and PYTHONPATH as set by the
-    installation phase. Executables and code will be searched there.
     """
 
     def __init__(self, pilotParams):
@@ -1135,10 +1032,7 @@ class LaunchAgent(CommandBase):
         if self.pp.executeCmd:
             # Execute user command
             self.log.info("Executing user defined command: %s" % self.pp.executeCmd)
-            if self.pp.pythonVersion == "27":
-                self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
-            else:
-                self.exitWithError(int(os.system("source diracos/diracosrc; %s" % self.pp.executeCmd) / 256))
+            self.exitWithError(int(os.system("source diracos/diracosrc; %s" % self.pp.executeCmd) / 256))
 
         self.log.info("Starting JobAgent")
         os.environ["PYTHONUNBUFFERED"] = "yes"
@@ -1239,10 +1133,7 @@ class MultiLaunchAgent(CommandBase):
         if self.pp.executeCmd:
             # Execute user command
             self.log.info("Executing user defined command: %s" % self.pp.executeCmd)
-            if self.pp.pythonVersion == "27":
-                self.exitWithError(int(os.system("source bashrc; %s" % self.pp.executeCmd) / 256))
-            else:
-                self.exitWithError(int(os.system("source diracos/diracosrc; %s" % self.pp.executeCmd) / 256))
+            self.exitWithError(int(os.system("source diracos/diracosrc; %s" % self.pp.executeCmd) / 256))
 
         self.log.info("Starting JobAgent")
         os.environ["PYTHONUNBUFFERED"] = "yes"

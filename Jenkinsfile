@@ -5,7 +5,7 @@ This is customized pipeline for running on jenkins-dirac.web.cern.ch
 */
 
 
-properties([parameters([string(name: 'projectVersion', defaultValue: 'v8.1.0a15', description: 'The DIRAC version to install. Use py2 or py3 syntax'),
+properties([parameters([string(name: 'projectVersion', defaultValue: 'v8.1.0a20', description: 'The DIRAC version to install'),
                         string(name: 'Pilot_repo', defaultValue: 'DIRACGrid', description: 'The Pilot repo'),
                         string(name: 'Pilot_branch', defaultValue: 'devel', description: 'The Pilot branch'),
                         string(name: 'DIRAC_test_repo', defaultValue: 'DIRACGrid', description: 'The DIRAC repo to use for getting the test code'),
@@ -13,7 +13,7 @@ properties([parameters([string(name: 'projectVersion', defaultValue: 'v8.1.0a15'
                         string(name: 'JENKINS_CE', defaultValue: 'jenkins.cern.ch', description: 'The CE definition to use (of DIRAC.Jenkins.ch, see CS for others)'),
                         string(name: 'modules', defaultValue: '', description: 'to override what is installed, e.g. with https://github.com/$DIRAC_test_repo/DIRAC.git:::DIRAC:::$DIRAC_test_branch'),
                         string(name: 'pip_install_options', defaultValue: '', description: 'options to pip install (e.g. --index-url=https://lhcb-repository.web.cern.ch/repository/pypi/simple)'),
-                        string(name: 'pilot_options', defaultValue: '', description: 'any pilot option, e.g. --pythonVersion=2'),
+                        string(name: 'pilot_options', defaultValue: '', description: 'any pilot option'),
                         string(name: 'CSURL', defaultValue: 'https://lbcertifdirac70.cern.ch:9135/Configuration/Server', description: 'URL for CS'),
                         string(name: 'DIRACSETUP', defaultValue: 'DIRAC-Certification', description: 'DIRAC setup'),
                         string(name: 'PILOTJSON', defaultValue: 'pilot_oldSchema.json', description: 'other option: pilot_newSchema.json'),

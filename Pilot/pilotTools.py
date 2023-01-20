@@ -8,7 +8,6 @@ import getopt
 import imp
 import json
 import os
-import pickle
 import re
 import select
 import signal
@@ -55,7 +54,7 @@ except NameError:
 # Utilities functions
 
 
-def parseVersion(releaseVersion, useLegacyStyle):
+def parseVersion(releaseVersion):
     """Convert the releaseVersion into a legacy or PEP-440 style string
 
     :param str releaseVersion: The software version to use
@@ -68,27 +67,11 @@ def parseVersion(releaseVersion, useLegacyStyle):
     if not match:
         return releaseVersion
     major, minor, patch, pre = match.groups()
-    if useLegacyStyle:
-        version = "v" + major + "r" + minor
-        if patch and int(patch):
-            version += "p" + patch
-        if pre:
-            version += "-pre" + pre
-    else:
-        version = major + "." + minor
-        version += "." + (patch or "0")
-        if pre:
-            version += "a" + pre
+    version = major + "." + minor
+    version += "." + (patch or "0")
+    if pre:
+        version += "a" + pre
     return version
-
-
-def printVersion(log):
-    log.info("Running %s" % " ".join(sys.argv))
-    try:
-        with open("%s.run" % sys.argv[0], "w") as fd:
-            pickle.dump(sys.argv[1:], fd)
-    except OSError:
-        pass
 
 
 def pythonPathCheck():
@@ -641,9 +624,9 @@ class CommandBase(object):
         Extensions could replace this function.
         """
         if not self.pp.releaseProject:
-            return LooseVersion(parseVersion("v7r0p29", self.pp.pythonVersion == "27"))
+            return LooseVersion(parseVersion("v7r0p29"))
         # just a trick to always evaluate comparisons in pilotCommands to False
-        return LooseVersion("z") if self.pp.pythonVersion == "27" else LooseVersion("1000")
+        return LooseVersion("1000")
 
     def executeAndGetOutput(self, cmd, environDict=None):
         """Execute a command on the worker node and get the output"""
@@ -731,7 +714,7 @@ class CommandBase(object):
 
     @property
     def releaseVersion(self):
-        parsedVersion = parseVersion(self.pp.releaseVersion, self.pp.pythonVersion == "27")
+        parsedVersion = parseVersion(self.pp.releaseVersion)
         # strip what is not strictly the version number (e.g. if it is DIRAC[pilot]==7.3.4])
         return parsedVersion.split("==")[1] if "==" in parsedVersion else parsedVersion
 
@@ -785,7 +768,6 @@ class PilotParams(object):
         # used to set payloadProcessors unless other limits are reached (like the number of processors on the WN)
         self.maxNumberOfProcessors = 0
         self.minDiskSpace = 2560  # MB
-        self.pythonVersion = "3"
         self.defaultsURL = None
         self.userGroup = ""
         self.userDN = ""
@@ -816,8 +798,8 @@ class PilotParams(object):
         self.pilotLogging = False
         self.loggerURL = None
         self.pilotUUID = "unknown"
-        self.modules = ""  # see dirac-install "-m" option documentation
-        self.userEnvVariables = ""  # see dirac-install "--userEnvVariables" option documentation
+        self.modules = ""  # for installing a non-released version
+        self.userEnvVariables = ""  # for adding user-defined environment variables
         self.pipInstallOptions = ""
 
         # Parameters that can be determined at runtime only
@@ -844,7 +826,7 @@ class PilotParams(object):
             ("n:", "name=", "Set <Site> as Site Name"),
             ("o:", "option=", "Option=value to add"),
             ("m:", "maxNumberOfProcessors=", "specify a max number of processors to use by the payload inside a pilot"),
-            ("", "modules=", 'for installing non-released code (see dirac-install "-m" option documentation)'),
+            ("", "modules=", 'for installing non-released code'),
             (
                 "",
                 "userEnvVariables=",
@@ -880,7 +862,6 @@ class PilotParams(object):
             ("W:", "gateway=", "Configure <gateway> as DIRAC Gateway during installation"),
             ("X:", "commands=", "Pilot commands to execute"),
             ("Z:", "commandOptions=", "Options parsed by command modules"),
-            ("", "pythonVersion=", "Python version of DIRAC client to install"),
             ("", "defaultsURL=", "user-defined URL for global config"),
             ("", "pilotUUID=", "pilot UUID"),
             ("", "preinstalledEnv=", "preinstalled pilot environment script location"),
@@ -1017,8 +998,6 @@ class PilotParams(object):
                 self.userEnvVariables = v
             elif o == "--pipInstallOptions":
                 self.pipInstallOptions = v
-            elif o == "--pythonVersion":
-                self.pythonVersion = v
             elif o == "--defaultsURL":
                 self.defaultsURL = v
             elif o == "--preinstalledEnv":
