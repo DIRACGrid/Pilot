@@ -10,7 +10,6 @@ dependencies:
   - python =3.8
   - pip
   - requests
-  - stomp.py
   # testing and development
   - autopep8
   - caniusepython3

@@ -21,7 +21,7 @@ jobs:
           - 3.9
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Prepare environment
       run: |
         conda config --set add_pip_as_python_dependency false
@@ -32,9 +32,7 @@ jobs:
 
         if [[ "${{ matrix.python }}" == "2.7.13" ]]
         then
-            pip install caniusepython3 stomp.py
-        else
-            pip install stomp.py
+            pip install caniusepython3
         fi
     - name: Run tests
       run: |
@@ -54,22 +52,21 @@ jobs:
     strategy:
       fail-fast: False
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Run shellcheck
       run: find tests/CI -name '*.sh' -print0 | xargs -0 -n1 shellcheck --external-sources;
 
   pycodestyle:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Prepare environment
       run: |
         conda config --set add_pip_as_python_dependency false
         conda create -c conda-forge -c free -n python_3.9 python=3.9
         source "${CONDA}/bin/activate"
         conda activate python_3.9
-        conda install pytest pytest-mock pylint autopep8 docopt mock requests pip
-        pip install stomp.py
+        conda install pytest pytest-mock pylint pycodestyle mock requests pip
     - name: Run pycodestyle
       run: |
             source "${CONDA}/bin/activate"

@@ -9,7 +9,6 @@ pytest-cov; python_version >= '2.7'
 mock
 coverage
 pytest-mock
-stomp.py
 requests
 autopep8
 caniusepython3
