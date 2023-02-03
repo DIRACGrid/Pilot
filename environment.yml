@@ -7,15 +7,15 @@ channels:
 
 dependencies:
   # runtime
-  - python =2.7
+  - python =3.9
   - pip
   - requests
   # testing and development
-  - autopep8
+  - pycodestyle
   - caniusepython3
   - coverage
   - mock
   - pylint
-  - pytest >=3.6
+  - pytest
   - pytest-mock
   - shellcheck
