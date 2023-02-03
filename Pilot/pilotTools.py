@@ -39,7 +39,7 @@ except ImportError:
     from io import StringIO
 
 try:
-    basestring
+    basestring  # pylint: disable=used-before-assignment
 except NameError:
     basestring = str
 
