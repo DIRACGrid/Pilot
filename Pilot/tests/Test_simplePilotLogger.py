@@ -31,7 +31,7 @@ class TestPilotParams(unittest.TestCase):
             "-g",
             "dummyURL",
             "-F",
-            "tests/CI/pilot.json",
+            "tests/pilot.json",
         ]
 
         pp = PilotParams()
@@ -48,7 +48,7 @@ class TestPilotParams(unittest.TestCase):
         # no -z, no -g when  the new JSON format in use.
         argvmock.__getitem__.return_value = [
             "-F",
-            "tests/CI/pilot.json",
+            "tests/pilot.json",
         ]
 
         pp = PilotParams()
@@ -126,7 +126,7 @@ class TestCommandBase(unittest.TestCase):
             "-g",
             "dummyURL",
             "-F",
-            "tests/CI/pilot.json",
+            "tests/pilot.json",
         ]
 
         for size in [1000, 1024, 1025, 2005]:
