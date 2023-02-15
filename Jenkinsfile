@@ -28,7 +28,7 @@ node('lhcbci-cernvm4-02') {
         "DIRACSE=CERN-SWTEST",
         "JENKINS_QUEUE=jenkins-queue_not_important",
         "JENKINS_SITE=DIRAC.Jenkins.ch",
-        "DIRACUSERDN=/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=cburr/CN=761704/CN=Chris Burr",
+        "DIRACUSERDN=/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer",
         "DIRACUSERROLE=dirac_user"]){
 
         stage('GET') {
