@@ -1,361 +1,73 @@
 {
   "timestamp": "2023-02-13T14:34:26.725499",
   "CEs": {
-    "prisma-controller01.na.infn.it": {
-      "Site": "CLOUD.RECAS-NAPOLI.it",
-      "GridCEType": "VMCloud"
+    "jenkins.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST"
     },
-    "lpnhe-cloud.in2p3.fr": {
-      "Site": "CLOUD.GRIF.fr",
-      "GridCEType": "VMCloud"
+    "jenkins-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-FULL"
     },
-    "vcycle-cern.blackett.manchester.ac.uk": {
-      "Site": "CLOUD.UKI-NORTHGRID-MAN-HEP.uk",
-      "GridCEType": "VMCloud"
+    "jenkins-mp.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-MP"
     },
-    "vcycle-ral.blackett.manchester.ac.uk": {
-      "Site": "CLOUD.UKI-NORTHGRID-MAN-HEP.uk",
-      "GridCEType": "VMCloud"
+    "jenkins-mp-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-FULL"
     },
-    "vcycle-cam.blackett.manchester.ac.uk": {
-      "Site": "CLOUD.UKI-NORTHGRID-MAN-HEP.uk",
-      "GridCEType": "VMCloud"
+    "jenkins-singularity.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST",
+      "LocalCEType": "Singularity",
+      "InstallDIRACInContainer": "True"
     },
-    "vcycle-aws.blackett.manchester.ac.uk": {
-      "Site": "CLOUD.UKI-NORTHGRID-MAN-HEP.uk",
-      "GridCEType": "VMCloud"
+    "jenkins-singularity-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-FULL",
+      "LocalCEType": "Singularity"
     },
-    "vac01.blackett.manchester.ac.uk": {
-      "Site": "VAC.UKI-NORTHGRID-MAN-HEP.uk",
-      "GridCEType": "VMCloud"
+    "jenkins-mp-pool.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST-MP",
+      "LocalCEType": "Pool"
     },
-    "vac02.tier2.hep.manchester.ac.uk": {
-      "Site": "VAC.UKI-NORTHGRID-MAN-HEP.uk",
-      "GridCEType": "Vac"
-    },
-    "vac04.blackett.manchester.ac.uk": {
-      "Site": "VAC.UKI-NORTHGRID-MAN-HEP.uk",
-      "GridCEType": "VMCloud"
-    },
-    "vac03.blackett.manchester.ac.uk": {
-      "Site": "VAC.UKI-NORTHGRID-MAN-HEP.uk",
-      "GridCEType": "VMCloud"
-    },
-    "vac02.blackett.manchester.ac.uk": {
-      "Site": "VAC.UKI-NORTHGRID-MAN-HEP.uk",
-      "GridCEType": "VMCloud"
-    },
-    "vac.ph.bham.ac.uk": {
-      "Site": "VAC.UKI-SOUTHGRID-BHAM-HEP.uk",
-      "GridCEType": "VMCloud"
-    },
-    "arc-ce01.gridpp.rl.ac.uk": {
-      "Site": "LCG.RAL-LCG2.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-EL7": {
+    "jenkins-mp-pool-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-FULL",
+      "LocalCEType": "InProcess",
+      "VAR_JENKINS_QUEUE": {
         "LocalCEType": "Pool"
       }
     },
-    "arc-ce02.gridpp.rl.ac.uk": {
-      "Site": "LCG.RAL-LCG2.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-EL7": {
-        "LocalCEType": "Pool"
+    "jenkins-mp-pool-sudo.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-MP",
+      "VAR_JENKINS_QUEUE": {
+        "LocalCEType": "Pool/Sudo"
       }
     },
-    "arc-ce03.gridpp.rl.ac.uk": {
-      "Site": "LCG.RAL-LCG2.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-EL7": {
-        "LocalCEType": "Pool"
+    "jenkins-mp-pool-sudo-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-FULL",
+      "VAR_JENKINS_QUEUE": {
+        "LocalCEType": "Pool/Sudo"
       }
     },
-    "arc-ce04.gridpp.rl.ac.uk": {
-      "Site": "LCG.RAL-LCG2.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-EL7": {
-        "LocalCEType": "Pool"
+    "jenkins-mp-pool-singularity.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-MP",
+      "VAR_JENKINS_QUEUE": {
+        "LocalCEType": "Pool/Singularity"
       }
     },
-    "arc-ce05.gridpp.rl.ac.uk": {
-      "Site": "LCG.RAL-LCG2.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-EL7": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "dc2-grid-21.brunel.ac.uk": {
-      "Site": "LCG.UKI-LT2-Brunel.uk",
-      "GridCEType": "ARC"
-    },
-    "dc2-grid-22.brunel.ac.uk": {
-      "Site": "LCG.UKI-LT2-Brunel.uk",
-      "GridCEType": "ARC"
-    },
-    "dc2-grid-25.brunel.ac.uk": {
-      "Site": "LCG.UKI-LT2-Brunel.uk",
-      "GridCEType": "ARC"
-    },
-    "dc2-grid-26.brunel.ac.uk": {
-      "Site": "LCG.UKI-LT2-Brunel.uk",
-      "GridCEType": "ARC"
-    },
-    "dc2-grid-28.brunel.ac.uk": {
-      "Site": "LCG.UKI-LT2-Brunel.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-default": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "hepgrid5.ph.liv.ac.uk": {
-      "Site": "LCG.UKI-NORTHGRID-LIV-HEP.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-grid": {
-        "LocalCEType": "Pool"
-      },
-      "-multimgrid": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "hepgrid6.ph.liv.ac.uk": {
-      "Site": "LCG.UKI-NORTHGRID-LIV-HEP.uk",
-      "GridCEType": "HTCondorCE",
-      "hepgrid6.ph.liv.ac.uk-condor-multi": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ce01.tier2.hep.manchester.ac.uk": {
-      "Site": "LCG.UKI-NORTHGRID-MAN-HEP.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-medium": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ce02.tier2.hep.manchester.ac.uk": {
-      "Site": "LCG.UKI-NORTHGRID-MAN-HEP.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-medium": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ce03.tier2.hep.manchester.ac.uk": {
-      "Site": "LCG.UKI-NORTHGRID-MAN-HEP.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-medium": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ce-test.dur.scotgrid.ac.uk": {
-      "Site": "LCG.UKI-SCOTGRID-DURHAM.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimslurm-testing": {
-        "LocalCEType": "Pool"
-      },
-      "-multimtesting": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ce1.dur.scotgrid.ac.uk": {
-      "Site": "LCG.UKI-SCOTGRID-DURHAM.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimslurm-ce1": {
-        "LocalCEType": "Pool"
-      },
-      "-multimce1": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ce2.dur.scotgrid.ac.uk": {
-      "Site": "LCG.UKI-SCOTGRID-DURHAM.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimslurm-ce2": {
-        "LocalCEType": "Pool"
-      },
-      "-multimce2": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ce3.dur.scotgrid.ac.uk": {
-      "Site": "LCG.UKI-SCOTGRID-DURHAM.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimslurm-ce3": {
-        "LocalCEType": "Pool"
-      },
-      "-multimce3": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ce4.dur.scotgrid.ac.uk": {
-      "Site": "LCG.UKI-SCOTGRID-DURHAM.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimslurm-ce4": {
-        "LocalCEType": "Pool"
-      },
-      "-multimce4": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "grendel.hec.lancs.ac.uk": {
-      "Site": "LCG.UKI-NORTHGRID-LANCS-HEP.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimsungridengine-grid7": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ce1.gridpp.ecdf.ed.ac.uk": {
-      "Site": "LCG.UKI-SCOTGRID-ECDF.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimsungridengine-eddie": {
-        "LocalCEType": "Pool"
-      },
-      "-multimeddie": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ce2.gridpp.ecdf.ed.ac.uk": {
-      "Site": "LCG.UKI-SCOTGRID-ECDF.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimsungridengine-eddie": {
-        "LocalCEType": "Pool"
-      },
-      "-multimeddie": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "t3-mw1.ph.ed.ac.uk": {
-      "Site": "LCG.UKI-SCOTGRID-ECDF.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-condor": {
-        "LocalCEType": "Pool"
-      },
-      "-multimcondor": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ce3.gridpp.ecdf.ed.ac.uk": {
-      "Site": "LCG.UKI-SCOTGRID-ECDF.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimsungridengine-eddie": {
-        "LocalCEType": "Pool"
-      },
-      "-multimeddie": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ce01.gla.scotgrid.ac.uk": {
-      "Site": "LCG.UKI-SCOTGRID-GLASGOW.uk",
-      "GridCEType": "ARC"
-    },
-    "ce02.gla.scotgrid.ac.uk": {
-      "Site": "LCG.UKI-SCOTGRID-GLASGOW.uk",
-      "GridCEType": "ARC"
-    },
-    "ce03.gla.scotgrid.ac.uk": {
-      "Site": "LCG.UKI-SCOTGRID-GLASGOW.uk",
-      "GridCEType": "ARC"
-    },
-    "ce04.gla.scotgrid.ac.uk": {
-      "Site": "LCG.UKI-SCOTGRID-GLASGOW.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-condor": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "lcgce02.phy.bris.ac.uk": {
-      "Site": "LCG.UKI-SOUTHGRID-BRIS-HEP.uk",
-      "GridCEType": "HTCondorCE",
-      "lcgce02.phy.bris.ac.uk-condor-multi": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "t2arc00.physics.ox.ac.uk": {
-      "Site": "LCG.UKI-SOUTHGRID-OX-HEP.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-condor": {
-        "LocalCEType": "Pool"
-      },
-      "-multimcondor": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "heplnx206.pp.rl.ac.uk": {
-      "Site": "LCG.UKI-SOUTHGRID-RALPP.uk",
-      "GridCEType": "ARC"
-    },
-    "heplnx207.pp.rl.ac.uk": {
-      "Site": "LCG.UKI-SOUTHGRID-RALPP.uk",
-      "GridCEType": "ARC"
-    },
-    "heplnx208.pp.rl.ac.uk": {
-      "Site": "LCG.UKI-SOUTHGRID-RALPP.uk",
-      "GridCEType": "ARC",
-      "nordugrid-condor-grid": {
-        "LocalCEType": "Pool"
-      },
-      "nordugrid-multimcondor-grid": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ceprod03.grid.hep.ph.ic.ac.uk": {
-      "Site": "LCG.UKI-LT2-IC-HEP.uk",
-      "GridCEType": "HTCondorCE",
-      "ceprod03.grid.hep.ph.ic.ac.uk-condor-multi": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ceprod01.grid.hep.ph.ic.ac.uk": {
-      "Site": "LCG.UKI-LT2-IC-HEP.uk",
-      "GridCEType": "HTCondorCE",
-      "ceprod01.grid.hep.ph.ic.ac.uk-condor-multi": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ceprod02.grid.hep.ph.ic.ac.uk": {
-      "Site": "LCG.UKI-LT2-IC-HEP.uk",
-      "GridCEType": "HTCondorCE",
-      "ceprod02.grid.hep.ph.ic.ac.uk-condor-multi": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "ceprod00.grid.hep.ph.ic.ac.uk": {
-      "Site": "LCG.UKI-LT2-IC-HEP.uk",
-      "GridCEType": "HTCondorCE",
-      "ceprod00.grid.hep.ph.ic.ac.uk-condor-multi": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "arcce02.esc.qmul.ac.uk": {
-      "Site": "LCG.UKI-LT2-QMUL.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimslurm-centos7_long": {
-        "LocalCEType": "Pool"
-      },
-      "nordugrid-multimslurm-centos7_gpu": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "arcce03.esc.qmul.ac.uk": {
-      "Site": "LCG.UKI-LT2-QMUL.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimslurm-centos7_long": {
-        "LocalCEType": "Pool"
-      },
-      "nordugrid-multimslurm-centos7_gpu": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "htc01.ppgrid1.rhul.ac.uk": {
-      "Site": "LCG.UKI-LT2-RHUL.uk",
-      "GridCEType": "HTCondorCE",
-      "htc01.ppgrid1.rhul.ac.uk-condor-multi": {
-        "LocalCEType": "Pool"
-      }
-    },
-    "lcgce1.shef.ac.uk": {
-      "Site": "LCG.UKI-NORTHGRID-SHEF-HEP.uk",
-      "GridCEType": "ARC",
-      "nordugrid-multimcondor-grid": {
-        "LocalCEType": "Pool"
+    "jenkins-mp-pool-singularity-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-FULL",
+      "VAR_JENKINS_QUEUE": {
+        "LocalCEType": "Pool/Singularity"
       }
     }
   },
@@ -376,17 +88,6 @@
       "WriteProtocols": "srm, root, dips",
       "UseCatalogPFN": "False"
     },
-    "ResourceStatus": {
-      "Config": {
-        "State": "InActive",
-        "Cache": "720",
-        "FromAddress": "dirac@diractest.grid.hep.ph.ic.ac.uk",
-        "StatusTypes": {
-          "default": "all",
-          "StorageElement": "ReadAccess, WriteAccess, CheckAccess, RemoveAccess"
-        }
-      }
-    },
     "Shifter": {
       "GridPPLogManager": {
         "User": "diracpilottest.grid.hep.ph.ic.ac.uk",
@@ -394,26 +95,55 @@
       }
     },
     "Pilot": {
-      "RemoteLogging": "False"
-    }
-  },
-  "GridPP": {
-    "Pilot": {
-      "Version": "8.0.5",
-      "Extensions": "None",
-      "CheckVersion": "False",
-      "pilotFileServer": "diractest.grid.hep.ph.ic.ac.uk:8443",
-      "pilotRepoBranch": "devel_janusz_pilot_logsWrapperJSON_sync.dev",
-      "pilotRepo": "https://github.com/martynia/Pilot.git"
+      "RemoteLogging": "False",
+      "Commands": {
+        "TEST": [
+          "CheckWorkerNode",
+          "InstallDIRAC",
+          "ConfigureBasics",
+          "CheckCECapabilities",
+          "CheckWNCapabilities",
+          "ConfigureSite",
+          "ConfigureArchitecture",
+          "ConfigureCPURequirements"
+        ],
+        "TEST-MP": [
+          "CheckWorkerNode",
+          "InstallDIRAC",
+          "ConfigureBasics",
+          "CheckCECapabilities",
+          "CheckWNCapabilities",
+          "ConfigureSite",
+          "ConfigureArchitecture",
+          "ConfigureCPURequirements"
+        ],
+        "TEST-FULL": [
+          "CheckWorkerNode",
+          "InstallDIRAC",
+          "ConfigureBasics",
+          "CheckCECapabilities",
+          "CheckWNCapabilities",
+          "ConfigureSite",
+          "ConfigureArchitecture",
+          "ConfigureCPURequirements",
+          "LaunchAgent"
+        ]
+      },
     }
   },
   "gridpp": {
-    "GridPP": {
+    "DIRAC-Certification": {
       "Pilot": {
+        "Version": "VAR_DIRAC_VERSION",
+        "Extensions": "None",
+        "CheckVersion": "False",
+        "pilotFileServer": "lbvobox70.cern.ch:8443",
+        "pilotRepoBranch": "does_not_matter",
+        "pilotRepo": "https://github.com/does_not_matter/Pilot.git",
         "GenericPilotGroup": "gridpp_pilot",
-        "GenericPilotDN": "/C=UK/O=eScience/OU=Imperial/L=Physics/CN=dirac-pilot-test.grid.hep.ph.ic.ac.uk",
+        "GenericPilotDN": "VAR_USERDN_GRIDPP",
         "RemoteLogging": "True",
-        "RemoteLoggerURL": "https://diractest.grid.hep.ph.ic.ac.uk:8444/WorkloadManagement/TornadoPilotLogging",
+        "RemoteLoggerURL": "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
         "UploadSE": "UKI-LT2-IC-HEP-disk",
         "UploadPath": "/gridpp/pilotlogs/",
         "LoggingShifterName": "GridPPLogManager",
@@ -448,42 +178,28 @@
         },
         "JobMonitoring": {
           "usePilotsLoggingFlag": "True",
-          "DownloadLocation": "https://diractest.grid.hep.ph.ic.ac.uk:8444/WorkloadManagement/TornadoPilotLogging"
+          "DownloadLocation": "https://lbvobox70.cern.ch:8444/WorkloadManagement/TornadoPilotLogging"
         }
       }
     }
   },
-  "lz": {
-    "GridPP": {
+  "dteam": {
+    "DIRAC-Certification": {
       "Pilot": {
-        "GenericPilotGroup": "lz_pilot",
-        "GenericPilotDN": "/C=UK/O=eScience/OU=Imperial/L=Physics/CN=dirac-pilot-test.grid.hep.ph.ic.ac.uk"
+        "Version": "VAR_DIRAC_VERSION",
+        "CheckVersion": "True",
+        "pilotFileServer": "lbvobox70.cern.ch:8443",
+        "pilotRepoBranch": "should_not_matter",
+        "pilotRepo": "https://github.com/should_not_matter/Pilot.git",
+        "GenericPilotGroup": "dteam_pilot",
+        "GenericPilotDN": "VAR_USERDN",
+        "RemoteLogging": "True",
+        "RemoteLoggerURL": "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
+        "PilotLogLevel": "DEBUG"
       },
-      "Shifter": {
-        "SAMManager": {
-          "User": "diracpilottest.grid.hep.ph.ic.ac.uk",
-          "Group": "lz_user"
-        },
-        "ProductionManager": {
-          "User": "diracpilottest.grid.hep.ph.ic.ac.uk",
-          "Group": "lz_user"
-        },
-        "DataManager": {
-          "User": "diracpilottest.grid.hep.ph.ic.ac.uk",
-          "Group": "lz_user"
-        }
-      },
-      "Services": {
-        "Catalogs": {
-          "FileCatalog": {
-            "AccessType": "ReadWrite",
-            "Status": "Active"
-          }
-        }
-      }
     }
   },
   "ConfigurationServers": [
-    "dips://diractest.grid.hep.ph.ic.ac.uk:9135/Configuration/Server"
+    "VAR_CS"
   ]
 }

@@ -82,6 +82,7 @@ PilotInstall(){
   sed -i "s/VAR_DIRAC_VERSION/${projectVersion}/g" pilot.json
   sed -i "s#VAR_CS#${CSURL}#g" pilot.json
   sed -i "s#VAR_USERDN#${DIRACUSERDN}#g" pilot.json
+  sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
 
   # launch the pilot script
   # shellcheck disable=SC2154
