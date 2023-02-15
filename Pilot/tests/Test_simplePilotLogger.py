@@ -90,7 +90,6 @@ class TestPilotParams(unittest.TestCase):
         pp.pilotCFGFile = "tests/CI/pilot.json"  # any file really, just testing remote logging options.
 
         with patch.dict(pp.pilotJSON, mockPilotJSON, clear=True):
-
             res = pp.getPilotOptionsDict()
             self.assertEqual(
                 res.get("RemoteLoggerURL"),

@@ -67,7 +67,6 @@ def logFinalizer(func):
     """
 
     def wrapper(self):
-
         if not self.log.isPilotLoggerOn:
             self.log.debug("Remote logger is not active, no log flushing performed")
             return func(self)
@@ -756,7 +755,6 @@ class ConfigureSite(CommandBase):
             self.exitWithError(retCode)
 
     def __setFlavour(self):
-
         pilotRef = "Unknown"
         self.pp.flavour = "Generic"
 
@@ -1021,7 +1019,6 @@ class LaunchAgent(CommandBase):
         self.jobAgentOpts = []
 
     def __setInnerCEOpts(self):
-
         localUid = os.getuid()
         try:
             import pwd
@@ -1138,7 +1135,6 @@ class MultiLaunchAgent(CommandBase):
         self.jobAgentOpts = []
 
     def __setInProcessOpts(self):
-
         localUid = os.getuid()
         try:
             import pwd

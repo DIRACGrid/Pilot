@@ -23,11 +23,6 @@ from datetime import datetime
 from functools import partial
 from distutils.version import LooseVersion
 
-try:
-    from Pilot.proxyTools import getVO
-except ImportError:
-    from proxyTools import getVO
-
 ############################
 # python 2 -> 3 "hacks"
 try:
@@ -51,7 +46,7 @@ except NameError:
 try:
     from Pilot.proxyTools import getVO
 except ImportError:
-    from pilotTools import getVO
+    from proxyTools import getVO
 
 # Utilities functions
 
@@ -84,7 +79,6 @@ def parseVersion(releaseVersion, useLegacyStyle):
 
 
 def printVersion(log):
-
     log.info("Running %s" % " ".join(sys.argv))
     try:
         with open("%s.run" % sys.argv[0], "w") as fd:
@@ -95,7 +89,6 @@ def printVersion(log):
 
 
 def pythonPathCheck():
-
     try:
         os.umask(18)  # 022
         pythonpath = os.getenv("PYTHONPATH", "").split(":")
@@ -600,7 +593,6 @@ class CommandBase(object):
 
         # The subprocess stdout/stderr will be written to logFile
         with open(logFile, "a+", 0) as fpLogFile:
-
             try:
                 _p = subprocess.Popen(
                     "%s" % cmd, shell=True, env=environDict, close_fds=False, stdout=fpLogFile, stderr=fpLogFile

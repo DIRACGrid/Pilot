@@ -43,7 +43,6 @@ except ImportError:
 ############################
 
 if __name__ == "__main__":
-
     pilotStartTime = int(time.time())
 
     sys.stdout, oldstdout = StringIO(), sys.stdout

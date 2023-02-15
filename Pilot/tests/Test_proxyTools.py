@@ -1,17 +1,20 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import subprocess
 import shlex
 import sys
 import os
 import shutil
+import unittest
 
+############################
+# python 2 -> 3 "hacks"
 try:
     from Pilot.proxyTools import getVO, parseASN1
 except ImportError:
     from proxyTools import getVO, parseASN1
-
-import unittest
 
 try:
     from unittest.mock import patch
