@@ -15,7 +15,8 @@ properties([parameters([string(name: 'projectVersion', defaultValue: '8.1.0a4', 
                         string(name: 'pip_install_options', defaultValue: '', description: 'options to pip install (e.g. --index-url=https://lhcb-repository.web.cern.ch/repository/pypi/simple)'),
                         string(name: 'pilot_options', defaultValue: '', description: 'any pilot option, e.g. --pythonVersion=2'),
                         string(name: 'CSURL', defaultValue: 'https://lbcertifdirac70.cern.ch:9135/Configuration/Server', description: 'URL for CS'),
-                        string(name: 'DIRACSETUP', defaultValue: 'DIRAC-Certification', description: 'DIRAC setup')
+                        string(name: 'DIRACSETUP', defaultValue: 'DIRAC-Certification', description: 'DIRAC setup'),
+                        string(name: 'pilotJSON', defaultValue: 'pilot_oldSchema.json', description: 'other option: pilot_newSchema.json')
                        ])])
 
 

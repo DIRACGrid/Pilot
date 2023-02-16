@@ -22,6 +22,8 @@ prepareForPilot(){
     cp "$TESTCODE/Pilot/Pilot/${file}" .
   done
 
+  cp "$TESTCODE/Pilot/tests/CI/${pilotJSON}" "$TESTCODE/Pilot/tests/CI/pilot.json"
+
   #get possible extensions
   if [[ "$VO" ]]; then
     pilotFile="PilotCommands.py"
