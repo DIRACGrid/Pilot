@@ -12,7 +12,7 @@ from subprocess import Popen, PIPE
 VOMS_FQANS_OID = b"1.3.6.1.4.1.8005.100.100.4"
 VOMS_EXTENSION_OID = b"1.3.6.1.4.1.8005.100.100.5"
 
-RE_OPENSSL_ANS1_FORMAT = re.compile(r"^\s*\d+:d=(\d+)\s+hl=")
+RE_OPENSSL_ANS1_FORMAT = re.compile(br"^\s*\d+:d=(\d+)\s+hl=")
 
 def parseASN1(data):
     cmd = ["openssl", "asn1parse", "-inform", "der"]
@@ -31,7 +31,7 @@ def findExtension(oid, lines):
 
 def getVO(proxy_data):
 
-    chain = re.findall(r"-----BEGIN CERTIFICATE-----\n.+?\n-----END CERTIFICATE-----", proxy_data, flags=re.DOTALL)
+    chain = re.findall(br"-----BEGIN CERTIFICATE-----\n.+?\n-----END CERTIFICATE-----", proxy_data, flags=re.DOTALL)
     for cert in chain:
         proc = Popen(["openssl", "x509", "-outform", "der"], stdin=PIPE, stdout=PIPE)
         out, _ = proc.communicate(cert)
@@ -51,7 +51,7 @@ def getVO(proxy_data):
             if depth <= initial_depth:
                 break
             # Look for a role, if it exists the VO is the first element
-            match = re.search(r"OCTET STRING\s+:/([a-zA-Z0-9]+)/Role=", line)
+            match = re.search(br"OCTET STRING\s+:/([a-zA-Z0-9]+)/Role=", line)
             if match:
                 return match.groups()[0].decode()
     raise NotImplementedError("Something went very wrong")
