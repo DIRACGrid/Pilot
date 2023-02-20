@@ -45,8 +45,6 @@ except ImportError:
 if __name__ == "__main__":
 
     pilotStartTime = int(time.time())
-    # we would usually have some classic logger content from a wrapper, which we passed in:
-    receivedContent = sys.stdin.read()
 
     sys.stdout, oldstdout = StringIO(), sys.stdout
     # so PilotParams are writing to a StingIO buffer now.
@@ -54,11 +52,17 @@ if __name__ == "__main__":
     sys.stdout, buffer = oldstdout, sys.stdout
     bufContent = buffer.getvalue()
     buffer.close()
+    # we would usually have some classic logger content from a wrapper, which we passed in:
+    receivedContent = sys.stdin.read()
     # print the buffer, so we have a "classic' logger back in sync.
     sys.stdout.write(bufContent)
-
     # now the remote logger.
     if pilotParams.pilotLogging:
+        # In a remote logger enabled Dirac version we would have some classic logger content from a wrapper,
+        # which we passed in:
+        receivedContent = ""
+        if not sys.stdin.isatty():
+            receivedContent = sys.stdin.read()
         log = RemoteLogger(
             pilotParams.loggerURL, "Pilot", pilotUUID=pilotParams.pilotUUID, debugFlag=pilotParams.debugFlag
         )
