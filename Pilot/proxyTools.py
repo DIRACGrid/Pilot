@@ -14,6 +14,7 @@ VOMS_EXTENSION_OID = b"1.3.6.1.4.1.8005.100.100.5"
 
 RE_OPENSSL_ANS1_FORMAT = re.compile(br"^\s*\d+:d=(\d+)\s+hl=")
 
+
 def parseASN1(data):
     cmd = ["openssl", "asn1parse", "-inform", "der"]
     proc = Popen(cmd, stdin=PIPE, stdout=PIPE)
