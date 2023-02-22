@@ -920,11 +920,15 @@ class PilotParams(object):
         """
 
         self.__ceType()
-        # Commands first. In the new format they can be either in a self.setup/Pilot section in Defaults/Pilot
-        # section or in a VO section (voname/self.setup/Pilot). They are published as a string.
+        # Commands first. In the new format they can be either in Defaults/Pilot
+        # section or in a VO section (voname/self.setup/Pilot). They are published as a list in a dict
+        # keyed by a CE type.
         pilotOptions = self.getPilotOptionsDict()
-        # remote logging
-        self.pilotLogging = pilotOptions.get("RemoteLogging", self.pilotLogging)
+        self.log.debug("PilotOptionsDict %s " % pilotOptions)
+        # remote logging (the default value is self.pilotLogging, a bool)
+        pilotLogging = pilotOptions.get("RemoteLogging")
+        if pilotLogging is not None:
+            self.pilotLogging = pilotLogging.upper() == "TRUE"
         self.loggerURL = pilotOptions.get("RemoteLoggerURL")
         pilotLogLevel = pilotOptions.get("PilotLogLevel", "INFO")
         if pilotLogLevel.lower() == "debug":
@@ -938,7 +942,7 @@ class PilotParams(object):
             for key in [self.gridCEType, "Defaults"]:
                 commands = pilotOptions["Commands"].get(key)
                 if commands is not None:
-                    self.commands = [elem.strip() for elem in commands.split(",")]
+                    self.commands = commands
                     self.log.debug("Selecting commands from JSON for Grid CE type %s" % key)
                     break
         else:
@@ -975,7 +979,7 @@ class PilotParams(object):
         :rtype: dict
         """
 
-        return self.__getOptionForPaths(self.__getSearchPaths(), self.pilotJSON)
+        return self.getOptionForPaths(self.__getSearchPaths(), self.pilotJSON)
 
     def __getVOFromProxy(self):
         """
@@ -1015,12 +1019,13 @@ class PilotParams(object):
 
         return paths
 
-    def __getOptionForPaths(self, paths, inDict):
+    @staticmethod
+    def getOptionForPaths(paths, inDict):
         """
-        Get the preferred option from an input dict passed on a path list. It modifies the inDict.
+        Get the preferred option from an input dict passed ond a path list. It modifies the inDict.
 
-        :param list paths: list of paths to walk through to get a preferred option. The option in
-        the last path has preference over earlier options.
+        :param list paths: list of paths to walk through to get a preferred option. An option found in
+        a path which comes later has a preference over options found in earlier paths.
         :param dict inDict:
         :return: dict
         """
@@ -1255,6 +1260,7 @@ class PilotParams(object):
                 pass
 
                 self.log.debug("Setup: %s" % self.setup)
+        self.log.debug("GridCEType: %s" % self.gridCEType)
         if not self.setup:
             # We don't use the default to override an explicit value from command line!
             try:

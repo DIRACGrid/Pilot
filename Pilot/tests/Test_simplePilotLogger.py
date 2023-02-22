@@ -2,12 +2,12 @@
 
 from __future__ import absolute_import, division, print_function
 
+import json
 import os
 import sys
-import tempfile
 import string
 import random
-import subprocess
+import tempfile
 
 try:
     from Pilot.pilotTools import CommandBase, PilotParams
@@ -42,18 +42,39 @@ class TestPilotParams(unittest.TestCase):
         self.assertEqual(pp.loggerURL, "dummyURL")
         self.assertTrue(pp.debugFlag)
 
+    def test_getOptionForPaths(self):
+        """Test option preference by path (later paths have higher preference)"""
+
+        basedir = os.path.dirname(__file__)
+        jsonFile = os.path.join(basedir, "../../tests/CI/pilot_newSchema.json")
+        vo = "gridpp"
+        setup = "DIRAC-Certification"
+        paths = ["/Defaults/Pilot", "/%s/Pilot" % setup, "/%s/Defaults/Pilot" % vo, "/%s/%s/Pilot" % (vo, setup)]
+        with open(jsonFile, "r") as fp:
+            jsonDict = json.load(fp)
+        res = PilotParams.getOptionForPaths(paths, jsonDict)
+        self.assertEqual(res["RemoteLogging"], "True")
+        self.assertEqual(res["UploadSE"], "UKI-LT2-IC-HEP-disk")
+        del jsonDict[vo][setup]["Pilot"]["RemoteLogging"]  # remove a vo-specific settings, a default value is False:
+        res = PilotParams.getOptionForPaths(paths, jsonDict)
+        self.assertEqual(res["RemoteLogging"], "False")
+
     @patch.object(PilotParams, "_PilotParams__getSearchPaths")
     @patch("sys.argv")
     def test_pilotOptions(self, argvmock, mockPaths):
         # no -z, no -g when  the new JSON format in use.
+        basedir = os.path.dirname(__file__)
         argvmock.__getitem__.return_value = [
             "-F",
-            "tests/pilot.json",
+            os.path.join(basedir, "../../tests/CI/pilot_newSchema.json"),
+            "-N",
+            "TEST_type_CE",
+            "--gridCEType",
+            "TEST",
         ]
 
-        pp = PilotParams()
         vo = "gridpp"
-        setup = "GridPP"
+        setup = "DIRAC-Certification"
         paths = [
             "/Defaults/Pilot",
             "/%s/Pilot" % setup,
@@ -61,48 +82,31 @@ class TestPilotParams(unittest.TestCase):
             "/%s/%s/Pilot" % (vo, setup),
         ]
         mockPaths.return_value = paths
+        pp = PilotParams()
+        lTESTcommands = [
+            "CheckWorkerNode",
+            "InstallDIRAC",
+            "ConfigureBasics",
+            "CheckCECapabilities",
+            "CheckWNCapabilities",
+            "ConfigureSite",
+            "ConfigureArchitecture",
+            "ConfigureCPURequirements",
+        ]
 
-        mockPilotJSON = {
-            "Defaults": {"Pilot": {"RemoteLogging": "False"}},
-            "GridPP": {
-                "Pilot": {
-                    "Version": "8.0.5",
-                    "Extensions": "None",
-                    "CheckVersion": "False",
-                    "pilotFileServer": "diractest.grid.hep.ph.ic.ac.uk:8443",
-                    "pilotRepoBranch": "devel",
-                }
-            },
-            "gridpp": {
-                "GridPP": {
-                    "Pilot": {
-                        "GenericPilotGroup": "gridpp_pilot",
-                        "GenericPilotDN": "/C=UK/O=eScience/OU=Imperial/L=Physics/CN=dirac-pilot-test.grid.hep.ph.ic.ac.uk",
-                        "RemoteLogging": "True",
-                        "RemoteLoggerURL": "https://diractest.grid.hep.ph.ic.ac.uk:8444/WorkloadManagement/TornadoPilotLogging",
-                        "UploadSE": "UKI-LT2-IC-HEP-disk",
-                        "UploadPath": "/gridpp/pilotlogs/",
-                        "LoggingShifterName": "GridPPLogManager",
-                    },
-                }
-            },
-        }
-        pp.pilotCFGFile = "tests/CI/pilot.json"  # any file really, just testing remote logging options.
+        pp.gridCEType = "TEST"
 
-        with patch.dict(pp.pilotJSON, mockPilotJSON, clear=True):
-            res = pp.getPilotOptionsDict()
-            self.assertEqual(
-                res.get("RemoteLoggerURL"),
-                "https://diractest.grid.hep.ph.ic.ac.uk:8444/WorkloadManagement/TornadoPilotLogging",
-            )
-            self.assertEqual(res.get("RemoteLogging"), "True")
-            self.assertEqual(res.get("UploadPath"), "/gridpp/pilotlogs/")
-
-        # delete a key from a higher priority dictionary and we are left with one with a lower priority:
-        del mockPilotJSON["gridpp"]["GridPP"]["Pilot"]["RemoteLogging"]
-        with patch.dict(pp.pilotJSON, mockPilotJSON, clear=True):
-            res = pp.getPilotOptionsDict()
-            self.assertEqual(res.get("RemoteLogging"), "False")
+        res = pp.getPilotOptionsDict()
+        logURL = "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging"
+        self.assertEqual(res.get("RemoteLoggerURL"), logURL)
+        self.assertEqual(pp.loggerURL, logURL)
+        self.assertEqual(res.get("RemoteLogging"), "True")
+        self.assertIs(pp.pilotLogging, True)
+        self.assertEqual(res.get("UploadPath"), "/gridpp/pilotlogs/")
+        self.assertTrue("Commands" in res)
+        self.assertEqual(res["Commands"].get(pp.gridCEType), lTESTcommands)
+        self.assertEqual(pp.commands, lTESTcommands)
+        self.assertEqual(pp.releaseVersion, "VAR_DIRAC_VERSION")
 
 
 class TestCommandBase(unittest.TestCase):
