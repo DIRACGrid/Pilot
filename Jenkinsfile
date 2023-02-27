@@ -16,7 +16,8 @@ properties([parameters([string(name: 'projectVersion', defaultValue: '8.1.0a4', 
                         string(name: 'pilot_options', defaultValue: '', description: 'any pilot option, e.g. --pythonVersion=2'),
                         string(name: 'CSURL', defaultValue: 'https://lbcertifdirac70.cern.ch:9135/Configuration/Server', description: 'URL for CS'),
                         string(name: 'DIRACSETUP', defaultValue: 'DIRAC-Certification', description: 'DIRAC setup'),
-                        string(name: 'pilotJSON', defaultValue: 'pilot_oldSchema.json', description: 'other option: pilot_newSchema.json')
+                        string(name: 'pilotJSON', defaultValue: 'pilot_oldSchema.json', description: 'other option: pilot_newSchema.json'),
+                        string(name: 'wnVO', defaultValue: 'dteam', description: 'other option: gridpp')
                        ])])
 
 

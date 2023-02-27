@@ -981,26 +981,39 @@ class PilotParams(object):
 
         return self.getOptionForPaths(self.__getSearchPaths(), self.pilotJSON)
 
-    def __getVOFromProxy(self):
+    def __getVO(self):
         """
-        Get a VO from a proxy. In case of problems return a value 'unknown", which would get pilot logging
+        Get the VO for which we are running this pilot.
+        In case of problems return a value 'unknown", which would get pilot logging
         properties from a Defaults section of the CS.
 
         :return: VO name
         :rtype: str
         """
 
+        # if the WN is bound to a VO
+        if self.wnVO:
+            return self.wnVO
+
+        # if env variable "DIRAC_PILOT_VO" is defined
+        if os.getenv("DIRAC_PILOT_VO"):
+            return os.getenv("DIRAC_PILOT_VO")
+
+        # is there a proxy, and can we get a VO from the proxy?
         cert = os.getenv("X509_USER_PROXY")
-        vo = "unknown"
         if cert:
             try:
                 with open(cert, "rb") as fp:
-                    vo = getVO(fp.read())
+                    return getVO(fp.read())
             except IOError as err:
                 self.log.error("Could not read a proxy, setting vo to 'unknown': ", os.strerror(err.errno))
         else:
             self.log.error("Could not locate a proxy via X509_USER_PROXY, setting vo to 'unknown' ")
-        return vo
+
+        # is there a token, and can we get a VO from the token?
+        # TBD
+
+        return "unknown"
 
     def __getSearchPaths(self):
         """
@@ -1009,7 +1022,7 @@ class PilotParams(object):
         :return: list paths to search in JSON derived dict.
         """
 
-        vo = self.__getVOFromProxy()
+        vo = self.__getVO()
         paths = [
             "/Defaults/Pilot",
             "/%s/Pilot" % self.setup,
