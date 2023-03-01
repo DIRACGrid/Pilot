@@ -72,8 +72,7 @@ PilotInstall(){
   default
 
   # get the configuration file (from an VO extension, if it exists)
-  pilot="Pilot"
-  cp "${TESTCODE}/${VO}${pilot}/tests/CI/pilot.json" .
+  cp "${TESTCODE}/${VO}Pilot/tests/CI/pilot.json" .
   # and adapt it
   sed -i "s/VAR_JENKINS_SITE/${JENKINS_SITE}/g" pilot.json
   sed -i "s/VAR_JENKINS_CE/${JENKINS_CE}/g" pilot.json
@@ -82,6 +81,7 @@ PilotInstall(){
   sed -i "s/VAR_DIRAC_VERSION/${projectVersion}/g" pilot.json
   sed -i "s#VAR_CS#${CSURL}#g" pilot.json
   sed -i "s#VAR_USERDN#${DIRACUSERDN}#g" pilot.json
+  sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
 
   # launch the pilot script
   # shellcheck disable=SC2154

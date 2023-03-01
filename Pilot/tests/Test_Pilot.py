@@ -41,7 +41,6 @@ class PilotTestCase(unittest.TestCase):
             )
 
     def tearDown(self):
-
         for fileProd in [
             "pilot.json",
             "Nagios1",

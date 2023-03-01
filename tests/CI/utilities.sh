@@ -17,10 +17,12 @@ prepareForPilot(){
   echo '==> [prepareForPilot]'
 
   #get the pilot files from the Pilot
-  for file in dirac-pilot.py pilotCommands.py pilotTools.py
+  for file in dirac-pilot.py pilotCommands.py pilotTools.py proxyTools.py
   do
     cp "$TESTCODE/Pilot/Pilot/${file}" .
   done
+
+  cp "$TESTCODE/Pilot/tests/CI/${PILOTJSON}" "$TESTCODE/Pilot/tests/CI/pilot.json"
 
   #get possible extensions
   if [[ "$VO" ]]; then
