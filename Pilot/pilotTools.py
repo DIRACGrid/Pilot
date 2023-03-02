@@ -792,6 +792,8 @@ class PilotParams(object):
                 self.setup = v
             elif o == "-F" or o == "--pilotCFGFile":
                 self.pilotCFGFile = v
+            elif o == "--wnVO":
+                self.wnVO = v
 
     def __initCommandLine2(self):
         """
@@ -828,8 +830,6 @@ class PilotParams(object):
                 self.executeCmd = v
             elif o in ("-O", "--OwnerDN"):
                 self.userDN = v
-            elif o == "--wnVO":
-                self.wnVO = v
             elif o in ("-V", "--installation"):
                 self.installation = v
             elif o == "-m" or o == "--maxNumberOfProcessors":
