@@ -520,6 +520,41 @@ class ConfigureBasics(CommandBase):
             self.cfg.append("-o /DIRAC/Security/KeyFile=%s/hostkey.pem" % self.pp.certsLocation)
 
 
+class RegisterPilot(CommandBase):
+    """The Pilot self-announce its own presence"""
+
+    def __init__(self, pilotParams):
+        """c'tor"""
+        super(RegisterPilot, self).__init__(pilotParams)
+
+        # this variable contains the options that are passed to dirac-admin-add-pilot
+        self.cfg = []
+        self.pilotStamp = os.environ.get("DIRAC_PILOT_STAMP", '')
+
+    @logFinalizer
+    def execute(self):
+        """Calls dirac-admin-add-pilot"""
+
+        if self.pp.useServerCertificate:
+            self.cfg.append("-o  /DIRAC/Security/UseServerCertificate=yes")
+        if self.pp.localConfigFile:
+            if LooseVersion(self.releaseVersion) >= self.cfgOptionDIRACVersion:
+                self.cfg.append("--cfg")
+            self.cfg.append(self.pp.localConfigFile)  # this file is as input
+
+        checkCmd = "dirac-admin-add-pilot %s %s %s %s %s --status=Running %s -d" % (
+            self.pp.pilotRef,
+            self.pp.userDN,
+            self.pp.userGroup,
+            self.pp.flavour,
+            self.pilotStamp,
+            " ".join(self.cfg),
+        )
+        retCode, _ = self.executeAndGetOutput(checkCmd, self.pp.installEnv)
+        if retCode:
+            self.log.error("Could not get execute dirac-admin-add-pilot [ERROR %d]" % retCode)
+
+
 class CheckCECapabilities(CommandBase):
     """Used to get CE tags and other relevant parameters."""
 
