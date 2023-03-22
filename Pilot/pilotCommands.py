@@ -527,6 +527,8 @@ class RegisterPilot(CommandBase):
     def execute(self):
         """Calls dirac-admin-add-pilot"""
 
+        self.__setFlavour()
+
         if self.pp.useServerCertificate:
             self.cfg.append("-o  /DIRAC/Security/UseServerCertificate=yes")
         if self.pp.localConfigFile:
@@ -545,6 +547,120 @@ class RegisterPilot(CommandBase):
         retCode, _ = self.executeAndGetOutput(checkCmd, self.pp.installEnv)
         if retCode:
             self.log.error("Could not get execute dirac-admin-add-pilot [ERROR %d]" % retCode)
+
+    def __setFlavour(self):
+
+        pilotRef = "Unknown"
+        self.pp.flavour = "Generic"
+
+        # If pilot reference is specified at submission, then set flavour to DIRAC
+        # unless overridden by presence of batch system environment variables
+        if self.pp.pilotReference:
+            self.pp.flavour = "DIRAC"
+            pilotRef = self.pp.pilotReference
+
+        # # Batch systems
+
+        # Take the reference from the Torque batch system
+        if "PBS_JOBID" in os.environ:
+            self.pp.flavour = "SSHTorque"
+            pilotRef = "sshtorque://" + self.pp.ceName + "/" + os.environ["PBS_JOBID"].split(".")[0]
+
+        # Take the reference from the OAR batch system
+        if "OAR_JOBID" in os.environ:
+            self.pp.flavour = "SSHOAR"
+            pilotRef = "sshoar://" + self.pp.ceName + "/" + os.environ["OAR_JOBID"]
+
+        # Grid Engine
+        if "JOB_ID" in os.environ and "SGE_TASK_ID" in os.environ:
+            self.pp.flavour = "SSHGE"
+            pilotRef = "sshge://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
+        # Generic JOB_ID
+        elif "JOB_ID" in os.environ:
+            self.pp.flavour = "Generic"
+            pilotRef = "generic://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
+
+        # LSF
+        if "LSB_BATCH_JID" in os.environ:
+            self.pp.flavour = "SSHLSF"
+            pilotRef = "sshlsf://" + self.pp.ceName + "/" + os.environ["LSB_BATCH_JID"]
+
+        #  SLURM batch system
+        if "SLURM_JOBID" in os.environ:
+            self.pp.flavour = "SSHSLURM"
+            pilotRef = "sshslurm://" + self.pp.ceName + "/" + os.environ["SLURM_JOBID"]
+
+        # Condor
+        if "CONDOR_JOBID" in os.environ:
+            self.pp.flavour = "SSHCondor"
+            pilotRef = "sshcondor://" + self.pp.ceName + "/" + os.environ["CONDOR_JOBID"]
+
+        # # CEs
+
+        # HTCondor
+        if "HTCONDOR_JOBID" in os.environ:
+            self.pp.flavour = "HTCondorCE"
+            pilotRef = "htcondorce://" + self.pp.ceName + "/" + os.environ["HTCONDOR_JOBID"]
+
+        # This is the CREAM direct submission case
+        if "CREAM_JOBID" in os.environ:
+            self.pp.flavour = "CREAM"
+            pilotRef = os.environ["CREAM_JOBID"]
+
+        if "OSG_WN_TMP" in os.environ:
+            self.pp.flavour = "OSG"
+
+        # GLOBUS Computing Elements
+        if "GLOBUS_GRAM_JOB_CONTACT" in os.environ:
+            self.pp.flavour = "GLOBUS"
+            pilotRef = os.environ["GLOBUS_GRAM_JOB_CONTACT"]
+
+        # Direct SSH tunnel submission
+        if "SSHCE_JOBID" in os.environ:
+            self.pp.flavour = "SSH"
+            pilotRef = "ssh://" + self.pp.ceName + "/" + os.environ["SSHCE_JOBID"]
+
+        # Batch host SSH tunnel submission (SSHBatch CE)
+        if "SSHBATCH_JOBID" in os.environ and "SSH_NODE_HOST" in os.environ:
+            self.pp.flavour = "SSHBATCH"
+            pilotRef = (
+                "sshbatchhost://"
+                + self.pp.ceName
+                + "/"
+                + os.environ["SSH_NODE_HOST"]
+                + "/"
+                + os.environ["SSHBATCH_JOBID"]
+            )
+
+        # ARC case
+        # JOBID does not provide the full url in recent versions of ARC
+        # JOBURL has been introduced recently and should be preferred when present
+        if "GRID_GLOBAL_JOBID" in os.environ:
+            self.pp.flavour = "ARC"
+            pilotRef = os.environ["GRID_GLOBAL_JOBID"]
+
+        if "GRID_GLOBAL_JOBURL" in os.environ:
+            self.pp.flavour = "ARC"
+            pilotRef = os.environ["GRID_GLOBAL_JOBURL"]
+
+        # # DIRAC specific
+
+        # VMDIRAC case
+        if "VMDIRAC_VERSION" in os.environ:
+            self.pp.flavour = "VMDIRAC"
+            pilotRef = "vm://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
+
+        # Pilot reference is given explicitly in environment
+        if "PILOT_UUID" in os.environ:
+            pilotRef = os.environ["PILOT_UUID"]
+
+        # Pilot reference is specified at submission
+        if self.pp.pilotReference:
+            pilotRef = self.pp.pilotReference
+
+        self.log.debug("Flavour: %s; pilot reference: %s " % (self.pp.flavour, pilotRef))
+
+        self.pp.pilotReference = pilotRef
 
 
 class CheckCECapabilities(CommandBase):
@@ -746,7 +862,6 @@ class ConfigureSite(CommandBase):
     @logFinalizer
     def execute(self):
         """Setup configuration parameters"""
-        self.__setFlavour()
         self.cfg.append("-o /LocalSite/GridMiddleware=%s" % self.pp.flavour)
 
         self.cfg.append('-n "%s"' % self.pp.site)
@@ -788,119 +903,6 @@ class ConfigureSite(CommandBase):
         if retCode:
             self.log.error("Could not configure DIRAC [ERROR %d]" % retCode)
             self.exitWithError(retCode)
-
-    def __setFlavour(self):
-        pilotRef = "Unknown"
-        self.pp.flavour = "Generic"
-
-        # If pilot reference is specified at submission, then set flavour to DIRAC
-        # unless overridden by presence of batch system environment variables
-        if self.pp.pilotReference:
-            self.pp.flavour = "DIRAC"
-            pilotRef = self.pp.pilotReference
-
-        # # Batch systems
-
-        # Take the reference from the Torque batch system
-        if "PBS_JOBID" in os.environ:
-            self.pp.flavour = "SSHTorque"
-            pilotRef = "sshtorque://" + self.pp.ceName + "/" + os.environ["PBS_JOBID"].split(".")[0]
-
-        # Take the reference from the OAR batch system
-        if "OAR_JOBID" in os.environ:
-            self.pp.flavour = "SSHOAR"
-            pilotRef = "sshoar://" + self.pp.ceName + "/" + os.environ["OAR_JOBID"]
-
-        # Grid Engine
-        if "JOB_ID" in os.environ and "SGE_TASK_ID" in os.environ:
-            self.pp.flavour = "SSHGE"
-            pilotRef = "sshge://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
-        # Generic JOB_ID
-        elif "JOB_ID" in os.environ:
-            self.pp.flavour = "Generic"
-            pilotRef = "generic://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
-
-        # LSF
-        if "LSB_BATCH_JID" in os.environ:
-            self.pp.flavour = "SSHLSF"
-            pilotRef = "sshlsf://" + self.pp.ceName + "/" + os.environ["LSB_BATCH_JID"]
-
-        #  SLURM batch system
-        if "SLURM_JOBID" in os.environ:
-            self.pp.flavour = "SSHSLURM"
-            pilotRef = "sshslurm://" + self.pp.ceName + "/" + os.environ["SLURM_JOBID"]
-
-        # Condor
-        if "CONDOR_JOBID" in os.environ:
-            self.pp.flavour = "SSHCondor"
-            pilotRef = "sshcondor://" + self.pp.ceName + "/" + os.environ["CONDOR_JOBID"]
-
-        # # CEs
-
-        # HTCondor
-        if "HTCONDOR_JOBID" in os.environ:
-            self.pp.flavour = "HTCondorCE"
-            pilotRef = "htcondorce://" + self.pp.ceName + "/" + os.environ["HTCONDOR_JOBID"]
-
-        # This is the CREAM direct submission case
-        if "CREAM_JOBID" in os.environ:
-            self.pp.flavour = "CREAM"
-            pilotRef = os.environ["CREAM_JOBID"]
-
-        if "OSG_WN_TMP" in os.environ:
-            self.pp.flavour = "OSG"
-
-        # GLOBUS Computing Elements
-        if "GLOBUS_GRAM_JOB_CONTACT" in os.environ:
-            self.pp.flavour = "GLOBUS"
-            pilotRef = os.environ["GLOBUS_GRAM_JOB_CONTACT"]
-
-        # Direct SSH tunnel submission
-        if "SSHCE_JOBID" in os.environ:
-            self.pp.flavour = "SSH"
-            pilotRef = "ssh://" + self.pp.ceName + "/" + os.environ["SSHCE_JOBID"]
-
-        # Batch host SSH tunnel submission (SSHBatch CE)
-        if "SSHBATCH_JOBID" in os.environ and "SSH_NODE_HOST" in os.environ:
-            self.pp.flavour = "SSHBATCH"
-            pilotRef = (
-                "sshbatchhost://"
-                + self.pp.ceName
-                + "/"
-                + os.environ["SSH_NODE_HOST"]
-                + "/"
-                + os.environ["SSHBATCH_JOBID"]
-            )
-
-        # ARC case
-        # JOBID does not provide the full url in recent versions of ARC
-        # JOBURL has been introduced recently and should be preferred when present
-        if "GRID_GLOBAL_JOBID" in os.environ:
-            self.pp.flavour = "ARC"
-            pilotRef = os.environ["GRID_GLOBAL_JOBID"]
-
-        if "GRID_GLOBAL_JOBURL" in os.environ:
-            self.pp.flavour = "ARC"
-            pilotRef = os.environ["GRID_GLOBAL_JOBURL"]
-
-        # # DIRAC specific
-
-        # VMDIRAC case
-        if "VMDIRAC_VERSION" in os.environ:
-            self.pp.flavour = "VMDIRAC"
-            pilotRef = "vm://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
-
-        # Pilot reference is given explicitly in environment
-        if "PILOT_UUID" in os.environ:
-            pilotRef = os.environ["PILOT_UUID"]
-
-        # Pilot reference is specified at submission
-        if self.pp.pilotReference:
-            pilotRef = self.pp.pilotReference
-
-        self.log.debug("Flavour: %s; pilot reference: %s " % (self.pp.flavour, pilotRef))
-
-        self.pp.pilotReference = pilotRef
 
 
 class ConfigureArchitecture(CommandBase):
