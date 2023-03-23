@@ -48,9 +48,9 @@ except ImportError:
     from pipes import quote
 
 try:
-    from Pilot.pilotTools import CommandBase, retrieveUrlTimeout, sendMessage
+    from Pilot.pilotTools import CommandBase, retrieveUrlTimeout, sendMessage, which
 except ImportError:
-    from pilotTools import CommandBase, retrieveUrlTimeout, sendMessage
+    from pilotTools import CommandBase, retrieveUrlTimeout, sendMessage, which
 ############################
 
 
@@ -518,6 +518,9 @@ class RegisterPilot(CommandBase):
     def __init__(self, pilotParams):
         """c'tor"""
         super(RegisterPilot, self).__init__(pilotParams)
+
+        if not which("dirac-admin-add-pilot"):
+            self.log.info("Skipping Pilot Command RegisterPilot, as executable dirac-admin-add-pilot does not exist")
 
         # this variable contains the options that are passed to dirac-admin-add-pilot
         self.cfg = []
