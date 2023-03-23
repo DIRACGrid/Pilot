@@ -537,7 +537,7 @@ class RegisterPilot(CommandBase):
             self.cfg.append(self.pp.localConfigFile)  # this file is as input
 
         checkCmd = "dirac-admin-add-pilot %s %s %s %s %s --status=Running %s -d" % (
-            self.pp.pilotRef,
+            self.pp.pilotReference,
             self.pp.userDN,
             self.pp.userGroup,
             self.pp.flavour,
@@ -550,62 +550,55 @@ class RegisterPilot(CommandBase):
 
     def __setFlavour(self):
 
-        pilotRef = os.environ.get("DIRAC_PILOT_STAMP", "Unknown")
-        self.pp.flavour = "Generic"
-
-        # If pilot reference is specified at submission, then set flavour to DIRAC
-        # unless overridden by presence of batch system environment variables
-        if self.pp.pilotReference:
-            self.pp.flavour = "DIRAC"
-            pilotRef = self.pp.pilotReference
+        self.pp.pilotReference = os.environ.get("DIRAC_PILOT_STAMP", self.pp.pilotReference)
 
         # # Batch systems
 
         # Take the reference from the Torque batch system
         if "PBS_JOBID" in os.environ:
             self.pp.flavour = "SSHTorque"
-            pilotRef = "sshtorque://" + self.pp.ceName + "/" + os.environ["PBS_JOBID"].split(".")[0]
+            self.pp.pilotReference = "sshtorque://" + self.pp.ceName + "/" + os.environ["PBS_JOBID"].split(".")[0]
 
         # Take the reference from the OAR batch system
         if "OAR_JOBID" in os.environ:
             self.pp.flavour = "SSHOAR"
-            pilotRef = "sshoar://" + self.pp.ceName + "/" + os.environ["OAR_JOBID"]
+            self.pp.pilotReference = "sshoar://" + self.pp.ceName + "/" + os.environ["OAR_JOBID"]
 
         # Grid Engine
         if "JOB_ID" in os.environ and "SGE_TASK_ID" in os.environ:
             self.pp.flavour = "SSHGE"
-            pilotRef = "sshge://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
+            self.pp.pilotReference = "sshge://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
         # Generic JOB_ID
         elif "JOB_ID" in os.environ:
             self.pp.flavour = "Generic"
-            pilotRef = "generic://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
+            self.pp.pilotReference = "generic://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
 
         # LSF
         if "LSB_BATCH_JID" in os.environ:
             self.pp.flavour = "SSHLSF"
-            pilotRef = "sshlsf://" + self.pp.ceName + "/" + os.environ["LSB_BATCH_JID"]
+            self.pp.pilotReference = "sshlsf://" + self.pp.ceName + "/" + os.environ["LSB_BATCH_JID"]
 
         #  SLURM batch system
         if "SLURM_JOBID" in os.environ:
             self.pp.flavour = "SSHSLURM"
-            pilotRef = "sshslurm://" + self.pp.ceName + "/" + os.environ["SLURM_JOBID"]
+            self.pp.pilotReference = "sshslurm://" + self.pp.ceName + "/" + os.environ["SLURM_JOBID"]
 
         # Condor
         if "CONDOR_JOBID" in os.environ:
             self.pp.flavour = "SSHCondor"
-            pilotRef = "sshcondor://" + self.pp.ceName + "/" + os.environ["CONDOR_JOBID"]
+            self.pp.pilotReference = "sshcondor://" + self.pp.ceName + "/" + os.environ["CONDOR_JOBID"]
 
         # # CEs
 
         # HTCondor
         if "HTCONDOR_JOBID" in os.environ:
             self.pp.flavour = "HTCondorCE"
-            pilotRef = "htcondorce://" + self.pp.ceName + "/" + os.environ["HTCONDOR_JOBID"]
+            self.pp.pilotReference = "htcondorce://" + self.pp.ceName + "/" + os.environ["HTCONDOR_JOBID"]
 
         # This is the CREAM direct submission case
         if "CREAM_JOBID" in os.environ:
             self.pp.flavour = "CREAM"
-            pilotRef = os.environ["CREAM_JOBID"]
+            self.pp.pilotReference = os.environ["CREAM_JOBID"]
 
         if "OSG_WN_TMP" in os.environ:
             self.pp.flavour = "OSG"
@@ -613,17 +606,17 @@ class RegisterPilot(CommandBase):
         # GLOBUS Computing Elements
         if "GLOBUS_GRAM_JOB_CONTACT" in os.environ:
             self.pp.flavour = "GLOBUS"
-            pilotRef = os.environ["GLOBUS_GRAM_JOB_CONTACT"]
+            self.pp.pilotReference = os.environ["GLOBUS_GRAM_JOB_CONTACT"]
 
         # Direct SSH tunnel submission
         if "SSHCE_JOBID" in os.environ:
             self.pp.flavour = "SSH"
-            pilotRef = "ssh://" + self.pp.ceName + "/" + os.environ["SSHCE_JOBID"]
+            self.pp.pilotReference = "ssh://" + self.pp.ceName + "/" + os.environ["SSHCE_JOBID"]
 
         # Batch host SSH tunnel submission (SSHBatch CE)
         if "SSHBATCH_JOBID" in os.environ and "SSH_NODE_HOST" in os.environ:
             self.pp.flavour = "SSHBATCH"
-            pilotRef = (
+            self.pp.pilotReference = (
                 "sshbatchhost://"
                 + self.pp.ceName
                 + "/"
@@ -637,26 +630,20 @@ class RegisterPilot(CommandBase):
         # JOBURL has been introduced recently and should be preferred when present
         if "GRID_GLOBAL_JOBID" in os.environ:
             self.pp.flavour = "ARC"
-            pilotRef = os.environ["GRID_GLOBAL_JOBID"]
+            self.pp.pilotReference = os.environ["GRID_GLOBAL_JOBID"]
 
         if "GRID_GLOBAL_JOBURL" in os.environ:
             self.pp.flavour = "ARC"
-            pilotRef = os.environ["GRID_GLOBAL_JOBURL"]
+            self.pp.pilotReference = os.environ["GRID_GLOBAL_JOBURL"]
 
         # # DIRAC specific
 
         # VMDIRAC case
         if "VMDIRAC_VERSION" in os.environ:
             self.pp.flavour = "VMDIRAC"
-            pilotRef = "vm://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
+            self.pp.pilotReference = "vm://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
 
-        # Pilot reference is specified at submission
-        if self.pp.pilotReference:
-            pilotRef = self.pp.pilotReference
-
-        self.log.debug("Flavour: %s; pilot reference: %s " % (self.pp.flavour, pilotRef))
-
-        self.pp.pilotReference = pilotRef
+        self.log.debug("Flavour: %s; pilot reference: %s " % (self.pp.flavour, self.pp.pilotReference))
 
 
 class CheckCECapabilities(CommandBase):
@@ -873,7 +860,7 @@ class ConfigureSite(CommandBase):
             if o == "-o" or o == "--option":
                 self.cfg.append('-o "%s"' % v)
 
-        if self.pp.pilotReference != "Unknown":
+        if self.pp.pilotReference:
             self.cfg.append("-o /LocalSite/PilotReference=%s" % self.pp.pilotReference)
 
         if self.pp.useServerCertificate:

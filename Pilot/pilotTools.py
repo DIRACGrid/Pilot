@@ -818,8 +818,6 @@ class PilotParams(object):
                 self.site = v
             elif o == "-y" or o == "--CEType":
                 self.ceType = v
-            elif o == "-R" or o == "--reference":
-                self.pilotReference = v
             elif o == "-k" or o == "--keepPP":
                 self.keepPythonPath = True
             elif o in ("-C", "--configurationServer"):
