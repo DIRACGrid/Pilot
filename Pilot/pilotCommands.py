@@ -550,7 +550,7 @@ class RegisterPilot(CommandBase):
 
     def __setFlavour(self):
 
-        pilotRef = "Unknown"
+        pilotRef = os.environ.get("DIRAC_PILOT_STAMP", "Unknown")
         self.pp.flavour = "Generic"
 
         # If pilot reference is specified at submission, then set flavour to DIRAC
@@ -649,10 +649,6 @@ class RegisterPilot(CommandBase):
         if "VMDIRAC_VERSION" in os.environ:
             self.pp.flavour = "VMDIRAC"
             pilotRef = "vm://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
-
-        # Pilot reference is given explicitly in environment
-        if "PILOT_UUID" in os.environ:
-            pilotRef = os.environ["PILOT_UUID"]
 
         # Pilot reference is specified at submission
         if self.pp.pilotReference:
