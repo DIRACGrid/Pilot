@@ -15,11 +15,13 @@ properties([parameters([string(name: 'projectVersion', defaultValue: '8.1.0a4', 
                         string(name: 'pip_install_options', defaultValue: '', description: 'options to pip install (e.g. --index-url=https://lhcb-repository.web.cern.ch/repository/pypi/simple)'),
                         string(name: 'pilot_options', defaultValue: '', description: 'any pilot option, e.g. --pythonVersion=2'),
                         string(name: 'CSURL', defaultValue: 'https://lbcertifdirac70.cern.ch:9135/Configuration/Server', description: 'URL for CS'),
-                        string(name: 'DIRACSETUP', defaultValue: 'DIRAC-Certification', description: 'DIRAC setup')
+                        string(name: 'DIRACSETUP', defaultValue: 'DIRAC-Certification', description: 'DIRAC setup'),
+                        string(name: 'PILOTJSON', defaultValue: 'pilot_oldSchema.json', description: 'other option: pilot_newSchema.json'),
+                        string(name: 'wnVO', defaultValue: 'dteam', description: 'other option: gridpp')
                        ])])
 
 
-node('lhcbci-cernvm4-02') {
+node('lhcbci-cernvm4-03') {
     // Clean workspace before doing anything
     deleteDir()
 
@@ -28,7 +30,7 @@ node('lhcbci-cernvm4-02') {
         "DIRACSE=CERN-SWTEST",
         "JENKINS_QUEUE=jenkins-queue_not_important",
         "JENKINS_SITE=DIRAC.Jenkins.ch",
-        "DIRACUSERDN=/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=cburr/CN=761704/CN=Chris Burr",
+        "DIRACUSERDN=/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer",
         "DIRACUSERROLE=dirac_user"]){
 
         stage('GET') {
@@ -70,7 +72,7 @@ node('lhcbci-cernvm4-02') {
             parallel(
 
                 "Integration" : {
-                    node('lhcbci-cernvm4-03') {
+                    node('jenkins-dirac-worker01') {
 
                         cleanWs()
 
