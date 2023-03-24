@@ -21,7 +21,7 @@ properties([parameters([string(name: 'projectVersion', defaultValue: '8.1.0a4', 
                        ])])
 
 
-node('lhcbci-cernvm4-02') {
+node('lhcbci-cernvm4-03') {
     // Clean workspace before doing anything
     deleteDir()
 
@@ -72,7 +72,7 @@ node('lhcbci-cernvm4-02') {
             parallel(
 
                 "Integration" : {
-                    node('lhcbci-cernvm4-03') {
+                    node('jenkins-dirac-worker01') {
 
                         cleanWs()
 
