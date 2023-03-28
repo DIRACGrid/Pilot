@@ -5,7 +5,7 @@ This is customized pipeline for running on jenkins-dirac.web.cern.ch
 */
 
 
-properties([parameters([string(name: 'projectVersion', defaultValue: '8.1.0a4', description: 'The DIRAC version to install. Use py2 or py3 syntax'),
+properties([parameters([string(name: 'projectVersion', defaultValue: '8.1.0a11', description: 'The DIRAC version to install. Use py2 or py3 syntax'),
                         string(name: 'Pilot_repo', defaultValue: 'DIRACGrid', description: 'The Pilot repo'),
                         string(name: 'Pilot_branch', defaultValue: 'devel', description: 'The Pilot branch'),
                         string(name: 'DIRAC_test_repo', defaultValue: 'DIRACGrid', description: 'The DIRAC repo to use for getting the test code'),
@@ -103,7 +103,7 @@ node('lhcbci-cernvm4-03') {
                 },
 
                 "Regression" : {
-                    node('lhcbci-cernvm4-03') {
+                    node('jenkins-dirac-worker01') {
 
                         cleanWs()
 
