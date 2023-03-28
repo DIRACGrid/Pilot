@@ -30,6 +30,7 @@ node('lhcbci-cernvm4-03') {
         "DIRACSE=CERN-SWTEST",
         "JENKINS_QUEUE=jenkins-queue_not_important",
         "JENKINS_SITE=DIRAC.Jenkins.ch",
+        "DIRAC_PILOT_STAMP=1234567890qwertyuiopasdfghjklzxc",
         "DIRACUSERDN=/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer",
         "DIRACUSERROLE=dirac_user"]){
 
