@@ -168,6 +168,22 @@ def retrieveUrlTimeout(url, fileName, log, timeout=0):
         raise x
 
 
+def which(cmd):
+    """
+    test if an executable exists, python2 compatible
+    (in python 3 one could simply use shutil.which(cmd)).
+
+    If testing for the existance of a DIRAC command,
+    this would only work for pilots installing python3 DIRAC clients
+    """
+    for prefix in os.environ["PATH"].split(os.pathsep):
+        filename = os.path.join(prefix, cmd)
+        executable = os.access(filename, os.X_OK)
+        if executable and os.path.isfile(filename):
+            return os.path.join(prefix, filename)
+    return False
+
+
 class ObjectLoader(object):
     """Simplified class for loading objects from a DIRAC installation.
 
@@ -637,6 +653,7 @@ class PilotParams(object):
             "CheckWorkerNode",
             "InstallDIRAC",
             "ConfigureBasics",
+            "RegisterPilot",
             "CheckCECapabilities",
             "CheckWNCapabilities",
             "ConfigureSite",
@@ -818,8 +835,6 @@ class PilotParams(object):
                 self.site = v
             elif o == "-y" or o == "--CEType":
                 self.ceType = v
-            elif o == "-R" or o == "--reference":
-                self.pilotReference = v
             elif o == "-k" or o == "--keepPP":
                 self.keepPythonPath = True
             elif o in ("-C", "--configurationServer"):
