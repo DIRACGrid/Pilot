@@ -572,6 +572,9 @@ class CheckCECapabilities(CommandBase):
             self.pp.reqtags += resourceDict["RequiredTag"]
 
         if self.cfg:
+            if self.pp.localConfigFile:
+                self.cfg.append("-O %s" % self.pp.localConfigFile)  # this file is as output
+
             self.cfg.append("-FDMH")
 
             if self.debugFlag:
