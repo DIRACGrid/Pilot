@@ -51,8 +51,6 @@ if __name__ == "__main__":
     sys.stdout, buffer = oldstdout, sys.stdout
     bufContent = buffer.getvalue()
     buffer.close()
-    # we would usually have some classic logger content from a wrapper, which we passed in:
-    receivedContent = sys.stdin.read()
     # print the buffer, so we have a "classic' logger back in sync.
     sys.stdout.write(bufContent)
     # now the remote logger.
