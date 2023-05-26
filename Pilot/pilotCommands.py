@@ -256,6 +256,24 @@ class InstallDIRAC(CommandBase):
         except OSError:
             pass
 
+    def _setupFromPreinstalledLocation(self):
+        """ Set up a preinstalled DIRAC client"""
+
+        # setting up the client environment
+        retCode, output = self.executeAndGetOutput('bash -c "source %s && env"' % self.pp.preinstalledEnv, self.pp.installEnv)
+        self.pp.installEnv = {}
+        if retCode:
+            self.log.error("Could not parse the diracos/diracosrc file [ERROR %d]" % retCode)
+            self.exitWithError(retCode)
+        for line in output.split("\n"):
+            try:
+                var, value = [vx.strip() for vx in line.split("=", 1)]
+                if var == "_" or "SSH" in var or "{" in value or "}" in value:  # Avoiding useless/confusing stuff
+                    continue
+                self.pp.installEnv[var] = value
+            except (IndexError, ValueError):
+                continue
+
     def _installDIRAC(self):
         """Install DIRAC or its extension, then parse the environment file created, and use it for subsequent calls"""
         # Installing
@@ -407,7 +425,10 @@ class InstallDIRAC(CommandBase):
     @logFinalizer
     def execute(self):
         """What is called all the time"""
-        if self.pp.pythonVersion == "27":
+
+        if self.pp.preinstalledEnv and os.path.exists(self.pp.preinstalledEnv):
+            self._setupFromPreinstalledLocation()
+        elif self.pp.pythonVersion == "27":
             self._setInstallOptions()
             self._locateInstallationScript()
             self._installDIRAC()
@@ -518,6 +539,9 @@ class ConfigureBasics(CommandBase):
             self.cfg.append("--UseServerCertificate")
             self.cfg.append("-o /DIRAC/Security/CertFile=%s/hostcert.pem" % self.pp.certsLocation)
             self.cfg.append("-o /DIRAC/Security/KeyFile=%s/hostkey.pem" % self.pp.certsLocation)
+        if self.pp.preinstalledEnv:
+            # Skip CAs download for preinstalled DIRAC
+            self.cfg.append("-D")
 
 
 class CheckCECapabilities(CommandBase):
