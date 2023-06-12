@@ -289,6 +289,12 @@ class InstallDIRAC(CommandBase):
 
     def _installDIRACpy3(self):
         """Install python3 version of DIRAC client"""
+        # default to limit the resources used during installation to what the pilot owns
+        installEnv = {
+            # see https://github.com/DIRACGrid/Pilot/issues/189
+            "MAMBA_EXTRACT_THREADS": self.pp.maxNumberOfProcessors or 1,
+        }
+        installEnv.update(self.pp.installEnv)
 
         # 1. Get the DIRACOS installer name
         # curl -O -L https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-$(uname -m).sh
@@ -305,7 +311,7 @@ class InstallDIRAC(CommandBase):
             shutil.rmtree("diracos")
 
         retCode, _ = self.executeAndGetOutput(
-            "bash /cvmfs/dirac.egi.eu/installSource/%s 2>&1" % installerName, self.pp.installEnv
+            "bash /cvmfs/dirac.egi.eu/installSource/%s 2>&1" % installerName, installEnv
         )
         if retCode:
             self.log.warn("Could not install DIRACOS from CVMFS [ERROR %d]" % retCode)
@@ -322,7 +328,7 @@ class InstallDIRAC(CommandBase):
                 shutil.rmtree("diracos")
 
             # 4. bash DIRACOS-Linux-$(uname -m).sh
-            retCode, _ = self.executeAndGetOutput("bash %s 2>&1" % installerName, self.pp.installEnv)
+            retCode, _ = self.executeAndGetOutput("bash %s 2>&1" % installerName, installEnv)
             if retCode:
                 self.log.error("Could not install DIRACOS [ERROR %d]" % retCode)
                 self.exitWithError(retCode)
@@ -348,7 +354,7 @@ class InstallDIRAC(CommandBase):
                 diracosrc.write("\n".join(lines))
 
         # 6. source diracos/diracosrc then replace the content in installEnv
-        retCode, output = self.executeAndGetOutput('bash -c "source diracos/diracosrc && env"', self.pp.installEnv)
+        retCode, output = self.executeAndGetOutput('bash -c "source diracos/diracosrc && env"', installEnv)
         self.pp.installEnv = {}
         if retCode:
             self.log.error("Could not parse the diracos/diracosrc file [ERROR %d]" % retCode)
