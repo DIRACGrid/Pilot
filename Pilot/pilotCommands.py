@@ -292,7 +292,7 @@ class InstallDIRAC(CommandBase):
         # default to limit the resources used during installation to what the pilot owns
         installEnv = {
             # see https://github.com/DIRACGrid/Pilot/issues/189
-            "MAMBA_EXTRACT_THREADS": self.pp.maxNumberOfProcessors or 1,
+            "MAMBA_EXTRACT_THREADS": str(self.pp.maxNumberOfProcessors or 1),
         }
         installEnv.update(self.pp.installEnv)
 
