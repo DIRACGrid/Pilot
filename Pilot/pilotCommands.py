@@ -1,20 +1,20 @@
-""" Definitions of a standard set of pilot commands
+"""Definitions of a standard set of pilot commands.
 
-    Each command is represented by a class inheriting from CommandBase class.
-    The command class constructor takes PilotParams object which is a data
-    structure which keeps common parameters across all the pilot commands.
+Each command is represented by a class inheriting from CommandBase class.
+The command class constructor takes PilotParams object which is a data
+structure which keeps common parameters across all the pilot commands.
 
-    The constructor must call the superclass constructor with the PilotParams
-    object and the command name as arguments, e.g.::
+The constructor must call the superclass constructor with the PilotParams
+object and the command name as arguments, e.g.::
 
-        class InstallDIRAC(CommandBase):
+    class InstallDIRAC(CommandBase):
 
-          def __init__(self, pilotParams):
-            CommandBase.__init__(self, pilotParams, 'Install')
-            ...
+      def __init__(self, pilotParams):
+        CommandBase.__init__(self, pilotParams, 'Install')
+        ...
 
-    The command class must implement execute() method for the actual command
-    execution.
+The command class must implement execute() method for the actual command
+execution.
 """
 
 from __future__ import print_function
@@ -55,10 +55,10 @@ except ImportError:
 
 
 def logFinalizer(func):
-    """
-    PilotCammand decorator. It marks a log file as final so no more messages should be written to it .
-    Finalising is triggered by a return statement or any sys.exit() call, so a file might be incomplete
-    if a command throws SystemExit exception with a code =! 0.
+    """PilotCammand decorator. It marks a log file as final so no more messages
+    should be written to it . Finalising is triggered by a return statement or
+    any sys.exit() call, so a file might be incomplete if a command throws
+    SystemExit exception with a code =! 0.
 
     :param func: method to be decorated
     :type func: method object
@@ -90,28 +90,29 @@ def logFinalizer(func):
 
 
 class GetPilotVersion(CommandBase):
-    """Now just returns what was obtained by pilotTools.py"""
+    """Now just returns what was obtained by pilotTools.py."""
 
     def __init__(self, pilotParams):
-        """c'tor"""
+        """c'tor."""
         super(GetPilotVersion, self).__init__(pilotParams)
 
     @logFinalizer
     def execute(self):
-        """Just returns what was obtained by pilotTools.py"""
+        """Just returns what was obtained by pilotTools.py."""
         return self.releaseVersion
 
 
 class CheckWorkerNode(CommandBase):
-    """Executes some basic checks"""
+    """Executes some basic checks."""
 
     def __init__(self, pilotParams):
-        """c'tor"""
+        """c'tor."""
         super(CheckWorkerNode, self).__init__(pilotParams)
 
     @logFinalizer
     def execute(self):
-        """Get host and local user info, and other basic checks, e.g. space available"""
+        """Get host and local user info, and other basic checks, e.g. space
+        available."""
 
         self.log.info("Uname      = %s" % " ".join(os.uname()))
         self.log.info("Host Name  = %s" % socket.gethostname())
@@ -188,13 +189,15 @@ class CheckWorkerNode(CommandBase):
 
 
 class InstallDIRAC(CommandBase):
-    """Basically, this is used to call dirac-install with the passed parameters.
+    """Basically, this is used to call dirac-install with the passed
+    parameters.
 
-    It requires dirac-install script to be sitting in the same directory.
+    It requires dirac-install script to be sitting in the same
+    directory.
     """
 
     def __init__(self, pilotParams):
-        """c'tor"""
+        """c'tor."""
         super(InstallDIRAC, self).__init__(pilotParams)
         self.installOpts = []
         self.pp.rootPath = self.pp.pilotRootPath
@@ -202,7 +205,7 @@ class InstallDIRAC(CommandBase):
         self.installScript = ""
 
     def _setInstallOptions(self):
-        """Setup installation parameters"""
+        """Setup installation parameters."""
 
         for o, v in self.pp.optList:
             if o == "-d" or o == "--debug":
@@ -229,7 +232,7 @@ class InstallDIRAC(CommandBase):
         self.log.debug("INSTALL OPTIONS [%s]" % ", ".join(map(str, self.installOpts)))
 
     def _locateInstallationScript(self):
-        """Locate installation script"""
+        """Locate installation script."""
         installScript = ""
         for path in (self.pp.pilotRootPath, self.pp.originalRootPath, self.pp.rootPath):
             installScript = os.path.join(path, self.installScriptName)
@@ -257,7 +260,8 @@ class InstallDIRAC(CommandBase):
             pass
 
     def _installDIRAC(self):
-        """Install DIRAC or its extension, then parse the environment file created, and use it for subsequent calls"""
+        """Install DIRAC or its extension, then parse the environment file
+        created, and use it for subsequent calls."""
         # Installing
         installCmd = "%s %s" % (self.installScript, " ".join(self.installOpts))
         self.log.debug("Installing with: %s" % installCmd)
@@ -288,7 +292,7 @@ class InstallDIRAC(CommandBase):
         # At this point self.pp.installEnv should contain all content of bashrc, sourced "on top" of (maybe) os.environ
 
     def _installDIRACpy3(self):
-        """Install python3 version of DIRAC client"""
+        """Install python3 version of DIRAC client."""
         # default to limit the resources used during installation to what the pilot owns
         installEnv = {
             # see https://github.com/DIRACGrid/Pilot/issues/189
@@ -406,7 +410,7 @@ class InstallDIRAC(CommandBase):
 
     @logFinalizer
     def execute(self):
-        """What is called all the time"""
+        """What is called all the time."""
         if self.pp.pythonVersion == "27":
             self._setInstallOptions()
             self._locateInstallationScript()
@@ -449,7 +453,7 @@ class ConfigureBasics(CommandBase):
     """
 
     def __init__(self, pilotParams):
-        """c'tor"""
+        """c'tor."""
         super(ConfigureBasics, self).__init__(pilotParams)
         self.cfg = []
 
@@ -457,7 +461,8 @@ class ConfigureBasics(CommandBase):
     def execute(self):
         """What is called all the times.
 
-        VOs may want to replace/extend the _getBasicsCFG and _getSecurityCFG functions
+        VOs may want to replace/extend the _getBasicsCFG and
+        _getSecurityCFG functions
         """
 
         self._getBasicsCFG()
@@ -492,7 +497,7 @@ class ConfigureBasics(CommandBase):
                 os.symlink(os.path.join("..", self.pp.localConfigFile), "etc/dirac.cfg")
 
     def _getBasicsCFG(self):
-        """basics (needed!)"""
+        """Basics (needed!)"""
         self.cfg.append('-S "%s"' % self.pp.setup)
         if self.pp.configServer:
             self.cfg.append('-C "%s"' % self.pp.configServer)
@@ -511,7 +516,8 @@ class ConfigureBasics(CommandBase):
             self.cfg.append('-o "/Resources/Computing/CEDefaults/VirtualOrganization=%s"' % self.pp.wnVO)
 
     def _getSecurityCFG(self):
-        """Nothing specific by default, but need to know host cert and key location in case they are needed"""
+        """Nothing specific by default, but need to know host cert and key
+        location in case they are needed."""
         if self.pp.useServerCertificate:
             self.cfg.append("--UseServerCertificate")
             self.cfg.append("-o /DIRAC/Security/CertFile=%s/hostcert.pem" % self.pp.certsLocation)
@@ -522,7 +528,7 @@ class CheckCECapabilities(CommandBase):
     """Used to get CE tags and other relevant parameters."""
 
     def __init__(self, pilotParams):
-        """c'tor"""
+        """c'tor."""
         super(CheckCECapabilities, self).__init__(pilotParams)
 
         # this variable contains the options that are passed to dirac-configure,
@@ -597,18 +603,19 @@ class CheckCECapabilities(CommandBase):
 
 
 class CheckWNCapabilities(CommandBase):
-    """Used to get capabilities specific to the Worker Node. This command must be called
-    after the CheckCECapabilities command
+    """Used to get capabilities specific to the Worker Node.
+
+    This command must be called after the CheckCECapabilities command
     """
 
     def __init__(self, pilotParams):
-        """c'tor"""
+        """c'tor."""
         super(CheckWNCapabilities, self).__init__(pilotParams)
         self.cfg = []
 
     @logFinalizer
     def execute(self):
-        """Discover NumberOfProcessors and RAM"""
+        """Discover NumberOfProcessors and RAM."""
 
         if self.pp.useServerCertificate:
             self.cfg.append("-o /DIRAC/Security/UseServerCertificate=yes")
@@ -707,10 +714,10 @@ class CheckWNCapabilities(CommandBase):
 
 
 class ConfigureSite(CommandBase):
-    """Command to configure DIRAC sites using the pilot options"""
+    """Command to configure DIRAC sites using the pilot options."""
 
     def __init__(self, pilotParams):
-        """c'tor"""
+        """c'tor."""
         super(ConfigureSite, self).__init__(pilotParams)
 
         # this variable contains the options that are passed to dirac-configure,
@@ -719,7 +726,7 @@ class ConfigureSite(CommandBase):
 
     @logFinalizer
     def execute(self):
-        """Setup configuration parameters"""
+        """Setup configuration parameters."""
         self.__setFlavour()
         self.cfg.append("-o /LocalSite/GridMiddleware=%s" % self.pp.flavour)
 
@@ -880,15 +887,17 @@ class ConfigureSite(CommandBase):
 
 class ConfigureArchitecture(CommandBase):
     """This command simply calls dirac-platfom to determine the platform.
+
     Separated from the ConfigureDIRAC command for easier extensibility.
     """
 
     @logFinalizer
     def execute(self):
-        """This is a simple command to call the dirac-platform utility to get the platform,
-        and add it to the configuration
+        """This is a simple command to call the dirac-platform utility to get
+        the platform, and add it to the configuration.
 
-        The architecture script, as well as its options can be replaced in a pilot extension
+        The architecture script, as well as its options can be replaced
+        in a pilot extension
         """
 
         cfg = []
@@ -934,15 +943,18 @@ class ConfigureArchitecture(CommandBase):
 
 
 class ConfigureCPURequirements(CommandBase):
-    """This command determines the CPU requirements. Needs to be executed after ConfigureSite"""
+    """This command determines the CPU requirements.
+
+    Needs to be executed after ConfigureSite
+    """
 
     def __init__(self, pilotParams):
-        """c'tor"""
+        """c'tor."""
         super(ConfigureCPURequirements, self).__init__(pilotParams)
 
     @logFinalizer
     def execute(self):
-        """Get job CPU requirement and queue normalization"""
+        """Get job CPU requirement and queue normalization."""
         # Determining the CPU normalization factor and updating pilot.cfg with it
         configFileArg = ""
         if self.pp.useServerCertificate:
@@ -1020,10 +1032,10 @@ class ConfigureCPURequirements(CommandBase):
 
 
 class LaunchAgent(CommandBase):
-    """Prepare and launch the job agent"""
+    """Prepare and launch the job agent."""
 
     def __init__(self, pilotParams):
-        """c'tor"""
+        """c'tor."""
         super(LaunchAgent, self).__init__(pilotParams)
         self.innerCEOpts = []
         self.jobAgentOpts = []
@@ -1129,7 +1141,7 @@ class LaunchAgent(CommandBase):
 
     @logFinalizer
     def execute(self):
-        """What is called all the time"""
+        """What is called all the time."""
         self.__setInnerCEOpts()
         self.__startJobAgent()
 
@@ -1137,10 +1149,10 @@ class LaunchAgent(CommandBase):
 
 
 class MultiLaunchAgent(CommandBase):
-    """Prepare and launch multiple agents"""
+    """Prepare and launch multiple agents."""
 
     def __init__(self, pilotParams):
-        """c'tor"""
+        """c'tor."""
         super(MultiLaunchAgent, self).__init__(pilotParams)
         self.inProcessOpts = []
         self.jobAgentOpts = []
@@ -1194,7 +1206,7 @@ class MultiLaunchAgent(CommandBase):
             self.inProcessOpts.append(self.pp.localConfigFile)
 
     def __startJobAgent(self):
-        """Starting of the JobAgent"""
+        """Starting of the JobAgent."""
 
         # Find any .cfg file uploaded with the sandbox or generated by previous commands
 
@@ -1266,7 +1278,7 @@ class MultiLaunchAgent(CommandBase):
         self.log.info("DiskSpace (MB) = %s" % diskSpace)
 
     def __parseJobAgentLog(self, logFile):
-        """Parse the JobAgent log and return shutdown message"""
+        """Parse the JobAgent log and return shutdown message."""
 
         # catch-all in case nothing matches
         shutdownMessage = "700 Failed, probably JobAgent or Application problem"
@@ -1335,7 +1347,7 @@ class MultiLaunchAgent(CommandBase):
 
     @logFinalizer
     def execute(self):
-        """What is called all the time"""
+        """What is called all the time."""
         self.__setInProcessOpts()
         self.__startJobAgent()
 
@@ -1356,13 +1368,13 @@ class NagiosProbes(CommandBase):
     """
 
     def __init__(self, pilotParams):
-        """c'tor"""
+        """c'tor."""
         super(NagiosProbes, self).__init__(pilotParams)
         self.nagiosProbes = []
         self.nagiosPutURL = None
 
     def _setNagiosOptions(self):
-        """Setup list of Nagios probes and optional PUT URL from pilot.json"""
+        """Setup list of Nagios probes and optional PUT URL from pilot.json."""
 
         try:
             self.nagiosProbes = [
@@ -1387,7 +1399,7 @@ class NagiosProbes(CommandBase):
         self.log.debug("NAGIOS PROBES [%s]" % ", ".join(self.nagiosProbes))
 
     def _runNagiosProbes(self):
-        """Run the probes one by one"""
+        """Run the probes one by one."""
 
         for probeCmd in self.nagiosProbes:
             self.log.debug("Running Nagios probe %s" % probeCmd)
@@ -1453,6 +1465,6 @@ class NagiosProbes(CommandBase):
 
     @logFinalizer
     def execute(self):
-        """Standard entry point to a pilot command"""
+        """Standard entry point to a pilot command."""
         self._setNagiosOptions()
         self._runNagiosProbes()

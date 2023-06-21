@@ -1,5 +1,4 @@
-""" A set of common tools to be used in pilot commands
-"""
+"""A set of common tools to be used in pilot commands."""
 
 from __future__ import print_function
 from __future__ import division
@@ -48,10 +47,11 @@ except NameError:
 
 
 def parseVersion(releaseVersion, useLegacyStyle):
-    """Convert the releaseVersion into a legacy or PEP-440 style string
+    """Convert the releaseVersion into a legacy or PEP-440 style string.
 
     :param str releaseVersion: The software version to use
-    :param bool useLegacyStyle: True to return a vXrY(pZ)(-preN) style version else vX.Y.ZaN
+    :param bool useLegacyStyle: True to return a vXrY(pZ)(-preN) style
+        version else vX.Y.ZaN
     """
     VERSION_PATTERN = re.compile(r"^(?:v)?(\d+)[r\.](\d+)(?:[p\.](\d+))?(?:(?:-pre|a)?(\d+))?$")
 
@@ -116,9 +116,7 @@ def alarmTimeoutHandler(*args):
 
 
 def retrieveUrlTimeout(url, fileName, log, timeout=0):
-    """
-    Retrieve remote url to local file, with timeout wrapper
-    """
+    """Retrieve remote url to local file, with timeout wrapper."""
     urlData = ""
     if timeout:
         signal.signal(signal.SIGALRM, alarmTimeoutHandler)
@@ -176,12 +174,12 @@ class ObjectLoader(object):
     """
 
     def __init__(self, baseModules, log):
-        """init"""
+        """init."""
         self.__rootModules = baseModules
         self.log = log
 
     def loadModule(self, modName, hideExceptions=False):
-        """Auto search which root module has to be used"""
+        """Auto search which root module has to be used."""
         for rootModule in self.__rootModules:
             impName = modName
             if rootModule:
@@ -198,7 +196,7 @@ class ObjectLoader(object):
         return None, None
 
     def __recurseImport(self, modName, parentModule=None, hideExceptions=False):
-        """Internal function to load modules"""
+        """Internal function to load modules."""
         if isinstance(modName, basestring):
             modName = modName.split(".")
         try:
@@ -221,7 +219,7 @@ class ObjectLoader(object):
         return self.__recurseImport(modName[1:], impModule, hideExceptions=hideExceptions)
 
     def loadObject(self, package, moduleName, command):
-        """Load an object from inside a module"""
+        """Load an object from inside a module."""
         loadModuleName = "%s.%s" % (package, moduleName)
         module, parentPath = self.loadModule(loadModuleName)
         if module is None:
@@ -261,7 +259,10 @@ def getCommand(params, commandName, log):
 
 
 class Logger(object):
-    """Basic logger object, for use inside the pilot. Just using print."""
+    """Basic logger object, for use inside the pilot.
+
+    Just using print.
+    """
 
     def __init__(self, name="Pilot", debugFlag=False, pilotOutput="pilot.out"):
         self.debugFlag = debugFlag
@@ -271,8 +272,7 @@ class Logger(object):
 
     @property
     def messageTemplate(self):
-        """
-        Message template in ISO-8601 format.
+        """Message template in ISO-8601 format.
 
         :return: template string
         :rtype: str
@@ -315,9 +315,10 @@ class Logger(object):
 
 
 class RemoteLogger(Logger):
-    """
-    The remote logger object, for use inside the pilot. It prints messages,
-    but can be also used to send messages to an external service.
+    """The remote logger object, for use inside the pilot.
+
+    It prints messages, but can be also used to send messages to an
+    external service.
     """
 
     def __init__(
@@ -330,11 +331,9 @@ class RemoteLogger(Logger):
         pilotUUID="unknown",
         setup="DIRAC-Certification",
     ):
-        """
-        c'tor
-        If flag PilotLoggerOn is not set, the logger will behave just like
-        the original Logger object, that means it will just print logs locally on the screen
-        """
+        """C'tor If flag PilotLoggerOn is not set, the logger will behave just
+        like the original Logger object, that means it will just print logs
+        locally on the screen."""
         super(RemoteLogger, self).__init__(name, debugFlag, pilotOutput)
         self.url = url
         self.isPilotLoggerOn = isPilotLoggerOn
@@ -364,8 +363,7 @@ class RemoteLogger(Logger):
             self.sendMessage(self.messageTemplate.format(level="INFO", message=msg))
 
     def sendMessage(self, msg):
-        """
-        Buffered message sender.
+        """Buffered message sender.
 
         :param msg: message to send
         :type msg: str
@@ -380,14 +378,14 @@ class RemoteLogger(Logger):
 
 
 class FixedSizeBuffer(object):
-    """
-    A buffer with a (preferred) fixed number of lines.
-    Once it's full, a message is sent to a remote server and the buffer is renewed.
+    """A buffer with a (preferred) fixed number of lines.
+
+    Once it's full, a message is sent to a remote server and the buffer
+    is renewed.
     """
 
     def __init__(self, senderFunc, bufsize=10):
-        """
-        Constructor.
+        """Constructor.
 
         :param senderFunc: a function used to send a message
         :type senderFunc: func
@@ -400,9 +398,8 @@ class FixedSizeBuffer(object):
         self.senderFunc = senderFunc
 
     def write(self, text):
-        """
-        Write text to a string buffer. Newline characters are counted and number of lines in the buffer
-        is increased accordingly.
+        """Write text to a string buffer. Newline characters are counted and
+        number of lines in the buffer is increased accordingly.
 
         :param text: text string to write
         :type text: str
@@ -421,21 +418,19 @@ class FixedSizeBuffer(object):
         return content
 
     def sendFullBuffer(self):
-        """
-        Get the buffer content, send a message, close the current buffer and re-create a new one for subsequent writes.
-
-        """
+        """Get the buffer content, send a message, close the current buffer and
+        re-create a new one for subsequent writes."""
 
         if self.__nlines >= self.bufsize:
             self.flush()
             self.output = StringIO()
 
     def flush(self):
-        """
-        Flush the buffer and send log records to a remote server. The buffer is closed as well.
+        """Flush the buffer and send log records to a remote server. The buffer
+        is closed as well.
 
         :return: None
-        :rtype:  None
+        :rtype: None
         """
 
         self.output.flush()
@@ -446,8 +441,7 @@ class FixedSizeBuffer(object):
 
 
 def sendMessage(url, pilotUUID, rawMessage):
-    """
-    Send a message to Tornado.
+    """Send a message to Tornado.
 
     :param url:
     :type url:
@@ -476,12 +470,12 @@ def sendMessage(url, pilotUUID, rawMessage):
 
 
 class CommandBase(object):
-    """CommandBase is the base class for every command in the pilot commands toolbox"""
+    """CommandBase is the base class for every command in the pilot commands
+    toolbox."""
 
     def __init__(self, pilotParams, dummy=""):
-        """
-        Defines the classic pilot logger and the pilot parameters.
-        Debug level of the Logger is controlled by the -d flag in pilotParams.
+        """Defines the classic pilot logger and the pilot parameters. Debug
+        level of the Logger is controlled by the -d flag in pilotParams.
 
         :param pilotParams: a dictionary of pilot parameters.
         :type pilotParams: dict
@@ -524,7 +518,7 @@ class CommandBase(object):
         return LooseVersion("z") if self.pp.pythonVersion == "27" else LooseVersion("1000")
 
     def executeAndGetOutput(self, cmd, environDict=None):
-        """Execute a command on the worker node and get the output"""
+        """Execute a command on the worker node and get the output."""
 
         self.log.info("Executing command %s" % cmd)
         _p = subprocess.Popen(
@@ -581,7 +575,7 @@ class CommandBase(object):
         sys.exit(errorCode)
 
     def forkAndExecute(self, cmd, logFile, environDict=None):
-        """Fork and execute a command on the worker node"""
+        """Fork and execute a command on the worker node."""
 
         self.log.info("Fork and execute command %s" % cmd)
         pid = os.fork()
@@ -614,10 +608,11 @@ class CommandBase(object):
 
 
 class PilotParams(object):
-    """Class that holds the structure with all the parameters to be used across all the commands"""
+    """Class that holds the structure with all the parameters to be used across
+    all the commands."""
 
     def __init__(self):
-        """c'tor
+        """c'tor.
 
         param names and defaults are defined here
         """
@@ -769,7 +764,8 @@ class PilotParams(object):
         self.__initCommandLine2()
 
     def __initCommandLine1(self):
-        """Parses and interpret options on the command line: first pass (essential things)"""
+        """Parses and interpret options on the command line: first pass
+        (essential things)"""
 
         self.optList, __args__ = getopt.getopt(
             sys.argv[1:], "".join([opt[0] for opt in self.cmdOpts]), [opt[1] for opt in self.cmdOpts]
@@ -790,10 +786,8 @@ class PilotParams(object):
                 self.pilotCFGFile = v
 
     def __initCommandLine2(self):
-        """
-        Parses and interpret options on the command line: second pass
-        (overriding discovered parameters, for tests/debug)
-        """
+        """Parses and interpret options on the command line: second pass
+        (overriding discovered parameters, for tests/debug)"""
 
         self.optList, __args__ = getopt.getopt(
             sys.argv[1:], "".join([opt[0] for opt in self.cmdOpts]), [opt[1] for opt in self.cmdOpts]
