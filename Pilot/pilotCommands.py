@@ -467,6 +467,8 @@ class ConfigureBasics(CommandBase):
             self.cfg.append("-ddd")
         if self.pp.localConfigFile:
             self.cfg.append("-O %s" % self.pp.localConfigFile)  # here, only as output
+            # Make sure that this configuration is available in the user job environment
+            self.pp.installEnv["DIRACSYSCONFIG"] = os.path.realpath(self.pp.localConfigFile)
 
         configureCmd = "%s %s" % (self.pp.configureScript, " ".join(self.cfg))
 
