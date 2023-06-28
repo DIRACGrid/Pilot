@@ -1,0 +1,140 @@
+#!/bin/sh
+#
+# Generic DIRAC pilot script for use with Singularity and Docker containers, 
+# containing the following ##user_data___## substitutions:
+#
+# user_data_jobfeatures_url
+# user_data_joboutputs_url
+# user_data_machine_hostname
+# user_data_machinefeatures_url
+# user_data_machinetype
+# user_data_option_dirac_opts
+# user_data_option_dirac_pilot_url
+# user_data_option_dirac_queue
+# user_data_option_hostcert
+# user_data_option_hostkey
+# user_data_option_x509_proxy
+# user_data_space
+# user_data_url
+# user_data_uuid
+#
+# Each substitution pattern may occur more than once in this template. If you
+# are reading a processed file, then these substitutions will already have 
+# been made below.
+#
+# Andrew.McNab@cern.ch October 2017
+#
+(
+date --utc +"%Y-%m-%d %H:%M:%S %Z user_data_sc Start user_data_sc on `hostname`"
+
+cd $HOME
+
+# Record MJFJO if substituted here by VM lifecycle manager
+export MACHINEFEATURES='##user_data_machinefeatures_url##'
+export JOBFEATURES='##user_data_jobfeatures_url##'
+export JOBOUTPUTS='##user_data_joboutputs_url##'
+
+export VM_UUID='##user_data_uuid##'
+
+if [ "$VM_UUID" = "" -a "$JOBFEATURES" != "" ] ; then
+  export VM_UUID=`cat $JOBFEATURES/job_id`
+fi
+
+if [ "$VM_UUID" = "" ] ; then
+  # If still unset then just use the hostname from the VM lifecycle manager
+  export VM_UUID=`date +'%s.##user_data_vm_hostname##'`
+fi
+
+export JOB_ID="##user_data_space##:$VM_UUID:##user_data_machinetype##"
+export PILOT_UUID="sc://##user_data_space##/$JOB_ID"
+
+mkdir -p $HOME/grid-security
+export X509_USER_PROXY=$HOME/grid-security/x509proxy.pem
+
+if [ ! -z "##user_data_option_x509_proxy##" ] ; then
+  # Simple if we are given an X.509 Proxy
+  cat <<X5_EOF > $X509_USER_PROXY
+##user_data_option_x509_proxy##
+X5_EOF
+
+  cp $X509_USER_PROXY $HOME/grid-security/hostkey.pem
+  cp $X509_USER_PROXY $HOME/grid-security/hostcert.pem
+
+elif [ ! -z "##user_data_option_hostkey##" -a ! -z "##user_data_option_hostcert##" ] ; then
+  # Given full host cert/key pair
+
+  cat <<X5_EOF > $HOME/grid-security/hostkey.pem
+##user_data_option_hostkey##
+X5_EOF
+
+  cat <<X5_EOF > $HOME/grid-security/hostcert.pem
+##user_data_option_hostcert##
+X5_EOF
+
+  cat $HOME/grid-security/hostkey.pem $HOME/grid-security/hostcert.pem > $X509_USER_PROXY
+else
+  date --utc +"%Y-%m-%d %H:%M:%S %Z Neither user_data_option_x509_proxy or user_data_option_hostkey/_hostcert defined!"
+fi
+
+chmod 0400 $HOME/grid-security/*.pem
+
+# Get CA certs from cvmfs
+ln -sf /cvmfs/grid.cern.ch/etc/grid-security/ $HOME/grid-security/
+export X509_CERT_DIR=$HOME/grid-security/certificates
+
+. /cvmfs/grid.cern.ch/emi3wn-latest/etc/profile.d/a1_grid_env.sh
+. /cvmfs/grid.cern.ch/emi3wn-latest/etc/profile.d/setup-wn-example.sh
+
+# Log HTTP proxies used for cvmfs
+attr -g proxy /mnt/.ro
+for i in /cvmfs/*
+do
+  attr -g proxy $i
+done
+
+# Fetch the DIRAC pilot scripts
+if [ '##user_data_option_dirac_pilot_url##' != '' ] ; then
+  wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' --ca-directory=$X509_CERT_DIR '##user_data_option_dirac_pilot_url##'
+elif [ '##user_data_url##' != '' ] ; then
+  # Remove user_data file name back to final slash
+  user_data_dir=`echo '##user_data_url##' | sed 's:[^/]*$::'`
+  wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' --ca-directory=$X509_CERT_DIR "$user_data_dir"
+else
+  wget --no-directories --recursive --no-parent --execute robots=off --reject 'index.html*' --ca-directory=$X509_CERT_DIR https://lhcb-portal-dirac.cern.ch/pilot/
+fi    
+
+if [ '##user_data_option_dirac_queue##' != '' ] ; then
+  QUEUE='##user_data_option_dirac_queue##'
+else
+  QUEUE=default
+fi
+
+# Now run the pilot script
+python $HOME/dirac-pilot.py \
+ --debug \
+ -o '/LocalSite/SubmitPool=Test' \
+ --Name '##user_data_space##' \
+ --Queue $QUEUE \
+ --MaxCycles 1 \
+ --cert --certLocation $HOME/grid-security \
+ ##user_data_option_dirac_opts## \
+  >##user_data_joboutputs_url##/dirac-pilot.log 2>&1
+
+# Save JobAgent and System logs
+cp -f $HOME/jobagent.*.log $HOME/shutdown_message* ##user_data_joboutputs_url##
+
+(
+  cd ##user_data_joboutputs_url##
+  for i in *
+  do
+   if [ -f $i ] ; then 
+    # This will be replaced by extended pilot logging??
+    curl --capath $X509_CERT_DIR --cert $HOME/grid-security/x509proxy.pem --cacert $HOME/grid-security/x509proxy.pem --location --upload-file "$i" \
+     "https://lhcb-depo.cern.ch:9132/hosts/##user_data_space##/##user_data_machinetype##/##user_data_machine_hostname##/##user_data_uuid##/"
+   fi
+  done
+)
+
+sleep 30
+
+) >##user_data_joboutputs_url##/user_data_script.log 2>&1 
