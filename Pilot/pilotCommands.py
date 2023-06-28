@@ -48,9 +48,9 @@ except ImportError:
     from pipes import quote
 
 try:
-    from Pilot.pilotTools import CommandBase, retrieveUrlTimeout, which
+    from Pilot.pilotTools import CommandBase, retrieveUrlTimeout, which, getFlavour
 except ImportError:
-    from pilotTools import CommandBase, retrieveUrlTimeout, which
+    from pilotTools import CommandBase, retrieveUrlTimeout, which, getFlavour
 ############################
 
 
@@ -460,6 +460,8 @@ class ConfigureBasics(CommandBase):
         VOs may want to replace/extend the _getBasicsCFG and _getSecurityCFG functions
         """
 
+        self.pp.flavour, self.pp.pilotReference = getFlavour(self.pp.ceName)
+
         self._getBasicsCFG()
         self._getSecurityCFG()
 
@@ -543,10 +545,10 @@ class RegisterPilot(CommandBase):
             extractDNCommand = "openssl x509 -in %s/hostcert.pem " % self.pp.certsLocation
             extractDNCommand += "-noout -subject -nameopt compat | sed 's/subject=//'"
             retCode, res = self.executeAndGetOutput(extractDNCommand, self.pp.installEnv)
-            pilotOwnerDN = res.strip().split("\n")[-1]
             if retCode:
                 self.log.error("Could not get execute %s [ERROR %d]" % (extractDNCommand, retCode))
-
+                self.exitWithError(retCode)
+            pilotOwnerDN = res.strip().split("\n")[-1]
             pilotOwnerGroup = "certificate_group"
         else:
             pilotOwnerDN = self.pp.userDN
@@ -772,7 +774,6 @@ class ConfigureSite(CommandBase):
     @logFinalizer
     def execute(self):
         """Setup configuration parameters"""
-        self.__setFlavour()
         self.cfg.append("-o /LocalSite/GridMiddleware=%s" % self.pp.flavour)
 
         self.cfg.append('-n "%s"' % self.pp.site)
@@ -814,85 +815,6 @@ class ConfigureSite(CommandBase):
         if retCode:
             self.log.error("Could not configure DIRAC [ERROR %d]" % retCode)
             self.exitWithError(retCode)
-
-    def __setFlavour(self):
-
-        self.pp.pilotReference = os.environ.get("DIRAC_PILOT_STAMP", self.pp.pilotReference)
-
-        # # Batch systems
-
-        # Take the reference from the Torque batch system
-        if "PBS_JOBID" in os.environ:
-            self.pp.flavour = "SSHTorque"
-            self.pp.pilotReference = "sshtorque://" + self.pp.ceName + "/" + os.environ["PBS_JOBID"].split(".")[0]
-
-        # Take the reference from the OAR batch system
-        if "OAR_JOBID" in os.environ:
-            self.pp.flavour = "SSHOAR"
-            self.pp.pilotReference = "sshoar://" + self.pp.ceName + "/" + os.environ["OAR_JOBID"]
-
-        # Grid Engine
-        if "JOB_ID" in os.environ and "SGE_TASK_ID" in os.environ:
-            self.pp.flavour = "SSHGE"
-            self.pp.pilotReference = "sshge://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
-        # Generic JOB_ID
-        elif "JOB_ID" in os.environ:
-            self.pp.flavour = "Generic"
-            self.pp.pilotReference = "generic://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
-
-        # LSF
-        if "LSB_BATCH_JID" in os.environ:
-            self.pp.flavour = "SSHLSF"
-            self.pp.pilotReference = "sshlsf://" + self.pp.ceName + "/" + os.environ["LSB_BATCH_JID"]
-
-        #  SLURM batch system
-        if "SLURM_JOBID" in os.environ:
-            self.pp.flavour = "SSHSLURM"
-            self.pp.pilotReference = "sshslurm://" + self.pp.ceName + "/" + os.environ["SLURM_JOBID"]
-
-        # Condor
-        if "CONDOR_JOBID" in os.environ:
-            self.pp.flavour = "SSHCondor"
-            self.pp.pilotReference = "sshcondor://" + self.pp.ceName + "/" + os.environ["CONDOR_JOBID"]
-
-        # # CEs
-
-        # HTCondor
-        if "HTCONDOR_JOBID" in os.environ:
-            self.pp.flavour = "HTCondorCE"
-            self.pp.pilotReference = "htcondorce://" + self.pp.ceName + "/" + os.environ["HTCONDOR_JOBID"]
-
-        # Direct SSH tunnel submission
-        if "SSHCE_JOBID" in os.environ:
-            self.pp.flavour = "SSH"
-            self.pp.pilotReference = "ssh://" + self.pp.ceName + "/" + os.environ["SSHCE_JOBID"]
-
-        # Batch host SSH tunnel submission (SSHBatch CE)
-        if "SSHBATCH_JOBID" in os.environ and "SSH_NODE_HOST" in os.environ:
-            self.pp.flavour = "SSHBATCH"
-            self.pp.pilotReference = (
-                "sshbatchhost://"
-                + self.pp.ceName
-                + "/"
-                + os.environ["SSH_NODE_HOST"]
-                + "/"
-                + os.environ["SSHBATCH_JOBID"]
-            )
-
-        # ARC
-        if "GRID_GLOBAL_JOBURL" in os.environ:
-            self.pp.flavour = "ARC"
-            pilotRef = os.environ["GRID_GLOBAL_JOBURL"]
-
-        # # DIRAC specific
-
-        # VMDIRAC case
-        if "VMDIRAC_VERSION" in os.environ:
-            self.pp.flavour = "VMDIRAC"
-            self.pp.pilotReference = "vm://" + self.pp.ceName + "/" + os.environ["JOB_ID"]
-
-
-        self.log.debug("Flavour: %s; pilot reference: %s " % (self.pp.flavour, self.pp.pilotReference))
 
 
 class ConfigureArchitecture(CommandBase):

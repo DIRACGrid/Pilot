@@ -185,6 +185,84 @@ def which(cmd, environDict=None):
     return False
 
 
+def getFlavour(ceName):
+
+    pilotReference = os.environ.get("DIRAC_PILOT_STAMP", '')
+    flavour = "DIRAC"
+
+    # # Batch systems
+
+    # Take the reference from the Torque batch system
+    if "PBS_JOBID" in os.environ:
+        flavour = "SSHTorque"
+        pilotReference = "sshtorque://" + ceName + "/" + os.environ["PBS_JOBID"].split(".")[0]
+
+    # Take the reference from the OAR batch system
+    if "OAR_JOBID" in os.environ:
+        flavour = "SSHOAR"
+        pilotReference = "sshoar://" + ceName + "/" + os.environ["OAR_JOBID"]
+
+    # Grid Engine
+    if "JOB_ID" in os.environ and "SGE_TASK_ID" in os.environ:
+        flavour = "SSHGE"
+        pilotReference = "sshge://" + ceName + "/" + os.environ["JOB_ID"]
+    # Generic JOB_ID
+    elif "JOB_ID" in os.environ:
+        flavour = "Generic"
+        pilotReference = "generic://" + ceName + "/" + os.environ["JOB_ID"]
+
+    # LSF
+    if "LSB_BATCH_JID" in os.environ:
+        flavour = "SSHLSF"
+        pilotReference = "sshlsf://" + ceName + "/" + os.environ["LSB_BATCH_JID"]
+
+    #  SLURM batch system
+    if "SLURM_JOBID" in os.environ:
+        flavour = "SSHSLURM"
+        pilotReference = "sshslurm://" + ceName + "/" + os.environ["SLURM_JOBID"]
+
+    # Condor
+    if "CONDOR_JOBID" in os.environ:
+        flavour = "SSHCondor"
+        pilotReference = "sshcondor://" + ceName + "/" + os.environ["CONDOR_JOBID"]
+
+    # # CEs
+
+    # HTCondor
+    if "HTCONDOR_JOBID" in os.environ:
+        flavour = "HTCondorCE"
+        pilotReference = "htcondorce://" + ceName + "/" + os.environ["HTCONDOR_JOBID"]
+
+    # Direct SSH tunnel submission
+    if "SSHCE_JOBID" in os.environ:
+        flavour = "SSH"
+        pilotReference = "ssh://" + ceName + "/" + os.environ["SSHCE_JOBID"]
+
+    # Batch host SSH tunnel submission (SSHBatch CE)
+    if "SSHBATCH_JOBID" in os.environ and "SSH_NODE_HOST" in os.environ:
+        flavour = "SSHBATCH"
+        pilotReference = (
+            "sshbatchhost://"
+            + ceName
+            + "/"
+            + os.environ["SSH_NODE_HOST"]
+            + "/"
+            + os.environ["SSHBATCH_JOBID"]
+        )
+
+    # ARC
+    if "GRID_GLOBAL_JOBURL" in os.environ:
+        flavour = "ARC"
+        pilotReference = os.environ["GRID_GLOBAL_JOBURL"]
+
+    # VMDIRAC case
+    if "VMDIRAC_VERSION" in os.environ:
+        flavour = "VMDIRAC"
+        pilotReference = "vm://" + ceName + "/" + os.environ["JOB_ID"]
+
+    return flavour, pilotReference
+
+
 class ObjectLoader(object):
     """Simplified class for loading objects from a DIRAC installation.
 
