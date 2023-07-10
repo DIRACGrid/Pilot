@@ -740,23 +740,21 @@ class CheckCECapabilities(CommandBase):
             self.log.error("The pilot command output is not json compatible.")
             self.exitWithError(1)
 
-        self.pp.queueParameters = resourceDict
-        for queueParamName, queueParamValue in self.pp.queueParameters.items():
-            if isinstance(queueParamValue, list):  # for the tags
-                queueParamValue = ",".join([str(qpv).strip() for qpv in queueParamValue])
-            self.cfg.append("-o /LocalSite/%s=%s" % (queueParamName, quote(queueParamValue)))
-
         # Pick up all the relevant resource parameters that will be used in the job matching
         if "WholeNode" in resourceDict:
             self.pp.tags.append("WholeNode")
 
         # Tags must be added to already defined tags if any
-        if resourceDict.get("Tag"):
-            self.pp.tags += resourceDict["Tag"]
+        self.pp.tags += resourceDict.pop("Tag", [])
 
         # RequiredTags are like Tags.
-        if resourceDict.get("RequiredTag"):
-            self.pp.reqtags += resourceDict["RequiredTag"]
+        self.pp.reqtags += resourceDict.pop("RequiredTag", [])
+
+        self.pp.queueParameters = resourceDict
+        for queueParamName, queueParamValue in self.pp.queueParameters.items():
+            if isinstance(queueParamValue, list):  # for the tags
+                queueParamValue = ",".join([str(qpv).strip() for qpv in queueParamValue])
+            self.cfg.append("-o /LocalSite/%s=%s" % (queueParamName, quote(queueParamValue)))
 
         if self.cfg:
             if self.pp.localConfigFile:
