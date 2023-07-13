@@ -442,7 +442,8 @@ class InstallDIRAC(CommandBase):
     def execute(self):
         """What is called all the time"""
 
-        if preinstalledEnvScript := self._getPreinstalledEnvScript():
+        preinstalledEnvScript = self._getPreinstalledEnvScript()
+        if preinstalledEnvScript:
             self._setupFromPreinstalledLocation(preinstalledEnvScript)
         elif self.pp.pythonVersion == "27":
             self._setInstallOptions()
