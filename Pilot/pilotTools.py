@@ -683,6 +683,7 @@ class PilotParams(object):
         # If DIRAC is preinstalled this file will receive the updates of the local configuration
         self.localConfigFile = "pilot.cfg"
         self.preinstalledEnv = ""
+        self.preinstalledEnvPrefix = ""
         self.executeCmd = False
         self.configureScript = "dirac-configure"
         self.architectureScript = "dirac-platform"
@@ -758,7 +759,8 @@ class PilotParams(object):
             ("", "pythonVersion=", "Python version of DIRAC client to install"),
             ("", "defaultsURL=", "user-defined URL for global config"),
             ("", "pilotUUID=", "pilot UUID"),
-            ("", "preinstalledEnv=", "preinstalled pilot environment script location")
+            ("", "preinstalledEnv=", "preinstalled pilot environment script location"),
+            ("", "preinstalledEnvPrefix=", "preinstalled pilot environment area prefix"),
         )
 
         # Possibly get Setup and JSON URL/filename from command line
@@ -895,6 +897,8 @@ class PilotParams(object):
                 self.defaultsURL = v
             elif o == "--preinstalledEnv":
                 self.preinstalledEnv = v
+            elif o == "--preinstalledEnvPrefix":
+                self.preinstalledEnvPrefix = v
 
     def __initJSON(self):
         """Retrieve pilot parameters from the content of json file. The file should be something like:

@@ -30,6 +30,7 @@ import stat
 import socket
 import filecmp
 import shutil
+import platform
 from collections import Counter
 from distutils.version import LooseVersion
 
@@ -256,11 +257,26 @@ class InstallDIRAC(CommandBase):
         except OSError:
             pass
 
-    def _setupFromPreinstalledLocation(self):
+    def _getPreinstalledEnvScript(self):
+        """ Get preinstalled environment script if any """
+
+        arch = platform.system() + "-" + platform.machine()
+        preinstalledEnvScript = self.pp.preinstalledEnv
+        if not preinstalledEnvScript and self.pp.preinstalledEnvPrefix:
+            version = self.pp.releaseVersion or "pro"
+            preinstalledEnvScript = os.path.join(self.pp.preinstalledEnvPrefix, version, arch, "diracosrc")
+
+        if os.path.isfile(preinstalledEnvScript):
+           self.pp.preinstalledEnv = preinstalledEnvScript
+           return preinstalledEnvScript
+
+        return None
+
+    def _setupFromPreinstalledLocation(self, preinstalledEnvScript):
         """ Set up a preinstalled DIRAC client"""
 
-        # setting up the client environment
-        retCode, output = self.executeAndGetOutput('bash -c "source %s && env"' % self.pp.preinstalledEnv, self.pp.installEnv)
+        retCode, output = self.executeAndGetOutput('bash -c "source %s && env"' % preinstalledEnvScript,
+                                                   self.pp.installEnv)
         self.pp.installEnv = {}
         if retCode:
             self.log.error("Could not parse the diracos/diracosrc file [ERROR %d]" % retCode)
@@ -426,8 +442,8 @@ class InstallDIRAC(CommandBase):
     def execute(self):
         """What is called all the time"""
 
-        if self.pp.preinstalledEnv and os.path.exists(self.pp.preinstalledEnv):
-            self._setupFromPreinstalledLocation()
+        if preinstalledEnvScript := self._getPreinstalledEnvScript():
+            self._setupFromPreinstalledLocation(preinstalledEnvScript)
         elif self.pp.pythonVersion == "27":
             self._setInstallOptions()
             self._locateInstallationScript()
