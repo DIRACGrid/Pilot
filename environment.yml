@@ -1,7 +1,6 @@
 name: pilot-development
 
 channels:
-  - diracgrid
   - conda-forge
   - defaults
 
