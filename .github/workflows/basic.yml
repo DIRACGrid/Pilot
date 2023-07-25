@@ -24,8 +24,8 @@ jobs:
       matrix:
         python: 
           - 2.7.18
-          - 3.6.8
-          - 3.9.4
+          - 3.6.15
+          - 3.9.17
 
     container: python:${{ matrix.python }}-slim
     steps:
@@ -54,8 +54,8 @@ jobs:
       matrix:
         python: 
           - 2.7.18
-          - 3.6.8
-          - 3.9.4
+          - 3.6.15
+          - 3.9.17
 
     container: python:${{ matrix.python }}-slim
     steps:
@@ -76,8 +76,8 @@ jobs:
       matrix:
         python: 
           - 2.7.18
-          - 3.6.8
-          - 3.9.4
+          - 3.6.15
+          - 3.9.17
 
     container: python:${{ matrix.python }}-slim
     steps:
