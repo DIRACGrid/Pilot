@@ -819,19 +819,6 @@ class ConfigureSite(CommandBase):
             self.pp.flavour = "HTCondorCE"
             pilotRef = "htcondorce://" + self.pp.ceName + "/" + os.environ["HTCONDOR_JOBID"]
 
-        # This is the CREAM direct submission case
-        if "CREAM_JOBID" in os.environ:
-            self.pp.flavour = "CREAM"
-            pilotRef = os.environ["CREAM_JOBID"]
-
-        if "OSG_WN_TMP" in os.environ:
-            self.pp.flavour = "OSG"
-
-        # GLOBUS Computing Elements
-        if "GLOBUS_GRAM_JOB_CONTACT" in os.environ:
-            self.pp.flavour = "GLOBUS"
-            pilotRef = os.environ["GLOBUS_GRAM_JOB_CONTACT"]
-
         # Direct SSH tunnel submission
         if "SSHCE_JOBID" in os.environ:
             self.pp.flavour = "SSH"
@@ -849,13 +836,7 @@ class ConfigureSite(CommandBase):
                 + os.environ["SSHBATCH_JOBID"]
             )
 
-        # ARC case
-        # JOBID does not provide the full url in recent versions of ARC
-        # JOBURL has been introduced recently and should be preferred when present
-        if "GRID_GLOBAL_JOBID" in os.environ:
-            self.pp.flavour = "ARC"
-            pilotRef = os.environ["GRID_GLOBAL_JOBID"]
-
+        # ARC
         if "GRID_GLOBAL_JOBURL" in os.environ:
             self.pp.flavour = "ARC"
             pilotRef = os.environ["GRID_GLOBAL_JOBURL"]
