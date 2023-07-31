@@ -621,7 +621,7 @@ class CommandBase(object):
 
         self.log.info("Executing command %s" % cmd)
         _p = subprocess.Popen(
-            "%s" % cmd, shell=True, env=environDict, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=False
+            cmd, shell=True, env=environDict, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=False
         )
 
         # Use non-blocking I/O on the process pipes
