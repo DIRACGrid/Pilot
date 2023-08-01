@@ -21,8 +21,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-__RCSID__ = "$Id$"
-
 import sys
 import os
 import time
@@ -200,6 +198,41 @@ class InstallDIRAC(CommandBase):
         self.installScriptName = "dirac-install.py"
         self.installScript = ""
 
+    def _sourceEnvironmentFile(self):
+        """source the $DIRAC_RC_FILE and save the created environment in self.pp.installEnv
+        """
+
+        retCode, output = self.executeAndGetOutput("bash -c 'source $DIRAC_RC_PATH && env'", self.pp.installEnv)
+        if retCode:
+            self.log.error("Could not parse the %s file [ERROR %d]" % (self.pp.installEnv["DIRAC_RC_PATH"], retCode))
+            self.exitWithError(retCode)
+        for line in output.split("\n"):
+            try:
+                var, value = [vx.strip() for vx in line.split("=", 1)]
+                if var == "_" or "SSH" in var or "{" in value or "}" in value:  # Avoiding useless/confusing stuff
+                    continue
+                self.pp.installEnv[var] = value
+            except (IndexError, ValueError):
+                continue
+
+    def _saveEnvInFile(self, eFile="environmentSourceDirac"):
+        """Save pp.installEnv in file (delete if already present)
+
+        :param str eFile: file where to save env
+        """
+        if os.path.isfile(eFile):
+            os.remove(eFile)
+
+        with open(eFile, "w") as fd:
+            for var, val in self.pp.installEnv.items():
+                if var == "_" or var == "X509_USER_PROXY" or "SSH" in var or "{" in val or "}" in val:
+                    continue
+                if " " in val and val[0] != '"':
+                    val = '"%s"' % val
+                bl = "export %s=%s\n" % (var, val.rstrip(":"))
+                fd.write(bl)
+
+
     def _setInstallOptions(self):
         """Setup installation parameters"""
 
@@ -256,7 +289,10 @@ class InstallDIRAC(CommandBase):
             pass
 
     def _installDIRAC(self):
-        """Install DIRAC or its extension, then parse the environment file created, and use it for subsequent calls"""
+        """ Install python2 DIRAC or its extension,
+            then parse the environment file created, and use it for subsequent calls
+        """
+        
         # Installing
         installCmd = "%s %s" % (self.installScript, " ".join(self.installOpts))
         self.log.debug("Installing with: %s" % installCmd)
@@ -272,19 +308,11 @@ class InstallDIRAC(CommandBase):
 
         # Parsing the bashrc then adding its content to the installEnv
         # at this point self.pp.installEnv may still coincide with os.environ
-        retCode, output = self.executeAndGetOutput('bash -c "source bashrc && env"', self.pp.installEnv)
-        if retCode:
-            self.log.error("Could not parse the bashrc file [ERROR %d]" % retCode)
-            self.exitWithError(retCode)
-        for line in output.split("\n"):
-            try:
-                var, value = [vx.strip() for vx in line.split("=", 1)]
-                if var == "_" or "SSH" in var or "{" in value or "}" in value:  # Avoiding useless/confusing stuff
-                    continue
-                self.pp.installEnv[var] = value
-            except (IndexError, ValueError):
-                continue
+        self.pp.installEnv["DIRAC_RC_PATH"] = os.path.join(os.getcwd(), "bashrc")
+
+        self._sourceEnvironmentFile()
         # At this point self.pp.installEnv should contain all content of bashrc, sourced "on top" of (maybe) os.environ
+        self._saveEnvInFile()
 
     def _installDIRACpy3(self):
         """Install python3 version of DIRAC client"""
@@ -352,21 +380,11 @@ class InstallDIRAC(CommandBase):
             with open("diracos/diracosrc", "a") as diracosrc:
                 diracosrc.write("\n".join(lines))
 
-        # 6. source diracos/diracosrc then replace the content in installEnv
-        retCode, output = self.executeAndGetOutput('bash -c "source diracos/diracosrc && env"', installEnv)
-        self.pp.installEnv = {}
-        if retCode:
-            self.log.error("Could not parse the diracos/diracosrc file [ERROR %d]" % retCode)
-            self.exitWithError(retCode)
-        for line in output.split("\n"):
-            try:
-                var, value = [vx.strip() for vx in line.split("=", 1)]
-                if var == "_" or "SSH" in var or "{" in value or "}" in value:  # Avoiding useless/confusing stuff
-                    continue
-                self.pp.installEnv[var] = value
-            except (IndexError, ValueError):
-                continue
-
+        # 6. source diracos/diracosrc
+        self.pp.installEnv["DIRAC_RC_PATH"] = os.path.join(os.getcwd(), "diracos/diracosrc")
+        self._sourceEnvironmentFile()
+        self._saveEnvInFile()
+        
         # 7. pip install DIRAC[pilot]
         pipInstalling = "pip install %s " % self.pp.pipInstallOptions
 
