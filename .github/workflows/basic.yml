@@ -63,7 +63,8 @@ jobs:
     - name: Installing dependencies
       run: |
         python -m pip install pytest mock
-        sudo apt install voms-clients
+        apt-get update
+        apt install -y voms-clients
     - name: Run pytest
       run: pytest
 
