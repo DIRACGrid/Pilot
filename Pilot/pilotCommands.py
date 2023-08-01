@@ -560,8 +560,13 @@ class RegisterPilot(CommandBase):
 
         checkCmd = "dirac-admin-add-pilot %s %s %s %s %s --status=Running %s -d" % (
             self.pp.pilotReference,
+<<<<<<< HEAD
             pilotOwnerDN,
             pilotOwnerGroup,
+=======
+            self.pp.userDN,
+            self.pp.userGroup,
+>>>>>>> af25773 (fix: pilotReference is by default)
             self.pp.flavour,
             self.pilotStamp,
             " ".join(self.cfg),
