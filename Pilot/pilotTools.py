@@ -82,7 +82,6 @@ def printVersion(log):
             pickle.dump(sys.argv[1:], fd)
     except OSError:
         pass
-    log.info("Version %s" % __RCSID__)
 
 
 def pythonPathCheck():
