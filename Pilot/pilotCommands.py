@@ -308,11 +308,12 @@ class InstallDIRAC(CommandBase):
             version = self.pp.releaseVersion or "pro"
             preinstalledEnvScript = os.path.join(self.pp.preinstalledEnvPrefix, version, arch, "diracosrc")
 
+        self.log.info("Evaluating env script %s" % preinstalledEnvScript)
         if os.path.isfile(preinstalledEnvScript):
            self.pp.preinstalledEnv = preinstalledEnvScript
            self.pp.installEnv["DIRAC_RC_PATH"] = preinstalledEnvScript
 
-    def _installDIRAC(self):
+    def _installDIRACpy2(self):
         """ Install python2 DIRAC or its extension,
             then parse the environment file created, and use it for subsequent calls
         """
@@ -445,20 +446,58 @@ class InstallDIRAC(CommandBase):
                 self.log.error("Could not pip install %s [ERROR %d]" % (self.releaseVersion, retCode))
                 self.exitWithError(retCode)
 
+    def _localInstallDIRAC(self):
+        self.log.info("Installing DIRAC locally")
+        if self.pp.pythonVersion == "27":
+            self._setInstallOptions()
+            self._locateInstallationScript()
+            self._installDIRACpy2()
+        else:  # python3 is requested
+            self._installDIRACpy3()
+
     @logFinalizer
     def execute(self):
         """What is called all the time"""
 
-        self._getPreinstalledEnvScript()
-        if self.pp.preinstalledEnv:
+        try:
+            # In case we want to force local installation (in absence of CVMFS or for test reasons)
+            if "diracInstallOnly" in self.pp.genericOption:
+                self.log.info("NOT sourcing: starting traditional DIRAC installation")
+                self._localInstallDIRAC()
+                return
+            
+            # Try sourcing from CVMFS
+            self._getPreinstalledEnvScript()
+            if not self.pp.preinstalledEnv:
+                self._localInstallDIRAC()
+                return
+            # if we are here, we have a preinstalled environment
             self._sourceEnvironmentFile()
+            self.log.info("source DIRAC env DONE, for release %s" % self.pp.releaseVersion)
+            # environment variables to add?
+            if self.pp.userEnvVariables:
+                # User-requested environment variables (comma-separated, name and value separated by ":::")
+                # The case of dirac-install is handled in vanilla DIRAC Pilot
+                newEnvVars = dict(
+                name.split(":::", 1) for name in self.pp.userEnvVariables.replace(" ", "").split(",")
+              )
+                self.log.info("Adding env variable(s) to the environment", newEnvVars)
+                self.pp.installEnv.update(newEnvVars)
+
+        except OSError as e:
+            self.log.error("Exception when trying to source the DIRAC environment: %s" % str(e))
+            if "cvmfsOnly" in self.pp.genericOption:
+                self.exitWithError(1)
+            self.log.warn("Source of the DIRAC environment NOT DONE: starting traditional DIRAC installation")
+            self._localInstallDIRAC()
+
+        finally:
+            # saving also in environmentSourceDirac file for completeness...
+            # (and bashrc too, if not created, with the same content)...
+            # this is doing some horrible mangling unfortunately!
             self._saveEnvInFile()
-        elif self.pp.pythonVersion == "27":
-            self._setInstallOptions()
-            self._locateInstallationScript()
-            self._installDIRAC()
-        else:  # python3 is requested
-            self._installDIRACpy3()
+            if not os.path.isfile("bashrc"):
+                shutil.copyfile("environmentSourceDirac", "bashrc")
 
 
 class ConfigureBasics(CommandBase):
