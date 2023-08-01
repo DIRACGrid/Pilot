@@ -1,37 +1,34 @@
 """ A set of common tools to be used in pilot commands
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
 
-__RCSID__ = "$Id$"
-
-import sys
-import os
-import pickle
+import fcntl
 import getopt
 import imp
 import json
+import os
+import pickle
 import re
 import select
 import signal
-import subprocess
 import ssl
-import fcntl
+import subprocess
+import sys
 from datetime import datetime
-from functools import partial
 from distutils.version import LooseVersion
+from functools import partial
 
 ############################
 # python 2 -> 3 "hacks"
 try:
-    from urllib.request import urlopen
     from urllib.error import HTTPError, URLError
     from urllib.parse import urlencode
+    from urllib.request import urlopen
 except ImportError:
-    from urllib2 import urlopen, HTTPError, URLError
     from urllib import urlencode
+
+    from urllib2 import HTTPError, URLError, urlopen
 
 try:
     from cStringIO import StringIO
