@@ -310,27 +310,7 @@ class InstallDIRAC(CommandBase):
 
         if os.path.isfile(preinstalledEnvScript):
            self.pp.preinstalledEnv = preinstalledEnvScript
-           return preinstalledEnvScript
-
-        return None
-
-    def _setupFromPreinstalledLocation(self, preinstalledEnvScript):
-        """ Set up a preinstalled DIRAC client"""
-
-        retCode, output = self.executeAndGetOutput('bash -c "source %s && env"' % preinstalledEnvScript,
-                                                   self.pp.installEnv)
-        self.pp.installEnv = {}
-        if retCode:
-            self.log.error("Could not parse the diracos/diracosrc file [ERROR %d]" % retCode)
-            self.exitWithError(retCode)
-        for line in output.split("\n"):
-            try:
-                var, value = [vx.strip() for vx in line.split("=", 1)]
-                if var == "_" or "SSH" in var or "{" in value or "}" in value:  # Avoiding useless/confusing stuff
-                    continue
-                self.pp.installEnv[var] = value
-            except (IndexError, ValueError):
-                continue
+           self.pp.installEnv["DIRAC_RC_PATH"] = preinstalledEnvScript
 
     def _installDIRAC(self):
         """ Install python2 DIRAC or its extension,
@@ -469,9 +449,10 @@ class InstallDIRAC(CommandBase):
     def execute(self):
         """What is called all the time"""
 
-        preinstalledEnvScript = self._getPreinstalledEnvScript()
-        if preinstalledEnvScript:
-            self._setupFromPreinstalledLocation(preinstalledEnvScript)
+        self._getPreinstalledEnvScript()
+        if self.pp.preinstalledEnv:
+            self._sourceEnvironmentFile()
+            self._saveEnvInFile()
         elif self.pp.pythonVersion == "27":
             self._setInstallOptions()
             self._locateInstallationScript()
