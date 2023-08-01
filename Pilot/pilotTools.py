@@ -15,6 +15,7 @@ import signal
 import ssl
 import subprocess
 import sys
+import threading
 from datetime import datetime
 from distutils.version import LooseVersion
 from functools import partial
@@ -44,6 +45,12 @@ try:
     from Pilot.proxyTools import getVO
 except ImportError:
     from proxyTools import getVO
+
+try:
+    FileNotFoundError  # pylint: disable=used-before-assignment
+    # because of https://github.com/PyCQA/pylint/issues/6748
+except NameError:
+    FileNotFoundError = OSError
 
 # Utilities functions
 
@@ -178,6 +185,32 @@ def which(cmd):
         if executable and os.path.isfile(filename):
             return os.path.join(prefix, filename)
     return False
+
+
+def safe_listdir(directory, timeout=60):
+    """ This is a "safe" list directory,
+    for lazily-loaded File Systems like CVMFS.
+    There's by default a 60 seconds timeout.
+
+    :param str directory: directory to list
+    :param int timeout: optional timeout, in seconds. Defaults to 60.
+    """
+
+    def listdir(directory):
+        try:
+            return os.listdir(directory)
+        except FileNotFoundError:
+            print("%s not found" % directory)
+            return []
+
+    contents = []
+    t = threading.Thread(target=lambda: contents.extend(listdir(directory)))
+    t.daemon = True  # don't delay program's exit
+    t.start()
+    t.join(timeout)
+    if t.is_alive():
+        return None  # timeout
+    return contents
 
 
 def getFlavour(ceName):

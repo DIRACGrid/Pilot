@@ -49,6 +49,7 @@ try:
         CommandBase,
         getFlavour,
         retrieveUrlTimeout,
+        safe_listdir,
         sendMessage,
         which,
     )
@@ -57,6 +58,7 @@ except ImportError:
         CommandBase,
         getFlavour,
         retrieveUrlTimeout,
+        safe_listdir,
         sendMessage,
         which,
     )
@@ -302,16 +304,20 @@ class InstallDIRAC(CommandBase):
     def _getPreinstalledEnvScript(self):
         """ Get preinstalled environment script if any """
 
-        arch = platform.system() + "-" + platform.machine()
         preinstalledEnvScript = self.pp.preinstalledEnv
         if not preinstalledEnvScript and self.pp.preinstalledEnvPrefix:
             version = self.pp.releaseVersion or "pro"
+            arch = platform.system() + "-" + platform.machine()
             preinstalledEnvScript = os.path.join(self.pp.preinstalledEnvPrefix, version, arch, "diracosrc")
 
-        self.log.info("Evaluating env script %s" % preinstalledEnvScript)
-        if os.path.isfile(preinstalledEnvScript):
-           self.pp.preinstalledEnv = preinstalledEnvScript
-           self.pp.installEnv["DIRAC_RC_PATH"] = preinstalledEnvScript
+        if preinstalledEnvScript:
+            self.log.info("Evaluating env script %s" % preinstalledEnvScript)
+            if not safe_listdir(os.path.dirname(preinstalledEnvScript)):
+                raise OSError("release not found")
+
+            if os.path.isfile(preinstalledEnvScript):
+                self.pp.preinstalledEnv = preinstalledEnvScript
+                self.pp.installEnv["DIRAC_RC_PATH"] = preinstalledEnvScript
 
     def _installDIRACpy2(self):
         """ Install python2 DIRAC or its extension,
