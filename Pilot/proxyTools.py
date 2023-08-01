@@ -1,13 +1,11 @@
 """ few functions for dealing with proxies
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
 
 import re
 from base64 import b16decode
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 
 VOMS_FQANS_OID = b"1.3.6.1.4.1.8005.100.100.4"
 VOMS_EXTENSION_OID = b"1.3.6.1.4.1.8005.100.100.5"

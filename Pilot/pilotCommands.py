@@ -17,17 +17,15 @@
     execution.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
 
-import sys
-import os
-import time
-import stat
-import socket
 import filecmp
+import os
 import shutil
+import socket
+import stat
+import sys
+import time
 from collections import Counter
 from distutils.version import LooseVersion
 
@@ -46,9 +44,21 @@ except ImportError:
     from pipes import quote
 
 try:
-    from Pilot.pilotTools import CommandBase, retrieveUrlTimeout, sendMessage, which, getFlavour
+    from Pilot.pilotTools import (
+        CommandBase,
+        getFlavour,
+        retrieveUrlTimeout,
+        sendMessage,
+        which,
+    )
 except ImportError:
-    from pilotTools import CommandBase, retrieveUrlTimeout, sendMessage, which, getFlavour
+    from pilotTools import (
+        CommandBase,
+        getFlavour,
+        retrieveUrlTimeout,
+        sendMessage,
+        which,
+    )
 ############################
 
 
