@@ -568,17 +568,8 @@ class RegisterPilot(CommandBase):
         """Calls dirac-admin-add-pilot"""
 
         if self.pp.useServerCertificate:
-            self.cfg.append("-o /DIRAC/Security/UseServerCertificate=yes")
-            extractDNCommand = "openssl x509 -in %s/hostcert.pem " % self.pp.certsLocation
-            extractDNCommand += "-noout -subject -nameopt compat | sed 's/subject=//'"
-            retCode, res = self.executeAndGetOutput(extractDNCommand, self.pp.installEnv)
-            if retCode:
-                self.log.error("Could not get execute %s [ERROR %d]" % (extractDNCommand, retCode))
-                self.exitWithError(retCode)
-            pilotOwnerDN = res.strip().split("\n")[-1]
             pilotOwnerGroup = "certificate_group"
         else:
-            pilotOwnerDN = self.pp.userDN
             pilotOwnerGroup = self.pp.userGroup
 
         if self.pp.localConfigFile:
@@ -586,9 +577,8 @@ class RegisterPilot(CommandBase):
                 self.cfg.append("--cfg")
             self.cfg.append(self.pp.localConfigFile)  # this file is as input
 
-        checkCmd = "dirac-admin-add-pilot %s %s %s %s %s --status=Running %s -d" % (
+        checkCmd = "dirac-admin-add-pilot %s %s %s %s --status=Running %s -d" % (
             self.pp.pilotReference,
-            pilotOwnerDN,
             pilotOwnerGroup,
             self.pp.flavour,
             self.pilotStamp,
