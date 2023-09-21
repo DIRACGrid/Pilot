@@ -96,13 +96,21 @@ if __name__ == "__main__":
         log.info("Requested command extensions: %s" % str(pilotParams.commandExtensions))
 
     log.info("Executing commands: %s" % str(pilotParams.commands))
-    if pilotParams.pilotLogging:
-        log.buffer.flush()
 
+    if pilotParams.pilotLogging:
+        # It's safer to cancel the timer here. Each command has got its own logger object with a timer cancelled by the
+        # finaliser. No need for a timer in the "else" code segment below.
+        try:
+            log.buffer.cancelTimer()
+            log.debug("Timer canceled")
+            log.buffer.flush()
+        except Exception as exc:
+            log.error(str(exc))
     for commandName in pilotParams.commands:
-        command, module = getCommand(pilotParams, commandName, log)
+        command, module = getCommand(pilotParams, commandName)
         if command is not None:
             command.log.info("Command %s instantiated from %s" % (commandName, module))
+            command.log.buffer.flush()
             command.execute()
         else:
             log.error("Command %s could not be instantiated" % commandName)
