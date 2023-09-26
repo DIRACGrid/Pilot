@@ -17,7 +17,6 @@ import subprocess
 import sys
 import threading
 from datetime import datetime
-from distutils.version import LooseVersion
 from functools import partial
 
 ############################
