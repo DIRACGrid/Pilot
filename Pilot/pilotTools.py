@@ -1114,6 +1114,7 @@ class PilotParams(object):
         vo = self.__getVO()
         paths = [
             "/Defaults/Pilot",
+            "/%s/Pilot" % vo,
             "/%s/Pilot" % self.setup,
             "/%s/Defaults/Pilot" % vo,
             "/%s/%s/Pilot" % (vo, self.setup),
