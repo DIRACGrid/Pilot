@@ -194,8 +194,7 @@ class CheckWorkerNode(CommandBase):
             self.log.error(
                 "%s MB < %s MB, not enough local disk space available, exiting" % (diskSpace, self.pp.minDiskSpace)
             )
-            sys.exit(1)
-
+            self.exitWithError(1)
 
 class InstallDIRAC(CommandBase):
     """Basically, this is used to call dirac-install with the passed parameters.
@@ -293,7 +292,7 @@ class InstallDIRAC(CommandBase):
                     self.pp.rootPath,
                 )
             )
-            sys.exit(1)
+            self.exitWithError(1)
 
         try:
             # change permission of the script
@@ -695,7 +694,7 @@ class CheckCECapabilities(CommandBase):
             resourceDict = json.loads(resourceDict.strip().split("\n")[-1])
         except ValueError:
             self.log.error("The pilot command output is not json compatible.")
-            sys.exit(1)
+            self.exitWithError(1)
 
         self.pp.queueParameters = resourceDict
         for queueParamName, queueParamValue in self.pp.queueParameters.items():
@@ -776,7 +775,7 @@ class CheckWNCapabilities(CommandBase):
                 numberOfGPUs = 0
         except ValueError:
             self.log.error("Wrong Command output %s" % result)
-            sys.exit(1)
+            self.exitWithError(1)
 
         # If NumberOfProcessors or MaxRAM are defined in the resource configuration, these
         # values are preferred
@@ -1023,7 +1022,7 @@ class ConfigureCPURequirements(CommandBase):
             self.log.info("Queue length (which is also set as CPUTimeLeft) is %f" % self.pp.jobCPUReq)
         except ValueError:
             self.log.error("Pilot command output does not have the correct format")
-            sys.exit(1)
+            self.exitWithError(1)
         # now setting this value in local file
         cfg = ["-FDMH"]
         if self.pp.useServerCertificate:
