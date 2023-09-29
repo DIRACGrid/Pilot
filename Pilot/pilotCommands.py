@@ -633,6 +633,10 @@ class RegisterPilot(CommandBase):
     def execute(self):
         """Calls dirac-admin-add-pilot"""
 
+        if not which("dirac-admin-add-pilot") or not self.pp.pilotReference:
+            self.log.info("Skipping module")
+            return
+
         if self.pp.useServerCertificate:
             pilotOwnerGroup = "certificate_group"
         else:
