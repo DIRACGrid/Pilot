@@ -680,6 +680,10 @@ class CommandBase(object):
 
     def exitWithError(self, errorCode):
         """Wrapper around sys.exit()"""
+        self.log.info("Content of pilot.cfg")
+        with open("pilot.cfg") as f:
+            print(f.read())
+
         self.log.info("List of child processes of current PID:")
         retCode, _outData = self.executeAndGetOutput(
             "ps --forest -o pid,%%cpu,%%mem,tty,stat,time,cmd -g %d" % os.getpid()
