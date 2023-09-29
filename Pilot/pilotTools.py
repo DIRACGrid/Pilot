@@ -629,21 +629,6 @@ class CommandBase(object):
 
         self.log.debug("Initialized command %s" % self.__class__.__name__)
         self.log.debug("pilotParams option list: %s" % self.pp.optList)
-        self.cfgOptionDIRACVersion = self._getCFGOptionDIRACVersion()
-
-    def _getCFGOptionDIRACVersion(self):
-        """Convenience method.
-
-        Reference vanilla DIRAC version from when we ask to use --cfg for cfg files
-
-        For extensions: the only way to know the vanilla DIRAC version
-        is to check releases.cfg. Not impossible, but cumbersome to do here.
-        Extensions could replace this function.
-        """
-        if not self.pp.releaseProject:
-            return LooseVersion(parseVersion("v7r0p29", self.pp.pythonVersion == "27"))
-        # just a trick to always evaluate comparisons in pilotCommands to False
-        return LooseVersion("z") if self.pp.pythonVersion == "27" else LooseVersion("1000")
 
     def executeAndGetOutput(self, cmd, environDict=None):
         """Execute a command on the worker node and get the output"""
