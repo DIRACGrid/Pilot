@@ -77,7 +77,7 @@
 		"jenkins-lhcb-d.cern.ch": {
 			"Site": "VAR_JENKINS_SITE",
 			"GridCEType": "LHCbD"
-		  }	  
+		}	  
 	},
 	"GenericPilotDNs": [],
 	"Defaults": {

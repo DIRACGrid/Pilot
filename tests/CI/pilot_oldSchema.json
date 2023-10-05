@@ -48,6 +48,18 @@
           "LHCbConfigureSite",
           "LHCbConfigureArchitecture",
           "LHCbConfigureCPURequirements"
+        ],
+        "LHCbD": [
+          "CheckWorkerNode",
+          "InstallDIRAC",
+          "LHCbConfigureBasics",
+          "RegisterPilot",
+          "CheckCECapabilities",
+          "LHCbAddCVMFSTags",
+          "CheckWNCapabilities",
+          "LHCbConfigureSite",
+          "LHCbConfigureArchitecture",
+          "LHCbConfigureCPURequirements"
         ]
       },
       "Logging": {
@@ -162,6 +174,10 @@
     "jenkins-lhcb.cern.ch": {
       "Site": "VAR_JENKINS_SITE",
       "GridCEType": "LHCb"
+    },
+    "jenkins-lhcb-d.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "LHCbD"
     }
   },
   "DefaultSetup": "DIRAC-Certification"
