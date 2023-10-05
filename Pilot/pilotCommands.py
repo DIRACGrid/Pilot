@@ -302,11 +302,16 @@ class InstallDIRAC(CommandBase):
     def _getPreinstalledEnvScript(self):
         """ Get preinstalled environment script if any """
 
+        self.log.debug("self.pp.preinstalledEnv = %s" % self.pp.preinstalledEnv)
+        self.log.debug("self.pp.preinstalledEnvPrefix = %s" % self.pp.preinstalledEnvPrefix)
+        
         preinstalledEnvScript = self.pp.preinstalledEnv
         if not preinstalledEnvScript and self.pp.preinstalledEnvPrefix:
             version = self.pp.releaseVersion or "pro"
             arch = platform.system() + "-" + platform.machine()
             preinstalledEnvScript = os.path.join(self.pp.preinstalledEnvPrefix, version, arch, "diracosrc")
+
+        self.log.debug("preinstalledEnvScript = %s" % preinstalledEnvScript)
 
         if preinstalledEnvScript:
             self.log.info("Evaluating env script %s" % preinstalledEnvScript)
