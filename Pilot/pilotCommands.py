@@ -196,9 +196,7 @@ class CheckWorkerNode(CommandBase):
             self.exitWithError(1)
 
 class InstallDIRAC(CommandBase):
-    """Basically, this is used to call dirac-install with the passed parameters.
-
-    It requires dirac-install script to be sitting in the same directory.
+    """ Source from CVMFS, or install locally
     """
 
     def __init__(self, pilotParams):
@@ -206,8 +204,6 @@ class InstallDIRAC(CommandBase):
         super(InstallDIRAC, self).__init__(pilotParams)
         self.installOpts = []
         self.pp.rootPath = self.pp.pilotRootPath
-        self.installScriptName = "dirac-install.py"
-        self.installScript = ""
 
     def _sourceEnvironmentFile(self):
         """source the $DIRAC_RC_FILE and save the created environment in self.pp.installEnv
@@ -325,6 +321,9 @@ class InstallDIRAC(CommandBase):
     def _installDIRACpy2(self):
         """ Install python2 DIRAC or its extension,
             then parse the environment file created, and use it for subsequent calls
+
+            Basically, this is used to call dirac-install with the passed parameters.
+            It requires dirac-install script to be sitting in the same directory.
         """
         
         # Installing
@@ -458,6 +457,8 @@ class InstallDIRAC(CommandBase):
     def _localInstallDIRAC(self):
         self.log.info("Installing DIRAC locally")
         if self.pp.pythonVersion == "27":
+            self.installScriptName = "dirac-install.py"
+            self.installScript = ""
             self._setInstallOptions()
             self._locateInstallationScript()
             self._installDIRACpy2()
@@ -525,21 +526,6 @@ class ConfigureBasics(CommandBase):
     .. note:: Further commands should always call dirac-configure using the options -FDMH
     .. note:: If custom cfg file is created further commands should call dirac-configure with
                "-O %s %s" % ( self.pp.localConfigFile, self.pp.localConfigFile )
-
-    From here on, we have to pay attention to the paths. Specifically, we need to know where to look for
-
-        * executables (scripts)
-        * DIRAC python code
-
-    If the pilot has installed DIRAC (and extensions) in the traditional way, so using the dirac-install.py script,
-    simply the current directory is used, and:
-
-        * scripts will be in $CWD/scripts.
-        * DIRAC python code will be all sitting in $CWD
-        * the local dirac.cfg file will be found in $CWD/etc
-
-    For a more general case of non-traditional installations, we should use the PATH and PYTHONPATH as set by the
-    installation phase. Executables and code will be searched there.
     """
 
     def __init__(self, pilotParams):
@@ -609,14 +595,108 @@ class ConfigureBasics(CommandBase):
             self.cfg.append('-o "/Resources/Computing/CEDefaults/VirtualOrganization=%s"' % self.pp.wnVO)
 
     def _getSecurityCFG(self):
-        """Nothing specific by default, but need to know host cert and key location in case they are needed"""
+        """ Sets security-related env variables, if needed
+        """
+        # Need to know host cert and key location in case they are needed
         if self.pp.useServerCertificate:
             self.cfg.append("--UseServerCertificate")
             self.cfg.append("-o /DIRAC/Security/CertFile=%s/hostcert.pem" % self.pp.certsLocation)
             self.cfg.append("-o /DIRAC/Security/KeyFile=%s/hostkey.pem" % self.pp.certsLocation)
+
+        # If DIRAC (or its extension) is installed in CVMFS:
         if self.pp.preinstalledEnv:
-            # Skip CAs download for preinstalled DIRAC
-            self.cfg.append("-D")
+
+            if "X509_CERT_DIR" in os.environ:
+                self.log.debug(
+                    "X509_CERT_DIR is set in the host environment as %s, aligning installEnv to it"
+                    % os.environ["X509_CERT_DIR"]
+                )
+                self.pp.installEnv["X509_CERT_DIR"] = os.environ["X509_CERT_DIR"]
+            else:
+                self.log.debug("X509_CERT_DIR is not set in the host environment")
+                # try and find it
+                for candidate in self.pp.CVMFS_locations:
+                    self.log.debug(
+                        "Candidate directory for X509_CERT_DIR is %s/etc/grid-security/certificates"
+                        % candidate
+                    )
+                    if os.path.isdir(
+                        os.path.join(
+                            os.path.expandvars(candidate),
+                            '/etc/grid-security/certificates/'
+                            )
+                        ):
+                        self.log.debug("Setting X509_CERT_DIR=%s" % candidate)
+                        self.pp.installEnv["X509_CERT_DIR"] = candidate
+                        os.environ["X509_CERT_DIR"] = candidate
+                        break
+                    self.log.debug("%s not found or not a directory" % candidate)
+
+            if "X509_CERT_DIR" not in self.pp.installEnv:
+                self.log.error("Could not find/set X509_CERT_DIR")
+                sys.exit(1)
+
+            if "X509_VOMS_DIR" in os.environ:
+                self.log.debug(
+                    "X509_VOMS_DIR is set in the host environment as %s, aligning installEnv to it"
+                    % os.environ["X509_VOMS_DIR"]
+                )
+                self.pp.installEnv["X509_VOMS_DIR"] = os.environ["X509_VOMS_DIR"]
+            else:
+                self.log.debug("X509_VOMS_DIR is not set in the host environment")
+                # try and find it
+                for candidate in self.pp.CVMFS_locations:
+                    self.log.debug(
+                        "Candidate directory for X509_VOMS_DIR is %s/etc/grid-security/vomsdir/"
+                        % candidate
+                    )
+                    if os.path.isdir(
+                        os.path.join(
+                            os.path.expandvars(candidate),
+                            '/etc/grid-security/vomsdir/'
+                            )
+                        ):
+                        self.log.debug("Setting X509_VOMS_DIR=%s" % candidate)
+                        self.pp.installEnv["X509_VOMS_DIR"] = candidate
+                        os.environ["X509_VOMS_DIR"] = candidate
+                        break
+                    self.log.debug("%s not found" % candidate)
+
+            if "X509_VOMS_DIR" not in self.pp.installEnv:
+                self.log.error("Could not find/set X509_VOMS_DIR")
+                sys.exit(1)
+
+            if "DIRAC_VOMSES" in os.environ:
+                self.log.debug(
+                    "DIRAC_VOMSES is set in the host environment as %s, aligning installEnv to it"
+                    % os.environ["DIRAC_VOMSES"]
+                )
+                self.pp.installEnv["DIRAC_VOMSES"] = os.environ["DIRAC_VOMSES"]
+            else:
+                self.log.debug("DIRAC_VOMSES is not set in the host environment")
+                # try and find it
+                for candidate in self.pp.CVMFS_locations:
+                    self.log.debug(
+                        "Candidate directory for DIRAC_VOMSES is %s/etc/grid-security/vomses/"
+                        % candidate)
+                    if os.path.isdir(
+                        os.path.join(
+                            os.path.expandvars(candidate),
+                            '/etc/grid-security/vomses/'
+                            )
+                        ):
+                        self.log.debug("Setting DIRAC_VOMSES=%s" % candidate)
+                        self.pp.installEnv["DIRAC_VOMSES"] = candidate
+                        os.environ["DIRAC_VOMSES"] = candidate
+                        break
+                    self.log.debug("%s not found" % candidate)
+
+            if "DIRAC_VOMSES" not in self.pp.installEnv:
+                self.log.error("Could not find/set DIRAC_VOMSES")
+                sys.exit(1)
+
+            # In any case do not download VOMS and CAs
+            self.cfg.append("-DMH")
 
 
 class RegisterPilot(CommandBase):

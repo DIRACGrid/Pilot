@@ -808,6 +808,10 @@ class PilotParams(object):
         self.modules = ""  # see dirac-install "-m" option documentation
         self.userEnvVariables = ""  # see dirac-install "--userEnvVariables" option documentation
         self.pipInstallOptions = ""
+        self.CVMFS_locations = [
+            "/cvmfs/grid.cern.ch",
+            "/cvmfs/dirac.egi.eu",
+        ]
 
         # Parameters that can be determined at runtime only
         self.queueParameters = {}  # from CE description
