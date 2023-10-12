@@ -1152,10 +1152,10 @@ class PilotParams(object):
         vo = self.__getVO()
         paths = [
             "/Defaults/Pilot",
-            "/%s/Pilot" % vo,
             "/%s/Pilot" % self.setup,
             "/%s/Defaults/Pilot" % vo,
             "/%s/%s/Pilot" % (vo, self.setup),
+            "/%s/Pilot" % vo,
         ]
 
         return paths
@@ -1163,7 +1163,7 @@ class PilotParams(object):
     @staticmethod
     def getOptionForPaths(paths, inDict):
         """
-        Get the preferred option from an input dict passed ond a path list. It modifies the inDict.
+        Get the preferred option from an input dict passed and a path list. It modifies the inDict.
 
         :param list paths: list of paths to walk through to get a preferred option. An option found in
         a path which comes later has a preference over options found in earlier paths.
