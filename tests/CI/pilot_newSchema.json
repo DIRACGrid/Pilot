@@ -79,156 +79,48 @@
 			"GridCEType": "LHCbD"
 		}	  
 	},
-	"GenericPilotDNs": [],
 	"Defaults": {
-		"EMail": {
-			"Production": "daniela.bauer.grid@googlemail.com",
-			"Logging": "daniela.bauer.grid@googlemail.com"
-		},
-		"InputDataPolicy": {
-			"Default": "DIRAC.WorkloadManagementSystem.Client.DownloadInputData"
-		},
-		"DataManagement": {
-			"ForceSingleSitePerSE": "False",
-			"AccessProtocols": "srm, root, dips",
-			"RegistrationProtocols": "srm, dips, root",
-			"ThirdPartyProtocols": "srm, dips, root",
-			"WriteProtocols": "srm, root, dips",
-			"UseCatalogPFN": "False"
-		},
-		"Shifter": {
-			"GridPPLogManager": {
-				"User": "diracpilottest.grid.hep.ph.ic.ac.uk",
-				"Group": "gridpp_user"
-			}
-		},
 		"Pilot": {
 			"RemoteLogging": "False",
 			"Commands": {
-				"TEST": [
-					"CheckWorkerNode",
-					"InstallDIRAC",
-					"ConfigureBasics",
-					"CheckCECapabilities",
-					"CheckWNCapabilities",
-					"ConfigureSite",
-					"ConfigureArchitecture",
-					"ConfigureCPURequirements"
-				],
-				"TEST-MP": [
-					"CheckWorkerNode",
-					"InstallDIRAC",
-					"ConfigureBasics",
-					"CheckCECapabilities",
-					"CheckWNCapabilities",
-					"ConfigureSite",
-					"ConfigureArchitecture",
-					"ConfigureCPURequirements"
-				],
-				"TEST-FULL": [
-					"CheckWorkerNode",
-					"InstallDIRAC",
-					"ConfigureBasics",
-					"CheckCECapabilities",
-					"CheckWNCapabilities",
-					"ConfigureSite",
-					"ConfigureArchitecture",
-					"ConfigureCPURequirements",
-					"LaunchAgent"
-				],
-				"LHCb": [
-					"CheckWorkerNode",
-					"LHCbInstallDIRAC",
-					"LHCbConfigureBasics",
-					"RegisterPilot",
-					"CheckCECapabilities",
-					"LHCbAddCVMFSTags",
-					"CheckWNCapabilities",
-					"LHCbConfigureSite",
-					"LHCbConfigureArchitecture",
-					"LHCbConfigureCPURequirements"
-				],
-				"LHCbD": [
-					"CheckWorkerNode",
-					"InstallDIRAC",
-					"LHCbConfigureBasics",
-					"RegisterPilot",
-					"CheckCECapabilities",
-					"LHCbAddCVMFSTags",
-					"CheckWNCapabilities",
-					"LHCbConfigureSite",
-					"LHCbConfigureArchitecture",
-					"LHCbConfigureCPURequirements"
-				]
+				"TEST": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
+				"TEST-MP": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
+				"TEST-FULL": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements, LaunchAgent",
+				"LHCb": "CheckWorkerNode, LHCbInstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, LHCbConfigureSite, LHCbConfigureArchitecture, LHCbConfigureCPURequirements",
+				"LHCbD": "CheckWorkerNode, InstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, LHCbConfigureSite, LHCbConfigureArchitecture, LHCbConfigureCPURequirements"
 		    }
 		}
 	},
 	"gridpp": {
-		"DIRAC-Certification": {
-			"Pilot": {
-				"Version": "VAR_DIRAC_VERSION",
-				"Extensions": "None",
-				"CheckVersion": "False",
-				"pilotFileServer": "lbvobox70.cern.ch:8443",
-				"pilotRepoBranch": "does_not_matter",
-				"pilotRepo": "https://github.com/does_not_matter/Pilot.git",
-				"GenericPilotGroup": "gridpp_pilot",
-				"GenericPilotDN": "VAR_USERDN_GRIDPP",
-				"RemoteLogging": "True",
-				"RemoteLoggerURL": "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
-				"UploadSE": "UKI-LT2-IC-HEP-disk",
-				"UploadPath": "/gridpp/pilotlogs/",
-				"LoggingShifterName": "GridPPLogManager",
-				"PilotLogLevel": "DEBUG"
-			},
-			"Shifter": {
-				"SAMManager": {
-					"User": "diracpilottest.grid.hep.ph.ic.ac.uk",
-					"Group": "gridpp_user"
-				},
-				"ProductionManager": {
-					"User": "diracpilottest.grid.hep.ph.ic.ac.uk",
-					"Group": "gridpp_user"
-				},
-				"DataManager": {
-					"User": "diracpilottest.grid.hep.ph.ic.ac.uk",
-					"Group": "gridpp_user"
-				}
-			},
-			"Services": {
-				"Catalogs": {
-					"CatalogList": "FileCatalog",
-					"FileCatalog": {
-						"Status": "Active",
-						"AccessType": "ReadWrite"
-					},
-					"ICRucioFileCatalog": {
-						"AccessType": "Read-Write",
-						"Status": "Active",
-						"Master": "True"
-					}
-				},
-				"JobMonitoring": {
-					"usePilotsLoggingFlag": "True",
-					"DownloadLocation": "https://lbvobox70.cern.ch:8444/WorkloadManagement/TornadoPilotLogging"
-				}
-			}
+		"Pilot": {
+			"Version": "VAR_DIRAC_VERSION",
+			"Extensions": "None",
+			"CheckVersion": "False",
+			"pilotFileServer": "lbvobox70.cern.ch:8443",
+			"pilotRepoBranch": "does_not_matter",
+			"pilotRepo": "https://github.com/does_not_matter/Pilot.git",
+			"GenericPilotGroup": "gridpp_pilot",
+			"GenericPilotDN": "VAR_USERDN_GRIDPP",
+			"RemoteLogging": "True",
+			"RemoteLoggerURL": "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
+			"UploadSE": "UKI-LT2-IC-HEP-disk",
+			"UploadPath": "/gridpp/pilotlogs/",
+			"LoggingShifterName": "GridPPLogManager",
+			"PilotLogLevel": "DEBUG"
 		}
 	},
 	"dteam": {
-		"DIRAC-Certification": {
-			"Pilot": {
-				"Version": "VAR_DIRAC_VERSION",
-				"CheckVersion": "True",
-				"pilotFileServer": "lbvobox70.cern.ch:8443",
-				"pilotRepoBranch": "should_not_matter",
-				"pilotRepo": "https://github.com/should_not_matter/Pilot.git",
-				"GenericPilotGroup": "dteam_pilot",
-				"GenericPilotDN": "VAR_USERDN",
-				"RemoteLogging": "False",
-				"RemoteLoggerURL": "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
-				"PilotLogLevel": "DEBUG"
-			}
+		"Pilot": {
+			"Version": "VAR_DIRAC_VERSION",
+			"CheckVersion": "True",
+			"pilotFileServer": "lbvobox70.cern.ch:8443",
+			"pilotRepoBranch": "should_not_matter",
+			"pilotRepo": "https://github.com/should_not_matter/Pilot.git",
+			"GenericPilotGroup": "dteam_pilot",
+			"GenericPilotDN": "VAR_USERDN",
+			"RemoteLogging": "False",
+			"RemoteLoggerURL": "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
+			"PilotLogLevel": "DEBUG"
 		}
 	},
 	"ConfigurationServers": [
