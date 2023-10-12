@@ -4,9 +4,9 @@ from __future__ import absolute_import, division, print_function
 
 import json
 import os
-import sys
-import string
 import random
+import string
+import sys
 import tempfile
 
 try:
@@ -49,13 +49,19 @@ class TestPilotParams(unittest.TestCase):
         jsonFile = os.path.join(basedir, "../../tests/CI/pilot_newSchema.json")
         vo = "gridpp"
         setup = "DIRAC-Certification"
-        paths = ["/Defaults/Pilot", "/%s/Pilot" % setup, "/%s/Defaults/Pilot" % vo, "/%s/%s/Pilot" % (vo, setup)]
+        paths = [
+            "/Defaults/Pilot",
+            "/%s/Pilot" % setup,
+            "/%s/Defaults/Pilot" % vo,
+            "/%s/%s/Pilot" % (vo, setup),
+            "/%s/Pilot" % vo
+        ]
         with open(jsonFile, "r") as fp:
             jsonDict = json.load(fp)
         res = PilotParams.getOptionForPaths(paths, jsonDict)
         self.assertEqual(res["RemoteLogging"], "True")
         self.assertEqual(res["UploadSE"], "UKI-LT2-IC-HEP-disk")
-        del jsonDict[vo][setup]["Pilot"]["RemoteLogging"]  # remove a vo-specific settings, a default value is False:
+        del jsonDict[vo]["Pilot"]["RemoteLogging"]  # remove a vo-specific settings, a default value is False:
         res = PilotParams.getOptionForPaths(paths, jsonDict)
         self.assertEqual(res["RemoteLogging"], "False")
 
@@ -80,19 +86,11 @@ class TestPilotParams(unittest.TestCase):
             "/%s/Pilot" % setup,
             "/%s/Defaults/Pilot" % vo,
             "/%s/%s/Pilot" % (vo, setup),
+            "/%s/Pilot" % vo
         ]
         mockPaths.return_value = paths
         pp = PilotParams()
-        lTESTcommands = [
-            "CheckWorkerNode",
-            "InstallDIRAC",
-            "ConfigureBasics",
-            "CheckCECapabilities",
-            "CheckWNCapabilities",
-            "ConfigureSite",
-            "ConfigureArchitecture",
-            "ConfigureCPURequirements",
-        ]
+        lTESTcommands = "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements"
 
         pp.gridCEType = "TEST"
 
@@ -105,7 +103,7 @@ class TestPilotParams(unittest.TestCase):
         self.assertEqual(res.get("UploadPath"), "/gridpp/pilotlogs/")
         self.assertTrue("Commands" in res)
         self.assertEqual(res["Commands"].get(pp.gridCEType), lTESTcommands)
-        self.assertEqual(pp.commands, lTESTcommands)
+        self.assertEqual(', '.join(pp.commands), lTESTcommands)
         self.assertEqual(pp.releaseVersion, "VAR_DIRAC_VERSION")
 
 
