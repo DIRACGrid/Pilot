@@ -1065,7 +1065,11 @@ class PilotParams(object):
             for key in [self.gridCEType, "Defaults"]:
                 commands = pilotOptions["Commands"].get(key)
                 if commands is not None:
-                    self.commands = commands
+                    if isinstance(commands, list):
+                        self.commands = commands
+                    else:
+                        # TODO: This is a workaround until the pilot JSON syncroniser is fixed
+                        self.commands = [elem.strip() for elem in commands.split(",")]
                     self.log.debug("Selecting commands from JSON for Grid CE type %s" % key)
                     break
         else:
