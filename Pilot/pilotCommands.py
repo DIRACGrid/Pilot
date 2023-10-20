@@ -594,6 +594,37 @@ class ConfigureBasics(CommandBase):
         if self.pp.wnVO:
             self.cfg.append('-o "/Resources/Computing/CEDefaults/VirtualOrganization=%s"' % self.pp.wnVO)
 
+    def __checkSecurityDir(self, envName, dirName):
+
+        if envName in os.environ:
+            self.log.debug(
+                "%s is set in the host environment as %s, aligning installEnv to it"
+                % (envName, os.environ[envName])
+            )
+            self.pp.installEnv[envName] = os.environ[envName]
+        else:
+            self.log.debug("%s is not set in the host environment" % envName)
+            # try and find it
+            for candidate in self.pp.CVMFS_locations:
+                candidateDir = os.path.join(candidate,
+                                            '/etc/grid-security',
+                                            dirName)
+                self.log.debug(
+                    "Candidate directory for %s is %s"
+                    % (envName, candidateDir)
+                )
+                if os.path.isdir(candidateDir):
+
+                    self.log.debug("Setting %s=%s" % (envName, candidateDir))
+                    self.pp.installEnv[envName] = candidateDir
+                    os.environ[envName] = candidateDir
+                    break
+                self.log.debug("%s not found or not a directory" % candidateDir)
+
+        if envName not in self.pp.installEnv:
+            self.log.error("Could not find/set %s" % envName)
+            sys.exit(1)
+
     def _getSecurityCFG(self):
         """ Sets security-related env variables, if needed
         """
@@ -606,94 +637,12 @@ class ConfigureBasics(CommandBase):
         # If DIRAC (or its extension) is installed in CVMFS:
         if self.pp.preinstalledEnv:
 
-            if "X509_CERT_DIR" in os.environ:
-                self.log.debug(
-                    "X509_CERT_DIR is set in the host environment as %s, aligning installEnv to it"
-                    % os.environ["X509_CERT_DIR"]
-                )
-                self.pp.installEnv["X509_CERT_DIR"] = os.environ["X509_CERT_DIR"]
-            else:
-                self.log.debug("X509_CERT_DIR is not set in the host environment")
-                # try and find it
-                for candidate in self.pp.CVMFS_locations:
-                    self.log.debug(
-                        "Candidate directory for X509_CERT_DIR is %s/etc/grid-security/certificates"
-                        % candidate
-                    )
-                    if os.path.isdir(
-                        os.path.join(
-                            os.path.expandvars(candidate),
-                            '/etc/grid-security/certificates/'
-                            )
-                        ):
-                        self.log.debug("Setting X509_CERT_DIR=%s" % candidate)
-                        self.pp.installEnv["X509_CERT_DIR"] = candidate
-                        os.environ["X509_CERT_DIR"] = candidate
-                        break
-                    self.log.debug("%s not found or not a directory" % candidate)
-
-            if "X509_CERT_DIR" not in self.pp.installEnv:
-                self.log.error("Could not find/set X509_CERT_DIR")
-                sys.exit(1)
-
-            if "X509_VOMS_DIR" in os.environ:
-                self.log.debug(
-                    "X509_VOMS_DIR is set in the host environment as %s, aligning installEnv to it"
-                    % os.environ["X509_VOMS_DIR"]
-                )
-                self.pp.installEnv["X509_VOMS_DIR"] = os.environ["X509_VOMS_DIR"]
-            else:
-                self.log.debug("X509_VOMS_DIR is not set in the host environment")
-                # try and find it
-                for candidate in self.pp.CVMFS_locations:
-                    self.log.debug(
-                        "Candidate directory for X509_VOMS_DIR is %s/etc/grid-security/vomsdir/"
-                        % candidate
-                    )
-                    if os.path.isdir(
-                        os.path.join(
-                            os.path.expandvars(candidate),
-                            '/etc/grid-security/vomsdir/'
-                            )
-                        ):
-                        self.log.debug("Setting X509_VOMS_DIR=%s" % candidate)
-                        self.pp.installEnv["X509_VOMS_DIR"] = candidate
-                        os.environ["X509_VOMS_DIR"] = candidate
-                        break
-                    self.log.debug("%s not found" % candidate)
-
-            if "X509_VOMS_DIR" not in self.pp.installEnv:
-                self.log.error("Could not find/set X509_VOMS_DIR")
-                sys.exit(1)
-
-            if "DIRAC_VOMSES" in os.environ:
-                self.log.debug(
-                    "DIRAC_VOMSES is set in the host environment as %s, aligning installEnv to it"
-                    % os.environ["DIRAC_VOMSES"]
-                )
-                self.pp.installEnv["DIRAC_VOMSES"] = os.environ["DIRAC_VOMSES"]
-            else:
-                self.log.debug("DIRAC_VOMSES is not set in the host environment")
-                # try and find it
-                for candidate in self.pp.CVMFS_locations:
-                    self.log.debug(
-                        "Candidate directory for DIRAC_VOMSES is %s/etc/grid-security/vomses/"
-                        % candidate)
-                    if os.path.isdir(
-                        os.path.join(
-                            os.path.expandvars(candidate),
-                            '/etc/grid-security/vomses/'
-                            )
-                        ):
-                        self.log.debug("Setting DIRAC_VOMSES=%s" % candidate)
-                        self.pp.installEnv["DIRAC_VOMSES"] = candidate
-                        os.environ["DIRAC_VOMSES"] = candidate
-                        break
-                    self.log.debug("%s not found" % candidate)
-
-            if "DIRAC_VOMSES" not in self.pp.installEnv:
-                self.log.error("Could not find/set DIRAC_VOMSES")
-                sys.exit(1)
+            self.__checkSecurityDir("X509_CERT_DIR", "certificates")
+            self.__checkSecurityDir("X509_VOMS_DIR", "vomsdir")
+            self.__checkSecurityDir("X509_VOMSES", "vomses")
+            # This is needed for the integration tests
+            self.pp.installEnv["DIRAC_VOMSES"] = self.pp.installEnv["X509_VOMSES"]
+            os.environ["DIRAC_VOMSES"] = os.environ["X509_VOMSES"]
 
             # In any case do not download VOMS and CAs
             self.cfg.append("-DMH")
