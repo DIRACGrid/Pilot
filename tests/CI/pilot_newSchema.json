@@ -106,7 +106,7 @@
 			"pilotRepo": "https://github.com/does_not_matter/Pilot.git",
 			"GenericPilotGroup": "gridpp_pilot",
 			"GenericPilotDN": "VAR_USERDN_GRIDPP",
-			"RemoteLogging": "True",
+			"RemoteLogging": "False",
 			"RemoteLoggerURL": "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
 			"UploadSE": "UKI-LT2-IC-HEP-disk",
 			"UploadPath": "/gridpp/pilotlogs/",
