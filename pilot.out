@@ -1,0 +1,74 @@
+2023-10-31T09:40:37.332559Z DEBUG [PilotParams] Options list: [('-F', '/home/fstagni/Devs/DIRACGrid/Pilot/Pilot/tests/../../tests/CI/pilot_newSchema.json'), ('-N', 'TEST_type_CE'), ('--gridCEType', 'TEST')]
+2023-10-31T09:40:37.332799Z DEBUG [PilotParams] JSON file loaded: /home/fstagni/Devs/DIRACGrid/Pilot/Pilot/tests/../../tests/CI/pilot_newSchema.json
+2023-10-31T09:40:37.332982Z DEBUG [PilotParams] CE name: TEST_type_CE
+2023-10-31T09:40:37.333062Z DEBUG [PilotParams] Setup: 
+2023-10-31T09:40:37.333106Z DEBUG [PilotParams] GridCEType: TEST
+2023-10-31T09:40:37.333191Z DEBUG [PilotParams] PilotOptionsDict {'RemoteLogging': 'False', 'Commands': {'TEST': 'CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements', 'TEST-MP': 'CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements', 'TEST-FULL': 'CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements, LaunchAgent', 'LHCb': 'CheckWorkerNode, LHCbInstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, LHCbConfigureSite, LHCbConfigureArchitecture, LHCbConfigureCPURequirements', 'LHCbD': 'CheckWorkerNode, InstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, LHCbConfigureSite, LHCbConfigureArchitecture, LHCbConfigureCPURequirements', 'LHCbDD': 'CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, LHCbConfigureArchitecture, ConfigureCPURequirements'}, 'Version': 'VAR_DIRAC_VERSION', 'Extensions': 'None', 'CheckVersion': 'False', 'pilotFileServer': 'lbvobox70.cern.ch:8443', 'pilotRepoBranch': 'does_not_matter', 'pilotRepo': 'https://github.com/does_not_matter/Pilot.git', 'GenericPilotGroup': 'gridpp_pilot', 'GenericPilotDN': 'VAR_USERDN_GRIDPP', 'RemoteLoggerURL': 'https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging', 'UploadSE': 'UKI-LT2-IC-HEP-disk', 'UploadPath': '/gridpp/pilotlogs/', 'LoggingShifterName': 'GridPPLogManager', 'PilotLogLevel': 'DEBUG'} 
+2023-10-31T09:40:37.333235Z DEBUG [PilotParams] JSON: Remote logging: False
+2023-10-31T09:40:37.333275Z DEBUG [PilotParams] JSON: Remote logging URL: https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging
+2023-10-31T09:40:37.333310Z DEBUG [PilotParams] JSON: Remote/local logging debug flag: True
+2023-10-31T09:40:37.333350Z DEBUG [PilotParams] Selecting commands from JSON for Grid CE type TEST
+2023-10-31T09:40:37.333393Z DEBUG [PilotParams] Commands[TEST]: ['CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics', 'RegisterPilot', 'CheckCECapabilities', 'CheckWNCapabilities', 'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements']
+2023-10-31T09:40:37.333440Z DEBUG [PilotParams] Version: ['VAR_DIRAC_VERSION'] -> (release) VAR_DIRAC_VERSION
+2023-10-31T09:40:37.333475Z DEBUG [PilotParams] Release project: 
+2023-10-31T09:40:37.335356Z DEBUG [PilotParams] Options list: [('-z', ''), ('-d', ''), ('-g', 'dummyURL'), ('-F', 'tests/pilot.json')]
+2023-10-31T09:40:37.335424Z DEBUG [PilotParams] JSON file loaded: tests/pilot.json
+2023-10-31T09:40:37.335523Z DEBUG [PilotParams] CE name: 
+2023-10-31T09:40:37.335563Z DEBUG [PilotParams] GridCEType: 
+2023-10-31T09:40:37.335628Z DEBUG [PilotParams] Commands: ['CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics', 'RegisterPilot', 'CheckCECapabilities', 'CheckWNCapabilities', 'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements', 'LaunchAgent']
+2023-10-31T09:40:37.335705Z DEBUG [PilotParams] Commands extesions: []
+2023-10-31T09:40:37.335746Z DEBUG [PilotParams] CS list: dips://does.not.matter.org:9162
+2023-10-31T09:40:37.335784Z DEBUG [PilotParams] Version: ['integration'] -> integration
+2023-10-31T09:40:37.335822Z DEBUG [PilotParams] Release project: 
+2023-10-31T09:40:37.338287Z DEBUG [PilotParams] Options list: [('-d', ''), ('-g', 'dummyURL'), ('-F', 'tests/pilot.json')]
+2023-10-31T09:40:37.338348Z DEBUG [PilotParams] JSON file loaded: tests/pilot.json
+2023-10-31T09:40:37.338431Z DEBUG [PilotParams] CE name: 
+2023-10-31T09:40:37.338472Z DEBUG [PilotParams] GridCEType: 
+2023-10-31T09:40:37.338513Z DEBUG [PilotParams] Commands: ['CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics', 'RegisterPilot', 'CheckCECapabilities', 'CheckWNCapabilities', 'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements', 'LaunchAgent']
+2023-10-31T09:40:37.338553Z DEBUG [PilotParams] Commands extesions: []
+2023-10-31T09:40:37.338592Z DEBUG [PilotParams] CS list: dips://does.not.matter.org:9162
+2023-10-31T09:40:37.338629Z DEBUG [PilotParams] Version: ['integration'] -> integration
+2023-10-31T09:40:37.338665Z DEBUG [PilotParams] Release project: 
+2023-10-31T09:40:37.338747Z DEBUG [CommandBase] Initialized command CommandBase
+2023-10-31T09:40:37.338790Z DEBUG [CommandBase] pilotParams option list: [('-d', ''), ('-g', 'dummyURL'), ('-F', 'tests/pilot.json')]
+2023-10-31T09:40:37.339081Z INFO [CommandBase] Executing command dummy
+2023-10-31T09:40:37.339788Z DEBUG [CommandBase] Return code of dummy: 1
+2023-10-31T09:40:37.340349Z DEBUG [PilotParams] Options list: [('-d', ''), ('-g', 'dummyURL'), ('-F', 'tests/pilot.json')]
+2023-10-31T09:40:37.340398Z DEBUG [PilotParams] JSON file loaded: tests/pilot.json
+2023-10-31T09:40:37.340481Z DEBUG [PilotParams] CE name: 
+2023-10-31T09:40:37.340520Z DEBUG [PilotParams] GridCEType: 
+2023-10-31T09:40:37.340560Z DEBUG [PilotParams] Commands: ['CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics', 'RegisterPilot', 'CheckCECapabilities', 'CheckWNCapabilities', 'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements', 'LaunchAgent']
+2023-10-31T09:40:37.340599Z DEBUG [PilotParams] Commands extesions: []
+2023-10-31T09:40:37.340638Z DEBUG [PilotParams] CS list: dips://does.not.matter.org:9162
+2023-10-31T09:40:37.340675Z DEBUG [PilotParams] Version: ['integration'] -> integration
+2023-10-31T09:40:37.340711Z DEBUG [PilotParams] Release project: 
+2023-10-31T09:40:37.340787Z DEBUG [CommandBase] Initialized command CommandBase
+2023-10-31T09:40:37.340829Z DEBUG [CommandBase] pilotParams option list: [('-d', ''), ('-g', 'dummyURL'), ('-F', 'tests/pilot.json')]
+2023-10-31T09:40:37.340875Z INFO [CommandBase] Executing command dummy
+2023-10-31T09:40:37.341053Z DEBUG [CommandBase] Return code of dummy: 1
+2023-10-31T09:40:37.341700Z DEBUG [PilotParams] Options list: [('-d', ''), ('-g', 'dummyURL'), ('-F', 'tests/pilot.json')]
+2023-10-31T09:40:37.341748Z DEBUG [PilotParams] JSON file loaded: tests/pilot.json
+2023-10-31T09:40:37.341825Z DEBUG [PilotParams] CE name: 
+2023-10-31T09:40:37.341864Z DEBUG [PilotParams] GridCEType: 
+2023-10-31T09:40:37.341904Z DEBUG [PilotParams] Commands: ['CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics', 'RegisterPilot', 'CheckCECapabilities', 'CheckWNCapabilities', 'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements', 'LaunchAgent']
+2023-10-31T09:40:37.341942Z DEBUG [PilotParams] Commands extesions: []
+2023-10-31T09:40:37.341980Z DEBUG [PilotParams] CS list: dips://does.not.matter.org:9162
+2023-10-31T09:40:37.342016Z DEBUG [PilotParams] Version: ['integration'] -> integration
+2023-10-31T09:40:37.342052Z DEBUG [PilotParams] Release project: 
+2023-10-31T09:40:37.342126Z DEBUG [CommandBase] Initialized command CommandBase
+2023-10-31T09:40:37.342168Z DEBUG [CommandBase] pilotParams option list: [('-d', ''), ('-g', 'dummyURL'), ('-F', 'tests/pilot.json')]
+2023-10-31T09:40:37.342214Z INFO [CommandBase] Executing command dummy
+2023-10-31T09:40:37.342345Z DEBUG [CommandBase] Return code of dummy: 1
+2023-10-31T09:40:37.343309Z DEBUG [PilotParams] Options list: [('-d', ''), ('-g', 'dummyURL'), ('-F', 'tests/pilot.json')]
+2023-10-31T09:40:37.343357Z DEBUG [PilotParams] JSON file loaded: tests/pilot.json
+2023-10-31T09:40:37.343475Z DEBUG [PilotParams] CE name: 
+2023-10-31T09:40:37.343533Z DEBUG [PilotParams] GridCEType: 
+2023-10-31T09:40:37.343622Z DEBUG [PilotParams] Commands: ['CheckWorkerNode', 'InstallDIRAC', 'ConfigureBasics', 'RegisterPilot', 'CheckCECapabilities', 'CheckWNCapabilities', 'ConfigureSite', 'ConfigureArchitecture', 'ConfigureCPURequirements', 'LaunchAgent']
+2023-10-31T09:40:37.343698Z DEBUG [PilotParams] Commands extesions: []
+2023-10-31T09:40:37.343776Z DEBUG [PilotParams] CS list: dips://does.not.matter.org:9162
+2023-10-31T09:40:37.343852Z DEBUG [PilotParams] Version: ['integration'] -> integration
+2023-10-31T09:40:37.343889Z DEBUG [PilotParams] Release project: 
+2023-10-31T09:40:37.343969Z DEBUG [CommandBase] Initialized command CommandBase
+2023-10-31T09:40:37.344012Z DEBUG [CommandBase] pilotParams option list: [('-d', ''), ('-g', 'dummyURL'), ('-F', 'tests/pilot.json')]
+2023-10-31T09:40:37.344061Z INFO [CommandBase] Executing command dummy
+2023-10-31T09:40:37.344259Z DEBUG [CommandBase] Return code of dummy: 1

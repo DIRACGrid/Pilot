@@ -59,7 +59,7 @@ class TestPilotParams(unittest.TestCase):
         with open(jsonFile, "r") as fp:
             jsonDict = json.load(fp)
         res = PilotParams.getOptionForPaths(paths, jsonDict)
-        self.assertEqual(res["RemoteLogging"], "True")
+        self.assertEqual(res["RemoteLogging"], "False")
         self.assertEqual(res["UploadSE"], "UKI-LT2-IC-HEP-disk")
         del jsonDict[vo]["Pilot"]["RemoteLogging"]  # remove a vo-specific settings, a default value is False:
         res = PilotParams.getOptionForPaths(paths, jsonDict)
@@ -98,8 +98,8 @@ class TestPilotParams(unittest.TestCase):
         logURL = "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging"
         self.assertEqual(res.get("RemoteLoggerURL"), logURL)
         self.assertEqual(pp.loggerURL, logURL)
-        self.assertEqual(res.get("RemoteLogging"), "True")
-        self.assertIs(pp.pilotLogging, True)
+        self.assertEqual(res.get("RemoteLogging"), "False")
+        self.assertIs(pp.pilotLogging, False)
         self.assertEqual(res.get("UploadPath"), "/gridpp/pilotlogs/")
         self.assertTrue("Commands" in res)
         self.assertEqual(res["Commands"].get(pp.gridCEType), lTESTcommands)

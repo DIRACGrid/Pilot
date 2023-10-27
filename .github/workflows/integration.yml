@@ -254,7 +254,9 @@ jobs:
         run: |
           cd Pilot
           export VO_LHCB_SW_DIR=${GITHUB_WORKSPACE}/Pilot
-          curl https://lhcbdirac.s3.cern.ch/Pilot3/LHCbPilotCommands.py -o LHCbPilotCommands.py
+          
+          curl https://gitlab.cern.ch/fstagni/LHCbPilot/-/raw/debug/LHCbPilot/LHCbPilotCommands.py -o LHCbPilotCommands.py
+
           cp ../tests/CI/${{ matrix.pilot_schema }} pilot.json
           sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
           sed -i "s/VAR_JENKINS_CE/jenkins-lhcb.cern.ch/g" pilot.json
