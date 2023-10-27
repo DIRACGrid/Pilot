@@ -110,7 +110,6 @@ if __name__ == "__main__":
         command, module = getCommand(pilotParams, commandName)
         if command is not None:
             command.log.info("Command %s instantiated from %s" % (commandName, module))
-            command.log.buffer.flush()
             command.execute()
         else:
             log.error("Command %s could not be instantiated" % commandName)

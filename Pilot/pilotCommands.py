@@ -84,6 +84,7 @@ def logFinalizer(func):
 
         try:
             ret = func(self)
+            self.log.buffer.flush()
             return ret
 
         except SystemExit as exCode:  # or Exception ?
@@ -92,7 +93,7 @@ def logFinalizer(func):
             self.log.info(
                 "Flushing the remote logger buffer for pilot on sys.exit(): %s (exit code:%s)" % (pRef, str(exCode))
             )
-            self.log.buffer.flush()  # flush the buffer unconditionally (on sys.exit() and return).
+            self.log.buffer.flush()  # flush the buffer unconditionally (on sys.exit()).
             try:
                 sendMessage(self.log.url, self.log.pilotUUID, "finaliseLogs", {"retCode": str(exCode)})
             except Exception as exc:
