@@ -77,6 +77,10 @@
 		"jenkins-lhcb-d.cern.ch": {
 			"Site": "VAR_JENKINS_SITE",
 			"GridCEType": "LHCbD"
+		},
+		"jenkins-lhcb-dd.cern.ch": {
+			"Site": "VAR_JENKINS_SITE",
+			"GridCEType": "LHCbDD"
 		}	  
 	},
 	"Defaults": {
@@ -87,7 +91,8 @@
 				"TEST-MP": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
 				"TEST-FULL": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements, LaunchAgent",
 				"LHCb": "CheckWorkerNode, LHCbInstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, LHCbConfigureSite, LHCbConfigureArchitecture, LHCbConfigureCPURequirements",
-				"LHCbD": "CheckWorkerNode, InstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, LHCbConfigureSite, LHCbConfigureArchitecture, LHCbConfigureCPURequirements"
+				"LHCbD": "CheckWorkerNode, InstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, LHCbConfigureSite, LHCbConfigureArchitecture, LHCbConfigureCPURequirements",
+				"LHCbDD": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, LHCbConfigureArchitecture, ConfigureCPURequirements"
 		    }
 		}
 	},
