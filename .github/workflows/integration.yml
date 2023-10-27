@@ -193,10 +193,6 @@ jobs:
           chmod 440 etc/grid-security/hostcert.pem
           chmod 400 etc/grid-security/hostkey.pem
       - name: tests
-        env:
-          X509_CERT_DIR: /cvmfs/grid.cern.ch/etc/grid-security/certificates
-          X509_VOMS_DIR: /cvmfs/grid.cern.ch/etc/grid-security/vomsdir
-          DIRAC_VOMSES: /cvmfs/grid.cern.ch/etc/grid-security/vomses
         run: |
           cd Pilot
           cp ../tests/CI/pilot_newSchema.json pilot.json
@@ -239,9 +235,7 @@ jobs:
           HOSTKEY_BASE64: ${{ secrets.HOSTKEY_BASE64 }}
         run: |
           cd Pilot
-          mkdir -p etc/grid-security/vomses
-          mkdir -p etc/grid-security/vomsdir
-          mkdir -p etc/grid-security/certificates
+          mkdir -p etc/grid-security/
           echo "$HOSTCERT_BASE64" | base64 --decode > etc/grid-security/hostcert.pem
           echo "$HOSTKEY_BASE64" | base64 --decode > etc/grid-security/hostkey.pem
           chmod 440 etc/grid-security/hostcert.pem
@@ -265,7 +259,7 @@ jobs:
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins-lhcb.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch -e LHCb -l LHCb -E LHCbPilot --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --debug
 
-  ext-lhcb_integration_dirac_installer:
+  ext-lhcb_integration_dirac_installer_no_env:
     runs-on: ubuntu-latest
 
     steps:
@@ -281,18 +275,12 @@ jobs:
           HOSTKEY_BASE64: ${{ secrets.HOSTKEY_BASE64 }}
         run: |
           cd Pilot
-          mkdir -p etc/grid-security/vomses
-          mkdir -p etc/grid-security/vomsdir
-          mkdir -p etc/grid-security/certificates
+          mkdir -p etc/grid-security/
           echo "$HOSTCERT_BASE64" | base64 --decode > etc/grid-security/hostcert.pem
           echo "$HOSTKEY_BASE64" | base64 --decode > etc/grid-security/hostkey.pem
           chmod 440 etc/grid-security/hostcert.pem
           chmod 400 etc/grid-security/hostkey.pem
       - name: tests
-        env:
-          X509_CERT_DIR: /cvmfs/lhcb.cern.ch/etc/grid-security/certificates
-          X509_VOMS_DIR: /cvmfs/lhcb.cern.ch/etc/grid-security/vomsdir
-          DIRAC_VOMSES: /cvmfs/lhcb.cern.ch/etc/grid-security/vomses
         run: |
           cd Pilot
           export VO_LHCB_SW_DIR=${GITHUB_WORKSPACE}/Pilot
