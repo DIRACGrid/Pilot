@@ -55,7 +55,7 @@ except NameError:
 
 # Timer 2.7 issue where Timer is a function
 if sys.version_info.major == 2:
-    from threading import _Timer as Timer
+    from threading import _Timer as Timer  # pylint: disable=no-name-in-module
 else:
     from threading import Timer
 
@@ -849,6 +849,7 @@ class PilotParams(object):
         self.pilotCFGFile = "pilot.json"
         self.pilotLogging = False
         self.loggerURL = None
+        self.loggerTimerInterval = 600
         self.pilotUUID = "unknown"
         self.modules = ""  # see dirac-install "-m" option documentation
         self.userEnvVariables = ""  # see dirac-install "--userEnvVariables" option documentation
@@ -1099,7 +1100,7 @@ class PilotParams(object):
             self.pilotLogging = pilotLogging.upper() == "TRUE"
         self.loggerURL = pilotOptions.get("RemoteLoggerURL")
         # logger buffer flush interval in seconds.
-        self.loggerTimerInterval = pilotOptions.get("RemoteLoggerTimerInterval", 600)
+        self.loggerTimerInterval = pilotOptions.get("RemoteLoggerTimerInterval", self.loggerTimerInterval)
         pilotLogLevel = pilotOptions.get("PilotLogLevel", "INFO")
         if pilotLogLevel.lower() == "debug":
             self.debugFlag = True
