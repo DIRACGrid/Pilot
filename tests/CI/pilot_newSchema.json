@@ -128,6 +128,18 @@
 			"PilotLogLevel": "DEBUG"
 		}
 	},
+	"LHCb": {
+		"Pilot": {
+			"Version": "VAR_DIRAC_VERSION",
+			"CheckVersion": "True",
+			"pilotFileServer": "lbvobox70.cern.ch:8443",
+			"GenericPilotGroup": "dteam_pilot",
+			"GenericPilotDN": "VAR_USERDN",
+			"RemoteLogging": "False",
+			"RemoteLoggerURL": "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
+			"PilotLogLevel": "DEBUG"
+		}
+	},
 	"ConfigurationServers": [
 		"VAR_CS"
 	]
