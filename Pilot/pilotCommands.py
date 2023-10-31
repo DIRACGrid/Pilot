@@ -498,7 +498,6 @@ class InstallDIRAC(CommandBase):
             # environment variables to add?
             if self.pp.userEnvVariables:
                 # User-requested environment variables (comma-separated, name and value separated by ":::")
-                # The case of dirac-install is handled in vanilla DIRAC Pilot
                 newEnvVars = dict(
                 name.split(":::", 1) for name in self.pp.userEnvVariables.replace(" ", "").split(",")
               )
