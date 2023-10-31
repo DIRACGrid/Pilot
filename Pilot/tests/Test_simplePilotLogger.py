@@ -10,9 +10,9 @@ import sys
 import tempfile
 
 try:
-    from Pilot.pilotTools import CommandBase, PilotParams
+    from Pilot.pilotTools import CommandBase, PilotParams, RemoteLogger
 except ImportError:
-    from pilotTools import CommandBase, PilotParams
+    from pilotTools import CommandBase, PilotParams, RemoteLogger
 
 import unittest
 
@@ -144,7 +144,14 @@ class TestCommandBase(unittest.TestCase):
                 self.stderr_mock.write("Errare humanum est!")
             self.stderr_mock.seek(0)
             pp = PilotParams()
-            cBase = CommandBase(pp)
+            try:
+                cBase = CommandBase(pp)
+                # we have a logger URL set, so:
+                assert isinstance(cBase.log, RemoteLogger)
+            finally:
+                # and cancel the timer !
+                cBase.log.buffer.cancelTimer()
+
             popenMock.return_value.stdout = self.stdout_mock
             popenMock.return_value.stderr = self.stderr_mock
             outData = cBase.executeAndGetOutput("dummy")

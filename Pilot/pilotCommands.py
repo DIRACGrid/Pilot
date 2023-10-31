@@ -27,6 +27,7 @@ import socket
 import stat
 import sys
 import time
+import traceback
 from collections import Counter
 
 ############################
@@ -82,19 +83,29 @@ def logFinalizer(func):
             return func(self)
 
         try:
-            return func(self)
+            ret = func(self)
+            self.log.buffer.flush()
+            return ret
+
         except SystemExit as exCode:  # or Exception ?
+            # controlled exit
             pRef = self.pp.pilotReference
             self.log.info(
                 "Flushing the remote logger buffer for pilot on sys.exit(): %s (exit code:%s)" % (pRef, str(exCode))
             )
-            self.log.buffer.flush()  # flush the buffer unconditionally (on sys.exit() and return).
+            self.log.buffer.flush()  # flush the buffer unconditionally (on sys.exit()).
             try:
                 sendMessage(self.log.url, self.log.pilotUUID, "finaliseLogs", {"retCode": str(exCode)})
             except Exception as exc:
                 self.log.error("Remote logger couldn't be finalised %s " % str(exc))
             raise
-
+        except Exception as exc:
+            # unexpected exit: document it and bail out.
+            self.log.error(str(exc))
+            self.log.error(traceback.format_exc())
+            raise
+        finally:
+            self.log.buffer.cancelTimer()
     return wrapper
 
 

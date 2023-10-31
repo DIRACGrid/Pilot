@@ -18,7 +18,8 @@ import sys
 import threading
 from datetime import datetime
 from distutils.version import LooseVersion
-from functools import partial
+from functools import partial, wraps
+from threading import RLock
 
 ############################
 # python 2 -> 3 "hacks"
@@ -51,6 +52,12 @@ try:
     # because of https://github.com/PyCQA/pylint/issues/6748
 except NameError:
     FileNotFoundError = OSError
+
+# Timer 2.7 issue where Timer is a function
+if sys.version_info.major == 2:
+    from threading import _Timer as Timer  # pylint: disable=no-name-in-module
+else:
+    from threading import Timer
 
 # Utilities functions
 
@@ -215,7 +222,7 @@ def safe_listdir(directory, timeout=60):
 
 def getFlavour(ceName):
 
-    pilotReference = os.environ.get("DIRAC_PILOT_STAMP", '')
+    pilotReference = os.environ.get("DIRAC_PILOT_STAMP", "")
     flavour = "DIRAC"
 
     # # Batch systems
@@ -270,12 +277,7 @@ def getFlavour(ceName):
     if "SSHBATCH_JOBID" in os.environ and "SSH_NODE_HOST" in os.environ:
         flavour = "SSHBATCH"
         pilotReference = (
-            "sshbatchhost://"
-            + ceName
-            + "/"
-            + os.environ["SSH_NODE_HOST"]
-            + "/"
-            + os.environ["SSHBATCH_JOBID"]
+            "sshbatchhost://" + ceName + "/" + os.environ["SSH_NODE_HOST"] + "/" + os.environ["SSHBATCH_JOBID"]
         )
 
     # ARC
@@ -359,7 +361,7 @@ class ObjectLoader(object):
             return None, None
 
 
-def getCommand(params, commandName, log):
+def getCommand(params, commandName):
     """Get an instantiated command object for execution.
     Commands are looked in the following modules in the order:
 
@@ -453,7 +455,7 @@ class RemoteLogger(Logger):
         pilotOutput="pilot.out",
         isPilotLoggerOn=True,
         pilotUUID="unknown",
-        setup="DIRAC-Certification",
+        flushInterval=10,
     ):
         """
         c'tor
@@ -465,7 +467,7 @@ class RemoteLogger(Logger):
         self.pilotUUID = pilotUUID
         self.isPilotLoggerOn = isPilotLoggerOn
         sendToURL = partial(sendMessage, url, pilotUUID, "sendMessage")
-        self.buffer = FixedSizeBuffer(sendToURL)
+        self.buffer = FixedSizeBuffer(sendToURL, autoflush=flushInterval)
 
     def debug(self, msg, header=True, sendPilotLog=False):
         super(RemoteLogger, self).debug(msg, header)
@@ -505,13 +507,28 @@ class RemoteLogger(Logger):
             super(RemoteLogger, self).error(str(err))
 
 
+def synchronized(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        with self._rlock:
+            return func(self, *args, **kwargs)
+
+    return wrapper
+
+
+class RepeatingTimer(Timer):
+    def run(self):
+        while not self.finished.wait(self.interval):
+            self.function(*self.args, **self.kwargs)
+
+
 class FixedSizeBuffer(object):
     """
     A buffer with a (preferred) fixed number of lines.
     Once it's full, a message is sent to a remote server and the buffer is renewed.
     """
 
-    def __init__(self, senderFunc, bufsize=10):
+    def __init__(self, senderFunc, bufsize=10, autoflush=10):
         """
         Constructor.
 
@@ -519,12 +536,22 @@ class FixedSizeBuffer(object):
         :type senderFunc: func
         :param bufsize: size of the buffer (in lines)
         :type bufsize: int
+        :param autoflush: buffer flush period in seconds
+        :type autoflush: int
         """
+
+        self._rlock = RLock()
+        if autoflush > 0:
+            self._timer = RepeatingTimer(autoflush, self.flush)
+            self._timer.start()
+        else:
+            self._timer = None
         self.output = StringIO()
         self.bufsize = bufsize
-        self.__nlines = 0
+        self._nlines = 0
         self.senderFunc = senderFunc
 
+    @synchronized
     def write(self, text):
         """
         Write text to a string buffer. Newline characters are counted and number of lines in the buffer
@@ -539,23 +566,26 @@ class FixedSizeBuffer(object):
         if self.output.closed:
             self.output = StringIO()
         self.output.write(text)
-        self.__nlines += max(1, text.count("\n"))
+        self._nlines += max(1, text.count("\n"))
         self.sendFullBuffer()
 
+    @synchronized
     def getValue(self):
         content = self.output.getvalue()
         return content
 
+    @synchronized
     def sendFullBuffer(self):
         """
         Get the buffer content, send a message, close the current buffer and re-create a new one for subsequent writes.
 
         """
 
-        if self.__nlines >= self.bufsize:
+        if self._nlines >= self.bufsize:
             self.flush()
             self.output = StringIO()
 
+    @synchronized
     def flush(self):
         """
         Flush the buffer and send log records to a remote server. The buffer is closed as well.
@@ -563,12 +593,22 @@ class FixedSizeBuffer(object):
         :return: None
         :rtype:  None
         """
+        if not self.output.closed:
+            self.output.flush()
+            buf = self.getValue()
+            self.senderFunc(buf)
+            self._nlines = 0
+            self.output.close()
 
-        self.output.flush()
-        buf = self.getValue()
-        self.senderFunc(buf)
-        self.__nlines = 0
-        self.output.close()
+    def cancelTimer(self):
+        """
+        Cancel the repeating timer if it exists.
+
+        :return: None
+        :rtype: None
+        """
+        if self._timer is not None:
+            self._timer.cancel()
 
 
 def sendMessage(url, pilotUUID, method, rawMessage):
@@ -614,13 +654,18 @@ class CommandBase(object):
         isPilotLoggerOn = pilotParams.pilotLogging
         self.debugFlag = pilotParams.debugFlag
         loggerURL = pilotParams.loggerURL
+        interval = pilotParams.loggerTimerInterval
 
         if loggerURL is None:
             self.log = Logger(self.__class__.__name__, debugFlag=self.debugFlag)
         else:
             # remote logger
             self.log = RemoteLogger(
-                loggerURL, self.__class__.__name__, pilotUUID=pilotParams.pilotUUID, debugFlag=self.debugFlag
+                loggerURL,
+                self.__class__.__name__,
+                pilotUUID=pilotParams.pilotUUID,
+                debugFlag=self.debugFlag,
+                flushInterval=interval,
             )
 
         self.log.isPilotLoggerOn = isPilotLoggerOn
@@ -804,6 +849,7 @@ class PilotParams(object):
         self.pilotCFGFile = "pilot.json"
         self.pilotLogging = False
         self.loggerURL = None
+        self.loggerTimerInterval = 600
         self.pilotUUID = "unknown"
         self.modules = ""  # see dirac-install "-m" option documentation
         self.userEnvVariables = ""  # see dirac-install "--userEnvVariables" option documentation
@@ -1053,11 +1099,14 @@ class PilotParams(object):
         if pilotLogging is not None:
             self.pilotLogging = pilotLogging.upper() == "TRUE"
         self.loggerURL = pilotOptions.get("RemoteLoggerURL")
+        # logger buffer flush interval in seconds.
+        self.loggerTimerInterval = pilotOptions.get("RemoteLoggerTimerInterval", self.loggerTimerInterval)
         pilotLogLevel = pilotOptions.get("PilotLogLevel", "INFO")
         if pilotLogLevel.lower() == "debug":
             self.debugFlag = True
         self.log.debug("JSON: Remote logging: %s" % self.pilotLogging)
         self.log.debug("JSON: Remote logging URL: %s" % self.loggerURL)
+        self.log.debug("JSON: Remote logging buffer flush interval in sec.(0: disabled): %s" % self.loggerTimerInterval)
         self.log.debug("JSON: Remote/local logging debug flag: %s" % self.debugFlag)
 
         # CE type if present, then Defaults, otherwise as defined in the code:
