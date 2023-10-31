@@ -77,6 +77,10 @@
 		"jenkins-lhcb-d.cern.ch": {
 			"Site": "VAR_JENKINS_SITE",
 			"GridCEType": "LHCbD"
+		},
+		"jenkins-lhcb-dd.cern.ch": {
+			"Site": "VAR_JENKINS_SITE",
+			"GridCEType": "LHCbDD"
 		}	  
 	},
 	"Defaults": {
@@ -87,7 +91,8 @@
 				"TEST-MP": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
 				"TEST-FULL": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements, LaunchAgent",
 				"LHCb": "CheckWorkerNode, LHCbInstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, LHCbConfigureSite, LHCbConfigureArchitecture, LHCbConfigureCPURequirements",
-				"LHCbD": "CheckWorkerNode, InstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, LHCbConfigureSite, LHCbConfigureArchitecture, LHCbConfigureCPURequirements"
+				"LHCbD": "CheckWorkerNode, InstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, LHCbConfigureSite, LHCbConfigureArchitecture, LHCbConfigureCPURequirements",
+				"LHCbDD": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, LHCbConfigureArchitecture, ConfigureCPURequirements"
 		    }
 		}
 	},
@@ -101,7 +106,7 @@
 			"pilotRepo": "https://github.com/does_not_matter/Pilot.git",
 			"GenericPilotGroup": "gridpp_pilot",
 			"GenericPilotDN": "VAR_USERDN_GRIDPP",
-			"RemoteLogging": "True",
+			"RemoteLogging": "False",
 			"RemoteLoggerURL": "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
 			"UploadSE": "UKI-LT2-IC-HEP-disk",
 			"UploadPath": "/gridpp/pilotlogs/",
@@ -116,6 +121,18 @@
 			"pilotFileServer": "lbvobox70.cern.ch:8443",
 			"pilotRepoBranch": "should_not_matter",
 			"pilotRepo": "https://github.com/should_not_matter/Pilot.git",
+			"GenericPilotGroup": "dteam_pilot",
+			"GenericPilotDN": "VAR_USERDN",
+			"RemoteLogging": "False",
+			"RemoteLoggerURL": "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
+			"PilotLogLevel": "DEBUG"
+		}
+	},
+	"LHCb": {
+		"Pilot": {
+			"Version": "VAR_DIRAC_VERSION",
+			"CheckVersion": "True",
+			"pilotFileServer": "lbvobox70.cern.ch:8443",
 			"GenericPilotGroup": "dteam_pilot",
 			"GenericPilotDN": "VAR_USERDN",
 			"RemoteLogging": "False",
