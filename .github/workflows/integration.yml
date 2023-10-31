@@ -56,6 +56,9 @@ jobs:
         pilot_schema:
           - pilot_oldSchema.json
           - pilot_newSchema.json
+        dirac_version:
+          - v8.0.27
+          - v8.1.0a17
 
     steps:
       - uses: actions/checkout@v4
@@ -86,7 +89,7 @@ jobs:
           sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
           sed -i "s/VAR_JENKINS_CE/jenkins.cern.ch/g" pilot.json
           sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
-          sed -i "s/VAR_DIRAC_VERSION/v8.1.0a16/g" pilot.json
+          sed -i "s/VAR_DIRAC_VERSION/${{ matrix.dirac_version }}/g" pilot.json
           sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
           sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
@@ -121,7 +124,7 @@ jobs:
           sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
           sed -i "s/VAR_JENKINS_CE/jenkins.cern.ch/g" pilot.json
           sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
-          sed -i "s/VAR_DIRAC_VERSION/v8.1.0a16/g" pilot.json
+          sed -i "s/VAR_DIRAC_VERSION/v8.1.0a17/g" pilot.json
           sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
           sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
@@ -179,6 +182,9 @@ jobs:
         VO: 
           - dteam
           - gridpp
+        dirac_version:
+          - v8.0.27
+          - v8.1.0a17
 
     steps:
       - uses: actions/checkout@v4
@@ -205,7 +211,7 @@ jobs:
           sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
           sed -i "s/VAR_JENKINS_CE/jenkins-full.cern.ch/g" pilot.json
           sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
-          sed -i "s/VAR_DIRAC_VERSION/v8.1.0a16/g" pilot.json
+          sed -i "s/VAR_DIRAC_VERSION/${{ matrix.dirac_version }}/g" pilot.json
           sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
           sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
