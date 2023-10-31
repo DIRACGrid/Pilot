@@ -206,6 +206,7 @@ class CheckWorkerNode(CommandBase):
             )
             self.exitWithError(1)
 
+
 class InstallDIRAC(CommandBase):
     """ Source from CVMFS, or install locally
     """
@@ -525,7 +526,7 @@ class ConfigureBasics(CommandBase):
 
     It calls dirac-configure to:
 
-        * download, by default, the CAs
+        * (maybe) download the CAs
         * creates a standard or custom (defined by self.pp.localConfigFile) cfg file
           (by default 'pilot.cfg') to be used where all the pilot configuration is to be set, e.g.:
         * adds to it basic info like the version
@@ -604,37 +605,6 @@ class ConfigureBasics(CommandBase):
         if self.pp.wnVO:
             self.cfg.append('-o "/Resources/Computing/CEDefaults/VirtualOrganization=%s"' % self.pp.wnVO)
 
-    def __checkSecurityDir(self, envName, dirName):
-
-        if envName in os.environ and safe_listdir(os.environ[envName]):
-            self.log.debug(
-                "%s is set in the host environment as %s, aligning installEnv to it"
-                % (envName, os.environ[envName])
-            )               
-            self.pp.installEnv[envName] = os.environ[envName]
-        else:
-            self.log.debug("%s is not set in the host environment" % envName)
-            # try and find it
-            for candidate in self.pp.CVMFS_locations:
-                candidateDir = os.path.join(candidate,
-                                            'etc/grid-security',
-                                            dirName)
-                self.log.debug(
-                    "Candidate directory for %s is %s"
-                    % (envName, candidateDir)
-                )
-                if safe_listdir(candidateDir):
-
-                    self.log.debug("Setting %s=%s" % (envName, candidateDir))
-                    self.pp.installEnv[envName] = candidateDir
-                    os.environ[envName] = candidateDir
-                    break
-                self.log.debug("%s not found or not a directory" % candidateDir)
-
-        if envName not in self.pp.installEnv:
-            self.log.error("Could not find/set %s" % envName)
-            sys.exit(1)
-
     def _getSecurityCFG(self):
         """ Sets security-related env variables, if needed
         """
@@ -644,17 +614,8 @@ class ConfigureBasics(CommandBase):
             self.cfg.append("-o /DIRAC/Security/CertFile=%s/hostcert.pem" % self.pp.certsLocation)
             self.cfg.append("-o /DIRAC/Security/KeyFile=%s/hostkey.pem" % self.pp.certsLocation)
 
-        # If DIRAC (or its extension) is installed in CVMFS:
+        # If DIRAC (or its extension) is installed in CVMFS do not download VOMS and CAs
         if self.pp.preinstalledEnv:
-
-            self.__checkSecurityDir("X509_CERT_DIR", "certificates")
-            self.__checkSecurityDir("X509_VOMS_DIR", "vomsdir")
-            self.__checkSecurityDir("X509_VOMSES", "vomses")
-            # This is needed for the integration tests
-            self.pp.installEnv["DIRAC_VOMSES"] = self.pp.installEnv["X509_VOMSES"]
-            os.environ["DIRAC_VOMSES"] = os.environ["X509_VOMSES"]
-
-            # In any case do not download VOMS and CAs
             self.cfg.append("-DMH")
 
 

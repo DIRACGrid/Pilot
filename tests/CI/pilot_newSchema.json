@@ -101,13 +101,13 @@
 			"Version": "VAR_DIRAC_VERSION",
 			"Extensions": "None",
 			"CheckVersion": "False",
-			"pilotFileServer": "lbvobox70.cern.ch:8443",
+			"pilotFileServer": "lbcertifdirac70.cern.ch:8443",
 			"pilotRepoBranch": "does_not_matter",
 			"pilotRepo": "https://github.com/does_not_matter/Pilot.git",
 			"GenericPilotGroup": "gridpp_pilot",
 			"GenericPilotDN": "VAR_USERDN_GRIDPP",
 			"RemoteLogging": "False",
-			"RemoteLoggerURL": "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
+			"RemoteLoggerURL": "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
 			"UploadSE": "UKI-LT2-IC-HEP-disk",
 			"UploadPath": "/gridpp/pilotlogs/",
 			"LoggingShifterName": "GridPPLogManager",
@@ -118,13 +118,13 @@
 		"Pilot": {
 			"Version": "VAR_DIRAC_VERSION",
 			"CheckVersion": "True",
-			"pilotFileServer": "lbvobox70.cern.ch:8443",
+			"pilotFileServer": "lbcertifdirac70.cern.ch:8443",
 			"pilotRepoBranch": "should_not_matter",
 			"pilotRepo": "https://github.com/should_not_matter/Pilot.git",
 			"GenericPilotGroup": "dteam_pilot",
 			"GenericPilotDN": "VAR_USERDN",
 			"RemoteLogging": "True",
-			"RemoteLoggerURL": "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
+			"RemoteLoggerURL": "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
 			"PilotLogLevel": "DEBUG"
 		}
 	},
@@ -132,11 +132,11 @@
 		"Pilot": {
 			"Version": "VAR_DIRAC_VERSION",
 			"CheckVersion": "True",
-			"pilotFileServer": "lbvobox70.cern.ch:8443",
+			"pilotFileServer": "lbcertifdirac70.cern.ch:8443",
 			"GenericPilotGroup": "dteam_pilot",
 			"GenericPilotDN": "VAR_USERDN",
 			"RemoteLogging": "False",
-			"RemoteLoggerURL": "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
+			"RemoteLoggerURL": "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
 			"PilotLogLevel": "DEBUG"
 		}
 	},

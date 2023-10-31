@@ -95,7 +95,7 @@ class TestPilotParams(unittest.TestCase):
         pp.gridCEType = "TEST"
 
         res = pp.getPilotOptionsDict()
-        logURL = "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging"
+        logURL = "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging"
         self.assertEqual(res.get("RemoteLoggerURL"), logURL)
         self.assertEqual(pp.loggerURL, logURL)
         self.assertEqual(res.get("RemoteLogging"), "False")

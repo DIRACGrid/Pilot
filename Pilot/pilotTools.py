@@ -8,7 +8,6 @@ import getopt
 import imp
 import json
 import os
-import pickle
 import re
 import select
 import signal
@@ -17,7 +16,6 @@ import subprocess
 import sys
 import threading
 from datetime import datetime
-from distutils.version import LooseVersion
 from functools import partial, wraps
 from threading import RLock
 
@@ -87,15 +85,6 @@ def parseVersion(releaseVersion, useLegacyStyle):
         if pre:
             version += "a" + pre
     return version
-
-
-def printVersion(log):
-    log.info("Running %s" % " ".join(sys.argv))
-    try:
-        with open("%s.run" % sys.argv[0], "w") as fd:
-            pickle.dump(sys.argv[1:], fd)
-    except OSError:
-        pass
 
 
 def pythonPathCheck():
@@ -632,7 +621,13 @@ def sendMessage(url, pilotUUID, method, rawMessage):
 
     context = ssl.create_default_context()
     context.load_verify_locations(capath=caPath)
-    context.load_cert_chain(cert)
+    try:
+        context.load_cert_chain(cert)
+    except IsADirectoryError:
+        context.load_cert_chain(
+            os.path.join(cert, "hostcert.pem"),
+            os.path.join(cert, "hostkey.pem")
+        )
     res = urlopen(url, data, context=context)
     res.close()
 
@@ -940,6 +935,48 @@ class PilotParams(object):
         # Command line can override options from JSON
         self.__initCommandLine2()
 
+        self.__checkSecurityDir("X509_CERT_DIR", "certificates")
+        self.__checkSecurityDir("X509_VOMS_DIR", "vomsdir")
+        self.__checkSecurityDir("X509_VOMSES", "vomses")
+        # This is needed for the integration tests
+        self.installEnv["DIRAC_VOMSES"] = self.installEnv["X509_VOMSES"]
+        os.environ["DIRAC_VOMSES"] = os.environ["X509_VOMSES"]
+
+        if self.useServerCertificate:
+            self.installEnv["X509_USER_PROXY"] = self.certsLocation
+            os.environ["X509_USER_PROXY"] = self.certsLocation
+
+    def __checkSecurityDir(self, envName, dirName):
+
+        if envName in os.environ and safe_listdir(os.environ[envName]):
+            self.log.debug(
+                "%s is set in the host environment as %s, aligning installEnv to it"
+                % (envName, os.environ[envName])
+            )               
+            self.installEnv[envName] = os.environ[envName]
+        else:
+            self.log.debug("%s is not set in the host environment" % envName)
+            # try and find it
+            for candidate in self.CVMFS_locations:
+                candidateDir = os.path.join(candidate,
+                                            'etc/grid-security',
+                                            dirName)
+                self.log.debug(
+                    "Candidate directory for %s is %s"
+                    % (envName, candidateDir)
+                )
+                if safe_listdir(candidateDir):
+                    self.log.debug("Setting %s=%s" % (envName, candidateDir))
+                    self.installEnv[envName] = candidateDir
+                    os.environ[envName] = candidateDir
+                    break
+                self.log.debug("%s not found or not a directory" % candidateDir)
+
+        if envName not in self.installEnv:
+            self.log.error("Could not find/set %s" % envName)
+            sys.exit(1)
+
+
     def __initCommandLine1(self):
         """Parses and interpret options on the command line: first pass (essential things)"""
 
@@ -1185,7 +1222,7 @@ class PilotParams(object):
             except IOError as err:
                 self.log.error("Could not read a proxy, setting vo to 'unknown': ", os.strerror(err.errno))
         else:
-            self.log.error("Could not locate a proxy via X509_USER_PROXY, setting vo to 'unknown' ")
+            self.log.error("Could not locate a proxy via X509_USER_PROXY")
 
         # is there a token, and can we get a VO from the token?
         # TBD
