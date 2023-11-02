@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        python: 
+        python_version: 
           - 2.7.18
           - 3.6.15
           - 3.9.17
@@ -22,10 +22,19 @@ jobs:
           - dteam
           - gridpp
 
-    container: python:${{ matrix.python }}-slim
-
     steps:
       - uses: actions/checkout@v4
+      - uses: cvmfs-contrib/github-action-cvmfs@v3
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python_version }}
+
+      - name: Check Python version
+        run: python --version
+
+      - name: Test CernVM-FS
+        run: ls /cvmfs/dirac.egi.eu
+
       - name: Retrieve the secret and decode it to a file
         env:
           HOSTCERT_BASE64: ${{ secrets.HOSTCERT_BASE64 }}
@@ -148,10 +157,19 @@ jobs:
           - pilot_oldSchema.json
           - pilot_newSchema.json
 
-    container: python:${{ matrix.python }}-slim
-    
     steps:
       - uses: actions/checkout@v4
+      - uses: cvmfs-contrib/github-action-cvmfs@v3
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python_version }}
+
+      - name: Check Python version
+        run: python --version
+
+      - name: Test CernVM-FS
+        run: ls /cvmfs/dirac.egi.eu
+
       - name: Retrieve the secret and decode it to a file
         env:
           HOSTCERT_BASE64: ${{ secrets.HOSTCERT_BASE64 }}
