@@ -610,24 +610,29 @@ def sendMessage(url, pilotUUID, method, rawMessage):
     :param str rawMessage: a message to be sent, in JSON format
     :return: None.
     """
-    message = json.dumps((json.dumps(rawMessage), pilotUUID))
-    major, minor, micro, _, _ = sys.version_info
-    if major >= 3:
-        data = urlencode({"method": method, "args": message}).encode("utf-8")  # encode to bytes ! for python3
-    else:
-        data = urlencode({"method": method, "args": message})
     caPath = os.getenv("X509_CERT_DIR")
     cert = os.getenv("X509_USER_PROXY")
 
     context = ssl.create_default_context()
     context.load_verify_locations(capath=caPath)
+    
+    message = json.dumps((json.dumps(rawMessage), pilotUUID))
+
     try:
-        context.load_cert_chain(cert)
-    except IsADirectoryError:
+        context.load_cert_chain(cert)  # this is a proxy
+        raw_data = {"method": method, "args": message}
+    except IsADirectoryError:  # assuming it'a dir containing cert and key
         context.load_cert_chain(
             os.path.join(cert, "hostcert.pem"),
             os.path.join(cert, "hostkey.pem")
         )
+        raw_data = {"method": method, "args": message, "extraCredentials": '"hosts"'}
+    
+    if sys.version_info[0] == 3:
+        data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
+    else:
+        data = urlencode(raw_data)
+
     res = urlopen(url, data, context=context)
     res.close()
 
