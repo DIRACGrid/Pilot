@@ -118,7 +118,7 @@
 	"dteam": {
 		"Pilot": {
 			"Version": "VAR_DIRAC_VERSION",
-			"CheckVersion": "True",
+			"CheckVersion": "False",
 			"pilotFileServer": "lbcertifdirac70.cern.ch:8443",
 			"pilotRepoBranch": "should_not_matter",
 			"pilotRepo": "https://github.com/should_not_matter/Pilot.git",
@@ -133,12 +133,12 @@
 	"LHCb": {
 		"Pilot": {
 			"Version": "VAR_DIRAC_VERSION",
-			"CheckVersion": "True",
+			"CheckVersion": "False",
 			"pilotFileServer": "lbcertifdirac70.cern.ch:8443",
 			"GenericPilotGroup": "dteam_pilot",
 			"GenericPilotDN": "VAR_USERDN",
 			"RemoteLogging": "False",
-			"RemoteLoggerURL": "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
+			"RemoteLoggerTimerInterval": 0,
 			"PilotLogLevel": "DEBUG"
 		}
 	},
