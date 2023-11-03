@@ -8,10 +8,6 @@ jobs:
 
     strategy:
       matrix:
-        python_version: 
-          - 2.7.18
-          - 3.6.15
-          - 3.9.17
         dirac_version:
           - rel-v8r0
           - integration
@@ -25,12 +21,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: cvmfs-contrib/github-action-cvmfs@v3
-      - uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python_version }}
-
-      - name: Check Python version
-        run: python --version
 
       - name: Test CernVM-FS
         run: ls /cvmfs/dirac.egi.eu
@@ -158,10 +148,6 @@ jobs:
 
     strategy:
       matrix:
-        python: 
-          - 2.7.18
-          - 3.6.15
-          - 3.9.17
         pilot_schema:
           - pilot_oldSchema.json
           - pilot_newSchema.json
@@ -169,12 +155,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: cvmfs-contrib/github-action-cvmfs@v3
-      - uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python_version }}
-
-      - name: Check Python version
-        run: python --version
 
       - name: Test CernVM-FS
         run: ls /cvmfs/dirac.egi.eu
