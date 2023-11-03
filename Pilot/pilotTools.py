@@ -850,7 +850,7 @@ class PilotParams(object):
         self.pilotCFGFile = "pilot.json"
         self.pilotLogging = False
         self.loggerURL = None
-        self.loggerTimerInterval = 600
+        self.loggerTimerInterval = 0
         self.pilotUUID = "unknown"
         self.modules = ""  # see dirac-install "-m" option documentation
         self.userEnvVariables = ""  # see dirac-install "--userEnvVariables" option documentation

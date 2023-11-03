@@ -110,6 +110,7 @@
 			"RemoteLoggerURL": "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
 			"UploadSE": "UKI-LT2-IC-HEP-disk",
 			"UploadPath": "/gridpp/pilotlogs/",
+			"RemoteLoggerTimerInterval": 0,
 			"LoggingShifterName": "GridPPLogManager",
 			"PilotLogLevel": "DEBUG"
 		}
@@ -125,6 +126,7 @@
 			"GenericPilotDN": "VAR_USERDN",
 			"RemoteLogging": "True",
 			"RemoteLoggerURL": "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
+			"RemoteLoggerTimerInterval": 0,
 			"PilotLogLevel": "DEBUG"
 		}
 	},
