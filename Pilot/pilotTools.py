@@ -1195,6 +1195,10 @@ class PilotParams(object):
         self.releaseProject = pilotOptions.get("Project", self.releaseProject)  # default from the code.
         self.log.debug("Release project: %s" % self.releaseProject)
 
+        self.CVMFS_locations = pilotOptions.get("CVMFS_locations", self.CVMFS_locations)  # default from the code.
+        self.log.debug("CVMFS locations: %s" % self.CVMFS_locations)
+
+
     def getPilotOptionsDict(self):
         """
         Get pilot option dictionary by searching paths in a certain order (commands, logging etc.).
