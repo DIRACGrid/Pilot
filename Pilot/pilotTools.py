@@ -53,8 +53,8 @@ try:
 except NameError:
     FileNotFoundError = OSError
 
-# Timer 2.7 issue where Timer is a function
-if sys.version_info.major == 2:
+# Timer 2.7 and < 3.3 versions issue where Timer is a function
+if sys.version_info.major == 2 or sys.version_info.major == 3 and sys.version_info.minor < 3:
     from threading import _Timer as Timer  # pylint: disable=no-name-in-module
 else:
     from threading import Timer
