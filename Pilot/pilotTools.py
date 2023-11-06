@@ -1100,7 +1100,7 @@ class PilotParams(object):
             self.pilotLogging = pilotLogging.upper() == "TRUE"
         self.loggerURL = pilotOptions.get("RemoteLoggerURL")
         # logger buffer flush interval in seconds.
-        self.loggerTimerInterval = pilotOptions.get("RemoteLoggerTimerInterval", self.loggerTimerInterval)
+        self.loggerTimerInterval = int(pilotOptions.get("RemoteLoggerTimerInterval", self.loggerTimerInterval))
         pilotLogLevel = pilotOptions.get("PilotLogLevel", "INFO")
         if pilotLogLevel.lower() == "debug":
             self.debugFlag = True
