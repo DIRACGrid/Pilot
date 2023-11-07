@@ -62,7 +62,8 @@ if __name__ == "__main__":
     # print the buffer, so we have a "classic' logger back in sync.
     sys.stdout.write(bufContent)
     # now the remote logger.
-    if pilotParams.pilotLogging:
+    remote = pilotParams.pilotLogging and (pilotParams.loggerURL is not None)
+    if remote:
         # In a remote logger enabled Dirac version we would have some classic logger content from a wrapper,
         # which we passed in:
         receivedContent = ""
@@ -97,7 +98,7 @@ if __name__ == "__main__":
 
     log.info("Executing commands: %s" % str(pilotParams.commands))
 
-    if pilotParams.pilotLogging:
+    if remote:
         # It's safer to cancel the timer here. Each command has got its own logger object with a timer cancelled by the
         # finaliser. No need for a timer in the "else" code segment below.
         try:
@@ -114,6 +115,6 @@ if __name__ == "__main__":
         else:
             log.error("Command %s could not be instantiated" % commandName)
             # send the last message and abandon ship.
-            if pilotParams.pilotLogging:
+            if remote:
                 log.buffer.flush()
             sys.exit(-1)

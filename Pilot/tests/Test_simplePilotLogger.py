@@ -10,9 +10,9 @@ import sys
 import tempfile
 
 try:
-    from Pilot.pilotTools import CommandBase, PilotParams, RemoteLogger
+    from Pilot.pilotTools import CommandBase, PilotParams, Logger, RemoteLogger
 except ImportError:
-    from pilotTools import CommandBase, PilotParams, RemoteLogger
+    from pilotTools import CommandBase, PilotParams, Logger, RemoteLogger
 
 import unittest
 
@@ -122,6 +122,7 @@ class TestCommandBase(unittest.TestCase):
     @patch(("sys.argv"))
     @patch("subprocess.Popen")
     def test_executeAndGetOutput(self, popenMock, argvmock):
+
         argvmock.__getitem__.return_value = [
             "-d",
             "-g",
@@ -129,7 +130,9 @@ class TestCommandBase(unittest.TestCase):
             "-F",
             "tests/pilot.json",
         ]
-
+        import os
+        cwd = os.getcwd()
+        print("cwd", cwd)
         for size in [1000, 1024, 1025, 2005]:
             random_str = "".join(random.choice(string.ascii_letters + "\n") for i in range(size))
             if sys.version_info.major == 3:
@@ -144,14 +147,10 @@ class TestCommandBase(unittest.TestCase):
                 self.stderr_mock.write("Errare humanum est!")
             self.stderr_mock.seek(0)
             pp = PilotParams()
-            try:
-                cBase = CommandBase(pp)
-                # we have a logger URL set, so:
-                assert isinstance(cBase.log, RemoteLogger)
-            finally:
-                # and cancel the timer !
-                cBase.log.buffer.cancelTimer()
 
+            cBase = CommandBase(pp)
+
+            assert isinstance(cBase.log, Logger)
             popenMock.return_value.stdout = self.stdout_mock
             popenMock.return_value.stderr = self.stderr_mock
             outData = cBase.executeAndGetOutput("dummy")
