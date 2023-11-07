@@ -10,9 +10,9 @@ import sys
 import tempfile
 
 try:
-    from Pilot.pilotTools import CommandBase, PilotParams, Logger, RemoteLogger
+    from Pilot.pilotTools import CommandBase, PilotParams, Logger
 except ImportError:
-    from pilotTools import CommandBase, PilotParams, Logger, RemoteLogger
+    from pilotTools import CommandBase, PilotParams, Logger
 
 import unittest
 
