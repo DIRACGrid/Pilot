@@ -130,9 +130,7 @@ class TestCommandBase(unittest.TestCase):
             "-F",
             "tests/pilot.json",
         ]
-        import os
-        cwd = os.getcwd()
-        print("cwd", cwd)
+ 
         for size in [1000, 1024, 1025, 2005]:
             random_str = "".join(random.choice(string.ascii_letters + "\n") for i in range(size))
             if sys.version_info.major == 3:
