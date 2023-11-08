@@ -651,12 +651,13 @@ class CommandBase(object):
         """
 
         self.pp = pilotParams
-        isPilotLoggerOn = pilotParams.pilotLogging
         self.debugFlag = pilotParams.debugFlag
         loggerURL = pilotParams.loggerURL
+        # URL present and the flag is set:
+        isPilotLoggerOn = pilotParams.pilotLogging and (loggerURL is not None)
         interval = pilotParams.loggerTimerInterval
 
-        if loggerURL is None:
+        if not isPilotLoggerOn:
             self.log = Logger(self.__class__.__name__, debugFlag=self.debugFlag)
         else:
             # remote logger
@@ -1100,7 +1101,7 @@ class PilotParams(object):
             self.pilotLogging = pilotLogging.upper() == "TRUE"
         self.loggerURL = pilotOptions.get("RemoteLoggerURL")
         # logger buffer flush interval in seconds.
-        self.loggerTimerInterval = pilotOptions.get("RemoteLoggerTimerInterval", self.loggerTimerInterval)
+        self.loggerTimerInterval = int(pilotOptions.get("RemoteLoggerTimerInterval", self.loggerTimerInterval))
         pilotLogLevel = pilotOptions.get("PilotLogLevel", "INFO")
         if pilotLogLevel.lower() == "debug":
             self.debugFlag = True
