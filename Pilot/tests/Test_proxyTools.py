@@ -1,12 +1,10 @@
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
 
-import subprocess
-import shlex
-import sys
 import os
+import shlex
 import shutil
+import subprocess
+import sys
 import unittest
 
 ############################
@@ -49,7 +47,7 @@ class TestProxyTools(unittest.TestCase):
             data = fp.read()
         os.remove(cert)
         with self.assertRaises(Exception) as exc:
-            vo = getVO(data)
+            getVO(data)
 
         self.assertEqual(str(exc.exception), msg)
 
@@ -58,7 +56,7 @@ class TestProxyTools(unittest.TestCase):
         msg = "command not found: openssl"
         popenMock.side_effect = OSError(msg)
         with self.assertRaises(OSError) as exc:
-            res = getVO(data)
+            getVO(data)
         self.assertEqual(str(exc.exception), msg)
 
     @patch("Pilot.proxyTools.Popen")
@@ -70,7 +68,7 @@ class TestProxyTools(unittest.TestCase):
         msg = "Error when invoking openssl asn1parse"
 
         with self.assertRaises(Exception) as exc:
-            res = parseASN1("Anything")
+            parseASN1("Anything")
 
         self.assertEqual(str(exc.exception), msg)
 
@@ -80,7 +78,7 @@ class TestProxyTools(unittest.TestCase):
         msg = "command not found: openssl"
         popenMock.side_effect = OSError(msg)
         with self.assertRaises(OSError) as exc:
-            res = parseASN1("Anything")
+            parseASN1("Anything")
         self.assertEqual(str(exc.exception), msg)
 
     def test_createFakeProxy(self):

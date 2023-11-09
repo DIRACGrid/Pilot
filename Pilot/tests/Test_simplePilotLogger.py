@@ -34,6 +34,10 @@ class TestPilotParams(unittest.TestCase):
             "tests/pilot.json",
         ]
 
+        os.environ["X509_CERT_DIR"] = os.getcwd()
+        os.environ["X509_VOMS_DIR"] = os.getcwd()
+        os.environ["X509_VOMSES"] = os.getcwd()
+        os.environ["X509_USER_PROXY"] = os.getcwd()
         pp = PilotParams()
 
         argvmock.__getitem__.assert_called()
@@ -89,13 +93,17 @@ class TestPilotParams(unittest.TestCase):
             "/%s/Pilot" % vo
         ]
         mockPaths.return_value = paths
+        os.environ["X509_CERT_DIR"] = os.getcwd()
+        os.environ["X509_VOMS_DIR"] = os.getcwd()
+        os.environ["X509_VOMSES"] = os.getcwd()
+        os.environ["X509_USER_PROXY"] = os.getcwd()
         pp = PilotParams()
         lTESTcommands = "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements"
 
         pp.gridCEType = "TEST"
 
         res = pp.getPilotOptionsDict()
-        logURL = "https://lbvobox70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging"
+        logURL = "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging"
         self.assertEqual(res.get("RemoteLoggerURL"), logURL)
         self.assertEqual(pp.loggerURL, logURL)
         self.assertEqual(res.get("RemoteLogging"), "False")
@@ -112,6 +120,9 @@ class TestCommandBase(unittest.TestCase):
         # These temporary files, opened in a binary mode, will act as standard stream pipes for `Popen`
         self.stdout_mock = tempfile.NamedTemporaryFile(mode="rb+", delete=False)
         self.stderr_mock = tempfile.NamedTemporaryFile(mode="rb+", delete=False)
+        os.environ["X509_CERT_DIR"] = '/some/thing/'
+        os.environ["X509_USER_PROXY"] = '/some/thing'
+
 
     def tearDown(self):
         # At the end of the test, we'll close and remove the created files
@@ -122,7 +133,10 @@ class TestCommandBase(unittest.TestCase):
     @patch(("sys.argv"))
     @patch("subprocess.Popen")
     def test_executeAndGetOutput(self, popenMock, argvmock):
-
+        os.environ["X509_CERT_DIR"] = os.getcwd()
+        os.environ["X509_VOMS_DIR"] = os.getcwd()
+        os.environ["X509_VOMSES"] = os.getcwd()
+        os.environ["X509_USER_PROXY"] = os.getcwd()
         argvmock.__getitem__.return_value = [
             "-d",
             "-g",

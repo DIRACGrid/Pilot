@@ -3,18 +3,18 @@
 
 from __future__ import absolute_import, division, print_function
 
-# pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
-
-# imports
-import unittest
 import json
-import stat
-import sys
 import os
 import shutil
+import stat
+import sys
 
-from Pilot.pilotTools import PilotParams
+# pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
+# imports
+import unittest
+
 from Pilot.pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes
+from Pilot.pilotTools import PilotParams
 
 
 class PilotTestCase(unittest.TestCase):
@@ -39,6 +39,10 @@ class PilotTestCase(unittest.TestCase):
                 },
                 fp,
             )
+        os.environ["X509_CERT_DIR"] = os.getcwd()
+        os.environ["X509_VOMS_DIR"] = os.getcwd()
+        os.environ["X509_VOMSES"] = os.getcwd()
+        os.environ["X509_USER_PROXY"] = os.getcwd()
 
     def tearDown(self):
         for fileProd in [
