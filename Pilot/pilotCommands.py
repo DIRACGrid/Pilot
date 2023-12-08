@@ -324,7 +324,7 @@ class InstallDIRAC(CommandBase):
             for CVMFS_location in self.pp.CVMFS_locations:
                 version = self.pp.releaseVersion or "pro"
                 arch = platform.system() + "-" + platform.machine()
-                preinstalledEnvScript = os.path.join(CVMFS_location, self.releaseProject.lower() + "dirac", version, arch, "diracosrc")
+                preinstalledEnvScript = os.path.join(CVMFS_location, self.pp.releaseProject.lower() + "dirac", version, arch, "diracosrc")
                 if os.path.isfile(preinstalledEnvScript):
                     break
 

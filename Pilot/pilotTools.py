@@ -930,6 +930,7 @@ class PilotParams(object):
             ("", "pilotUUID=", "pilot UUID"),
             ("", "preinstalledEnv=", "preinstalled pilot environment script location"),
             ("", "preinstalledEnvPrefix=", "preinstalled pilot environment area prefix"),
+            ("", "CVMFS_locations=", "comma-separated list of CVMS locations"),
         )
 
         # Possibly get Setup and JSON URL/filename from command line
@@ -1112,6 +1113,8 @@ class PilotParams(object):
                 self.preinstalledEnv = v
             elif o == "--preinstalledEnvPrefix":
                 self.preinstalledEnvPrefix = v
+            elif o == "--CVMFS_locations":
+                self.CVMFS_locations = v.split(",")
 
     def __loadJSON(self):
         """
