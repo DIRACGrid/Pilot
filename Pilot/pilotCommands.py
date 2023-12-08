@@ -312,12 +312,21 @@ class InstallDIRAC(CommandBase):
 
         self.log.debug("self.pp.preinstalledEnv = %s" % self.pp.preinstalledEnv)
         self.log.debug("self.pp.preinstalledEnvPrefix = %s" % self.pp.preinstalledEnvPrefix)
+        self.log.debug("self.pp.CVMFS_locations = %s" % self.pp.CVMFS_locations)
         
         preinstalledEnvScript = self.pp.preinstalledEnv
         if not preinstalledEnvScript and self.pp.preinstalledEnvPrefix:
             version = self.pp.releaseVersion or "pro"
             arch = platform.system() + "-" + platform.machine()
             preinstalledEnvScript = os.path.join(self.pp.preinstalledEnvPrefix, version, arch, "diracosrc")
+
+        if not preinstalledEnvScript and self.pp.CVMFS_locations:
+            for CVMFS_location in self.pp.CVMFS_locations:
+                version = self.pp.releaseVersion or "pro"
+                arch = platform.system() + "-" + platform.machine()
+                preinstalledEnvScript = os.path.join(CVMFS_location, self.releaseProject.lower() + "dirac", version, arch, "diracosrc")
+                if os.path.isfile(preinstalledEnvScript):
+                    break
 
         self.log.debug("preinstalledEnvScript = %s" % preinstalledEnvScript)
 
