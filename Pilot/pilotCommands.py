@@ -641,17 +641,12 @@ class RegisterPilot(CommandBase):
             self.log.info("Skipping module")
             return
 
-        if self.pp.useServerCertificate:
-            pilotOwnerGroup = "certificate_group"
-        else:
-            pilotOwnerGroup = self.pp.userGroup or self.pp.wnVO
-
         if self.pp.localConfigFile:
             self.cfg.extend(["--cfg", self.pp.localConfigFile])  # this file is as input
 
         checkCmd = "dirac-admin-add-pilot %s %s %s %s --status=Running %s -d" % (
             self.pp.pilotReference,
-            pilotOwnerGroup,
+            self.pp.wnVO,
             self.pp.flavour,
             self.pilotStamp,
             " ".join(self.cfg),
