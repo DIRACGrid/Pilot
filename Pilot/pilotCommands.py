@@ -47,7 +47,7 @@ except ImportError:
 try:
     from Pilot.pilotTools import (
         CommandBase,
-        getFlavour,
+        getSubmitterInfo,
         retrieveUrlTimeout,
         safe_listdir,
         sendMessage,
@@ -56,7 +56,7 @@ try:
 except ImportError:
     from pilotTools import (
         CommandBase,
-        getFlavour,
+        getSubmitterInfo,
         retrieveUrlTimeout,
         safe_listdir,
         sendMessage,
@@ -559,8 +559,7 @@ class ConfigureBasics(CommandBase):
 
         VOs may want to replace/extend the _getBasicsCFG and _getSecurityCFG functions
         """
-
-        self.pp.flavour, self.pp.pilotReference = getFlavour(self.pp.ceName)
+        self.pp.flavour, self.pp.pilotReference, self.pp.batchSystemInfo = getSubmitterInfo(self.pp.ceName)
 
         self._getBasicsCFG()
         self._getSecurityCFG()
@@ -854,6 +853,17 @@ class ConfigureSite(CommandBase):
     def execute(self):
         """Setup configuration parameters"""
         self.cfg.append("-o /LocalSite/GridMiddleware=%s" % self.pp.flavour)
+
+        # Add batch system details to the configuration
+        # Can be used by the pilot/job later on, to interact with the batch system
+        self.cfg.append("-o /LocalSite/BatchSystem/Type=%s" % self.pp.batchSystemInfo.get("Type", "Unknown"))
+        self.cfg.append("-o /LocalSite/BatchSystem/JobID=%s" % self.pp.batchSystemInfo.get("JobID", "Unknown"))
+
+        batchSystemParams = self.pp.batchSystemInfo.get("Parameters", {})
+        self.cfg.append("-o /LocalSite/BatchSystem/Parameters/Queue=%s" % batchSystemParams.get("Queue", "Unknown"))
+        self.cfg.append("-o /LocalSite/BatchSystem/Parameters/BinaryPath=%s" % batchSystemParams.get("BinaryPath", "Unknown"))
+        self.cfg.append("-o /LocalSite/BatchSystem/Parameters/Host=%s" % batchSystemParams.get("Host", "Unknown"))
+        self.cfg.append("-o /LocalSite/BatchSystem/Parameters/InfoPath=%s" % batchSystemParams.get("InfoPath", "Unknown"))
 
         self.cfg.append('-n "%s"' % self.pp.site)
         self.cfg.append('-S "%s"' % self.pp.setup)
