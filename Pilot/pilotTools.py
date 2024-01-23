@@ -650,7 +650,7 @@ class FixedSizeBuffer(object):
         :return: None
         :rtype:  None
         """
-        if not self.output.closed:
+        if not self.output.closed and self._nlines > 0:
             self.output.flush()
             buf = self.getValue()
             self.senderFunc(buf)
