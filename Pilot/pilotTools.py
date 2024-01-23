@@ -1221,6 +1221,16 @@ class PilotParams(object):
         self.loggerTimerInterval = int(pilotOptions.get("RemoteLoggerTimerInterval", self.loggerTimerInterval))
         # logger buffer size in lines:
         self.loggerBufsize = max(1, int(pilotOptions.get("RemoteLoggerBufsize", self.loggerBufsize)))
+        # logger CE white list
+        loggerCEsWhiteList = pilotOptions.get("RemoteLoggerCEsWhiteList")
+        # restrict remote logging to whitelisted CEs ([] or None => no restriction)
+        self.log.debug("JSON: Remote logging CE white list: %s" % loggerCEsWhiteList)
+        if loggerCEsWhiteList is not None:
+            if not isinstance(loggerCEsWhiteList, list):
+                loggerCEsWhiteList = [elem.strip() for elem in loggerCEsWhiteList.split(",")]
+            if self.ceName not in loggerCEsWhiteList:
+                self.pilotLogging = False
+                self.log.debug("JSON: Remote logging disabled for this CE: %s" % self.ceName)
         pilotLogLevel = pilotOptions.get("PilotLogLevel", "INFO")
         if pilotLogLevel.lower() == "debug":
             self.debugFlag = True
