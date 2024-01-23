@@ -70,7 +70,7 @@ if __name__ == "__main__":
         if not sys.stdin.isatty():
             receivedContent = sys.stdin.read()
         log = RemoteLogger(
-            pilotParams.loggerURL, "Pilot", pilotUUID=pilotParams.pilotUUID, debugFlag=pilotParams.debugFlag
+            pilotParams.loggerURL, "Pilot", bufsize=pilotParams.loggerBufsize, pilotUUID=pilotParams.pilotUUID, debugFlag=pilotParams.debugFlag
         )
         log.info("Remote logger activated")
         log.buffer.write(receivedContent)
