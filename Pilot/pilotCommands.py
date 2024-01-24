@@ -561,6 +561,9 @@ class ConfigureBasics(CommandBase):
         """
         self.pp.flavour, self.pp.pilotReference, self.pp.batchSystemInfo = getSubmitterInfo(self.pp.ceName)
 
+        if not self.pp.pilotReference:
+            self.pp.pilotReference = self.pp.pilotUUID
+
         self._getBasicsCFG()
         self._getSecurityCFG()
 
@@ -639,14 +642,14 @@ class RegisterPilot(CommandBase):
 
         # this variable contains the options that are passed to dirac-admin-add-pilot
         self.cfg = []
-        self.pilotStamp = os.environ.get("DIRAC_PILOT_STAMP", '')
+        self.pilotStamp = os.environ.get("DIRAC_PILOT_STAMP", self.pp.pilotUUID)
 
     @logFinalizer
     def execute(self):
         """Calls dirac-admin-add-pilot"""
 
-        if not which("dirac-admin-add-pilot") or not self.pp.pilotReference:
-            self.log.info("Skipping module")
+        if not self.pp.pilotReference:
+            self.log.warn("Skipping module, no pilot reference found")
             return
 
         if self.pp.localConfigFile:
