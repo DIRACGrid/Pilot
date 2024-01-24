@@ -126,6 +126,7 @@
 			"GenericPilotGroup": "dteam_pilot",
 			"GenericPilotDN": "VAR_USERDN",
 			"RemoteLogging": "True",
+			"RemoteLoggerCEsWhiteList": "jenkins.cern.ch, jenkins-mp-pool.cern.ch",
 			"RemoteLoggerURL": "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
 			"RemoteLoggerTimerInterval": 0,
 			"PilotLogLevel": "DEBUG",
