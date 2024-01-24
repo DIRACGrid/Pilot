@@ -512,6 +512,7 @@ class RemoteLogger(Logger):
         isPilotLoggerOn=True,
         pilotUUID="unknown",
         flushInterval=10,
+        bufsize=1000,
     ):
         """
         c'tor
@@ -523,7 +524,7 @@ class RemoteLogger(Logger):
         self.pilotUUID = pilotUUID
         self.isPilotLoggerOn = isPilotLoggerOn
         sendToURL = partial(sendMessage, url, pilotUUID, "sendMessage")
-        self.buffer = FixedSizeBuffer(sendToURL, autoflush=flushInterval)
+        self.buffer = FixedSizeBuffer(sendToURL, bufsize=bufsize, autoflush=flushInterval)
 
     def debug(self, msg, header=True, sendPilotLog=False):
         super(RemoteLogger, self).debug(msg, header)
@@ -584,7 +585,7 @@ class FixedSizeBuffer(object):
     Once it's full, a message is sent to a remote server and the buffer is renewed.
     """
 
-    def __init__(self, senderFunc, bufsize=10, autoflush=10):
+    def __init__(self, senderFunc, bufsize=1000, autoflush=10):
         """
         Constructor.
 
@@ -649,7 +650,7 @@ class FixedSizeBuffer(object):
         :return: None
         :rtype:  None
         """
-        if not self.output.closed:
+        if not self.output.closed and self._nlines > 0:
             self.output.flush()
             buf = self.getValue()
             self.senderFunc(buf)
@@ -723,6 +724,7 @@ class CommandBase(object):
         # URL present and the flag is set:
         isPilotLoggerOn = pilotParams.pilotLogging and (loggerURL is not None)
         interval = pilotParams.loggerTimerInterval
+        bufsize = pilotParams.loggerBufsize
 
         if not isPilotLoggerOn:
             self.log = Logger(self.__class__.__name__, debugFlag=self.debugFlag)
@@ -734,6 +736,7 @@ class CommandBase(object):
                 pilotUUID=pilotParams.pilotUUID,
                 debugFlag=self.debugFlag,
                 flushInterval=interval,
+                bufsize=bufsize,
             )
 
         self.log.isPilotLoggerOn = isPilotLoggerOn
@@ -919,6 +922,7 @@ class PilotParams(object):
         self.pilotLogging = False
         self.loggerURL = None
         self.loggerTimerInterval = 0
+        self.loggerBufsize = 1000
         self.pilotUUID = "unknown"
         self.modules = ""  # see dirac-install "-m" option documentation
         self.userEnvVariables = ""  # see dirac-install "--userEnvVariables" option documentation
@@ -1215,6 +1219,18 @@ class PilotParams(object):
         self.loggerURL = pilotOptions.get("RemoteLoggerURL")
         # logger buffer flush interval in seconds.
         self.loggerTimerInterval = int(pilotOptions.get("RemoteLoggerTimerInterval", self.loggerTimerInterval))
+        # logger buffer size in lines:
+        self.loggerBufsize = max(1, int(pilotOptions.get("RemoteLoggerBufsize", self.loggerBufsize)))
+        # logger CE white list
+        loggerCEsWhiteList = pilotOptions.get("RemoteLoggerCEsWhiteList")
+        # restrict remote logging to whitelisted CEs ([] or None => no restriction)
+        self.log.debug("JSON: Remote logging CE white list: %s" % loggerCEsWhiteList)
+        if loggerCEsWhiteList is not None:
+            if not isinstance(loggerCEsWhiteList, list):
+                loggerCEsWhiteList = [elem.strip() for elem in loggerCEsWhiteList.split(",")]
+            if self.ceName not in loggerCEsWhiteList:
+                self.pilotLogging = False
+                self.log.debug("JSON: Remote logging disabled for this CE: %s" % self.ceName)
         pilotLogLevel = pilotOptions.get("PilotLogLevel", "INFO")
         if pilotLogLevel.lower() == "debug":
             self.debugFlag = True
@@ -1222,6 +1238,7 @@ class PilotParams(object):
         self.log.debug("JSON: Remote logging URL: %s" % self.loggerURL)
         self.log.debug("JSON: Remote logging buffer flush interval in sec.(0: disabled): %s" % self.loggerTimerInterval)
         self.log.debug("JSON: Remote/local logging debug flag: %s" % self.debugFlag)
+        self.log.debug("JSON: Remote logging buffer size (lines): %s" % self.loggerBufsize)
 
         # CE type if present, then Defaults, otherwise as defined in the code:
         if "Commands" in pilotOptions:
