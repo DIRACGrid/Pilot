@@ -652,6 +652,8 @@ class RegisterPilot(CommandBase):
             self.log.warn("Skipping module, no pilot reference found")
             return
 
+        if self.pp.useServerCertificate:
+            self.cfg.append("-o  /DIRAC/Security/UseServerCertificate=yes")
         if self.pp.localConfigFile:
             self.cfg.extend(["--cfg", self.pp.localConfigFile])  # this file is as input
 
