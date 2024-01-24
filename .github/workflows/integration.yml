@@ -107,7 +107,7 @@ jobs:
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
           pilotUUID="${g_job//_/}""${GITHUB_RUN_ID}"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=dteam --pilotUUID="${pilotUUID}" --debug
+          python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --wnVO=dteam --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --pilotUUID="${pilotUUID}" --debug
 
 
   integration-cvmfs_no_env_CEs:
