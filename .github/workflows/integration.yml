@@ -48,7 +48,7 @@ jobs:
           sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
-          pilotUUID="${g_job//_/}""${GITHUB_RUN_ID}"
+          pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::${{ matrix.dirac_branch }} -M 1 -S DIRAC-Certification -N jenkins.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=${{ matrix.VO }} --pilotUUID="${pilotUUID}" --debug
 
@@ -105,7 +105,7 @@ jobs:
           sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
-          pilotUUID="${g_job//_/}""${GITHUB_RUN_ID}"
+          pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --wnVO=dteam --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --pilotUUID="${pilotUUID}" --debug
 
@@ -153,7 +153,7 @@ jobs:
           sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
-          pilotUUID="${g_job//_/}""${GITHUB_RUN_ID}"
+          pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           python dirac-pilot.py -M 1 -S DIRAC-Certification -N ${{ matrix.ce }} -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=dteam -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
 
@@ -197,7 +197,7 @@ jobs:
           sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
-          pilotUUID="${g_job//_/}""${GITHUB_RUN_ID}"
+          pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::integration -M 1 -S DIRAC-Certification -N jenkins-full.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --wnVO=dteam --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --pilotUUID="${pilotUUID}" --debug
 
@@ -250,7 +250,7 @@ jobs:
           sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
-          pilotUUID="${g_job//_/}""${GITHUB_RUN_ID}"
+          pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins-full.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=${{ matrix.VO }} -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
 
@@ -299,7 +299,7 @@ jobs:
           sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
-          pilotUUID="${g_job//_/}""${GITHUB_RUN_ID}"
+          pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           python dirac-pilot.py -M 1 -S DIRAC-Certification -N ${{ matrix.ce }} -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --StopAfterFailedMatches=1 --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=dteam -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
 
@@ -360,7 +360,7 @@ jobs:
           sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
-          pilotUUID="${g_job//_/}""${GITHUB_RUN_ID}"
+          pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins-lhcb.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch -e LHCb -l LHCb -E LHCbPilot --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=LHCb  -o lbRunOnly --pilotUUID="${pilotUUID}" --debug
 
@@ -408,7 +408,7 @@ jobs:
           sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
-          pilotUUID="${g_job//_/}""${GITHUB_RUN_ID}"
+          pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           python dirac-pilot.py -M 1 -S DIRAC-Certification -N ${{ matrix.ce }} -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch -e LHCb -l LHCb -E LHCbPilot --preinstalledEnvPrefix=/cvmfs/lhcb.cern.ch/lhcbdirac/ --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=LHCb -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
 
@@ -456,6 +456,6 @@ jobs:
           sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
-          pilotUUID="${g_job//_/}""${GITHUB_RUN_ID}"
+          pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins-lhcb.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch -e LHCb -l LHCb -E LHCbPilot --preinstalledEnvPrefix=/cvmfs/lhcb.cern.ch/lhcbdirac/ --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=LHCb -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
