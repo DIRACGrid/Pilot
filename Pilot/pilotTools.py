@@ -513,6 +513,7 @@ class RemoteLogger(Logger):
         pilotUUID="unknown",
         flushInterval=10,
         bufsize=1000,
+        wnVO = "unknown",
     ):
         """
         c'tor
@@ -523,7 +524,7 @@ class RemoteLogger(Logger):
         self.url = url
         self.pilotUUID = pilotUUID
         self.isPilotLoggerOn = isPilotLoggerOn
-        sendToURL = partial(sendMessage, url, pilotUUID, "sendMessage")
+        sendToURL = partial(sendMessage, url, pilotUUID, wnVO, "sendMessage")
         self.buffer = FixedSizeBuffer(sendToURL, bufsize=bufsize, autoflush=flushInterval)
 
     def debug(self, msg, header=True, sendPilotLog=False):
@@ -668,12 +669,13 @@ class FixedSizeBuffer(object):
             self._timer.cancel()
 
 
-def sendMessage(url, pilotUUID, method, rawMessage):
+def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
     """
     Invoke a remote method on a Tornado server and pass a JSON message to it.
 
     :param str url: Server URL
     :param str pilotUUID: pilot unique ID
+    :param str wnVO: VO name, relevant only if not contained in a proxy
     :param str method: a method to be invoked
     :param str rawMessage: a message to be sent, in JSON format
     :return: None.
@@ -684,7 +686,7 @@ def sendMessage(url, pilotUUID, method, rawMessage):
     context = ssl.create_default_context()
     context.load_verify_locations(capath=caPath)
     
-    message = json.dumps((json.dumps(rawMessage), pilotUUID))
+    message = json.dumps((json.dumps(rawMessage), pilotUUID, wnVO))
 
     try:
         context.load_cert_chain(cert)  # this is a proxy
@@ -737,6 +739,7 @@ class CommandBase(object):
                 debugFlag=self.debugFlag,
                 flushInterval=interval,
                 bufsize=bufsize,
+                wnVO=pilotParams.wnVO,
             )
 
         self.log.isPilotLoggerOn = isPilotLoggerOn
