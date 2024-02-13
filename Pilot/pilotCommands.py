@@ -856,14 +856,14 @@ class ConfigureSite(CommandBase):
 
         # Add batch system details to the configuration
         # Can be used by the pilot/job later on, to interact with the batch system
-        self.cfg.append("-o /LocalSite/BatchSystem/Type=%s" % self.pp.batchSystemInfo.get("Type", "Unknown"))
-        self.cfg.append("-o /LocalSite/BatchSystem/JobID=%s" % self.pp.batchSystemInfo.get("JobID", "Unknown"))
+        self.cfg.append("-o /LocalSite/BatchSystemInfo/Type=%s" % self.pp.batchSystemInfo.get("Type", "Unknown"))
+        self.cfg.append("-o /LocalSite/BatchSystemInfo/JobID=%s" % self.pp.batchSystemInfo.get("JobID", "Unknown"))
 
         batchSystemParams = self.pp.batchSystemInfo.get("Parameters", {})
-        self.cfg.append("-o /LocalSite/BatchSystem/Parameters/Queue=%s" % batchSystemParams.get("Queue", "Unknown"))
-        self.cfg.append("-o /LocalSite/BatchSystem/Parameters/BinaryPath=%s" % batchSystemParams.get("BinaryPath", "Unknown"))
-        self.cfg.append("-o /LocalSite/BatchSystem/Parameters/Host=%s" % batchSystemParams.get("Host", "Unknown"))
-        self.cfg.append("-o /LocalSite/BatchSystem/Parameters/InfoPath=%s" % batchSystemParams.get("InfoPath", "Unknown"))
+        self.cfg.append("-o /LocalSite/BatchSystemInfo/Parameters/Queue=%s" % batchSystemParams.get("Queue", "Unknown"))
+        self.cfg.append("-o /LocalSite/BatchSystemInfo/Parameters/BinaryPath=%s" % batchSystemParams.get("BinaryPath", "Unknown"))
+        self.cfg.append("-o /LocalSite/BatchSystemInfo/Parameters/Host=%s" % batchSystemParams.get("Host", "Unknown"))
+        self.cfg.append("-o /LocalSite/BatchSystemInfo/Parameters/InfoPath=%s" % batchSystemParams.get("InfoPath", "Unknown"))
 
         self.cfg.append('-n "%s"' % self.pp.site)
         self.cfg.append('-S "%s"' % self.pp.setup)
