@@ -1029,31 +1029,28 @@ class PilotParams(object):
 
     def __checkSecurityDir(self, envName, dirName):
 
+        # try and find it
+        for candidate in self.CVMFS_locations:
+            candidateDir = os.path.join(candidate,
+                                        'etc/grid-security',
+                                        dirName)
+            self.log.debug(
+                "Candidate directory for %s is %s"
+                % (envName, candidateDir)
+            )
+            if safe_listdir(candidateDir):
+                self.log.debug("Setting %s=%s" % (envName, candidateDir))
+                self.installEnv[envName] = candidateDir
+                os.environ[envName] = candidateDir
+                return
+            self.log.debug("%s not found or not a directory" % candidateDir)
+
         if envName in os.environ and safe_listdir(os.environ[envName]):
             self.log.debug(
                 "%s is set in the host environment as %s, aligning installEnv to it"
                 % (envName, os.environ[envName])
-            )               
-            self.installEnv[envName] = os.environ[envName]
+            )
         else:
-            self.log.debug("%s is not set in the host environment" % envName)
-            # try and find it
-            for candidate in self.CVMFS_locations:
-                candidateDir = os.path.join(candidate,
-                                            'etc/grid-security',
-                                            dirName)
-                self.log.debug(
-                    "Candidate directory for %s is %s"
-                    % (envName, candidateDir)
-                )
-                if safe_listdir(candidateDir):
-                    self.log.debug("Setting %s=%s" % (envName, candidateDir))
-                    self.installEnv[envName] = candidateDir
-                    os.environ[envName] = candidateDir
-                    break
-                self.log.debug("%s not found or not a directory" % candidateDir)
-
-        if envName not in self.installEnv:
             self.log.error("Could not find/set %s" % envName)
             sys.exit(1)
 
