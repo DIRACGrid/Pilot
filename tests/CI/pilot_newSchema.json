@@ -113,7 +113,7 @@
 			"RemoteLoggerTimerInterval": 0,
 			"LoggingShifterName": "GridPPLogManager",
 			"PilotLogLevel": "DEBUG",
-			"CVMFS_locations": ["/cvmfs/grid.cern.ch", "/cvmfs/dirac.egi.eu"]
+			"CVMFS_locations": "/cvmfs/grid.cern.ch, /cvmfs/dirac.egi.eu"
 		}
 	},
 	"dteam": {
@@ -130,7 +130,7 @@
 			"RemoteLoggerURL": "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
 			"RemoteLoggerTimerInterval": 0,
 			"PilotLogLevel": "DEBUG",
-			"CVMFS_locations": ["/cvmfs/grid.cern.ch", "/cvmfs/dirac.egi.eu"]
+			"CVMFS_locations": "/cvmfs/grid.cern.ch, /cvmfs/dirac.egi.eu"
 		}
 	},
 	"LHCb": {
@@ -143,7 +143,7 @@
 			"RemoteLogging": "False",
 			"RemoteLoggerTimerInterval": 0,
 			"PilotLogLevel": "DEBUG",
-			"CVMFS_locations": ["/cvmfs/lhcb.cern.ch/", "$VO_LHCB_SW_DIR"]
+			"CVMFS_locations": "/cvmfs/lhcb.cern.ch/, $VO_LHCB_SW_DIR"
 		}
 	},
 	"ConfigurationServers": [
