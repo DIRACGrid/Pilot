@@ -173,22 +173,6 @@ def retrieveUrlTimeout(url, fileName, log, timeout=0):
         raise x
 
 
-def which(cmd):
-    """
-    test if an executable exists, python2 compatible
-    (in python 3 one could simply use shutil.which(cmd)).
-
-    If testing for the existance of a DIRAC command,
-    this would only work for pilots installing python3 DIRAC clients
-    """
-    for prefix in os.environ["PATH"].split(os.pathsep):
-        filename = os.path.join(prefix, cmd)
-        executable = os.access(filename, os.X_OK)
-        if executable and os.path.isfile(filename):
-            return os.path.join(prefix, filename)
-    return False
-
-
 def safe_listdir(directory, timeout=60):
     """ This is a "safe" list directory,
     for lazily-loaded File Systems like CVMFS.
