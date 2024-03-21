@@ -830,7 +830,6 @@ class PilotParams(object):
         """
         self.log = Logger(self.__class__.__name__, debugFlag=True)
         self.rootPath = os.getcwd()
-        self.originalRootPath = os.getcwd()
         self.pilotRootPath = os.getcwd()
         self.workingDir = os.getcwd()
 
@@ -859,7 +858,6 @@ class PilotParams(object):
         self.site = ""
         self.setup = ""
         self.configServer = ""
-        self.installation = ""
         self.ceName = ""
         self.ceType = ""
         self.queueName = ""
@@ -869,7 +867,6 @@ class PilotParams(object):
         # used to set payloadProcessors unless other limits are reached (like the number of processors on the WN)
         self.maxNumberOfProcessors = 0
         self.minDiskSpace = 2560  # MB
-        self.defaultsURL = None
         self.userGroup = ""
         self.userDN = ""
         self.maxCycles = 10
@@ -966,11 +963,9 @@ class PilotParams(object):
             ("R:", "reference=", "Use this pilot reference"),
             ("S:", "setup=", "DIRAC Setup to use"),
             ("T:", "CPUTime=", "Requested CPU Time"),
-            ("V:", "installation=", "Installation configuration file"),
             ("W:", "gateway=", "Configure <gateway> as DIRAC Gateway during installation"),
             ("X:", "commands=", "Pilot commands to execute"),
             ("Z:", "commandOptions=", "Options parsed by command modules"),
-            ("", "defaultsURL=", "user-defined URL for global config"),
             ("", "pilotUUID=", "pilot UUID"),
             ("", "preinstalledEnv=", "preinstalled pilot environment script location"),
             ("", "preinstalledEnvPrefix=", "preinstalled pilot environment area prefix"),
@@ -1085,8 +1080,6 @@ class PilotParams(object):
                 self.executeCmd = v
             elif o in ("-O", "--OwnerDN"):
                 self.userDN = v
-            elif o in ("-V", "--installation"):
-                self.installation = v
             elif o == "-m" or o == "--maxNumberOfProcessors":
                 self.maxNumberOfProcessors = int(v)
             elif o == "-D" or o == "--disk":
@@ -1146,9 +1139,6 @@ class PilotParams(object):
                 self.userEnvVariables = v
             elif o == "--pipInstallOptions":
                 self.pipInstallOptions = v
-
-            elif o == "--defaultsURL":
-                self.defaultsURL = v
             elif o == "--preinstalledEnv":
                 self.preinstalledEnv = v
             elif o == "--preinstalledEnvPrefix":
