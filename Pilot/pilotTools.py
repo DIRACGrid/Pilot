@@ -271,24 +271,14 @@ def getSubmitterInfo(ceName):
         flavour = "SSH%s" % batchSystemType
         pilotReference = "sshslurm://" + ceName + "/" + batchSystemJobID
 
-    # Condor
-    if "CONDOR_JOBID" in os.environ:
+    # HTCondor
+    if "_CONDOR_JOB_AD" in os.environ:
         batchSystemType = "HTCondor"
-        batchSystemJobID = os.environ["CONDOR_JOBID"]
-        batchSystemParameters["InfoPath"] = os.environ.get("_CONDOR_JOB_AD", "Unknown")
+        batchSystemJobID = None # Not available in the environment
+        batchSystemParameters["InfoPath"] = os.environ["_CONDOR_JOB_AD"]
 
         flavour = "SSH%s" % batchSystemType
-        pilotReference = "sshcondor://" + ceName + "/" + batchSystemJobID
-
-    # # CEs/Batch Systems
-
-    # HTCondor
-    if "HTCONDOR_JOBID" in os.environ:
-        batchSystemType = "HTCondor"
-        batchSystemJobID = os.environ["HTCONDOR_JOBID"]
-
-        flavour = "HTCondorCE"
-        pilotReference = "htcondorce://" + ceName + "/" + batchSystemJobID
+        pilotReference = "sshcondor://" + ceName + "/" + os.environ.get("CONDOR_JOBID", pilotReference)
 
     # # Local/SSH
 
@@ -310,6 +300,11 @@ def getSubmitterInfo(ceName):
         )
 
     # # CEs
+
+    # HTCondor
+    if "HTCONDOR_JOBID" in os.environ:
+        flavour = "HTCondorCE"
+        pilotReference = "htcondorce://" + ceName + "/" + os.environ["HTCONDOR_JOBID"]
 
     # ARC
     if "GRID_GLOBAL_JOBURL" in os.environ:
