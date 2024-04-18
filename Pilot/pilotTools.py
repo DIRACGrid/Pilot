@@ -5,7 +5,6 @@ from __future__ import absolute_import, division, print_function
 
 import fcntl
 import getopt
-import imp
 import json
 import os
 import re
@@ -30,6 +29,33 @@ except ImportError:
     from urllib import urlencode
 
     from urllib2 import HTTPError, URLError, urlopen
+
+try:
+    import importlib.util
+    from importlib import import_module
+except ImportError:
+    def import_module(module):
+        import imp
+
+        impData = imp.find_module(module)
+        return imp.load_module(module, *impData)
+
+    
+    def load_module_from_path(module_name, path_to_module):
+        import imp
+        fp, pathname, description = imp.find_module(module_name, [path_to_module])
+        try:
+            module = imp.load_module('module_name', fp, pathname, description)
+        finally:
+            if fp:
+                fp.close()
+
+else:
+    def load_module_from_path(module_name, path_to_module):
+        spec = importlib.util.spec_from_file_location(module_name, path_to_module)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
 
 try:
     from cStringIO import StringIO
@@ -370,12 +396,9 @@ class ObjectLoader(object):
             modName = modName.split(".")
         try:
             if parentModule:
-                impData = imp.find_module(modName[0], parentModule.__path__)
+                module = load_module_from_path(modName[0], parentModule.__path__)
             else:
-                impData = imp.find_module(modName[0])
-            impModule = imp.load_module(modName[0], *impData)
-            if impData[0]:
-                impData[0].close()
+                module = import_module(modName[0])
         except ImportError as excp:
             if str(excp).find("No module named %s" % modName[0]) == 0:
                 return None, None
@@ -415,8 +438,7 @@ def getCommand(params, commandName):
     # Look for commands in the modules in the current directory first
     for module in modules:
         try:
-            impData = imp.find_module(module)
-            commandModule = imp.load_module(module, *impData)
+            commandModule = import_module(module)
             commandObject = getattr(commandModule, commandName)
         except Exception:
             pass
