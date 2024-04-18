@@ -45,7 +45,7 @@ except ImportError:
         import imp
         fp, pathname, description = imp.find_module(module_name, [path_to_module])
         try:
-            module = imp.load_module('module_name', fp, pathname, description)
+            return imp.load_module(module_name, fp, pathname, description)
         finally:
             if fp:
                 fp.close()
@@ -396,9 +396,9 @@ class ObjectLoader(object):
             modName = modName.split(".")
         try:
             if parentModule:
-                module = load_module_from_path(modName[0], parentModule.__path__)
+                impModule = load_module_from_path(modName[0], parentModule.__path__)
             else:
-                module = import_module(modName[0])
+                impModule = import_module(modName[0])
         except ImportError as excp:
             if str(excp).find("No module named %s" % modName[0]) == 0:
                 return None, None
