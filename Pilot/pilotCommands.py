@@ -361,6 +361,7 @@ class InstallDIRAC(CommandBase):
             for modules in self.pp.modules.split(","):
                 branch = project = ""
                 elements = modules.split(":::")
+                url = ""
                 if len(elements) == 3:
                     # e.g.: https://github.com/$DIRAC_test_repo/DIRAC.git:::DIRAC:::$DIRAC_test_branch
                     url, project, branch = elements
@@ -516,6 +517,8 @@ class ConfigureBasics(CommandBase):
         if self.pp.userDN:
             self.cfg.append('-o /AgentJobRequirements/OwnerDN="%s"' % self.pp.userDN)
         self.cfg.append("-o /LocalSite/ReleaseVersion=%s" % self.releaseVersion)
+        # add the installation locations
+        self.cfg.append("-o /LocalSite/CVMFS_locations=%s" % ",".join(self.pp.CVMFS_locations))
 
         if self.pp.wnVO:
             self.cfg.append('-o "/Resources/Computing/CEDefaults/VirtualOrganization=%s"' % self.pp.wnVO)
@@ -846,6 +849,9 @@ class ConfigureArchitecture(CommandBase):
         localArchitecture = localArchitecture.strip().split("\n")[-1].strip()
         cfg.append('-S "%s"' % self.pp.setup)
         cfg.append("-o /LocalSite/Architecture=%s" % localArchitecture)
+        
+        # add the local platform as determined by the platform module
+        cfg.append("-o /LocalSite/Platform=%s" % platform.machine())
 
         configureCmd = "%s %s" % (self.pp.configureScript, " ".join(cfg))
         retCode, _configureOutData = self.executeAndGetOutput(configureCmd, self.pp.installEnv)
