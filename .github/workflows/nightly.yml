@@ -1,11 +1,11 @@
 name: Nightly
 
-# on: push
-on: 
-  schedule:
-    # every night at midnight
-    - cron:  '0 0 * * *'
-  workflow_dispatch:
+on: push
+# on: 
+#   schedule:
+#     # every night at midnight
+#     - cron:  '0 0 * * *'
+#   workflow_dispatch:
 
 
 jobs:
@@ -25,22 +25,24 @@ jobs:
           - devel
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           ref: ${{ matrix.branch }}
-      - name: upload
+
+      - name: create artifacts
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io --username ${{ github.actor }} --password-stdin;
-          docker pull ghcr.io/diracgrid/management/dirac-distribution:latest
-          contID=$(docker run -dt ghcr.io/diracgrid/management/dirac-distribution:latest)
-          docker exec ${contID} mkdir Pilot
-          docker cp Pilot ${contID}:.
-          docker cp tests ${contID}:.
-          docker exec ${contID} bash -c \
-          "sed -i 's/uploaduser/${{ secrets.KRB_USERNAME }}/g' pilot_tarball_upload.sh && "\
-          "cat pilot_tarball_upload.sh && "\
-          "echo ${{ secrets.KRB_PASSWORD }} | kinit ${{ secrets.KRB_USERNAME }}@CERN.CH  && "\
-          "echo readyToUpload && "\
-          "export USER=${{ secrets.KRB_USERNAME }} && "\
-          "echo reallyReadyToUpload && "\
-          "source pilot_tarball_upload.sh ${{ matrix.branch }}"
+          mkdir tmp_dir
+          cp Pilot/*.py tmp_dir
+          cp tests/pilot.json tmp_dir
+          # create the tar
+          cd tmp_dir
+          tar -cf pilot.tar *.py
+          # make the checksums file
+          sha512sum pilot.tar pilot.json *.py > checksums.sha512
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pilot_${{ matrix.branch }}
+          path: tmp_dir/pilot.tar tmp_dir/checksums.sha512
+          retention-days: 2
