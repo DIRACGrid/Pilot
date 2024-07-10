@@ -31,22 +31,21 @@ jobs:
 
       - name: create artifacts
         run: |
-          ls -l
-          ls -l Pilot
           mkdir tmp_dir
           cp Pilot/*.py tmp_dir
           cp tests/pilot.json tmp_dir
-          ls -l tmp_dir
           # create the tar
           cd tmp_dir
           tar -cf pilot.tar *.py
           # make the checksums file
           sha512sum pilot.tar pilot.json *.py > checksums.sha512
-          ls -l
+          cd ..
+          cp tmp_dir/checksums.sha512 .
+          cp tmp_dir/pilot.tar .
 
       - name: upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Pilot_${{ matrix.branch }}
-          path: tmp_dir/pilot.tar tmp_dir/checksums.sha512
+          path: pilot.tar checksums.sha512
           retention-days: 2
