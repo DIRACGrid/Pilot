@@ -32,13 +32,17 @@ jobs:
       - name: create artifacts
         run: |
           mkdir tmp_dir
+          ls -al
+          ls -al Pilot
           cp Pilot/*.py tmp_dir
           cp tests/pilot.json tmp_dir
+          ls tmp_dir
           # create the tar
           cd tmp_dir
           tar -cf pilot.tar *.py
           # make the checksums file
           sha512sum pilot.tar pilot.json *.py > checksums.sha512
+          ls tmp_dir
 
       - name: upload artifacts
         uses: actions/upload-artifact@v4
