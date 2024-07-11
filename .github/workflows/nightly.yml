@@ -31,9 +31,10 @@ jobs:
 
       - name: create artifacts
         run: |
+          pwd
           mkdir tmp_dir
-          cp Pilot/*.py tmp_dir
-          cp tests/pilot.json tmp_dir
+          cp Pilot/*.py tmp_dir/
+          cp tests/pilot.json tmp_dir/
           # create the tar
           cd tmp_dir
           tar -cf pilot.tar *.py
@@ -44,6 +45,8 @@ jobs:
           cp tmp_dir/pilot.tar .
           pwd
           ls -l
+          cp tmp_dir/checksums.sha512 ../
+          cp tmp_dir/pilot.tar ../
 
       - name: upload artifacts
         uses: actions/upload-artifact@v4
