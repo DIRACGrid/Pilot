@@ -1,15 +1,15 @@
 name: Nightly
 
-on: push
-# on: 
-#   schedule:
-#     # every night at midnight
-#     - cron:  '0 0 * * *'
-#   workflow_dispatch:
+# on: push
+on: 
+  schedule:
+    # every night at midnight
+    - cron:  '0 0 * * *'
+  workflow_dispatch:
 
 
 jobs:
-  # uploading master and devel tarballs to web server, for use in subsequent tests
+  # uploading master and devel tarballs as artifacts, for use in subsequent tests
   # the base tests that use these uploaded tarballs are the DIRAC "pilot wrapper" tests:
   # https://github.com/DIRACGrid/DIRAC/actions?query=workflow%3A%22pilot+wrapper%22
   # (triggered by https://github.com/DIRACGrid/DIRAC/blob/integration/.github/workflows/pilotWrapper.yml)
@@ -31,7 +31,6 @@ jobs:
 
       - name: create artifacts
         run: |
-          pwd
           mkdir tmp_dir
           cp Pilot/*.py tmp_dir/
           cp tests/pilot.json tmp_dir/
@@ -40,17 +39,12 @@ jobs:
           tar -cf pilot.tar *.py
           # make the checksums file
           sha512sum pilot.tar pilot.json *.py > checksums.sha512
-          cd ..
-          cp tmp_dir/checksums.sha512 .
-          cp tmp_dir/pilot.tar .
-          pwd
-          ls -l
-          cp tmp_dir/checksums.sha512 ../
-          cp tmp_dir/pilot.tar ../
+          # remove unneeded files
+          rm *.py
 
       - name: upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Pilot_${{ matrix.branch }}
           path: tmp_dir
-          retention-days: 2
+          retention-days: 1
