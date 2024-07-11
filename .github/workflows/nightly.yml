@@ -41,7 +41,7 @@ jobs:
           sha512sum pilot.tar pilot.json *.py > checksums.sha512
           cd ..
           cp tmp_dir/checksums.sha512 .
-          cp tmp_dir/pilot.tar 
+          cp tmp_dir/pilot.tar .
           pwd
           ls -l
 
