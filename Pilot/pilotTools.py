@@ -329,10 +329,10 @@ def getSubmitterInfo(ceName):
         flavour = "ARC"
         pilotReference = os.environ["GRID_GLOBAL_JOBURL"]
 
-    # VMDIRAC case
-    if "VMDIRAC_VERSION" in os.environ:
-        flavour = "VMDIRAC"
-        pilotReference = "vm://" + ceName + "/" + os.environ["JOB_ID"]
+    # Cloud case
+    if "PILOT_UUID" in os.environ:
+        flavour = "CLOUD"
+        pilotReference = os.environ["PILOT_UUID"]
 
     return flavour, pilotReference, {"Type": batchSystemType, "JobID": batchSystemJobID, "Parameters": batchSystemParameters}
 
