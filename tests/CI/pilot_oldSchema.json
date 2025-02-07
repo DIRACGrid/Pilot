@@ -45,9 +45,9 @@
           "CheckCECapabilities",
           "LHCbAddCVMFSTags",
           "CheckWNCapabilities",
-          "LHCbConfigureSite",
+          "ConfigureSite",
           "LHCbConfigureArchitecture",
-          "LHCbConfigureCPURequirements"
+          "ConfigureCPURequirements"
         ],
         "LHCbD": [
           "CheckWorkerNode",
@@ -57,9 +57,9 @@
           "CheckCECapabilities",
           "LHCbAddCVMFSTags",
           "CheckWNCapabilities",
-          "LHCbConfigureSite",
+          "ConfigureSite",
           "LHCbConfigureArchitecture",
-          "LHCbConfigureCPURequirements"
+          "ConfigureCPURequirements"
         ],
         "LHCbDD": [
           "CheckWorkerNode",

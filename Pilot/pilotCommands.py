@@ -824,14 +824,19 @@ class ConfigureArchitecture(CommandBase):
         cfg = []
         if self.pp.useServerCertificate:
             cfg.append("-o  /DIRAC/Security/UseServerCertificate=yes")
-        if self.pp.localConfigFile:
-            cfg.extend(["--cfg", self.pp.localConfigFile])  # this file is as input
 
-        architectureCmd = "%s %s -d" % (self.pp.architectureScript, " ".join(cfg))
+        archScript = self.pp.architectureScript
+        if self.pp.architectureScript.split(" ")[0] == 'dirac-apptainer-exec':
+            archScript = self.pp.architectureScript.split(" ")[1]
+        
+        architectureCmd = "%s %s -d" % (archScript, " ".join(cfg))
+
+        if self.pp.architectureScript.split(" ")[0] == 'dirac-apptainer-exec':
+            architectureCmd = "dirac-apptainer-exec '%s' %s" % (architectureCmd, " ".join(cfg))
 
         retCode, localArchitecture = self.executeAndGetOutput(architectureCmd, self.pp.installEnv)
         if retCode:
-            self.log.error("There was an error updating the platform [ERROR %d]" % retCode)
+            self.log.error("There was an error getting the platform [ERROR %d]" % retCode)
             self.exitWithError(retCode)
         self.log.info("Architecture determined: %s" % localArchitecture.strip().split("\n")[-1])
 

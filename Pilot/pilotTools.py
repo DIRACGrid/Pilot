@@ -986,6 +986,7 @@ class PilotParams(object):
             ("", "pilotUUID=", "pilot UUID"),
             ("", "preinstalledEnv=", "preinstalled pilot environment script location"),
             ("", "preinstalledEnvPrefix=", "preinstalled pilot environment area prefix"),
+            ("", "architectureScript=", "architecture script to use"),
             ("", "CVMFS_locations=", "comma-separated list of CVMS locations"),
         )
 
@@ -1160,6 +1161,8 @@ class PilotParams(object):
                 self.preinstalledEnv = v
             elif o == "--preinstalledEnvPrefix":
                 self.preinstalledEnvPrefix = v
+            elif o == "--architectureScript":
+                self.architectureScript = v
             elif o == "--CVMFS_locations":
                 self.CVMFS_locations = v.split(",")
 
