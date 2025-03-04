@@ -824,14 +824,16 @@ class ConfigureArchitecture(CommandBase):
         cfg = []
         if self.pp.useServerCertificate:
             cfg.append("-o  /DIRAC/Security/UseServerCertificate=yes")
+        if self.pp.localConfigFile:
+            cfg.extend(["--cfg", self.pp.localConfigFile])  # this file is as input
 
         archScript = self.pp.architectureScript
-        if self.pp.architectureScript.split(" ")[0] == 'dirac-apptainer-exec':
+        if self.pp.architectureScript.split(" ")[0] == "dirac-apptainer-exec":
             archScript = self.pp.architectureScript.split(" ")[1]
         
-        architectureCmd = "%s %s -d" % (archScript, " ".join(cfg))
+        architectureCmd = "%s %s -ddd" % (archScript, " ".join(cfg))
 
-        if self.pp.architectureScript.split(" ")[0] == 'dirac-apptainer-exec':
+        if self.pp.architectureScript.startswith("dirac-apptainer-exec"):
             architectureCmd = "dirac-apptainer-exec '%s' %s" % (architectureCmd, " ".join(cfg))
 
         retCode, localArchitecture = self.executeAndGetOutput(architectureCmd, self.pp.installEnv)
