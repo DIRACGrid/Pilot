@@ -40,17 +40,17 @@ jobs:
         run: |
           cd Pilot
           cp ../tests/CI/${{ matrix.pilot_schema }} pilot.json
-          sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
+          sed -i "s/VAR_JENKINS_SITE/${{ vars.JENKINS_SITE }}/g" pilot.json
           sed -i "s/VAR_JENKINS_CE/jenkins.cern.ch/g" pilot.json
-          sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
+          sed -i "s/VAR_JENKINS_QUEUE/${{ vars.JENKINS_QUEUE }}/g" pilot.json
           sed -i "s/VAR_DIRAC_VERSION/${{ matrix.dirac_branch }}/g" pilot.json
-          sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
-          sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
+          sed -i "s#VAR_CS#${{ vars.CONFIGURATION_SERVER_URL }}#g" pilot.json
+          sed -i "s#VAR_USERDN#${{ vars.USER_DN }}#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::${{ matrix.dirac_branch }} -M 1 -S DIRAC-Certification -N jenkins.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=${{ matrix.VO }} --pilotUUID="${pilotUUID}" --debug
+          python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::${{ matrix.dirac_branch }} -M 1 -S ${{ vars.SETUP }} -N jenkins.cern.ch -Q ${{ vars.JENKINS_QUEUE }} -n ${{ vars.JENKINS_SITE }} --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=${{ matrix.VO }} --pilotUUID="${pilotUUID}" --debug
 
 
   integration-cvmfs:
@@ -97,17 +97,17 @@ jobs:
           echo ${version}
           cd Pilot
           cp ../tests/CI/${{ matrix.pilot_schema }} pilot.json
-          sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
+          sed -i "s/VAR_JENKINS_SITE/${{ vars.JENKINS_SITE }}/g" pilot.json
           sed -i "s/VAR_JENKINS_CE/jenkins.cern.ch/g" pilot.json
-          sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
+          sed -i "s/VAR_JENKINS_QUEUE/${{ vars.JENKINS_QUEUE }}/g" pilot.json
           sed -i "s/VAR_DIRAC_VERSION/${version}/g" pilot.json
-          sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
-          sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
+          sed -i "s#VAR_CS#${{ vars.CONFIGURATION_SERVER_URL }}#g" pilot.json
+          sed -i "s#VAR_USERDN#${{ vars.USER_DN }}#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --wnVO=dteam --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --pilotUUID="${pilotUUID}" --debug
+          python dirac-pilot.py -M 1 -S ${{ vars.SETUP }} -N jenkins.cern.ch -Q ${{ vars.JENKINS_QUEUE }} -n ${{ vars.JENKINS_SITE }} --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --wnVO=dteam --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --pilotUUID="${pilotUUID}" --debug
 
 
   integration-cvmfs_no_env_CEs:
@@ -145,17 +145,17 @@ jobs:
           version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'a' | tail -n 1)
           cd Pilot
           cp ../tests/CI/pilot_newSchema.json pilot.json
-          sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
+          sed -i "s/VAR_JENKINS_SITE/${{ vars.JENKINS_SITE }}/g" pilot.json
           sed -i "s/VAR_JENKINS_CE/${{ matrix.ce }}/g" pilot.json
-          sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
+          sed -i "s/VAR_JENKINS_QUEUE/${{ vars.JENKINS_QUEUE }}/g" pilot.json
           sed -i "s/VAR_DIRAC_VERSION/${version}/g" pilot.json
-          sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
-          sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
+          sed -i "s#VAR_CS#${{ vars.CONFIGURATION_SERVER_URL }}#g" pilot.json
+          sed -i "s#VAR_USERDN#${{ vars.USER_DN }}#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          python dirac-pilot.py -M 1 -S DIRAC-Certification -N ${{ matrix.ce }} -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=dteam -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
+          python dirac-pilot.py -M 1 -S ${{ vars.SETUP }} -N ${{ matrix.ce }} -Q ${{ vars.JENKINS_QUEUE }} -n ${{ vars.JENKINS_SITE }} --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=dteam -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
 
 
   matching:
@@ -189,17 +189,17 @@ jobs:
         run: |
           cd Pilot
           cp ../tests/CI/${{ matrix.pilot_schema }} pilot.json
-          sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
+          sed -i "s/VAR_JENKINS_SITE/${{ vars.JENKINS_SITE }}/g" pilot.json
           sed -i "s/VAR_JENKINS_CE/jenkins-full.cern.ch/g" pilot.json
-          sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
+          sed -i "s/VAR_JENKINS_QUEUE/${{ vars.JENKINS_QUEUE }}/g" pilot.json
           sed -i "s/VAR_DIRAC_VERSION/integration/g" pilot.json
-          sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
-          sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
+          sed -i "s#VAR_CS#${{ vars.CONFIGURATION_SERVER_URL }}#g" pilot.json
+          sed -i "s#VAR_USERDN#${{ vars.USER_DN }}#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::integration -M 1 -S DIRAC-Certification -N jenkins-full.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --wnVO=dteam --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --pilotUUID="${pilotUUID}" --debug
+          python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::integration -M 1 -S ${{ vars.SETUP }} -N jenkins-full.cern.ch -Q ${{ vars.JENKINS_QUEUE }} -n ${{ vars.JENKINS_SITE }} --wnVO=dteam --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --pilotUUID="${pilotUUID}" --debug
 
 
   integration-cvmfs_matching:
@@ -242,17 +242,17 @@ jobs:
           echo ${version}
           cd Pilot
           cp ../tests/CI/pilot_newSchema.json pilot.json
-          sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
+          sed -i "s/VAR_JENKINS_SITE/${{ vars.JENKINS_SITE }}/g" pilot.json
           sed -i "s/VAR_JENKINS_CE/jenkins-full.cern.ch/g" pilot.json
-          sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
+          sed -i "s/VAR_JENKINS_QUEUE/${{ vars.JENKINS_QUEUE }}/g" pilot.json
           sed -i "s/VAR_DIRAC_VERSION/${version}/g" pilot.json
-          sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
-          sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
+          sed -i "s#VAR_CS#${{ vars.CONFIGURATION_SERVER_URL }}#g" pilot.json
+          sed -i "s#VAR_USERDN#${{ vars.USER_DN }}#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins-full.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=${{ matrix.VO }} -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
+          python dirac-pilot.py -M 1 -S ${{ vars.SETUP }} -N jenkins-full.cern.ch -Q ${{ vars.JENKINS_QUEUE }} -n ${{ vars.JENKINS_SITE }} --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=${{ matrix.VO }} -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
 
 
   integration-cvmfs_matching_CEs:
@@ -291,17 +291,17 @@ jobs:
           echo ${version}
           cd Pilot
           cp ../tests/CI/pilot_newSchema.json pilot.json
-          sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
+          sed -i "s/VAR_JENKINS_SITE/${{ vars.JENKINS_SITE }}/g" pilot.json
           sed -i "s/VAR_JENKINS_CE/${{ matrix.ce }}/g" pilot.json
-          sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
+          sed -i "s/VAR_JENKINS_QUEUE/${{ vars.JENKINS_QUEUE }}/g" pilot.json
           sed -i "s/VAR_DIRAC_VERSION/${version}/g" pilot.json
-          sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
-          sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
+          sed -i "s#VAR_CS#${{ vars.CONFIGURATION_SERVER_URL }}#g" pilot.json
+          sed -i "s#VAR_USERDN#${{ vars.USER_DN }}#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          python dirac-pilot.py -M 1 -S DIRAC-Certification -N ${{ matrix.ce }} -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --StopAfterFailedMatches=1 --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=dteam -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
+          python dirac-pilot.py -M 1 -S ${{ vars.SETUP }} -N ${{ matrix.ce }} -Q ${{ vars.JENKINS_QUEUE }} -n ${{ vars.JENKINS_SITE }} --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --StopAfterFailedMatches=1 --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=dteam -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
 
 
   ##################################
@@ -352,17 +352,17 @@ jobs:
           export VO_LHCB_SW_DIR=${GITHUB_WORKSPACE}/Pilot
           curl https://gitlab.cern.ch/lhcb-dirac/LHCbPilot/-/raw/${{ matrix.pilot_version }}/LHCbPilot/LHCbPilotCommands.py -o LHCbPilotCommands.py
           cp ../tests/CI/${{ matrix.pilot_schema }} pilot.json
-          sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
+          sed -i "s/VAR_JENKINS_SITE/${{ vars.JENKINS_SITE }}/g" pilot.json
           sed -i "s/VAR_JENKINS_CE/jenkins-lhcb.cern.ch/g" pilot.json
-          sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
+          sed -i "s/VAR_JENKINS_QUEUE/${{ vars.JENKINS_QUEUE }}/g" pilot.json
           sed -i "s/VAR_DIRAC_VERSION/${version}/g" pilot.json
-          sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
-          sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
+          sed -i "s#VAR_CS#${{ vars.CONFIGURATION_SERVER_URL }}#g" pilot.json
+          sed -i "s#VAR_USERDN#${{ vars.USER_DN }}#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins-lhcb.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch -e LHCb -l LHCb -E LHCbPilot --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=LHCb  -o lbRunOnly --pilotUUID="${pilotUUID}" --debug
+          python dirac-pilot.py -M 1 -S ${{ vars.SETUP }} -N jenkins-lhcb.cern.ch -Q ${{ vars.JENKINS_QUEUE }} -n ${{ vars.JENKINS_SITE }} -e LHCb -l LHCb -E LHCbPilot --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=LHCb  -o lbRunOnly --pilotUUID="${pilotUUID}" --debug
 
   ext-lhcb_integration_dirac_installer_no_env:
     runs-on: ubuntu-latest
@@ -400,17 +400,17 @@ jobs:
           cd Pilot
           curl https://lhcbdirac.s3.cern.ch/Pilot3/LHCbPilotCommands.py -o LHCbPilotCommands.py
           cp ../tests/CI/${{ matrix.pilot_schema }} pilot.json
-          sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
+          sed -i "s/VAR_JENKINS_SITE/${{ vars.JENKINS_SITE }}/g" pilot.json
           sed -i "s/VAR_JENKINS_CE/${{ matrix.ce }}/g" pilot.json
-          sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
+          sed -i "s/VAR_JENKINS_QUEUE/${{ vars.JENKINS_QUEUE }}/g" pilot.json
           sed -i "s/VAR_DIRAC_VERSION/${version}/g" pilot.json
-          sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
-          sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
+          sed -i "s#VAR_CS#${{ vars.CONFIGURATION_SERVER_URL }}#g" pilot.json
+          sed -i "s#VAR_USERDN#${{ vars.USER_DN }}#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          python dirac-pilot.py -M 1 -S DIRAC-Certification -N ${{ matrix.ce }} -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch -e LHCb -l LHCb -E LHCbPilot --preinstalledEnvPrefix=/cvmfs/lhcb.cern.ch/lhcbdirac/ --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=LHCb -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
+          python dirac-pilot.py -M 1 -S ${{ vars.SETUP }} -N ${{ matrix.ce }} -Q ${{ vars.JENKINS_QUEUE }} -n ${{ vars.JENKINS_SITE }} -e LHCb -l LHCb -E LHCbPilot --preinstalledEnvPrefix=/cvmfs/lhcb.cern.ch/lhcbdirac/ --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=LHCb -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
 
   ext-lhcb_integration_no_env:
     runs-on: ubuntu-latest
@@ -448,14 +448,14 @@ jobs:
           cd Pilot
           curl https://gitlab.cern.ch/lhcb-dirac/LHCbPilot/-/raw/${{ matrix.pilot_version }}/LHCbPilot/LHCbPilotCommands.py -o LHCbPilotCommands.py
           cp ../tests/CI/${{ matrix.pilot_schema }} pilot.json
-          sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
+          sed -i "s/VAR_JENKINS_SITE/${{ vars.JENKINS_SITE }}/g" pilot.json
           sed -i "s/VAR_JENKINS_CE/jenkins-lhcb-d.cern.ch/g" pilot.json
-          sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
+          sed -i "s/VAR_JENKINS_QUEUE/${{ vars.JENKINS_QUEUE }}/g" pilot.json
           sed -i "s/VAR_DIRAC_VERSION/${version}/g" pilot.json
-          sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
-          sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
+          sed -i "s#VAR_CS#${{ vars.CONFIGURATION_SERVER_URL }}#g" pilot.json
+          sed -i "s#VAR_USERDN#${{ vars.USER_DN }}#g" pilot.json
           sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins-lhcb.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch -e LHCb -l LHCb -E LHCbPilot --preinstalledEnvPrefix=/cvmfs/lhcb.cern.ch/lhcbdirac/ --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=LHCb -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
+          python dirac-pilot.py -M 1 -S ${{ vars.SETUP }} -N jenkins-lhcb.cern.ch -Q ${{ vars.JENKINS_QUEUE }} -n ${{ vars.JENKINS_SITE }} -e LHCb -l LHCb -E LHCbPilot --preinstalledEnvPrefix=/cvmfs/lhcb.cern.ch/lhcbdirac/ --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=LHCb -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
