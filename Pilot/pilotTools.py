@@ -18,6 +18,15 @@ from datetime import datetime
 from functools import partial, wraps
 from threading import RLock
 
+try:
+    from Pilot.proxyTools import (
+        X509BasedRequest
+    )
+except ImportError:
+    from proxyTools import (
+        X509BasedRequest
+    )
+
 ############################
 # python 2 -> 3 "hacks"
 try:
@@ -701,26 +710,21 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
     caPath = os.getenv("X509_CERT_DIR")
     cert = os.getenv("X509_USER_PROXY")
 
-    context = ssl.create_default_context()
-    context.load_verify_locations(capath=caPath)
-
+    
     message = json.dumps((json.dumps(rawMessage), pilotUUID, wnVO))
 
-    try:
-        context.load_cert_chain(cert)  # this is a proxy
-        raw_data = {"method": method, "args": message}
-    except IsADirectoryError:  # assuming it'a dir containing cert and key
-        context.load_cert_chain(os.path.join(cert, "hostcert.pem"), os.path.join(cert, "hostkey.pem"))
-        raw_data = {"method": method, "args": message, "extraCredentials": '"hosts"'}
+    raw_data = {"method": method, "args": message}
 
-    if sys.version_info.major == 3:
-        data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
-    else:
-        # Python2
-        data = urlencode(raw_data)
 
-    res = urlopen(url, data, context=context)
-    res.close()
+    X509config = X509BasedRequest(url=url,
+                                  caPath=caPath,
+                                  certEnv=cert)
+    
+    # Do the request
+    _res = X509config.executeRequest(raw_data=raw_data,
+                              headers={
+                                "User-Agent": X509config.generateUserAgent(pilotUUID=pilotUUID)
+                              })
 
 
 class CommandBase(object):
