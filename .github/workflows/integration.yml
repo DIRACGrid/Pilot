@@ -3,7 +3,7 @@ name: integration
 on: [push]
 
 jobs:
-  integration-local_install:
+  local_install:
     runs-on: ubuntu-latest
 
     strategy:
@@ -51,9 +51,9 @@ jobs:
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::${{ matrix.dirac_branch }} -M 1 -S DIRAC-Certification -N jenkins.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=${{ matrix.VO }} --pilotUUID="${pilotUUID}" --debug
+          
 
-
-  integration-cvmfs:
+  release_prod_pre-cvmfs:
     runs-on: ubuntu-latest
 
     strategy:
@@ -107,10 +107,10 @@ jobs:
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --wnVO=dteam --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --pilotUUID="${pilotUUID}" --debug
+          python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --architectureScript=dirac-platform --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --wnVO=dteam --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --pilotUUID="${pilotUUID}" --debug
 
 
-  integration-cvmfs_no_env_CEs:
+  release_prod-cvmfs_no_env_CEs:
     runs-on: ubuntu-latest
 
     strategy:
@@ -202,7 +202,7 @@ jobs:
           python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::integration -M 1 -S DIRAC-Certification -N jenkins-full.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --wnVO=dteam --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --pilotUUID="${pilotUUID}" --debug
 
 
-  integration-cvmfs_matching:
+  release_prod_pre-cvmfs_matching:
     runs-on: ubuntu-latest
 
     strategy:
@@ -255,7 +255,7 @@ jobs:
           python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins-full.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=${{ matrix.VO }} -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
 
 
-  integration-cvmfs_matching_CEs:
+  release_prod-cvmfs_matching_CEs:
     runs-on: ubuntu-latest
 
     strategy:
@@ -362,7 +362,7 @@ jobs:
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins-lhcb.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch -e LHCb -l LHCb -E LHCbPilot --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=LHCb  -o lbRunOnly --pilotUUID="${pilotUUID}" --debug
+          python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins-lhcb.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch -e LHCb -l LHCb -E LHCbPilot --architectureScript=dirac-architecture --cert --certLocation=${GITHUB_WORKSPACE}/Pilot/etc/grid-security --wnVO=LHCb  -o lbRunOnly --pilotUUID="${pilotUUID}" --debug
 
   ext-lhcb_integration_dirac_installer_no_env:
     runs-on: ubuntu-latest

@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
 
   shellcheck:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.event_name != 'push' || github.repository == 'DIRACGrid/DIRAC'
     timeout-minutes: 10
 
@@ -16,7 +16,7 @@ jobs:
         find tests/CI -name '*.sh' -print0 | xargs -0 -n1 shellcheck --external-sources;
 
   pycodestyle:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.event_name != 'push' || github.repository == 'DIRACGrid/Pilot'
     timeout-minutes: 10
 
@@ -46,7 +46,7 @@ jobs:
 
 
   pytest:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.event_name != 'push' || github.repository == 'DIRACGrid/Pilot'
     timeout-minutes: 10
 
@@ -70,7 +70,7 @@ jobs:
 
 
   pylint:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.event_name != 'push' || github.repository == 'DIRACGrid/Pilot'
     timeout-minutes: 10
 
