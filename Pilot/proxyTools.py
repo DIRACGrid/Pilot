@@ -1,5 +1,4 @@
-""" few functions for dealing with proxies
-"""
+"""few functions for dealing with proxies"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -29,6 +28,18 @@ def findExtension(oid, lines):
 
 
 def getVO(proxy_data):
+    """Fetches the VO in a chain certificate
+
+    Args:
+        proxy_data (bytes): Bytes for the proxy chain
+
+    Raises:
+        Exception: Any error related to openssl
+        NotImplementedError: Not documented error
+
+    Returns:
+        str: A VO
+    """
 
     chain = re.findall(br"-----BEGIN CERTIFICATE-----\n.+?\n-----END CERTIFICATE-----", proxy_data, flags=re.DOTALL)
     for cert in chain:

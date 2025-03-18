@@ -1,5 +1,4 @@
-""" A set of common tools to be used in pilot commands
-"""
+"""A set of common tools to be used in pilot commands"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -41,21 +40,23 @@ try:
         return module
 
 except ImportError:
+
     def import_module(module):
         import imp
 
         impData = imp.find_module(module)
         return imp.load_module(module, *impData)
 
-    
     def load_module_from_path(module_name, path_to_module):
         import imp
+
         fp, pathname, description = imp.find_module(module_name, [path_to_module])
         try:
             return imp.load_module(module_name, fp, pathname, description)
         finally:
             if fp:
                 fp.close()
+
 
 try:
     from cStringIO import StringIO
@@ -112,6 +113,12 @@ def parseVersion(releaseVersion):
 
 
 def pythonPathCheck():
+    """Checks where python is located
+
+    Raises:
+        - An exception if getting the env path raises an error
+        - An exception in case there is an error while removing duplicates in the PYTHONPATH
+    """
     try:
         os.umask(18)  # 022
         pythonpath = os.getenv("PYTHONPATH", "").split(":")
@@ -123,17 +130,17 @@ def pythonPathCheck():
                 if os.path.normpath(p) in sys.path:
                     # In case a given directory is twice in PYTHONPATH it has to removed only once
                     sys.path.remove(os.path.normpath(p))
-            except Exception as x:
-                print(x)
+            except Exception as pathRemovalError:
+                print(pathRemovalError)
                 print("[EXCEPTION-info] Failing path:", p, os.path.normpath(p))
                 print("[EXCEPTION-info] sys.path:", sys.path)
-                raise x
-    except Exception as x:
-        print(x)
+                raise pathRemovalError
+    except Exception as envError:
+        print(envError)
         print("[EXCEPTION-info] sys.executable:", sys.executable)
         print("[EXCEPTION-info] sys.version:", sys.version)
         print("[EXCEPTION-info] os.uname():", os.uname())
-        raise x
+        raise envError
 
 
 def alarmTimeoutHandler(*args):
@@ -192,9 +199,13 @@ def retrieveUrlTimeout(url, fileName, log, timeout=0):
 
 
 def safe_listdir(directory, timeout=60):
-    """ This is a "safe" list directory,
+    """This is a "safe" list directory,
     for lazily-loaded File Systems like CVMFS.
     There's by default a 60 seconds timeout.
+
+    .. warning::
+        There is no distinction between an empty directory, and a non existent one.
+        It will return `[]` in both cases.
 
     :param str directory: directory to list
     :param int timeout: optional timeout, in seconds. Defaults to 60.
@@ -220,7 +231,7 @@ def safe_listdir(directory, timeout=60):
 def getSubmitterInfo(ceName):
     """Get information about the submitter of the pilot.
 
-    Check the environment variables to determine the type of batch system and CE used 
+    Check the environment variables to determine the type of batch system and CE used
     to submit the pilot being used and return this information in a tuple.
     """
 
@@ -292,7 +303,7 @@ def getSubmitterInfo(ceName):
     # HTCondor
     if "_CONDOR_JOB_AD" in os.environ:
         batchSystemType = "HTCondor"
-        batchSystemJobID = None # Not available in the environment
+        batchSystemJobID = None  # Not available in the environment
         batchSystemParameters["InfoPath"] = os.environ["_CONDOR_JOB_AD"]
 
         flavour = "SSH%s" % batchSystemType
@@ -334,25 +345,34 @@ def getSubmitterInfo(ceName):
         flavour = "CLOUD"
         pilotReference = os.environ["PILOT_UUID"]
 
-    return flavour, pilotReference, {"Type": batchSystemType, "JobID": batchSystemJobID, "Parameters": batchSystemParameters}
+    return (
+        flavour,
+        pilotReference,
+        {"Type": batchSystemType, "JobID": batchSystemJobID, "Parameters": batchSystemParameters},
+    )
 
 
 def getFlavour(ceName):
     """Old method to get the flavour of the pilot. Deprecated.
-    
+
     Please use getSubmitterInfo instead.
     """
-    warnings.warn("getFlavour() is deprecated. Please use getSubmitterInfo() instead.", category=DeprecationWarning, stacklevel=2)
+    warnings.warn(
+        "getFlavour() is deprecated. Please use getSubmitterInfo() instead.", category=DeprecationWarning, stacklevel=2
+    )
     flavour, pilotReference, _ = getSubmitterInfo(ceName)
     return flavour, pilotReference
+
 
 class ObjectLoader(object):
     """Simplified class for loading objects from a DIRAC installation.
 
     Example:
 
+    ```py
     ol = ObjectLoader()
     object, modulePath = ol.loadObject( 'pilot', 'LaunchAgent' )
+    ```
     """
 
     def __init__(self, baseModules, log):
@@ -415,8 +435,8 @@ def getCommand(params, commandName):
     """Get an instantiated command object for execution.
     Commands are looked in the following modules in the order:
 
-    1. <CommandExtension>Commands
-    2. pilotCommands
+    1. `<CommandExtension>PilotCommands`
+    2. `PilotCommands`
     """
     extensions = params.commandExtensions
     modules = [m + "Commands" for m in extensions + ["pilot"]]
@@ -506,7 +526,7 @@ class RemoteLogger(Logger):
         pilotUUID="unknown",
         flushInterval=10,
         bufsize=1000,
-        wnVO = "unknown",
+        wnVO="unknown",
     ):
         """
         c'tor
@@ -520,24 +540,28 @@ class RemoteLogger(Logger):
         sendToURL = partial(sendMessage, url, pilotUUID, wnVO, "sendMessage")
         self.buffer = FixedSizeBuffer(sendToURL, bufsize=bufsize, autoflush=flushInterval)
 
-    def debug(self, msg, header=True, sendPilotLog=False):
+    def debug(self, msg, header=True, _sendPilotLog=False):
+        # TODO: Send pilot log remotely?
         super(RemoteLogger, self).debug(msg, header)
         if (
             self.isPilotLoggerOn and self.debugFlag
         ):  # the -d flag activates this debug flag in CommandBase via PilotParams
             self.sendMessage(self.messageTemplate.format(level="DEBUG", message=msg))
 
-    def error(self, msg, header=True, sendPilotLog=False):
+    def error(self, msg, header=True, _sendPilotLog=False):
+        # TODO: Send pilot log remotely?
         super(RemoteLogger, self).error(msg, header)
         if self.isPilotLoggerOn:
             self.sendMessage(self.messageTemplate.format(level="ERROR", message=msg))
 
-    def warn(self, msg, header=True, sendPilotLog=False):
+    def warn(self, msg, header=True, _sendPilotLog=False):
+        # TODO: Send pilot log remotely?
         super(RemoteLogger, self).warn(msg, header)
         if self.isPilotLoggerOn:
             self.sendMessage(self.messageTemplate.format(level="WARNING", message=msg))
 
-    def info(self, msg, header=True, sendPilotLog=False):
+    def info(self, msg, header=True, _sendPilotLog=False):
+        # TODO: Send pilot log remotely?
         super(RemoteLogger, self).info(msg, header)
         if self.isPilotLoggerOn:
             self.sendMessage(self.messageTemplate.format(level="INFO", message=msg))
@@ -678,22 +702,20 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
 
     context = ssl.create_default_context()
     context.load_verify_locations(capath=caPath)
-    
+
     message = json.dumps((json.dumps(rawMessage), pilotUUID, wnVO))
 
     try:
         context.load_cert_chain(cert)  # this is a proxy
         raw_data = {"method": method, "args": message}
     except IsADirectoryError:  # assuming it'a dir containing cert and key
-        context.load_cert_chain(
-            os.path.join(cert, "hostcert.pem"),
-            os.path.join(cert, "hostkey.pem")
-        )
+        context.load_cert_chain(os.path.join(cert, "hostcert.pem"), os.path.join(cert, "hostkey.pem"))
         raw_data = {"method": method, "args": message, "extraCredentials": '"hosts"'}
-    
+
     if sys.version_info[0] == 3:
         data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
     else:
+        # Python2
         data = urlencode(raw_data)
 
     res = urlopen(url, data, context=context)
@@ -703,7 +725,7 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
 class CommandBase(object):
     """CommandBase is the base class for every command in the pilot commands toolbox"""
 
-    def __init__(self, pilotParams, dummy=""):
+    def __init__(self, pilotParams):
         """
         Defines the classic pilot logger and the pilot parameters.
         Debug level of the Logger is controlled by the -d flag in pilotParams.
@@ -765,7 +787,7 @@ class CommandBase(object):
                     continue
                 dataWasRead = True
                 # Strip unicode replacement characters
-                outChunk = str(outChunk.replace(u"\ufffd", ""))
+                outChunk = str(outChunk.replace("\ufffd", ""))
                 if stream == _p.stderr:
                     sys.stderr.write(outChunk)
                     sys.stderr.flush()
@@ -948,7 +970,7 @@ class PilotParams(object):
             ("n:", "name=", "Set <Site> as Site Name"),
             ("o:", "option=", "Option=value to add"),
             ("m:", "maxNumberOfProcessors=", "specify a max number of processors to use by the payload inside a pilot"),
-            ("", "modules=", 'for installing non-released code'),
+            ("", "modules=", "for installing non-released code"),
             (
                 "",
                 "userEnvVariables=",
@@ -1014,33 +1036,59 @@ class PilotParams(object):
             self.installEnv["X509_USER_PROXY"] = self.certsLocation
             os.environ["X509_USER_PROXY"] = self.certsLocation
 
-    def __checkSecurityDir(self, envName, dirName):
+    def __setSecurityDir(self, envName, dirLocation):
+        """Set the environment variable of the `envName`, and add it also to the Pilot Parameters
 
-        # try and find it
+        Args:
+            envName (str): The environment to set (ex : `X509_USER_PROXY`)
+            dirLocation (str): The path that corresponds to the environment variable
+        """
+        self.log.debug("Setting %s=%s" % (envName, dirLocation))
+        self.installEnv[envName] = dirLocation
+        os.environ[envName] = dirLocation
+
+    def __checkSecurityDir(self, envName, dirName):
+        """For a given environment variable (that is not necessarily set in the OS), checks if it exists *and* is not empty.
+
+        .. example::
+            ```
+            self.__checkSecurityDir("X509_VOMSES", "vomses")
+            ```
+            It will check if `X509_VOMSES` is set, if not, check if one of the CVMFS_locations with "vomses" is a valid candidate.
+            If let's say `/cvmfs/dirac.egi.eu/etc/grid-security/vomses` exists, *and* is not empty, sets the OS environment variable `X509_VOMSES` to `/cvmfs/dirac.egi.eu/etc/grid-security/vomses`.
+
+
+        .. warning::
+            If none of the candidates work, it will stop the program.
+
+        Args:
+            envName (str): The environment name to try
+            dirName (str): The target folder
+        """
+
+        # Else, try to find it
         for candidate in self.CVMFS_locations:
-            candidateDir = os.path.join(candidate,
-                                        'etc/grid-security',
-                                        dirName)
-            self.log.debug(
-                "Candidate directory for %s is %s"
-                % (envName, candidateDir)
-            )
+            candidateDir = os.path.join(candidate, "etc/grid-security", dirName)
+            self.log.debug("Candidate directory for %s is %s" % (envName, candidateDir))
+
+            # Checks if the directory exists *and* isn't empty
             if safe_listdir(candidateDir):
                 self.log.debug("Setting %s=%s" % (envName, candidateDir))
-                self.installEnv[envName] = candidateDir
-                os.environ[envName] = candidateDir
-                return
-            self.log.debug("%s empty, or not found, or not a directory" % candidateDir)
+                # Set the environment variables to the candidate
+                self.__setSecurityDir(envName, candidateDir)
+                break
+            self.log.debug("%s not found or not a directory" % candidateDir)
 
+            # Check first if the environment variable is set
+            # If so, just return
         if envName in os.environ and safe_listdir(os.environ[envName]):
             self.log.debug(
-                "%s is set in the host environment as %s, aligning installEnv to it"
-                % (envName, os.environ[envName])
+                "%s is set in the host environment as %s, aligning installEnv to it" % (envName, os.environ[envName])
             )
         else:
+            # None of the candidates exists, stop the program.
             self.log.error("Could not find/set %s" % envName)
             sys.exit(1)
-
 
     def __initCommandLine1(self):
         """Parses and interpret options on the command line: first pass (essential things)"""
@@ -1170,8 +1218,7 @@ class PilotParams(object):
         """
         Load JSON file and return a dict content.
 
-        :return:
-        :rtype:
+        :return: None
         """
 
         self.log.debug("JSON file loaded: %s" % self.pilotCFGFile)
@@ -1265,7 +1312,6 @@ class PilotParams(object):
             self.CVMFS_locations = pilotOptions["CVMFS_locations"].replace(" ", "").split(",")
         self.log.debug("CVMFS locations: %s" % self.CVMFS_locations)
 
-
     def getPilotOptionsDict(self):
         """
         Get pilot option dictionary by searching paths in a certain order (commands, logging etc.).
@@ -1301,7 +1347,7 @@ class PilotParams(object):
                 with open(cert, "rb") as fp:
                     return getVO(fp.read())
             except IOError as err:
-                self.log.error("Could not read a proxy, setting vo to 'unknown': ", os.strerror(err.errno))
+                self.log.error("Could not read a proxy, setting vo to 'unknown': %s" % os.strerror(err.errno))
         else:
             self.log.error("Could not locate a proxy via X509_USER_PROXY")
 
@@ -1541,7 +1587,6 @@ class PilotParams(object):
     def __ceType(self):
         """
         Set CE type and setup.
-
         """
         self.log.debug("CE name: %s" % self.ceName)
         if self.ceName:

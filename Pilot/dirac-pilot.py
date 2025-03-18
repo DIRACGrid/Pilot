@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 
-""" The dirac-pilot.py script is a steering script to execute a series of
-    pilot commands. The commands may be provided in the pilot input sandbox, and are coded in
-    the pilotCommands.py module or in any <EXTENSION>Commands.py module.
-    The pilot script defines two switches in order to choose a set of commands for the pilot:
+"""The dirac-pilot.py script is a steering script to execute a series of
+pilot commands. The commands may be provided in the pilot input sandbox, and are coded in
+the pilotCommands.py module or in any <EXTENSION>PilotCommands.py module (e.g. "LHCbPilotCommands.py")
+The pilot script defines two switches in order to choose a set of commands for the pilot:
 
-     -E, --commandExtensions value
-        where the value is a comma separated list of extension names. Modules
-        with names <EXTENSION>Commands.py will be searched for the commands in
-        the order defined in the value. By default no extensions are given
-     -X, --commands value
-        where value is a comma separated list of pilot commands. By default
-        the list is InstallDIRAC,ConfigureDIRAC,LaunchAgent
+ -E, --commandExtensions value
+    where the value is a comma separated list of extension names. Modules
+    with names <EXTENSION>PilotCommands.py will be searched for the commands in
+    the order defined in the value. By default no extensions are given
+ -X, --commands value
+    where value is a comma separated list of pilot commands. By default
+    the list is CheckWorkerNode,InstallDIRAC,ConfigureBasics,RegisterPilot,CheckCECapabilities,CheckWNCapabilities,
+                ConfigureSite,ConfigureArchitecture,ConfigureCPURequirements,LaunchAgent
 
-    The pilot script by default performs initial sanity checks on WN, installs and configures
-    DIRAC and runs the Job Agent to execute pending workloads in the DIRAC WMS.
-    But, as said, all the actions are actually configurable.
+The pilot script by default performs initial sanity checks on WN, installs and configures
+DIRAC and runs the DIRAC JobAgent (https://github.com/DIRACGrid/DIRAC/blob/integration/src/DIRAC/WorkloadManagementSystem/Agent/JobAgent.py) to execute pending workloads in the DIRAC WMS.
+But, as said, all the actions are actually configurable.
 """
 
 from __future__ import absolute_import, division, print_function
@@ -70,8 +71,12 @@ if __name__ == "__main__":
         if not sys.stdin.isatty():
             receivedContent = sys.stdin.read()
         log = RemoteLogger(
-            pilotParams.loggerURL, "Pilot", bufsize=pilotParams.loggerBufsize,
-            pilotUUID=pilotParams.pilotUUID, debugFlag=pilotParams.debugFlag, wnVO=pilotParams.wnVO,
+            pilotParams.loggerURL,
+            "Pilot",
+            bufsize=pilotParams.loggerBufsize,
+            pilotUUID=pilotParams.pilotUUID,
+            debugFlag=pilotParams.debugFlag,
+            wnVO=pilotParams.wnVO,
         )
         log.info("Remote logger activated")
         log.buffer.write(receivedContent)
