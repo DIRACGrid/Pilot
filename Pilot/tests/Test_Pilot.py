@@ -1,5 +1,4 @@
-""" Test class for Pilot
-"""
+"""Test class for Pilot"""
 
 from __future__ import absolute_import, division, print_function
 

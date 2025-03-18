@@ -1,20 +1,20 @@
-""" Definitions of a standard set of pilot commands
+"""Definitions of a standard set of pilot commands
 
-    Each command is represented by a class inheriting from CommandBase class.
-    The command class constructor takes PilotParams object which is a data
-    structure which keeps common parameters across all the pilot commands.
+Each command is represented by a class inheriting from CommandBase class.
+The command class constructor takes PilotParams object which is a data
+structure which keeps common parameters across all the pilot commands.
 
-    The constructor must call the superclass constructor with the PilotParams
-    object and the command name as arguments, e.g.::
+The constructor must call the superclass constructor with the PilotParams
+object and the command name as arguments, e.g.::
 
-        class InstallDIRAC(CommandBase):
+    class InstallDIRAC(CommandBase):
 
-          def __init__(self, pilotParams):
-            CommandBase.__init__(self, pilotParams, 'Install')
-            ...
+      def __init__(self, pilotParams):
+        CommandBase.__init__(self, pilotParams, 'Install')
+        ...
 
-    The command class must implement execute() method for the actual command
-    execution.
+The command class must implement execute() method for the actual command
+execution.
 """
 
 from __future__ import absolute_import, division, print_function
@@ -65,7 +65,7 @@ except ImportError:
 
 def logFinalizer(func):
     """
-    PilotCammand decorator. It marks a log file as final so no more messages should be written to it .
+    PilotCommand decorator. It marks a log file as final so no more messages should be written to it.
     Finalising is triggered by a return statement or any sys.exit() call, so a file might be incomplete
     if a command throws SystemExit exception with a code =! 0.
 
@@ -104,6 +104,7 @@ def logFinalizer(func):
             raise
         finally:
             self.log.buffer.cancelTimer()
+
     return wrapper
 
 
@@ -206,8 +207,7 @@ class CheckWorkerNode(CommandBase):
 
 
 class InstallDIRAC(CommandBase):
-    """ Source from CVMFS, or install locally
-    """
+    """Source from CVMFS, or install locally"""
 
     def __init__(self, pilotParams):
         """c'tor"""
@@ -215,8 +215,7 @@ class InstallDIRAC(CommandBase):
         self.pp.rootPath = self.pp.pilotRootPath
 
     def _sourceEnvironmentFile(self):
-        """source the $DIRAC_RC_FILE and save the created environment in self.pp.installEnv
-        """
+        """Source the $DIRAC_RC_FILE and save the created environment in self.pp.installEnv"""
 
         retCode, output = self.executeAndGetOutput("bash -c 'source $DIRAC_RC_PATH && env'", self.pp.installEnv)
         if retCode:
@@ -249,12 +248,12 @@ class InstallDIRAC(CommandBase):
                 fd.write(bl)
 
     def _getPreinstalledEnvScript(self):
-        """ Get preinstalled environment script if any """
+        """Get preinstalled environment script if any"""
 
         self.log.debug("self.pp.preinstalledEnv = %s" % self.pp.preinstalledEnv)
         self.log.debug("self.pp.preinstalledEnvPrefix = %s" % self.pp.preinstalledEnvPrefix)
         self.log.debug("self.pp.CVMFS_locations = %s" % self.pp.CVMFS_locations)
-        
+
         preinstalledEnvScript = self.pp.preinstalledEnv
         if not preinstalledEnvScript and self.pp.preinstalledEnvPrefix:
             version = self.pp.releaseVersion or "pro"
@@ -265,7 +264,9 @@ class InstallDIRAC(CommandBase):
             for CVMFS_location in self.pp.CVMFS_locations:
                 version = self.pp.releaseVersion or "pro"
                 arch = platform.system() + "-" + platform.machine()
-                preinstalledEnvScript = os.path.join(CVMFS_location, self.pp.releaseProject.lower() + "dirac", version, arch, "diracosrc")
+                preinstalledEnvScript = os.path.join(
+                    CVMFS_location, self.pp.releaseProject.lower() + "dirac", version, arch, "diracosrc"
+                )
                 if os.path.isfile(preinstalledEnvScript):
                     break
 
@@ -280,11 +281,11 @@ class InstallDIRAC(CommandBase):
                 self.pp.preinstalledEnv = preinstalledEnvScript
                 self.pp.installEnv["DIRAC_RC_PATH"] = preinstalledEnvScript
 
-
     def _localInstallDIRAC(self):
+        """Install python3 version of DIRAC client"""
+
         self.log.info("Installing DIRAC locally")
 
-        """Install python3 version of DIRAC client"""
         # default to limit the resources used during installation to what the pilot owns
         installEnv = {
             # see https://github.com/DIRACGrid/Pilot/issues/189
@@ -353,7 +354,7 @@ class InstallDIRAC(CommandBase):
         self.pp.installEnv["DIRAC_RC_PATH"] = os.path.join(os.getcwd(), "diracos/diracosrc")
         self._sourceEnvironmentFile()
         self._saveEnvInFile()
-        
+
         # 7. pip install DIRAC[pilot]
         pipInstalling = "pip install %s " % self.pp.pipInstallOptions
 
@@ -401,7 +402,7 @@ class InstallDIRAC(CommandBase):
                 self.log.info("NOT sourcing: starting traditional DIRAC installation")
                 self._localInstallDIRAC()
                 return
-            
+
             # Try sourcing from CVMFS
             self._getPreinstalledEnvScript()
             if not self.pp.preinstalledEnv:
@@ -413,10 +414,8 @@ class InstallDIRAC(CommandBase):
             # environment variables to add?
             if self.pp.userEnvVariables:
                 # User-requested environment variables (comma-separated, name and value separated by ":::")
-                newEnvVars = dict(
-                name.split(":::", 1) for name in self.pp.userEnvVariables.replace(" ", "").split(",")
-              )
-                self.log.info("Adding env variable(s) to the environment", newEnvVars)
+                newEnvVars = dict(name.split(":::", 1) for name in self.pp.userEnvVariables.replace(" ", "").split(","))
+                self.log.info("Adding env variable(s) to the environment : %s" % newEnvVars)
                 self.pp.installEnv.update(newEnvVars)
 
         except OSError as e:
@@ -524,8 +523,7 @@ class ConfigureBasics(CommandBase):
             self.cfg.append('-o "/Resources/Computing/CEDefaults/VirtualOrganization=%s"' % self.pp.wnVO)
 
     def _getSecurityCFG(self):
-        """ Sets security-related env variables, if needed
-        """
+        """Sets security-related env variables, if needed"""
         # Need to know host cert and key location in case they are needed
         if self.pp.useServerCertificate:
             self.cfg.append("--UseServerCertificate")
@@ -765,9 +763,13 @@ class ConfigureSite(CommandBase):
 
         batchSystemParams = self.pp.batchSystemInfo.get("Parameters", {})
         self.cfg.append("-o /LocalSite/BatchSystemInfo/Parameters/Queue=%s" % batchSystemParams.get("Queue", "Unknown"))
-        self.cfg.append("-o /LocalSite/BatchSystemInfo/Parameters/BinaryPath=%s" % batchSystemParams.get("BinaryPath", "Unknown"))
+        self.cfg.append(
+            "-o /LocalSite/BatchSystemInfo/Parameters/BinaryPath=%s" % batchSystemParams.get("BinaryPath", "Unknown")
+        )
         self.cfg.append("-o /LocalSite/BatchSystemInfo/Parameters/Host=%s" % batchSystemParams.get("Host", "Unknown"))
-        self.cfg.append("-o /LocalSite/BatchSystemInfo/Parameters/InfoPath=%s" % batchSystemParams.get("InfoPath", "Unknown"))
+        self.cfg.append(
+            "-o /LocalSite/BatchSystemInfo/Parameters/InfoPath=%s" % batchSystemParams.get("InfoPath", "Unknown")
+        )
 
         self.cfg.append('-n "%s"' % self.pp.site)
         self.cfg.append('-S "%s"' % self.pp.setup)
@@ -856,7 +858,7 @@ class ConfigureArchitecture(CommandBase):
         localArchitecture = localArchitecture.strip().split("\n")[-1].strip()
         cfg.append('-S "%s"' % self.pp.setup)
         cfg.append("-o /LocalSite/Architecture=%s" % localArchitecture)
-        
+
         # add the local platform as determined by the platform module
         cfg.append("-o /LocalSite/Platform=%s" % platform.machine())
 
@@ -1129,6 +1131,8 @@ class NagiosProbes(CommandBase):
                 # retCode could be 2 (error) or 3 (unknown) or something we haven't thought of
                 self.log.error("Return code = %d: %s" % (retCode, str(output).split("\n", 1)[0]))
                 retStatus = "error"
+
+            # TODO: Do something with the retStatus (for example: log it?)
 
             # report results to pilot logger too. Like this:
             #   "NagiosProbes", probeCmd, retStatus, str(retCode) + ' ' + output.split('\n',1)[0]

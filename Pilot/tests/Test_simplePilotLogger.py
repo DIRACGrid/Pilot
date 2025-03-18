@@ -10,9 +10,9 @@ import sys
 import tempfile
 
 try:
-    from Pilot.pilotTools import CommandBase, PilotParams, Logger
+    from Pilot.pilotTools import CommandBase, Logger, PilotParams
 except ImportError:
-    from pilotTools import CommandBase, PilotParams, Logger
+    from pilotTools import CommandBase, Logger, PilotParams
 
 import unittest
 
@@ -58,7 +58,7 @@ class TestPilotParams(unittest.TestCase):
             "/%s/Pilot" % setup,
             "/%s/Defaults/Pilot" % vo,
             "/%s/%s/Pilot" % (vo, setup),
-            "/%s/Pilot" % vo
+            "/%s/Pilot" % vo,
         ]
         with open(jsonFile, "r") as fp:
             jsonDict = json.load(fp)
@@ -90,7 +90,7 @@ class TestPilotParams(unittest.TestCase):
             "/%s/Pilot" % setup,
             "/%s/Defaults/Pilot" % vo,
             "/%s/%s/Pilot" % (vo, setup),
-            "/%s/Pilot" % vo
+            "/%s/Pilot" % vo,
         ]
         mockPaths.return_value = paths
         os.environ["X509_CERT_DIR"] = os.getcwd()
@@ -111,7 +111,7 @@ class TestPilotParams(unittest.TestCase):
         self.assertEqual(res.get("UploadPath"), "/gridpp/pilotlogs/")
         self.assertTrue("Commands" in res)
         self.assertEqual(res["Commands"].get(pp.gridCEType), lTESTcommands)
-        self.assertEqual(', '.join(pp.commands), lTESTcommands)
+        self.assertEqual(", ".join(pp.commands), lTESTcommands)
         self.assertEqual(pp.releaseVersion, "VAR_DIRAC_VERSION")
 
 
@@ -120,9 +120,8 @@ class TestCommandBase(unittest.TestCase):
         # These temporary files, opened in a binary mode, will act as standard stream pipes for `Popen`
         self.stdout_mock = tempfile.NamedTemporaryFile(mode="rb+", delete=False)
         self.stderr_mock = tempfile.NamedTemporaryFile(mode="rb+", delete=False)
-        os.environ["X509_CERT_DIR"] = '/some/thing/'
-        os.environ["X509_USER_PROXY"] = '/some/thing'
-
+        os.environ["X509_CERT_DIR"] = "/some/thing/"
+        os.environ["X509_USER_PROXY"] = "/some/thing"
 
     def tearDown(self):
         # At the end of the test, we'll close and remove the created files
@@ -144,7 +143,7 @@ class TestCommandBase(unittest.TestCase):
             "-F",
             "tests/pilot.json",
         ]
- 
+
         for size in [1000, 1024, 1025, 2005]:
             random_str = "".join(random.choice(string.ascii_letters + "\n") for i in range(size))
             if sys.version_info.major == 3:
@@ -172,12 +171,6 @@ class TestCommandBase(unittest.TestCase):
             self.stderr_mock.seek(0)
             self.stdout_mock.truncate()
             self.stderr_mock.truncate()
-
-
-class TestSimplePilotLogger(unittest.TestCase):
-    def test_SimplePilotLogger(self):
-        uuid = "37356d94-15c6-11e6-a600-606c663dde16"
-
 
 if __name__ == "__main__":
     unittest.main()

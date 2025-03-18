@@ -9,3 +9,16 @@ init-hook='import sys; sys.path.append("$WORKSPACE/DIRAC/WorkloadManagementSyste
 # Add <file or directory> to the black list. It should be a base name, not a
 # path. You may set this option multiple times.
 ignore=.git
+
+# For unused variables
+[VARIABLES]
+dummy-variables=_
+
+[MESSAGES CONTROL]
+disable=
+    invalid-name,
+    line-too-long, # would be nice to remove this one
+    consider-using-f-string, # python2/3 support
+    unspecified-encoding, # python2/3 support
+    super-with-arguments, # python2/3 support
+    redefined-builtin, # python2/3 support
