@@ -2,12 +2,12 @@
 
 from __future__ import absolute_import, division, print_function
 
+import os
 import re
-from base64 import b16decode
-from subprocess import PIPE, Popen
 import ssl
 import sys
-import os
+from base64 import b16decode
+from subprocess import PIPE, Popen
 
 try:
     IsADirectoryError  # pylint: disable=used-before-assignment
@@ -47,15 +47,10 @@ def findExtension(oid, lines):
 def getVO(proxy_data):
     """Fetches the VO in a chain certificate
 
-    Args:
-        proxy_data (bytes): Bytes for the proxy chain
-
-    Raises:
-        Exception: Any error related to openssl
-        NotImplementedError: Not documented error
-
-    Returns:
-        str: A VO
+    :param proxy_data: Bytes for the proxy chain
+    :type proxy_data: bytes
+    :return: A VO
+    :rtype: str
     """
 
     chain = re.findall(br"-----BEGIN CERTIFICATE-----\n.+?\n-----END CERTIFICATE-----", proxy_data, flags=re.DOTALL)
@@ -100,11 +95,11 @@ class BaseConnectedRequest(object):
     def generateUserAgent(self, pilotUUID):
         """To analyse the traffic, we can send a taylor-made User-Agent
 
-        Args:
-            pilotUUID (str): Unique ID of the Pilot
-
-        Returns:
-            str: The generated user agent
+        :param pilotUUID: Unique ID of the Pilot
+        :type pilotUUID: str
+        :type param_name: param_type
+        :return: The generated user agent
+        :rtype: str
         """
         return "Dirac Pilot [%s]" % pilotUUID
 
@@ -117,12 +112,12 @@ class BaseConnectedRequest(object):
     def executeRequest(self, raw_data, headers={"User-Agent": "Dirac Pilot [Unknown ID]"}):
         """Execute a HTTP request with the data, headers, and the pre-defined data (SSL + auth)
 
-        Args:
-            raw_data (dict): Data to send
-            headers (dict, optional): Headers to send, helps to track requests. Defaults to {"User-Agent": "Dirac Pilot [Unknown ID]"}.
-
-        Returns:
-            str: Response of the HTTP request
+        :param raw_data: Data to send
+        :type raw_data: dict
+        :param headers: Headers to send, helps to track requests. Defaults to {"User-Agent": "Dirac Pilot [Unknown ID]"}.
+        :type headers: dict, optional
+        :return: Response of the HTTP request
+        :rtype: str
         """
         if sys.version_info[0] == 3:
             data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
@@ -148,7 +143,7 @@ class TokenBasedRequest(BaseConnectedRequest):
 
     def executeRequest(self, raw_data, headers={"User-Agent": "Dirac Pilot [Unknown ID]"}):
         # Adds the JWT in the HTTP request (in the Bearer field)
-        headers["Bearer"] = self.jwtData
+        headers["Authorization"] = "Bearer: %s" % self.jwtData
         return super(TokenBasedRequest, self).executeRequest(raw_data, headers)
 
 

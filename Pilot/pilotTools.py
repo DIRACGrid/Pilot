@@ -18,15 +18,6 @@ from datetime import datetime
 from functools import partial, wraps
 from threading import RLock
 
-try:
-    from Pilot.proxyTools import (
-        X509BasedRequest
-    )
-except ImportError:
-    from proxyTools import (
-        X509BasedRequest
-    )
-
 ############################
 # python 2 -> 3 "hacks"
 try:
@@ -78,9 +69,9 @@ except NameError:
     basestring = str
 
 try:
-    from Pilot.proxyTools import getVO
+    from Pilot.proxyTools import X509BasedRequest, getVO
 except ImportError:
-    from proxyTools import getVO
+    from proxyTools import X509BasedRequest, getVO
 
 try:
     FileNotFoundError  # pylint: disable=used-before-assignment
