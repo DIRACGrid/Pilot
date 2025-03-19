@@ -711,11 +711,10 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
                                   caPath=caPath,
                                   certEnv=cert)
     
+    X509config.generateUserAgent(pilotUUID=pilotUUID)
+    
     # Do the request
-    _res = X509config.executeRequest(raw_data=raw_data,
-                              headers={
-                                "User-Agent": X509config.generateUserAgent(pilotUUID=pilotUUID)
-                              })
+    _res = X509config.executeRequest(raw_data=raw_data)
 
 
 class CommandBase(object):

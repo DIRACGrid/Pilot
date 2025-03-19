@@ -86,6 +86,9 @@ class BaseConnectedRequest(object):
         self.name = name
         self.url = url
         self.caPath = caPath
+        self.headers = {
+            "User-Agent": "Dirac Pilot [Unknown ID]"
+        }
         # We assume we have only one context, so this variable could be shared to avoid opening n times a cert.
         # On the contrary, to avoid race conditions, we do avoid using "self.data" and "self.headers"
         self._context = None
@@ -97,11 +100,8 @@ class BaseConnectedRequest(object):
 
         :param pilotUUID: Unique ID of the Pilot
         :type pilotUUID: str
-        :type param_name: param_type
-        :return: The generated user agent
-        :rtype: str
         """
-        return "Dirac Pilot [%s]" % pilotUUID
+        self.headers["User-Agent"] = "Dirac Pilot [%s]" % pilotUUID
 
     def _prepareRequest(self):
         """As previously, loads the SSL certificates of the server (to avoid "unknown issuer")"""
@@ -109,7 +109,7 @@ class BaseConnectedRequest(object):
         self._context = ssl.create_default_context()
         self._context.load_verify_locations(capath=self.caPath)
 
-    def executeRequest(self, raw_data, headers={"User-Agent": "Dirac Pilot [Unknown ID]"}):
+    def executeRequest(self, raw_data):
         """Execute a HTTP request with the data, headers, and the pre-defined data (SSL + auth)
 
         :param raw_data: Data to send
@@ -125,7 +125,7 @@ class BaseConnectedRequest(object):
             # Python2
             data = urlencode(raw_data)
 
-        request = Request(self.url, data=data, headers=headers)
+        request = Request(self.url, data=data, headers=self.headers)
 
         res = urlopen(request, context=self._context)
         res.close()
@@ -140,11 +140,10 @@ class TokenBasedRequest(BaseConnectedRequest):
         super(TokenBasedRequest, self).__init__(url, caPath, "TokenBasedConnection")
 
         self.jwtData = jwtData
-
-    def executeRequest(self, raw_data, headers={"User-Agent": "Dirac Pilot [Unknown ID]"}):
+    
+    def addJwtToHeader(self):
         # Adds the JWT in the HTTP request (in the Bearer field)
-        headers["Authorization"] = "Bearer: %s" % self.jwtData
-        return super(TokenBasedRequest, self).executeRequest(raw_data, headers)
+        self.headers["Authorization"] = "Bearer: %s" % self.jwtData
 
 
 class X509BasedRequest(BaseConnectedRequest):
@@ -165,8 +164,8 @@ class X509BasedRequest(BaseConnectedRequest):
             )
             self._hasExtraCredentials = True
 
-    def executeRequest(self, raw_data, headers={"User-Agent": "Dirac Pilot [Unknown ID]"}):
+    def executeRequest(self, raw_data):
         # Adds a flag if the passed cert is a Directory
         if self._hasExtraCredentials:
             raw_data["extraCredentials"] = '"hosts"'
-        return super(X509BasedRequest, self).executeRequest(raw_data, headers)
+        return super(X509BasedRequest, self).executeRequest(raw_data)
