@@ -93,7 +93,7 @@ def logFinalizer(func):
             )
             self.log.buffer.flush()  # flush the buffer unconditionally (on sys.exit()).
             try:
-                sendMessage(self.log.url, self.log.pilotUUID, "finaliseLogs", {"retCode": str(exCode)})
+                sendMessage(self.log.url, self.log.pilotUUID, self.log.wnVO, "finaliseLogs", {"retCode": str(exCode)})
             except Exception as exc:
                 self.log.error("Remote logger couldn't be finalised %s " % str(exc))
             raise
