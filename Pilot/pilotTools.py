@@ -69,9 +69,9 @@ except NameError:
     basestring = str
 
 try:
-    from Pilot.proxyTools import getVO
+    from Pilot.proxyTools import X509BasedRequest, getVO
 except ImportError:
-    from proxyTools import getVO
+    from proxyTools import X509BasedRequest, getVO
 
 try:
     FileNotFoundError  # pylint: disable=used-before-assignment
@@ -701,26 +701,19 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
     caPath = os.getenv("X509_CERT_DIR")
     cert = os.getenv("X509_USER_PROXY")
 
-    context = ssl.create_default_context()
-    context.load_verify_locations(capath=caPath)
-
+    
     message = json.dumps((json.dumps(rawMessage), pilotUUID, wnVO))
 
-    try:
-        context.load_cert_chain(cert)  # this is a proxy
-        raw_data = {"method": method, "args": message}
-    except IsADirectoryError:  # assuming it'a dir containing cert and key
-        context.load_cert_chain(os.path.join(cert, "hostcert.pem"), os.path.join(cert, "hostkey.pem"))
-        raw_data = {"method": method, "args": message, "extraCredentials": '"hosts"'}
+    raw_data = {"method": method, "args": message}
 
-    if sys.version_info[0] == 3:
-        data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
-    else:
-        # Python2
-        data = urlencode(raw_data)
-
-    res = urlopen(url, data, context=context)
-    res.close()
+    X509config = X509BasedRequest(url=url,
+                                  caPath=caPath,
+                                  certEnv=cert)
+    
+    X509config.generateUserAgent(pilotUUID=pilotUUID)
+    
+    # Do the request
+    _res = X509config.executeRequest(raw_data=raw_data)
 
 
 class CommandBase(object):
