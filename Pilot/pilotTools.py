@@ -787,8 +787,20 @@ class CommandBase(object):
                 if not outChunk:
                     continue
                 dataWasRead = True
+                # Ensure outChunk is unicode in Python 2
+                if sys.version_info[0] < 3:
+                    if isinstance(outChunk, str):
+                        outChunk = outChunk.decode("utf-8")
                 # Strip unicode replacement characters
                 outChunk = str(outChunk.replace("\ufffd", ""))
+
+                # Ensure correct type conversion in Python 2
+                if sys.version_info[0] < 3:
+                    # Avoid potential str() issues in Py2
+                    outChunk = unicode(outChunk)  # pylint: disable=undefined-variable
+                else:
+                    outChunk = str(outChunk)  # Python 3: Ensure it's a string
+
                 if stream == _p.stderr:
                     sys.stderr.write(outChunk)
                     sys.stderr.flush()
