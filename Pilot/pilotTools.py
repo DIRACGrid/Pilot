@@ -713,7 +713,7 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
         context.load_cert_chain(os.path.join(cert, "hostcert.pem"), os.path.join(cert, "hostkey.pem"))
         raw_data = {"method": method, "args": message, "extraCredentials": '"hosts"'}
 
-    if sys.version_info[0] == 3:
+    if sys.version_info.major == 3:
         data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
     else:
         # Python2
@@ -787,7 +787,7 @@ class CommandBase(object):
                 if not outChunk:
                     continue
                 dataWasRead = True
-                if sys.version_info[0] < 3:
+                if sys.version_info.major == 2:
                     # Ensure outChunk is unicode in Python 2
                     if isinstance(outChunk, str):
                         outChunk = outChunk.decode("utf-8")
