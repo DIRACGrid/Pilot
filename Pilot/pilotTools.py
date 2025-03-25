@@ -713,7 +713,7 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
         context.load_cert_chain(os.path.join(cert, "hostcert.pem"), os.path.join(cert, "hostkey.pem"))
         raw_data = {"method": method, "args": message, "extraCredentials": '"hosts"'}
 
-    if sys.version_info[0] == 3:
+    if sys.version_info.major == 3:
         data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
     else:
         # Python2
@@ -787,19 +787,17 @@ class CommandBase(object):
                 if not outChunk:
                     continue
                 dataWasRead = True
-                # Ensure outChunk is unicode in Python 2
-                if sys.version_info[0] < 3:
+                if sys.version_info.major == 2:
+                    # Ensure outChunk is unicode in Python 2
                     if isinstance(outChunk, str):
                         outChunk = outChunk.decode("utf-8")
-                # Strip unicode replacement characters
-                outChunk = str(outChunk.replace("\ufffd", ""))
-
-                # Ensure correct type conversion in Python 2
-                if sys.version_info[0] < 3:
+                    # Strip unicode replacement characters
+                    # Ensure correct type conversion in Python 2
+                    outChunk = str(outChunk.replace(u"\ufffd", ""))
                     # Avoid potential str() issues in Py2
                     outChunk = unicode(outChunk)  # pylint: disable=undefined-variable
                 else:
-                    outChunk = str(outChunk)  # Python 3: Ensure it's a string
+                    outChunk = str(outChunk.replace("\ufffd", ""))  # Python 3: Ensure it's a string
 
                 if stream == _p.stderr:
                     sys.stderr.write(outChunk)
