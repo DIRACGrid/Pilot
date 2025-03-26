@@ -69,9 +69,9 @@ except NameError:
     basestring = str
 
 try:
-    from Pilot.proxyTools import getVO
+    from Pilot.proxyTools import X509BasedRequest, getVO, TokenBasedRequest
 except ImportError:
-    from proxyTools import getVO
+    from proxyTools import X509BasedRequest, getVO, TokenBasedRequest
 
 try:
     FileNotFoundError  # pylint: disable=used-before-assignment
@@ -687,7 +687,7 @@ class FixedSizeBuffer(object):
             self._timer.cancel()
 
 
-def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
+def sendMessage(url, pilotUUID, wnVO, method, rawMessage, withJWT=False):
     """
     Invoke a remote method on a Tornado server and pass a JSON message to it.
 
@@ -696,31 +696,40 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
     :param str wnVO: VO name, relevant only if not contained in a proxy
     :param str method: a method to be invoked
     :param str rawMessage: a message to be sent, in JSON format
+    :param bool withJWT: tells if we use or not JWT
     :return: None.
     """
+    
     caPath = os.getenv("X509_CERT_DIR")
-    cert = os.getenv("X509_USER_PROXY")
 
-    context = ssl.create_default_context()
-    context.load_verify_locations(capath=caPath)
+    message = json.dumps((json.dumps(rawMessage), pilotUUID, wnVO))    
+    raw_data = {"method": method, "args": message}
 
-    message = json.dumps((json.dumps(rawMessage), pilotUUID, wnVO))
+    config = None
+    
+    if withJWT:
+        jwtData = os.getenv("JWT_TOKEN")
+        
+        config = TokenBasedRequest(
+            url=url,
+            caPath=caPath,
+            jwtData=jwtData
+        )
 
-    try:
-        context.load_cert_chain(cert)  # this is a proxy
-        raw_data = {"method": method, "args": message}
-    except IsADirectoryError:  # assuming it'a dir containing cert and key
-        context.load_cert_chain(os.path.join(cert, "hostcert.pem"), os.path.join(cert, "hostkey.pem"))
-        raw_data = {"method": method, "args": message, "extraCredentials": '"hosts"'}
-
-    if sys.version_info.major == 3:
-        data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
     else:
-        # Python2
-        data = urlencode(raw_data)
+        cert = os.getenv("X509_USER_PROXY")
 
-    res = urlopen(url, data, context=context)
-    res.close()
+        config = X509BasedRequest(
+            url=url,
+            caPath=caPath,
+            certEnv=cert
+        )
+    
+    # Config the header, will help debugging
+    config.generateUserAgent(pilotUUID=pilotUUID)
+    
+    # Do the request
+    _res = config.executeRequest(raw_data=raw_data)
 
 
 class CommandBase(object):
