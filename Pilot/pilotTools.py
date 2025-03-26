@@ -69,9 +69,9 @@ except NameError:
     basestring = str
 
 try:
-    from Pilot.proxyTools import X509BasedRequest, getVO
+    from Pilot.proxyTools import X509BasedRequest, getVO, TokenBasedRequest
 except ImportError:
-    from proxyTools import X509BasedRequest, getVO
+    from proxyTools import X509BasedRequest, getVO, TokenBasedRequest
 
 try:
     FileNotFoundError  # pylint: disable=used-before-assignment
@@ -687,7 +687,7 @@ class FixedSizeBuffer(object):
             self._timer.cancel()
 
 
-def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
+def sendMessage(url, pilotUUID, wnVO, method, rawMessage, withJWT=False):
     """
     Invoke a remote method on a Tornado server and pass a JSON message to it.
 
@@ -696,25 +696,40 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
     :param str wnVO: VO name, relevant only if not contained in a proxy
     :param str method: a method to be invoked
     :param str rawMessage: a message to be sent, in JSON format
+    :param bool withJWT: tells if we use or not JWT
     :return: None.
     """
-    caPath = os.getenv("X509_CERT_DIR")
-    cert = os.getenv("X509_USER_PROXY")
-
     
-    message = json.dumps((json.dumps(rawMessage), pilotUUID, wnVO))
+    caPath = os.getenv("X509_CERT_DIR")
 
+    message = json.dumps((json.dumps(rawMessage), pilotUUID, wnVO))    
     raw_data = {"method": method, "args": message}
 
-
-    X509config = X509BasedRequest(url=url,
-                                  caPath=caPath,
-                                  certEnv=cert)
+    config = None
     
-    X509config.generateUserAgent(pilotUUID=pilotUUID)
+    if withJWT:
+        jwtData = os.getenv("JWT_TOKEN")
+        
+        config = TokenBasedRequest(
+            url=url,
+            caPath=caPath,
+            jwtData=jwtData
+        )
+
+    else:
+        cert = os.getenv("X509_USER_PROXY")
+
+        config = X509BasedRequest(
+            url=url,
+            caPath=caPath,
+            certEnv=cert
+        )
+    
+    # Config the header, will help debugging
+    config.generateUserAgent(pilotUUID=pilotUUID)
     
     # Do the request
-    _res = X509config.executeRequest(raw_data=raw_data)
+    _res = config.executeRequest(raw_data=raw_data)
 
 
 class CommandBase(object):
