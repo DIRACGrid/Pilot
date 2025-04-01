@@ -82,7 +82,7 @@ except NameError:
 try:
     IsADirectoryError  # pylint: disable=used-before-assignment
 except NameError:
-    IsADirectoryError = OSError
+    IsADirectoryError = IOError
 
 # Timer 2.7 and < 3.3 versions issue where Timer is a function
 if sys.version_info.major == 2 or sys.version_info.major == 3 and sys.version_info.minor < 3:
