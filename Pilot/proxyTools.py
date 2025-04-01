@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import json
 import os
 import re
 import ssl
@@ -79,7 +80,7 @@ def getVO(proxy_data):
     raise NotImplementedError("Something went very wrong")
 
 
-class BaseConnectedRequest(object):
+class BaseRequest(object):
     """This class helps supporting multiple kinds of requests that requires connections"""
 
     def __init__(self, url, caPath, name="unknown"):
@@ -108,17 +109,21 @@ class BaseConnectedRequest(object):
         # Load the SSL context
         self._context = ssl.create_default_context()
         self._context.load_verify_locations(capath=self.caPath)
+        
+    def addHeader(self, key, value):
+        """Add a header (key, value) into the request header"""
+        self.headers[key] = value
 
-    def executeRequest(self, raw_data):
+    def executeRequest(self, raw_data, insecure=False):
         """Execute a HTTP request with the data, headers, and the pre-defined data (SSL + auth)
 
         :param raw_data: Data to send
         :type raw_data: dict
-        :param headers: Headers to send, helps to track requests. Defaults to {"User-Agent": "Dirac Pilot [Unknown ID]"}.
-        :type headers: dict, optional
-        :return: Response of the HTTP request
-        :rtype: str
-        """
+        :param insecure: Deactivate proxy verification /!\ Debug ONLY
+        :type insecure: bool
+        :return: Parsed JSON response
+        :rtype: dict
+        """    
         if sys.version_info[0] == 3:
             data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
         else:
@@ -127,13 +132,24 @@ class BaseConnectedRequest(object):
 
         request = Request(self.url, data=data, headers=self.headers)
 
-        res = urlopen(request, context=self._context)
-        res.close()
+        ctx = self._context  # Save in case of an insecure request
 
-        return res.read()
+        if insecure:
+            # DEBUG ONLY
+            # Overrides context
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+
+        with urlopen(request, context=ctx) as res:
+            response_data = res.read().decode("utf-8")  # Decode response bytes
+            try:
+                return json.loads(response_data)  # Parse JSON response
+            except json.JSONDecodeError:
+                raise Exception("Invalid JSON response: %s" % response_data)
 
 
-class TokenBasedRequest(BaseConnectedRequest):
+class TokenBasedRequest(BaseRequest):
     """Connected Request with JWT support"""
 
     def __init__(self, url, caPath, jwtData):
@@ -146,7 +162,7 @@ class TokenBasedRequest(BaseConnectedRequest):
         self.headers["Authorization"] = "Bearer: %s" % self.jwtData
 
 
-class X509BasedRequest(BaseConnectedRequest):
+class X509BasedRequest(BaseRequest):
     """Connected Request with X509 support"""
 
     def __init__(self, url, caPath, certEnv):
