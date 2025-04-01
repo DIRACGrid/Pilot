@@ -69,9 +69,9 @@ except NameError:
     basestring = str
 
 try:
-    from Pilot.proxyTools import X509BasedRequest, getVO, TokenBasedRequest
+    from Pilot.proxyTools import X509BasedRequest, getVO, TokenBasedRequest, BaseRequest
 except ImportError:
-    from proxyTools import X509BasedRequest, getVO, TokenBasedRequest
+    from proxyTools import X509BasedRequest, getVO, TokenBasedRequest, BaseRequest
 
 try:
     FileNotFoundError  # pylint: disable=used-before-assignment
@@ -732,6 +732,25 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage, withJWT=False):
     _res = config.executeRequest(raw_data=raw_data)
 
 
+
+def retrieveJWT(diracXURL, pilotUUID, pilotSecret):
+    
+    caPath = os.getenv("X509_CERT_DIR")
+    
+    data_in_url = "?pilot_job_reference=%s&pilot_secret=%s" % (pilotUUID, pilotSecret)
+    
+    config = BaseRequest(
+        "%s/api/auth/pilot-login%s" % (diracXURL, data_in_url),
+        caPath=caPath
+    )
+    
+    config.addHeader("Content-Type", "application/json")
+    
+    config.generateUserAgent(pilotUUID=pilotUUID)
+
+    # TODO: Add new cert for DiracX (different from Dirac)
+    return config.executeRequest(raw_data={}, insecure=True)
+
 class CommandBase(object):
     """CommandBase is the base class for every command in the pilot commands toolbox"""
 
@@ -917,10 +936,16 @@ class PilotParams(object):
         self.site = ""
         self.setup = ""
         self.configServer = ""
+        self.diracXServer = ""
         self.ceName = ""
         self.ceType = ""
         self.queueName = ""
         self.gridCEType = ""
+        self.pilotSecret = ""
+        self.jwt = {
+            "access_token": "",
+            "refresh_token": ""
+        }
         # maxNumberOfProcessors: the number of
         # processors allocated to the pilot which the pilot can allocate to one payload
         # used to set payloadProcessors unless other limits are reached (like the number of processors on the WN)
@@ -1005,6 +1030,7 @@ class PilotParams(object):
             ("y:", "CEType=", "CE Type (normally InProcess)"),
             ("z", "pilotLogging", "Activate pilot logging system"),
             ("C:", "configurationServer=", "Configuration servers to use"),
+            ("", "diracXServer=", "DiracX server to use"),
             ("D:", "disk=", "Require at least <space> MB available"),
             ("E:", "commandExtensions=", "Python modules with extra commands"),
             ("F:", "pilotCFGFile=", "Specify pilot CFG file"),
@@ -1030,6 +1056,7 @@ class PilotParams(object):
             ("", "preinstalledEnvPrefix=", "preinstalled pilot environment area prefix"),
             ("", "architectureScript=", "architecture script to use"),
             ("", "CVMFS_locations=", "comma-separated list of CVMS locations"),
+            ("", "pilotSecret=", "secret that the pilot uses with DiracX"),
         )
 
         # Possibly get Setup and JSON URL/filename from command line
@@ -1055,7 +1082,9 @@ class PilotParams(object):
         if self.useServerCertificate:
             self.installEnv["X509_USER_PROXY"] = self.certsLocation
             os.environ["X509_USER_PROXY"] = self.certsLocation
-
+            
+        self.__retrieveIfNeededJWT()
+    
     def __setSecurityDir(self, envName, dirLocation):
         """Set the environment variable of the `envName`, and add it also to the Pilot Parameters
 
@@ -1110,6 +1139,16 @@ class PilotParams(object):
             self.log.error("Could not find/set %s" % envName)
             sys.exit(1)
 
+    def __retrieveIfNeededJWT(self):
+        
+        if self.diracXServer != "":
+            if self.pilotSecret == "":
+                raise ValueError("PilotSecret has to be defined")
+            if self.pilotUUID == "":
+                raise ValueError("PilotUUID has to be defined")
+            self.jwt = retrieveJWT(self.diracXServer, self.pilotUUID, self.pilotSecret)
+            self.log.debug("Retrieved JWT from DiracX")
+
     def __initCommandLine1(self):
         """Parses and interpret options on the command line: first pass (essential things)"""
 
@@ -1160,6 +1199,8 @@ class PilotParams(object):
                 self.keepPythonPath = True
             elif o in ("-C", "--configurationServer"):
                 self.configServer = v
+            elif o == "--diracXServer":
+                self.diracXServer = v
             elif o in ("-G", "--Group"):
                 self.userGroup = v
             elif o in ("-x", "--execute"):
@@ -1233,6 +1274,8 @@ class PilotParams(object):
                 self.architectureScript = v
             elif o == "--CVMFS_locations":
                 self.CVMFS_locations = v.split(",")
+            elif o == "--pilotSecret":
+                self.pilotSecret = v
 
     def __loadJSON(self):
         """
