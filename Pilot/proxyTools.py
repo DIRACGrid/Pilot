@@ -119,7 +119,7 @@ class BaseRequest(object):
 
         :param raw_data: Data to send
         :type raw_data: dict
-        :param insecure: Deactivate proxy verification /!\ Debug ONLY
+        :param insecure: Deactivate proxy verification WARNING Debug ONLY
         :type insecure: bool
         :return: Parsed JSON response
         :rtype: dict
