@@ -687,7 +687,7 @@ class FixedSizeBuffer(object):
             self._timer.cancel()
 
 
-def sendMessage(url, pilotUUID, wnVO, method, rawMessage, withJWT=False):
+def sendMessage(url, pilotUUID, wnVO, method, rawMessage, withJWT=False, jwt={}):
     """
     Invoke a remote method on a Tornado server and pass a JSON message to it.
 
@@ -697,6 +697,7 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage, withJWT=False):
     :param str method: a method to be invoked
     :param str rawMessage: a message to be sent, in JSON format
     :param bool withJWT: tells if we use or not JWT
+    :param dict jwt: JWT for the requests
     :return: None.
     """
     
@@ -708,12 +709,15 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage, withJWT=False):
     config = None
     
     if withJWT:
-        jwtData = os.getenv("JWT_TOKEN")
+        try:
+            access_token = jwt["access_token"]
+        except ValueError as e:
+            raise ValueError("JWT is needed, with an access_token field")
         
         config = TokenBasedRequest(
             url=url,
             caPath=caPath,
-            jwtData=jwtData
+            jwtData=access_token
         )
 
     else:
@@ -1141,10 +1145,10 @@ class PilotParams(object):
 
     def __retrieveIfNeededJWT(self):
         
-        if self.diracXServer != "":
-            if self.pilotSecret == "":
+        if self.diracXServer:
+            if not self.pilotSecret:
                 raise ValueError("PilotSecret has to be defined")
-            if self.pilotUUID == "":
+            if not self.pilotUUID:
                 raise ValueError("PilotUUID has to be defined")
             self.jwt = retrieveJWT(self.diracXServer, self.pilotUUID, self.pilotSecret)
             self.log.debug("Retrieved JWT from DiracX")
