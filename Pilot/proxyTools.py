@@ -124,7 +124,7 @@ class BaseRequest(object):
         :return: Parsed JSON response
         :rtype: dict
         """    
-        if sys.version_info[0] == 3:
+        if sys.version_info.major == 3:
             data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
         else:
             # Python2
@@ -141,7 +141,7 @@ class BaseRequest(object):
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
 
-        if sys.version_info[0] >= 3:
+        if sys.version_info.major == 3:
             # Python 3 code
             with urlopen(request, context=ctx) as res:
                 response_data = res.read().decode("utf-8")  # Decode response bytes
@@ -149,7 +149,7 @@ class BaseRequest(object):
             # Python 2 code
             res = urlopen(request, context=ctx)
             try:
-                response_data = res.read().decode("utf-8")  # Decode response bytes
+                response_data = res.read()
             finally:
                 res.close()
 
