@@ -13,7 +13,7 @@ from subprocess import PIPE, Popen
 try:
     IsADirectoryError  # pylint: disable=used-before-assignment
 except NameError:
-    IsADirectoryError = OSError
+    IsADirectoryError = IOError
 
 try:
     from urllib.parse import urlencode
@@ -21,7 +21,7 @@ try:
 except ImportError:
     from urllib import urlencode
 
-    from urllib2 import urlopen
+    from urllib2 import Request, urlopen
 
 
 VOMS_FQANS_OID = b"1.3.6.1.4.1.8005.100.100.4"
@@ -141,12 +141,22 @@ class BaseRequest(object):
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
 
-        with urlopen(request, context=ctx) as res:
-            response_data = res.read().decode("utf-8")  # Decode response bytes
+        if sys.version_info[0] >= 3:
+            # Python 3 code
+            with urlopen(request, context=ctx) as res:
+                response_data = res.read().decode("utf-8")  # Decode response bytes
+        else:
+            # Python 2 code
+            res = urlopen(request, context=ctx)
             try:
-                return json.loads(response_data)  # Parse JSON response
-            except json.JSONDecodeError:
-                raise Exception("Invalid JSON response: %s" % response_data)
+                response_data = res.read().decode("utf-8")  # Decode response bytes
+            finally:
+                res.close()
+
+        try:
+            return json.loads(response_data)  # Parse JSON response
+        except ValueError:  # In Python 2, json.JSONDecodeError is a subclass of ValueError
+            raise Exception("Invalid JSON response: %s" % response_data)
 
 
 class TokenBasedRequest(BaseRequest):
