@@ -687,7 +687,7 @@ class FixedSizeBuffer(object):
             self._timer.cancel()
 
 
-def sendMessage(url, pilotUUID, wnVO, method, rawMessage, withJWT=False, jwt={}):
+def sendMessage(url, pilotUUID, wnVO, method, rawMessage, jwt={}):
     """
     Invoke a remote method on a Tornado server and pass a JSON message to it.
 
@@ -696,7 +696,6 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage, withJWT=False, jwt={})
     :param str wnVO: VO name, relevant only if not contained in a proxy
     :param str method: a method to be invoked
     :param str rawMessage: a message to be sent, in JSON format
-    :param bool withJWT: tells if we use or not JWT
     :param dict jwt: JWT for the requests
     :return: None.
     """
@@ -708,7 +707,7 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage, withJWT=False, jwt={})
 
     config = None
     
-    if withJWT:
+    if jwt:
         try:
             access_token = jwt["access_token"]
         except ValueError as e:
@@ -1034,7 +1033,7 @@ class PilotParams(object):
             ("y:", "CEType=", "CE Type (normally InProcess)"),
             ("z", "pilotLogging", "Activate pilot logging system"),
             ("C:", "configurationServer=", "Configuration servers to use"),
-            ("", "diracXServer=", "DiracX server to use"),
+            ("", "diracx_URL=", "DiracX Server URL to use"),
             ("D:", "disk=", "Require at least <space> MB available"),
             ("E:", "commandExtensions=", "Python modules with extra commands"),
             ("F:", "pilotCFGFile=", "Specify pilot CFG file"),
