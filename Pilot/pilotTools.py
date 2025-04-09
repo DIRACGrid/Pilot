@@ -1085,8 +1085,6 @@ class PilotParams(object):
         if self.useServerCertificate:
             self.installEnv["X509_USER_PROXY"] = self.certsLocation
             os.environ["X509_USER_PROXY"] = self.certsLocation
-            
-        self.__retrieveIfNeededJWT()
     
     def __setSecurityDir(self, envName, dirLocation):
         """Set the environment variable of the `envName`, and add it also to the Pilot Parameters
@@ -1141,16 +1139,6 @@ class PilotParams(object):
             # None of the candidates exists, stop the program.
             self.log.error("Could not find/set %s" % envName)
             sys.exit(1)
-
-    def __retrieveIfNeededJWT(self):
-        
-        if self.diracXServer:
-            if not self.pilotSecret:
-                raise ValueError("PilotSecret has to be defined")
-            if not self.pilotUUID:
-                raise ValueError("PilotUUID has to be defined")
-            self.jwt = retrieveJWT(self.diracXServer, self.pilotUUID, self.pilotSecret)
-            self.log.debug("Retrieved JWT from DiracX")
 
     def __initCommandLine1(self):
         """Parses and interpret options on the command line: first pass (essential things)"""
