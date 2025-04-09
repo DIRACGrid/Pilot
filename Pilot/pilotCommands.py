@@ -572,6 +572,33 @@ class RegisterPilot(CommandBase):
             self.log.error("Could not get execute dirac-admin-add-pilot [ERROR %d]" % retCode)
 
 
+class PilotLogin(CommandBase):
+    """The Pilot logins and fetches his jwt, only compatible with DiracX cli command"""
+
+    def __init__(self, pilotParams):
+        """c'tor"""
+        super(PilotLogin, self).__init__(pilotParams)
+
+    @logFinalizer
+    def execute(self):
+        """Calls dirac-admin-add-pilot"""
+
+        if not self.pp.pilotReference:
+            self.log.warn("Skipping module, no pilot reference found")
+            return
+
+        if not self.pp.pilotSecret:
+            self.log.warn("Skipping module, no pilot secret found")
+            return
+
+        checkCmd = "dirac pilot-login %s %s" % (
+            self.pp.pilotReference,
+            self.pp.pilotSecret
+        )
+        retCode, _ = self.executeAndGetOutput(checkCmd, self.pp.installEnv)
+        if retCode:
+            self.log.error("Could not get execute dirac pilot-login [ERROR %d]" % retCode)
+
 class CheckCECapabilities(CommandBase):
     """Used to get CE tags and other relevant parameters."""
 
