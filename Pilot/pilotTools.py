@@ -751,7 +751,6 @@ def retrieveJWT(diracXURL, pilotUUID, pilotSecret):
     
     config.generateUserAgent(pilotUUID=pilotUUID)
 
-    # TODO: Add new cert for DiracX (different from Dirac)
     return config.executeRequest(raw_data={}, insecure=True)
 
 class CommandBase(object):
