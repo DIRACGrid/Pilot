@@ -573,7 +573,11 @@ class RegisterPilot(CommandBase):
 
 
 class PilotLogin(CommandBase):
-    """The Pilot logins and fetches his jwt, only compatible with DiracX cli command"""
+    """The pilot logs in and fetches their JWT.
+
+    .. note:: This command is only compatible with DiracX CLI, and requires Dirac version >= 9.0
+    """
+
 
     def __init__(self, pilotParams):
         """c'tor"""
@@ -581,7 +585,7 @@ class PilotLogin(CommandBase):
 
     @logFinalizer
     def execute(self):
-        """Calls dirac-admin-add-pilot"""
+        """Calls dirac pilot-login"""
 
         if not self.pp.pilotReference:
             self.log.warn("Skipping module, no pilot reference found")
