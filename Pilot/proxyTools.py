@@ -1,10 +1,28 @@
-"""few functions for dealing with proxies"""
+"""few functions for dealing with proxies and authentication"""
 
 from __future__ import absolute_import, division, print_function
 
+import json
+import os
 import re
+import ssl
+import sys
 from base64 import b16decode
 from subprocess import PIPE, Popen
+
+try:
+    IsADirectoryError  # pylint: disable=used-before-assignment
+except NameError:
+    IsADirectoryError = IOError
+
+try:
+    from urllib.parse import urlencode
+    from urllib.request import Request, urlopen
+except ImportError:
+    from urllib import urlencode
+
+    from urllib2 import Request, urlopen
+
 
 VOMS_FQANS_OID = b"1.3.6.1.4.1.8005.100.100.4"
 VOMS_EXTENSION_OID = b"1.3.6.1.4.1.8005.100.100.5"
@@ -30,15 +48,10 @@ def findExtension(oid, lines):
 def getVO(proxy_data):
     """Fetches the VO in a chain certificate
 
-    Args:
-        proxy_data (bytes): Bytes for the proxy chain
-
-    Raises:
-        Exception: Any error related to openssl
-        NotImplementedError: Not documented error
-
-    Returns:
-        str: A VO
+    :param proxy_data: Bytes for the proxy chain
+    :type proxy_data: bytes
+    :return: A VO
+    :rtype: str
     """
 
     chain = re.findall(br"-----BEGIN CERTIFICATE-----\n.+?\n-----END CERTIFICATE-----", proxy_data, flags=re.DOTALL)
@@ -65,3 +78,120 @@ def getVO(proxy_data):
             if match:
                 return match.groups()[0].decode()
     raise NotImplementedError("Something went very wrong")
+
+
+class BaseRequest(object):
+    """This class helps supporting multiple kinds of requests that requires connections"""
+
+    def __init__(self, url, caPath, name="unknown"):
+        self.name = name
+        self.url = url
+        self.caPath = caPath
+        self.headers = {
+            "User-Agent": "Dirac Pilot [Unknown ID]"
+        }
+        # We assume we have only one context, so this variable could be shared to avoid opening n times a cert.
+        # On the contrary, to avoid race conditions, we do avoid using "self.data" and "self.headers"
+        self._context = None
+
+        self._prepareRequest()
+
+    def generateUserAgent(self, pilotUUID):
+        """To analyse the traffic, we can send a taylor-made User-Agent
+
+        :param pilotUUID: Unique ID of the Pilot
+        :type pilotUUID: str
+        """
+        self.headers["User-Agent"] = "Dirac Pilot [%s]" % pilotUUID
+
+    def _prepareRequest(self):
+        """As previously, loads the SSL certificates of the server (to avoid "unknown issuer")"""
+        # Load the SSL context
+        self._context = ssl.create_default_context()
+        self._context.load_verify_locations(capath=self.caPath)
+        
+    def addHeader(self, key, value):
+        """Add a header (key, value) into the request header"""
+        self.headers[key] = value
+
+    def executeRequest(self, raw_data, insecure=False):
+        """Execute a HTTP request with the data, headers, and the pre-defined data (SSL + auth)
+
+        :param raw_data: Data to send
+        :type raw_data: dict
+        :param insecure: Deactivate proxy verification WARNING Debug ONLY
+        :type insecure: bool
+        :return: Parsed JSON response
+        :rtype: dict
+        """    
+        if sys.version_info.major == 3:
+            data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
+        else:
+            # Python2
+            data = urlencode(raw_data)
+
+        request = Request(self.url, data=data, headers=self.headers)
+
+        ctx = self._context  # Save in case of an insecure request
+
+        if insecure:
+            # DEBUG ONLY
+            # Overrides context
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+
+        if sys.version_info.major == 3:
+            # Python 3 code
+            with urlopen(request, context=ctx) as res:
+                response_data = res.read().decode("utf-8")  # Decode response bytes
+        else:
+            # Python 2 code
+            res = urlopen(request, context=ctx)
+            try:
+                response_data = res.read()
+            finally:
+                res.close()
+
+        try:
+            return json.loads(response_data)  # Parse JSON response
+        except ValueError:  # In Python 2, json.JSONDecodeError is a subclass of ValueError
+            raise Exception("Invalid JSON response: %s" % response_data)
+
+
+class TokenBasedRequest(BaseRequest):
+    """Connected Request with JWT support"""
+
+    def __init__(self, url, caPath, jwtData):
+        super(TokenBasedRequest, self).__init__(url, caPath, "TokenBasedConnection")
+
+        self.jwtData = jwtData
+    
+    def addJwtToHeader(self):
+        # Adds the JWT in the HTTP request (in the Bearer field)
+        self.headers["Authorization"] = "Bearer: %s" % self.jwtData
+
+
+class X509BasedRequest(BaseRequest):
+    """Connected Request with X509 support"""
+
+    def __init__(self, url, caPath, certEnv):
+        super(X509BasedRequest, self).__init__(url, caPath, "X509BasedConnection")
+
+        self.certEnv = certEnv
+        self._hasExtraCredentials = False
+
+        # Load X509 once
+        try:
+            self._context.load_cert_chain(self.certEnv)
+        except IsADirectoryError:  # assuming it'a dir containing cert and key
+            self._context.load_cert_chain(
+                os.path.join(self.certEnv, "hostcert.pem"), os.path.join(self.certEnv, "hostkey.pem")
+            )
+            self._hasExtraCredentials = True
+
+    def executeRequest(self, raw_data):
+        # Adds a flag if the passed cert is a Directory
+        if self._hasExtraCredentials:
+            raw_data["extraCredentials"] = '"hosts"'
+        return super(X509BasedRequest, self).executeRequest(raw_data)

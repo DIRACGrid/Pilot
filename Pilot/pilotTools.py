@@ -69,9 +69,9 @@ except NameError:
     basestring = str
 
 try:
-    from Pilot.proxyTools import getVO
+    from Pilot.proxyTools import X509BasedRequest, getVO, TokenBasedRequest, BaseRequest
 except ImportError:
-    from proxyTools import getVO
+    from proxyTools import X509BasedRequest, getVO, TokenBasedRequest, BaseRequest
 
 try:
     FileNotFoundError  # pylint: disable=used-before-assignment
@@ -687,7 +687,7 @@ class FixedSizeBuffer(object):
             self._timer.cancel()
 
 
-def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
+def sendMessage(url, pilotUUID, wnVO, method, rawMessage, jwt={}):
     """
     Invoke a remote method on a Tornado server and pass a JSON message to it.
 
@@ -696,32 +696,62 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
     :param str wnVO: VO name, relevant only if not contained in a proxy
     :param str method: a method to be invoked
     :param str rawMessage: a message to be sent, in JSON format
+    :param dict jwt: JWT for the requests
     :return: None.
     """
+    
     caPath = os.getenv("X509_CERT_DIR")
-    cert = os.getenv("X509_USER_PROXY")
 
-    context = ssl.create_default_context()
-    context.load_verify_locations(capath=caPath)
+    message = json.dumps((json.dumps(rawMessage), pilotUUID, wnVO))    
+    raw_data = {"method": method, "args": message}
 
-    message = json.dumps((json.dumps(rawMessage), pilotUUID, wnVO))
+    config = None
+    
+    if jwt:
+        try:
+            access_token = jwt["access_token"]
+        except ValueError as e:
+            raise ValueError("JWT is needed, with an access_token field")
+        
+        config = TokenBasedRequest(
+            url=url,
+            caPath=caPath,
+            jwtData=access_token
+        )
 
-    try:
-        context.load_cert_chain(cert)  # this is a proxy
-        raw_data = {"method": method, "args": message}
-    except IsADirectoryError:  # assuming it'a dir containing cert and key
-        context.load_cert_chain(os.path.join(cert, "hostcert.pem"), os.path.join(cert, "hostkey.pem"))
-        raw_data = {"method": method, "args": message, "extraCredentials": '"hosts"'}
-
-    if sys.version_info.major == 3:
-        data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
     else:
-        # Python2
-        data = urlencode(raw_data)
+        cert = os.getenv("X509_USER_PROXY")
 
-    res = urlopen(url, data, context=context)
-    res.close()
+        config = X509BasedRequest(
+            url=url,
+            caPath=caPath,
+            certEnv=cert
+        )
+    
+    # Config the header, will help debugging
+    config.generateUserAgent(pilotUUID=pilotUUID)
+    
+    # Do the request
+    _res = config.executeRequest(raw_data=raw_data)
 
+
+
+def retrieveJWT(diracXURL, pilotUUID, pilotSecret):
+    
+    caPath = os.getenv("X509_CERT_DIR")
+    
+    data_in_url = "?pilot_job_reference=%s&pilot_secret=%s" % (pilotUUID, pilotSecret)
+    
+    config = BaseRequest(
+        "%s/api/auth/pilot-login%s" % (diracXURL, data_in_url),
+        caPath=caPath
+    )
+    
+    config.addHeader("Content-Type", "application/json")
+    
+    config.generateUserAgent(pilotUUID=pilotUUID)
+
+    return config.executeRequest(raw_data={}, insecure=True)
 
 class CommandBase(object):
     """CommandBase is the base class for every command in the pilot commands toolbox"""
@@ -908,10 +938,16 @@ class PilotParams(object):
         self.site = ""
         self.setup = ""
         self.configServer = ""
+        self.diracXServer = ""
         self.ceName = ""
         self.ceType = ""
         self.queueName = ""
         self.gridCEType = ""
+        self.pilotSecret = ""
+        self.jwt = {
+            "access_token": "",
+            "refresh_token": ""
+        }
         # maxNumberOfProcessors: the number of
         # processors allocated to the pilot which the pilot can allocate to one payload
         # used to set payloadProcessors unless other limits are reached (like the number of processors on the WN)
@@ -996,6 +1032,7 @@ class PilotParams(object):
             ("y:", "CEType=", "CE Type (normally InProcess)"),
             ("z", "pilotLogging", "Activate pilot logging system"),
             ("C:", "configurationServer=", "Configuration servers to use"),
+            ("", "diracx_URL=", "DiracX Server URL to use"),
             ("D:", "disk=", "Require at least <space> MB available"),
             ("E:", "commandExtensions=", "Python modules with extra commands"),
             ("F:", "pilotCFGFile=", "Specify pilot CFG file"),
@@ -1021,6 +1058,7 @@ class PilotParams(object):
             ("", "preinstalledEnvPrefix=", "preinstalled pilot environment area prefix"),
             ("", "architectureScript=", "architecture script to use"),
             ("", "CVMFS_locations=", "comma-separated list of CVMS locations"),
+            ("", "pilotSecret=", "secret that the pilot uses with DiracX"),
         )
 
         # Possibly get Setup and JSON URL/filename from command line
@@ -1046,7 +1084,7 @@ class PilotParams(object):
         if self.useServerCertificate:
             self.installEnv["X509_USER_PROXY"] = self.certsLocation
             os.environ["X509_USER_PROXY"] = self.certsLocation
-
+    
     def __setSecurityDir(self, envName, dirLocation):
         """Set the environment variable of the `envName`, and add it also to the Pilot Parameters
 
@@ -1151,6 +1189,8 @@ class PilotParams(object):
                 self.keepPythonPath = True
             elif o in ("-C", "--configurationServer"):
                 self.configServer = v
+            elif o == "--diracXServer":
+                self.diracXServer = v
             elif o in ("-G", "--Group"):
                 self.userGroup = v
             elif o in ("-x", "--execute"):
@@ -1224,6 +1264,8 @@ class PilotParams(object):
                 self.architectureScript = v
             elif o == "--CVMFS_locations":
                 self.CVMFS_locations = v.split(",")
+            elif o == "--pilotSecret":
+                self.pilotSecret = v
 
     def __loadJSON(self):
         """
