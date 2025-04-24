@@ -831,11 +831,11 @@ class ConfigureArchitecture(CommandBase):
 
         archScript = self.pp.architectureScript
         if self.pp.architectureScript.split(" ")[0] == "dirac-apptainer-exec":
-            archScript = self.pp.architectureScript.split(" ")[1]
+            archScript = " ".join(self.pp.architectureScript.split(" ")[1:])
         
         architectureCmd = "%s %s -ddd" % (archScript, " ".join(cfg))
 
-        if self.pp.architectureScript.startswith("dirac-apptainer-exec"):
+        if self.pp.architectureScript.split(" ")[0] == "dirac-apptainer-exec":
             architectureCmd = "dirac-apptainer-exec '%s' %s" % (architectureCmd, " ".join(cfg))
 
         retCode, localArchitecture = self.executeAndGetOutput(architectureCmd, self.pp.installEnv)
