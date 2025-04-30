@@ -130,7 +130,7 @@ class BaseRequest(object):
             # Python2
             data = urlencode(raw_data)
 
-        request = Request(self.url, data=data, headers=self.headers)
+        request = Request(self.url, data=data, headers=self.headers, method="POST")
 
         ctx = self._context  # Save in case of an insecure request
 

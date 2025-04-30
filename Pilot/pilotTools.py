@@ -22,11 +22,8 @@ from threading import RLock
 # python 2 -> 3 "hacks"
 try:
     from urllib.error import HTTPError, URLError
-    from urllib.parse import urlencode
     from urllib.request import urlopen
 except ImportError:
-    from urllib import urlencode
-
     from urllib2 import HTTPError, URLError, urlopen
 
 try:
@@ -1189,7 +1186,7 @@ class PilotParams(object):
                 self.keepPythonPath = True
             elif o in ("-C", "--configurationServer"):
                 self.configServer = v
-            elif o == "--diracXServer":
+            elif o == "--diracx_URL":
                 self.diracXServer = v
             elif o in ("-G", "--Group"):
                 self.userGroup = v
