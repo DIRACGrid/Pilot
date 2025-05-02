@@ -729,26 +729,11 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage, jwt={}):
     config.generateUserAgent(pilotUUID=pilotUUID)
     
     # Do the request
-    _res = config.executeRequest(raw_data=raw_data)
-
-
-
-def retrieveJWT(diracXURL, pilotUUID, pilotSecret):
-    
-    caPath = os.getenv("X509_CERT_DIR")
-    
-    data_in_url = "?pilot_job_reference=%s&pilot_secret=%s" % (pilotUUID, pilotSecret)
-    
-    config = BaseRequest(
-        "%s/api/auth/pilot-login%s" % (diracXURL, data_in_url),
-        caPath=caPath
+    _res = config.executeRequest(
+        raw_data=raw_data,
+        content_type="x-www-form-urlencoded"
     )
-    
-    config.addHeader("Content-Type", "application/json")
-    
-    config.generateUserAgent(pilotUUID=pilotUUID)
 
-    return config.executeRequest(raw_data={}, insecure=True)
 
 class CommandBase(object):
     """CommandBase is the base class for every command in the pilot commands toolbox"""

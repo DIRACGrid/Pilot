@@ -594,13 +594,19 @@ class PilotLogin(CommandBase):
     def execute(self):
         """Calls diracX api"""
 
-        if not self.pp.pilotReference:
-            self.log.warn("Skipping module, no pilot reference found")
-            return
+        if not self.pp.pilotUUID:
+            self.log.error("PilotUUID not given, exiting...")
+            sys.exit(-1)
 
         if not self.pp.pilotSecret:
-            self.log.warn("Skipping module, no pilot secret found")
-            return
+            self.log.error("PilotSecret not given, exiting...")
+            sys.exit(-1)
+
+        if not self.pp.diracXServer:
+            self.log.error("DiracXServer (url) not given, exiting...")
+            sys.exit(-1)
+
+        self.log.info("Fetching JWT in DiracX (URL: %s)" % self.pp.diracXServer)
 
         config = BaseRequest(
             "%s/api/auth/pilot-login" % (
@@ -611,11 +617,16 @@ class PilotLogin(CommandBase):
         
         config.generateUserAgent(self.pp.pilotUUID)
         
-        self.pp.jwt = config.executeRequest({
-            "pilot_stamp": self.pp.pilotStamp,
-            "pilot_secret": self.pp.pilotSecret
-        }, insecure=True)
-        
+        try:
+            self.pp.jwt = config.executeRequest({
+                "pilot_stamp": self.pp.pilotUUID,
+                "pilot_secret": self.pp.pilotSecret
+            }, insecure=True)
+        except HTTPError as e:
+            self.log.error("Request failed: %s" % str(e))
+
+        self.log.info("Fetched the pilot token with the pilot secret.")
+
 class CheckCECapabilities(CommandBase):
     """Used to get CE tags and other relevant parameters."""
 

@@ -17,12 +17,12 @@ except NameError:
 
 try:
     from urllib.parse import urlencode
+    from urllib.error import HTTPError
     from urllib.request import Request, urlopen
 except ImportError:
     from urllib import urlencode
 
-    from urllib2 import Request, urlopen
-
+    from urllib2 import Request, urlopen, HTTPError
 
 VOMS_FQANS_OID = b"1.3.6.1.4.1.8005.100.100.4"
 VOMS_EXTENSION_OID = b"1.3.6.1.4.1.8005.100.100.5"
@@ -81,7 +81,7 @@ def getVO(proxy_data):
 
 
 class BaseRequest(object):
-    """This class helps supporting multiple kinds of requests that requires connections"""
+    """This class helps supporting multiple kinds of requests that require connections"""
 
     def __init__(self, url, caPath, name="unknown"):
         self.name = name
@@ -114,21 +114,32 @@ class BaseRequest(object):
         """Add a header (key, value) into the request header"""
         self.headers[key] = value
 
-    def executeRequest(self, raw_data, insecure=False):
+    def executeRequest(self, raw_data, insecure=False, content_type="json"):
         """Execute a HTTP request with the data, headers, and the pre-defined data (SSL + auth)
 
         :param raw_data: Data to send
         :type raw_data: dict
         :param insecure: Deactivate proxy verification WARNING Debug ONLY
         :type insecure: bool
+        :param content_type: Data format to send, either "json" or "x-www-form-urlencoded"
+        :type content_type: str
         :return: Parsed JSON response
         :rtype: dict
-        """    
-        if sys.version_info.major == 3:
-            data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
+        """
+        if content_type == "json":
+            data = json.dumps(raw_data).encode("utf-8")
+            self.headers["Content-Type"] = "application/json"
+        elif content_type == "x-www-form-urlencoded":
+            if sys.version_info.major == 3:
+                data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
+            else:
+                # Python2
+                data = urlencode(raw_data)
+            self.headers["Content-Type"] = "application/x-www-form-urlencoded"
         else:
-            # Python2
-            data = urlencode(raw_data)
+            raise ValueError("Invalid content_type. Use 'json' or 'x-www-form-urlencoded'.")
+
+        self.headers["Content-Length"] = str(len(data))
 
         request = Request(self.url, data=data, headers=self.headers, method="POST")
 
@@ -190,8 +201,12 @@ class X509BasedRequest(BaseRequest):
             )
             self._hasExtraCredentials = True
 
-    def executeRequest(self, raw_data):
+    def executeRequest(self, raw_data, insecure=False, content_type="json"):
         # Adds a flag if the passed cert is a Directory
         if self._hasExtraCredentials:
             raw_data["extraCredentials"] = '"hosts"'
-        return super(X509BasedRequest, self).executeRequest(raw_data)
+        return super(X509BasedRequest, self).executeRequest(
+            raw_data,
+            insecure=insecure,
+            content_type=content_type
+        )
