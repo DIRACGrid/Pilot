@@ -66,8 +66,11 @@ try:
     from Pilot.proxyTools import BaseRequest
 except ImportError:
     from proxyTools import BaseRequest
-    
-from urllib.error import HTTPError
+   
+try:
+    from urllib.error import HTTPError
+except ImportError:
+    from urllib2 import HTTPError
 ############################
 
 
