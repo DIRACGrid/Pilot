@@ -582,7 +582,7 @@ class RegisterPilot(CommandBase):
             self.log.error("Could not get execute dirac-admin-add-pilot [ERROR %d]" % retCode)
 
 
-class PilotLogin(CommandBase):
+class PilotLoginX(CommandBase):
     """The pilot logs in and fetches their JWT.
 
     .. note:: This command is only compatible with DiracX CLI, and requires Dirac version >= 9.0
@@ -591,7 +591,7 @@ class PilotLogin(CommandBase):
 
     def __init__(self, pilotParams):
         """c'tor"""
-        super(PilotLogin, self).__init__(pilotParams)
+        super(PilotLoginX, self).__init__(pilotParams)
 
     @logFinalizer
     def execute(self):
