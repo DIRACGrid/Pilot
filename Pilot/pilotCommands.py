@@ -68,9 +68,9 @@ except ImportError:
     from proxyTools import BaseRequest
    
 try:
-    from urllib.error import HTTPError
+    from urllib.error import HTTPError, URLError
 except ImportError:
-    from urllib2 import HTTPError
+    from urllib2 import HTTPError, URLError
 ############################
 
 
@@ -625,8 +625,10 @@ class PilotLoginX(CommandBase):
                 "pilot_stamp": self.pp.pilotUUID,
                 "pilot_secret": self.pp.pilotSecret
             }, insecure=True)
-        except HTTPError as e:
+        except (HTTPError, URLError) as e:
             self.log.error("Request failed: %s" % str(e))
+            self.log.error("Could not fetch pilot tokens. Aborting...")
+            sys.exit(1)
 
         self.log.info("Fetched the pilot token with the pilot secret.")
 
