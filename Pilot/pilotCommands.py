@@ -585,7 +585,7 @@ class RegisterPilot(CommandBase):
 class PilotLoginX(CommandBase):
     """The pilot logs in and fetches their JWT.
 
-    .. note:: This command is only compatible with DiracX CLI, and requires Dirac version >= 9.0
+    .. note:: This command is only compatible with DiracX, and requires Dirac version >= 9.0
     """
 
 
