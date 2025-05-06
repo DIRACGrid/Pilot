@@ -28,6 +28,7 @@ import stat
 import sys
 import time
 import traceback
+import subprocess
 from collections import Counter
 
 ############################
@@ -811,40 +812,37 @@ class ConfigureSite(CommandBase):
 
 
 class ConfigureArchitecture(CommandBase):
-    """This command simply calls dirac-platfom to determine the platform.
+    """This command determines the platform.
     Separated from the ConfigureDIRAC command for easier extensibility.
     """
+    def getPlatformString(self):
+        # Modified to return our desired platform string, R. Graciani
+        platformTuple = (platform.system(), platform.machine())
+        if platformTuple[0] == "Linux":
+            platformTuple += ("-".join(platform.libc_ver()),)
+        elif platformTuple[0] == "Darwin":
+            platformTuple += (".".join(platform.mac_ver()[0].split(".")[:2]),)
+        else:
+            platformTuple += platform.release()
+
+        platformString = "%s_%s_%s" % platformTuple
+
+        return platformString
 
     @logFinalizer
     def execute(self):
-        """This is a simple command to call the dirac-platform utility to get the platform,
-        and add it to the configuration
+        """This is a simple command to get the platform, and add it to the configuration
 
         The architecture script, as well as its options can be replaced in a pilot extension
         """
 
-        cfg = []
-        if self.pp.useServerCertificate:
-            cfg.append("-o  /DIRAC/Security/UseServerCertificate=yes")
-        if self.pp.localConfigFile:
-            cfg.extend(["--cfg", self.pp.localConfigFile])  # this file is as input
+        try:
+            localArchitecture = self.getPlatformString()
+        except Exception as e:
+            self.log.error("Configuration error [ERROR %s]" % str(e))
+            self.exitWithError(1)
 
-        archScript = self.pp.architectureScript
-        if self.pp.architectureScript.split(" ")[0] == "dirac-apptainer-exec":
-            archScript = " ".join(self.pp.architectureScript.split(" ")[1:])
-        
-        architectureCmd = "%s %s -ddd" % (archScript, " ".join(cfg))
 
-        if self.pp.architectureScript.split(" ")[0] == "dirac-apptainer-exec":
-            architectureCmd = "dirac-apptainer-exec '%s' %s" % (architectureCmd, " ".join(cfg))
-
-        retCode, localArchitecture = self.executeAndGetOutput(architectureCmd, self.pp.installEnv)
-        if retCode:
-            self.log.error("There was an error getting the platform [ERROR %d]" % retCode)
-            self.exitWithError(retCode)
-        self.log.info("Architecture determined: %s" % localArchitecture.strip().split("\n")[-1])
-
-        # standard options
         cfg = ["-FDMH"]  # force update, skip CA checks, skip CA download, skip VOMS
         if self.pp.useServerCertificate:
             cfg.append("--UseServerCertificate")
