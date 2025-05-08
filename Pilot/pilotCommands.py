@@ -812,6 +812,66 @@ class ConfigureSite(CommandBase):
 
 
 class ConfigureArchitecture(CommandBase):
+    """This command simply calls dirac-platfom to determine the platform.
+    Separated from the ConfigureDIRAC command for easier extensibility.
+    """
+
+    @logFinalizer
+    def execute(self):
+        """This is a simple command to call the dirac-platform utility to get the platform,
+        and add it to the configuration
+
+        The architecture script, as well as its options can be replaced in a pilot extension
+        """
+
+        cfg = []
+        if self.pp.useServerCertificate:
+            cfg.append("-o  /DIRAC/Security/UseServerCertificate=yes")
+        if self.pp.localConfigFile:
+            cfg.extend(["--cfg", self.pp.localConfigFile])  # this file is as input
+
+        archScript = self.pp.architectureScript
+        if self.pp.architectureScript.split(" ")[0] == "dirac-apptainer-exec":
+            archScript = " ".join(self.pp.architectureScript.split(" ")[1:])
+        
+        architectureCmd = "%s %s -ddd" % (archScript, " ".join(cfg))
+
+        if self.pp.architectureScript.split(" ")[0] == "dirac-apptainer-exec":
+            architectureCmd = "dirac-apptainer-exec '%s' %s" % (architectureCmd, " ".join(cfg))
+
+        retCode, localArchitecture = self.executeAndGetOutput(architectureCmd, self.pp.installEnv)
+        if retCode:
+            self.log.error("There was an error getting the platform [ERROR %d]" % retCode)
+            self.exitWithError(retCode)
+        self.log.info("Architecture determined: %s" % localArchitecture.strip().split("\n")[-1])
+
+        # standard options
+        cfg = ["-FDMH"]  # force update, skip CA checks, skip CA download, skip VOMS
+        if self.pp.useServerCertificate:
+            cfg.append("--UseServerCertificate")
+        if self.pp.localConfigFile:
+            cfg.append("-O %s" % self.pp.localConfigFile)  # our target file for pilots
+            cfg.extend(["--cfg", self.pp.localConfigFile])  # this file is also an input
+        if self.pp.debugFlag:
+            cfg.append("-ddd")
+
+        # real options added here
+        localArchitecture = localArchitecture.strip().split("\n")[-1].strip()
+        cfg.append('-S "%s"' % self.pp.setup)
+        cfg.append("-o /LocalSite/Architecture=%s" % localArchitecture)
+
+        # add the local platform as determined by the platform module
+        cfg.append("-o /LocalSite/Platform=%s" % platform.machine())
+
+        configureCmd = "%s %s" % (self.pp.configureScript, " ".join(cfg))
+        retCode, _configureOutData = self.executeAndGetOutput(configureCmd, self.pp.installEnv)
+        if retCode:
+            self.log.error("Configuration error [ERROR %d]" % retCode)
+            self.exitWithError(retCode)
+
+        return localArchitecture
+
+class ConfigureArchitectureWithoutCLI(CommandBase):
     """This command determines the platform.
     Separated from the ConfigureDIRAC command for easier extensibility.
     """
