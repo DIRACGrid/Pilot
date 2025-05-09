@@ -121,6 +121,7 @@ jobs:
           - jenkins-mp.cern.ch
           - jenkins-mp-pool.cern.ch
           - jenkins-mp-pool-singularity.cern.ch
+          - jenkins-revised.cern.ch
 
     steps:
       - uses: actions/checkout@v4
@@ -266,6 +267,7 @@ jobs:
           - jenkins-mp-full.cern.ch
           - jenkins-mp-pool-full.cern.ch
           - jenkins-mp-pool-singularity-full.cern.ch
+          - jenkins-revised.cern.ch
 
     steps:
       - uses: actions/checkout@v4
