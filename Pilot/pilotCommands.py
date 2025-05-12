@@ -28,6 +28,7 @@ import stat
 import sys
 import time
 import traceback
+import subprocess
 from collections import Counter
 
 ############################
@@ -845,6 +846,63 @@ class ConfigureArchitecture(CommandBase):
         self.log.info("Architecture determined: %s" % localArchitecture.strip().split("\n")[-1])
 
         # standard options
+        cfg = ["-FDMH"]  # force update, skip CA checks, skip CA download, skip VOMS
+        if self.pp.useServerCertificate:
+            cfg.append("--UseServerCertificate")
+        if self.pp.localConfigFile:
+            cfg.append("-O %s" % self.pp.localConfigFile)  # our target file for pilots
+            cfg.extend(["--cfg", self.pp.localConfigFile])  # this file is also an input
+        if self.pp.debugFlag:
+            cfg.append("-ddd")
+
+        # real options added here
+        localArchitecture = localArchitecture.strip().split("\n")[-1].strip()
+        cfg.append('-S "%s"' % self.pp.setup)
+        cfg.append("-o /LocalSite/Architecture=%s" % localArchitecture)
+
+        # add the local platform as determined by the platform module
+        cfg.append("-o /LocalSite/Platform=%s" % platform.machine())
+
+        configureCmd = "%s %s" % (self.pp.configureScript, " ".join(cfg))
+        retCode, _configureOutData = self.executeAndGetOutput(configureCmd, self.pp.installEnv)
+        if retCode:
+            self.log.error("Configuration error [ERROR %d]" % retCode)
+            self.exitWithError(retCode)
+
+        return localArchitecture
+
+class ConfigureArchitectureWithoutCLI(CommandBase):
+    """This command determines the platform.
+    Separated from the ConfigureDIRAC command for easier extensibility.
+    """
+    def getPlatformString(self):
+        # Modified to return our desired platform string, R. Graciani
+        platformTuple = (platform.system(), platform.machine())
+        if platformTuple[0] == "Linux":
+            platformTuple += ("-".join(platform.libc_ver()),)
+        elif platformTuple[0] == "Darwin":
+            platformTuple += (".".join(platform.mac_ver()[0].split(".")[:2]),)
+        else:
+            platformTuple += platform.release()
+
+        platformString = "%s_%s_%s" % platformTuple
+
+        return platformString
+
+    @logFinalizer
+    def execute(self):
+        """This is a simple command to get the platform, and add it to the configuration
+
+        The architecture script, as well as its options can be replaced in a pilot extension
+        """
+
+        try:
+            localArchitecture = self.getPlatformString()
+        except Exception as e:
+            self.log.error("Configuration error [ERROR %s]" % str(e))
+            self.exitWithError(1)
+
+
         cfg = ["-FDMH"]  # force update, skip CA checks, skip CA download, skip VOMS
         if self.pp.useServerCertificate:
             cfg.append("--UseServerCertificate")
