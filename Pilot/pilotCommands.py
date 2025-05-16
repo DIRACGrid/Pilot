@@ -21,6 +21,7 @@ from __future__ import absolute_import, division, print_function
 
 import filecmp
 import os
+import threading
 import platform
 import shutil
 import socket
@@ -63,9 +64,9 @@ except ImportError:
     )
     
 try:
-    from Pilot.proxyTools import BaseRequest
+    from Pilot.proxyTools import BaseRequest, refreshTokenLoop
 except ImportError:
-    from proxyTools import BaseRequest
+    from proxyTools import BaseRequest, refreshTokenLoop
    
 try:
     from urllib.error import HTTPError, URLError
@@ -592,6 +593,7 @@ class PilotLoginX(CommandBase):
     def __init__(self, pilotParams):
         """c'tor"""
         super(PilotLoginX, self).__init__(pilotParams)
+        self.jwt_lock = threading.Lock()
 
     @logFinalizer
     def execute(self):
@@ -609,16 +611,19 @@ class PilotLoginX(CommandBase):
             self.log.error("DiracXServer (url) not given, exiting...")
             sys.exit(-1)
 
+        if not self.pp.clientID:
+            self.log.error("ClientID not given, exiting...")
+            sys.exit(-1)
+
         self.log.info("Fetching JWT in DiracX (URL: %s)" % self.pp.diracXServer)
 
         config = BaseRequest(
-            "%s/api/auth/pilot-login" % (
+            "%s/api/pilots/token" % (
                 self.pp.diracXServer
             ),
-            os.getenv("X509_CERT_DIR")
+            os.getenv("X509_CERT_DIR"),
+            self.pp.pilotUUID
         )
-        
-        config.generateUserAgent(self.pp.pilotUUID)
         
         try:
             self.pp.jwt = config.executeRequest({
@@ -631,6 +636,25 @@ class PilotLoginX(CommandBase):
             sys.exit(1)
 
         self.log.info("Fetched the pilot token with the pilot secret.")
+
+        self.log.info("Starting the refresh thread.")
+        self.log.info("Refreshing the token every %d seconds." % self.pp.refreshTokenEvery)
+        # Start background refresh thread
+        t = threading.Thread(
+            target=refreshTokenLoop,
+            args=(
+                self.pp.diracXServer,
+                self.pp.pilotUUID,
+                self.pp.jwt,
+                self.jwt_lock,
+                self.log,
+                self.pp.clientID,
+                self.pp.refreshTokenEvery
+            )
+        )
+        t.daemon = True
+        t.start()
+
 
 class CheckCECapabilities(CommandBase):
     """Used to get CE tags and other relevant parameters."""

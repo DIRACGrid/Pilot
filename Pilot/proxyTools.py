@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 
 import json
 import os
+import time
 import re
 import ssl
 import sys
@@ -83,26 +84,23 @@ def getVO(proxy_data):
 class BaseRequest(object):
     """This class helps supporting multiple kinds of requests that require connections"""
 
-    def __init__(self, url, caPath, name="unknown"):
+    def __init__(self, url, caPath, pilotUUID, name="unknown"):
         self.name = name
         self.url = url
         self.caPath = caPath
         self.headers = {
             "User-Agent": "Dirac Pilot [Unknown ID]"
         }
+        self.pilotUUID = pilotUUID
         # We assume we have only one context, so this variable could be shared to avoid opening n times a cert.
         # On the contrary, to avoid race conditions, we do avoid using "self.data" and "self.headers"
         self._context = None
 
         self._prepareRequest()
 
-    def generateUserAgent(self, pilotUUID):
-        """To analyse the traffic, we can send a taylor-made User-Agent
-
-        :param pilotUUID: Unique ID of the Pilot
-        :type pilotUUID: str
-        """
-        self.headers["User-Agent"] = "Dirac Pilot [%s]" % pilotUUID
+    def generateUserAgent(self):
+        """To analyse the traffic, we can send a taylor-made User-Agent"""
+        self.addHeader("User-Agent", "Dirac Pilot [%s]" % self.pilotUUID)
 
     def _prepareRequest(self):
         """As previously, loads the SSL certificates of the server (to avoid "unknown issuer")"""
@@ -128,18 +126,18 @@ class BaseRequest(object):
         """
         if content_type == "json":
             data = json.dumps(raw_data).encode("utf-8")
-            self.headers["Content-Type"] = "application/json"
+            self.addHeader("Content-Type", "application/json")
         elif content_type == "x-www-form-urlencoded":
             if sys.version_info.major == 3:
                 data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
             else:
                 # Python2
                 data = urlencode(raw_data)
-            self.headers["Content-Type"] = "application/x-www-form-urlencoded"
+            self.addHeader("Content-Type", "application/x-www-form-urlencoded")
         else:
             raise ValueError("Invalid content_type. Use 'json' or 'x-www-form-urlencoded'.")
 
-        self.headers["Content-Length"] = str(len(data))
+        self.addHeader("Content-Length", str(len(data)))
 
         request = Request(self.url, data=data, headers=self.headers, method="POST")
 
@@ -173,21 +171,27 @@ class BaseRequest(object):
 class TokenBasedRequest(BaseRequest):
     """Connected Request with JWT support"""
 
-    def __init__(self, url, caPath, jwtData):
-        super(TokenBasedRequest, self).__init__(url, caPath, "TokenBasedConnection")
-
+    def __init__(self, url, caPath, jwtData, pilotUUID):
+        super(TokenBasedRequest, self).__init__(url, caPath, pilotUUID, "TokenBasedConnection")
         self.jwtData = jwtData
     
     def addJwtToHeader(self):
         # Adds the JWT in the HTTP request (in the Bearer field)
-        self.headers["Authorization"] = "Bearer: %s" % self.jwtData
+        self.headers["Authorization"] = "Bearer: %s" % self.jwtData["access_token"]
 
+    def executeRequest(self, raw_data, insecure=False, content_type="json", is_token_refreshed=False):
+    
+        return super(TokenBasedRequest, self).executeRequest(
+            raw_data,
+            insecure=insecure,
+            content_type=content_type
+        )
 
 class X509BasedRequest(BaseRequest):
     """Connected Request with X509 support"""
 
-    def __init__(self, url, caPath, certEnv):
-        super(X509BasedRequest, self).__init__(url, caPath, "X509BasedConnection")
+    def __init__(self, url, caPath, certEnv, pilotUUID):
+        super(X509BasedRequest, self).__init__(url, caPath, pilotUUID, "X509BasedConnection")
 
         self.certEnv = certEnv
         self._hasExtraCredentials = False
@@ -210,3 +214,113 @@ class X509BasedRequest(BaseRequest):
             insecure=insecure,
             content_type=content_type
         )
+
+
+def refreshPilotToken(url, pilotUUID, jwt, jwt_lock, clientID):
+    """
+    Refresh the JWT token in a separate thread.
+
+    :param str url: Server URL
+    :param str pilotUUID: Pilot unique ID
+    :param dict jwt: Shared dict with current JWT; updated in-place
+    :param threading.Lock jwt_lock: Lock to safely update the jwt dict
+    :return: None
+    """
+
+    # PRECONDITION: jwt must contain "refresh_token"
+    if not jwt or "refresh_token" not in jwt:
+        raise ValueError("To refresh a token, a pilot needs a JWT with refresh_token")
+
+    # Get CA path from environment
+    caPath = os.getenv("X509_CERT_DIR")
+
+    # Create request object with required configuration
+    config = BaseRequest(
+        url="%s/api/auth/token" % url,
+        caPath=caPath,
+        pilotUUID=pilotUUID
+    )
+
+    # Prepare refresh token payload
+    payload = {
+        "grant_type": "refresh_token",
+        "refresh_token": jwt["refresh_token"],
+        "client_id": clientID 
+    }
+
+    # Perform the request to refresh the token
+    response = config.executeRequest(
+        raw_data=payload,
+        insecure=True,
+        content_type="x-www-form-urlencoded"
+    )
+
+    # Ensure thread-safe update of the shared jwt dictionary
+    jwt_lock.acquire()
+    try:
+        jwt.update(response)
+    finally:
+        jwt_lock.release()
+
+
+def revokePilotToken(url, pilotUUID, jwt, clientID):
+    """
+    Refresh the JWT token in a separate thread.
+
+    :param str url: Server URL
+    :param str pilotUUID: Pilot unique ID
+    :param dict jwt: Shared dict with current JWT; 
+    :return: None
+    """
+
+    # PRECONDITION: jwt must contain "refresh_token"
+    if not jwt or "refresh_token" not in jwt:
+        raise ValueError("To refresh a token, a pilot needs a JWT with refresh_token")
+
+    # Get CA path from environment
+    caPath = os.getenv("X509_CERT_DIR")
+
+    # Create request object with required configuration
+    config = BaseRequest(
+        url="%s/api/auth/revoke" % url,
+        caPath=caPath,
+        pilotUUID=pilotUUID
+    )
+
+    # Prepare refresh token payload
+    payload = {
+        "refresh_token": jwt["refresh_token"],
+        "client_id": clientID 
+    }
+
+    # Perform the request to revoke the token
+    _response = config.executeRequest(
+        raw_data=payload,
+        insecure=True,
+        content_type="x-www-form-urlencoded"
+    )
+
+# === Token refresher thread function ===
+def refreshTokenLoop(url, pilotUUID, jwt, jwt_lock, logger, clientID, interval=600):
+    """
+    Periodically refresh the pilot JWT token.
+
+    :param str url: DiracX server URL
+    :param str pilotUUID: Pilot UUID
+    :param dict jwt: Shared JWT dictionary
+    :param threading.Lock jwt_lock: Lock to safely update JWT
+    :param Logger logger: Logger to debug 
+    :param str clientID: ClientID used to refresh tokens 
+    :param int interval: Sleep time between refreshes in seconds
+    :return: None
+    """
+    while True:
+        time.sleep(interval)
+
+        try:
+            refreshPilotToken(url, pilotUUID, jwt, jwt_lock, clientID)
+
+            logger.info("Token refreshed.")
+        except Exception as e:
+            logger.error("Token refresh failed: %s\n" % str(e))
+            continue

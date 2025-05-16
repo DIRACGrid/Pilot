@@ -705,15 +705,12 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage, jwt={}):
     config = None
     
     if jwt:
-        try:
-            access_token = jwt["access_token"]
-        except ValueError as e:
-            raise ValueError("JWT is needed, with an access_token field")
         
         config = TokenBasedRequest(
             url=url,
             caPath=caPath,
-            jwtData=access_token
+            jwtData=jwt,
+            pilotUUID=pilotUUID
         )
 
     else:
@@ -722,11 +719,9 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage, jwt={}):
         config = X509BasedRequest(
             url=url,
             caPath=caPath,
-            certEnv=cert
+            certEnv=cert,
+            pilotUUID=pilotUUID
         )
-    
-    # Config the header, will help debugging
-    config.generateUserAgent(pilotUUID=pilotUUID)
     
     # Do the request
     _res = config.executeRequest(
@@ -926,6 +921,8 @@ class PilotParams(object):
         self.queueName = ""
         self.gridCEType = ""
         self.pilotSecret = ""
+        self.clientID = ""
+        self.refreshTokenEvery = 300
         self.jwt = {
             "access_token": "",
             "refresh_token": ""
@@ -1041,6 +1038,8 @@ class PilotParams(object):
             ("", "architectureScript=", "architecture script to use"),
             ("", "CVMFS_locations=", "comma-separated list of CVMS locations"),
             ("", "pilotSecret=", "secret that the pilot uses with DiracX"),
+            ("", "clientID=", "client id used by DiracX to revoke a token"),
+            ("", "refreshTokenEvery=", "how often we have to refresh a token (in seconds)")
         )
 
         # Possibly get Setup and JSON URL/filename from command line
@@ -1248,6 +1247,10 @@ class PilotParams(object):
                 self.CVMFS_locations = v.split(",")
             elif o == "--pilotSecret":
                 self.pilotSecret = v
+            elif o == "--clientID":
+                self.clientID = v
+            elif o == "--refreshTokenEvery":
+                self.refreshTokenEvery = int(v)
 
     def __loadJSON(self):
         """
