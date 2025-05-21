@@ -127,17 +127,23 @@ class BaseRequest(object):
         if content_type == "json":
             data = json.dumps(raw_data).encode("utf-8")
             self.addHeader("Content-Type", "application/json")
-        elif content_type == "x-www-form-urlencoded":
-            if sys.version_info.major == 3:
-                data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
-            else:
-                # Python2
-                data = urlencode(raw_data)
-            self.addHeader("Content-Type", "application/x-www-form-urlencoded")
+            self.addHeader("Content-Length", str(len(data)))
         else:
-            raise ValueError("Invalid content_type. Use 'json' or 'x-www-form-urlencoded'.")
 
-        self.addHeader("Content-Length", str(len(data)))
+            data = urlencode(raw_data)
+
+            if content_type == "x-www-form-urlencoded":
+                if sys.version_info.major == 3:
+                    data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
+            
+                self.addHeader("Content-Type", "application/x-www-form-urlencoded")
+                self.addHeader("Content-Length", str(len(data)))
+            elif content_type == "query":
+                self.url = self.url + "?" + data 
+                data = None  # No body
+            else:
+                raise ValueError("Invalid content_type. Use 'json' or 'x-www-form-urlencoded'.")
+
 
         request = Request(self.url, data=data, headers=self.headers, method="POST")
 
@@ -150,22 +156,26 @@ class BaseRequest(object):
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
 
-        if sys.version_info.major == 3:
-            # Python 3 code
-            with urlopen(request, context=ctx) as res:
-                response_data = res.read().decode("utf-8")  # Decode response bytes
-        else:
-            # Python 2 code
-            res = urlopen(request, context=ctx)
-            try:
-                response_data = res.read()
-            finally:
-                res.close()
+
+        try:
+            if sys.version_info.major == 3:
+                # Python 3 code
+                with urlopen(request, context=ctx) as res:
+                    response_data = res.read().decode("utf-8")  # Decode response bytes
+            else:
+                # Python 2 code
+                res = urlopen(request, context=ctx)
+                try:
+                    response_data = res.read()
+                finally:
+                    res.close()
+        except HTTPError as e:
+            raise RuntimeError("HTTPError : %s" % e.read().decode())
 
         try:
             return json.loads(response_data)  # Parse JSON response
         except ValueError:  # In Python 2, json.JSONDecodeError is a subclass of ValueError
-            raise Exception("Invalid JSON response: %s" % response_data)
+            raise ValueError("Invalid JSON response: %s" % response_data)
 
 
 class TokenBasedRequest(BaseRequest):
@@ -174,12 +184,13 @@ class TokenBasedRequest(BaseRequest):
     def __init__(self, url, caPath, jwtData, pilotUUID):
         super(TokenBasedRequest, self).__init__(url, caPath, pilotUUID, "TokenBasedConnection")
         self.jwtData = jwtData
+        self.addJwtToHeader()
     
     def addJwtToHeader(self):
         # Adds the JWT in the HTTP request (in the Bearer field)
-        self.headers["Authorization"] = "Bearer: %s" % self.jwtData["access_token"]
+        self.headers["Authorization"] = "Bearer %s" % self.jwtData["access_token"]
 
-    def executeRequest(self, raw_data, insecure=False, content_type="json", is_token_refreshed=False):
+    def executeRequest(self, raw_data, insecure=False, content_type="json"):
     
         return super(TokenBasedRequest, self).executeRequest(
             raw_data,
@@ -216,7 +227,7 @@ class X509BasedRequest(BaseRequest):
         )
 
 
-def refreshPilotToken(url, pilotUUID, jwt, jwt_lock, clientID):
+def refreshPilotToken(url, pilotUUID, jwt, jwt_lock):
     """
     Refresh the JWT token in a separate thread.
 
@@ -235,24 +246,19 @@ def refreshPilotToken(url, pilotUUID, jwt, jwt_lock, clientID):
     caPath = os.getenv("X509_CERT_DIR")
 
     # Create request object with required configuration
-    config = BaseRequest(
-        url="%s/api/auth/token" % url,
+    config = TokenBasedRequest(
+        url="%s/api/pilots/refresh-token" % url,
         caPath=caPath,
-        pilotUUID=pilotUUID
+        pilotUUID=pilotUUID,
+        jwtData=jwt
     )
-
-    # Prepare refresh token payload
-    payload = {
-        "grant_type": "refresh_token",
-        "refresh_token": jwt["refresh_token"],
-        "client_id": clientID 
-    }
 
     # Perform the request to refresh the token
     response = config.executeRequest(
-        raw_data=payload,
+        raw_data={
+            "refresh_token": jwt["refresh_token"]
+        },
         insecure=True,
-        content_type="x-www-form-urlencoded"
     )
 
     # Ensure thread-safe update of the shared jwt dictionary
@@ -269,6 +275,7 @@ def revokePilotToken(url, pilotUUID, jwt, clientID):
 
     :param str url: Server URL
     :param str pilotUUID: Pilot unique ID
+    :param str clientID: ClientID used to revoke tokens 
     :param dict jwt: Shared dict with current JWT; 
     :return: None
     """
@@ -297,11 +304,11 @@ def revokePilotToken(url, pilotUUID, jwt, clientID):
     _response = config.executeRequest(
         raw_data=payload,
         insecure=True,
-        content_type="x-www-form-urlencoded"
+        content_type="query"
     )
 
 # === Token refresher thread function ===
-def refreshTokenLoop(url, pilotUUID, jwt, jwt_lock, logger, clientID, interval=600):
+def refreshTokenLoop(url, pilotUUID, jwt, jwt_lock, logger, interval=600):
     """
     Periodically refresh the pilot JWT token.
 
@@ -310,7 +317,6 @@ def refreshTokenLoop(url, pilotUUID, jwt, jwt_lock, logger, clientID, interval=6
     :param dict jwt: Shared JWT dictionary
     :param threading.Lock jwt_lock: Lock to safely update JWT
     :param Logger logger: Logger to debug 
-    :param str clientID: ClientID used to refresh tokens 
     :param int interval: Sleep time between refreshes in seconds
     :return: None
     """
@@ -318,7 +324,7 @@ def refreshTokenLoop(url, pilotUUID, jwt, jwt_lock, logger, clientID, interval=6
         time.sleep(interval)
 
         try:
-            refreshPilotToken(url, pilotUUID, jwt, jwt_lock, clientID)
+            refreshPilotToken(url, pilotUUID, jwt, jwt_lock)
 
             logger.info("Token refreshed.")
         except Exception as e:

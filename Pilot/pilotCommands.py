@@ -587,6 +587,7 @@ class PilotLoginX(CommandBase):
     """The pilot logs in and fetches their JWT.
 
     .. note:: This command is only compatible with DiracX, and requires Dirac version >= 9.0
+    .. note:: This command will start a new thread to refresh tokens regularly
     """
 
 
@@ -609,10 +610,6 @@ class PilotLoginX(CommandBase):
 
         if not self.pp.diracXServer:
             self.log.error("DiracXServer (url) not given, exiting...")
-            sys.exit(-1)
-
-        if not self.pp.clientID:
-            self.log.error("ClientID not given, exiting...")
             sys.exit(-1)
 
         self.log.info("Fetching JWT in DiracX (URL: %s)" % self.pp.diracXServer)
@@ -648,7 +645,6 @@ class PilotLoginX(CommandBase):
                 self.pp.jwt,
                 self.jwt_lock,
                 self.log,
-                self.pp.clientID,
                 self.pp.refreshTokenEvery
             )
         )
