@@ -9,7 +9,7 @@ import os
 import re
 import select
 import signal
-import ssl
+import threading
 import subprocess
 import sys
 import threading
@@ -66,9 +66,9 @@ except NameError:
     basestring = str
 
 try:
-    from Pilot.proxyTools import X509BasedRequest, getVO, TokenBasedRequest, BaseRequest
+    from Pilot.proxyTools import X509BasedRequest, getVO, TokenBasedRequest, BaseRequest, refreshTokenLoop
 except ImportError:
-    from proxyTools import X509BasedRequest, getVO, TokenBasedRequest, BaseRequest
+    from proxyTools import X509BasedRequest, getVO, TokenBasedRequest, BaseRequest, refreshTokenLoop
 
 try:
     FileNotFoundError  # pylint: disable=used-before-assignment
@@ -927,6 +927,7 @@ class PilotParams(object):
             "access_token": "",
             "refresh_token": ""
         }
+        self.jwt_lock = threading.Lock()
         # maxNumberOfProcessors: the number of
         # processors allocated to the pilot which the pilot can allocate to one payload
         # used to set payloadProcessors unless other limits are reached (like the number of processors on the WN)
@@ -1065,7 +1066,53 @@ class PilotParams(object):
         if self.useServerCertificate:
             self.installEnv["X509_USER_PROXY"] = self.certsLocation
             os.environ["X509_USER_PROXY"] = self.certsLocation
-    
+
+
+
+        if self.pilotUUID or not self.pilotSecret or not self.diracXServer:
+            self.log.info("Fetching JWT in DiracX (URL: %s)" % self.diracXServer)
+
+            config = BaseRequest(
+                "%s/api/pilots/token" % (
+                    self.diracXServer
+                ),
+                os.getenv("X509_CERT_DIR"),
+                self.pilotUUID
+            )
+            
+            try:
+                self.jwt = config.executeRequest({
+                    "pilot_stamp": self.pilotUUID,
+                    "pilot_secret": self.pilotSecret
+                }, insecure=True)
+            except (HTTPError, URLError) as e:
+                self.log.error("Request failed: %s" % str(e))
+                self.log.error("Could not fetch pilot tokens. Aborting...")
+                sys.exit(1)
+
+            self.log.info("Fetched the pilot token with the pilot secret.")
+
+            self.log.info("Starting the refresh thread.")
+            self.log.info("Refreshing the token every %d seconds." % self.refreshTokenEvery)
+            # Start background refresh thread
+            t = threading.Thread(
+                target=refreshTokenLoop,
+                args=(
+                    self.diracXServer,
+                    self.pilotUUID,
+                    self.jwt,
+                    self.jwt_lock,
+                    self.log,
+                    self.refreshTokenEvery
+                )
+            )
+            t.daemon = True
+            t.start()
+        else:
+            self.log.info("PilotUUID, pilotSecret, and diracXServer are needed to support DiracX.")
+
+
+
     def __setSecurityDir(self, envName, dirLocation):
         """Set the environment variable of the `envName`, and add it also to the Pilot Parameters
 

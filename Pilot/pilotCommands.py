@@ -21,7 +21,6 @@ from __future__ import absolute_import, division, print_function
 
 import filecmp
 import os
-import threading
 import platform
 import shutil
 import socket
@@ -29,7 +28,6 @@ import stat
 import sys
 import time
 import traceback
-import subprocess
 from collections import Counter
 
 ############################
@@ -581,75 +579,6 @@ class RegisterPilot(CommandBase):
         retCode, _ = self.executeAndGetOutput(checkCmd, self.pp.installEnv)
         if retCode:
             self.log.error("Could not get execute dirac-admin-add-pilot [ERROR %d]" % retCode)
-
-
-class PilotLoginX(CommandBase):
-    """The pilot logs in and fetches their JWT.
-
-    .. note:: This command is only compatible with DiracX, and requires Dirac version >= 9.0
-    .. note:: This command will start a new thread to refresh tokens regularly
-    """
-
-
-    def __init__(self, pilotParams):
-        """c'tor"""
-        super(PilotLoginX, self).__init__(pilotParams)
-        self.jwt_lock = threading.Lock()
-
-    @logFinalizer
-    def execute(self):
-        """Calls diracX api"""
-
-        if not self.pp.pilotUUID:
-            self.log.error("PilotUUID not given, exiting...")
-            sys.exit(-1)
-
-        if not self.pp.pilotSecret:
-            self.log.error("PilotSecret not given, exiting...")
-            sys.exit(-1)
-
-        if not self.pp.diracXServer:
-            self.log.error("DiracXServer (url) not given, exiting...")
-            sys.exit(-1)
-
-        self.log.info("Fetching JWT in DiracX (URL: %s)" % self.pp.diracXServer)
-
-        config = BaseRequest(
-            "%s/api/pilots/token" % (
-                self.pp.diracXServer
-            ),
-            os.getenv("X509_CERT_DIR"),
-            self.pp.pilotUUID
-        )
-        
-        try:
-            self.pp.jwt = config.executeRequest({
-                "pilot_stamp": self.pp.pilotUUID,
-                "pilot_secret": self.pp.pilotSecret
-            }, insecure=True)
-        except (HTTPError, URLError) as e:
-            self.log.error("Request failed: %s" % str(e))
-            self.log.error("Could not fetch pilot tokens. Aborting...")
-            sys.exit(1)
-
-        self.log.info("Fetched the pilot token with the pilot secret.")
-
-        self.log.info("Starting the refresh thread.")
-        self.log.info("Refreshing the token every %d seconds." % self.pp.refreshTokenEvery)
-        # Start background refresh thread
-        t = threading.Thread(
-            target=refreshTokenLoop,
-            args=(
-                self.pp.diracXServer,
-                self.pp.pilotUUID,
-                self.pp.jwt,
-                self.jwt_lock,
-                self.log,
-                self.pp.refreshTokenEvery
-            )
-        )
-        t.daemon = True
-        t.start()
 
 
 class CheckCECapabilities(CommandBase):
