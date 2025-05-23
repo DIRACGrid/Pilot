@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 import json
+from multiprocessing import Value
 import os
 import time
 import re
@@ -112,15 +113,17 @@ class BaseRequest(object):
         """Add a header (key, value) into the request header"""
         self.headers[key] = value
 
-    def executeRequest(self, raw_data, insecure=False, content_type="json"):
+    def executeRequest(self, raw_data, insecure=False, content_type="json", json_output=True):
         """Execute a HTTP request with the data, headers, and the pre-defined data (SSL + auth)
 
         :param raw_data: Data to send
         :type raw_data: dict
         :param insecure: Deactivate proxy verification WARNING Debug ONLY
         :type insecure: bool
-        :param content_type: Data format to send, either "json" or "x-www-form-urlencoded"
+        :param content_type: Data format to send, either "json" or "x-www-form-urlencoded" or "query"
         :type content_type: str
+        :param json_output: If we have an output
+        :type json_output: bool
         :return: Parsed JSON response
         :rtype: dict
         """
@@ -172,10 +175,11 @@ class BaseRequest(object):
         except HTTPError as e:
             raise RuntimeError("HTTPError : %s" % e.read().decode())
 
-        try:
-            return json.loads(response_data)  # Parse JSON response
-        except ValueError:  # In Python 2, json.JSONDecodeError is a subclass of ValueError
-            raise ValueError("Invalid JSON response: %s" % response_data)
+        if json_output:
+            try:
+                return json.loads(response_data)  # Parse JSON response
+            except ValueError:  # In Python 2, json.JSONDecodeError is a subclass of ValueError
+                raise ValueError("Invalid JSON response: %s" % response_data)
 
 
 class TokenBasedRequest(BaseRequest):
@@ -190,12 +194,13 @@ class TokenBasedRequest(BaseRequest):
         # Adds the JWT in the HTTP request (in the Bearer field)
         self.headers["Authorization"] = "Bearer %s" % self.jwtData["access_token"]
 
-    def executeRequest(self, raw_data, insecure=False, content_type="json"):
+    def executeRequest(self, raw_data, insecure=False, content_type="json", json_output=True):
     
         return super(TokenBasedRequest, self).executeRequest(
             raw_data,
             insecure=insecure,
-            content_type=content_type
+            content_type=content_type,
+            json_output=json_output
         )
 
 class X509BasedRequest(BaseRequest):
@@ -216,14 +221,15 @@ class X509BasedRequest(BaseRequest):
             )
             self._hasExtraCredentials = True
 
-    def executeRequest(self, raw_data, insecure=False, content_type="json"):
+    def executeRequest(self, raw_data, insecure=False, content_type="json", json_output=True):
         # Adds a flag if the passed cert is a Directory
         if self._hasExtraCredentials:
             raw_data["extraCredentials"] = '"hosts"'
         return super(X509BasedRequest, self).executeRequest(
             raw_data,
             insecure=insecure,
-            content_type=content_type
+            content_type=content_type,
+            json_output=json_output
         )
 
 
