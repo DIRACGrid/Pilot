@@ -46,7 +46,7 @@
           "LHCbAddCVMFSTags",
           "CheckWNCapabilities",
           "ConfigureSite",
-          "LHCbConfigureArchitecture",
+          "ConfigureArchitecture",
           "ConfigureCPURequirements"
         ],
         "LHCbD": [
@@ -58,7 +58,7 @@
           "LHCbAddCVMFSTags",
           "CheckWNCapabilities",
           "ConfigureSite",
-          "LHCbConfigureArchitecture",
+          "ConfigureArchitecture",
           "ConfigureCPURequirements"
         ],
         "LHCbDD": [
@@ -70,7 +70,7 @@
           "LHCbAddCVMFSTags",
           "CheckWNCapabilities",
           "ConfigureSite",
-          "LHCbConfigureArchitecture",
+          "ConfigureArchitecture",
           "ConfigureCPURequirements"
         ]
       },
