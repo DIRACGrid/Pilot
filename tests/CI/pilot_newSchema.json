@@ -94,9 +94,9 @@
 				"TEST": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
 				"TEST-MP": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
 				"TEST-FULL": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements, LaunchAgent",
-				"LHCb": "CheckWorkerNode, LHCbInstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, LHCbConfigureArchitecture, ConfigureCPURequirements",
-				"LHCbD": "CheckWorkerNode, InstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, LHCbConfigureArchitecture, ConfigureCPURequirements",
-				"LHCbDD": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, LHCbConfigureArchitecture, ConfigureCPURequirements",
+				"LHCb": "CheckWorkerNode, LHCbInstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
+				"LHCbD": "CheckWorkerNode, InstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
+				"LHCbDD": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
 				"TEST-REVISED-COMMANDS": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitectureWithoutCLI, ConfigureCPURequirements"
       }
 		}
