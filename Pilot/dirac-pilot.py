@@ -63,8 +63,7 @@ if __name__ == "__main__":
     # print the buffer, so we have a "classic' logger back in sync.
     sys.stdout.write(bufContent)
     # now the remote logger.
-    remote = pilotParams.pilotLogging and (pilotParams.loggerURL is not None)
-    if remote:
+    if pilotParams.pilotLogging:
         # In a remote logger enabled Dirac version we would have some classic logger content from a wrapper,
         # which we passed in:
         receivedContent = ""
@@ -72,16 +71,22 @@ if __name__ == "__main__":
             receivedContent = sys.stdin.read()
         log = RemoteLogger(
             pilotParams.loggerURL,
-            "Pilot",
+            useServerCertificate=pilotParams.useServerCertificate,
+            name="Pilot",
             bufsize=pilotParams.loggerBufsize,
             pilotUUID=pilotParams.pilotUUID,
             debugFlag=pilotParams.debugFlag,
-            wnVO=pilotParams.wnVO,
         )
         log.info("Remote logger activated")
-        log.buffer.write(receivedContent)
+        log.buffer.write(log.format_to_json(
+            "INFO",
+            receivedContent,
+        ))
         log.buffer.flush()
-        log.buffer.write(bufContent)
+        log.buffer.write(log.format_to_json(
+            "INFO",
+            bufContent,
+        ))
     else:
         log = Logger("Pilot", debugFlag=pilotParams.debugFlag)
 
@@ -103,7 +108,7 @@ if __name__ == "__main__":
         log.info("Requested command extensions: %s" % str(pilotParams.commandExtensions))
 
     log.info("Executing commands: %s" % str(pilotParams.commands))
-
+    remote = pilotParams.pilotLogging
     if remote:
         # It's safer to cancel the timer here. Each command has got its own logger object with a timer cancelled by the
         # finaliser. No need for a timer in the "else" code segment below.
@@ -122,5 +127,8 @@ if __name__ == "__main__":
             log.error("Command %s could not be instantiated" % commandName)
             # send the last message and abandon ship.
             if remote:
-                log.buffer.flush()
+                log.buffer.flush(force=True)
             sys.exit(-1)
+
+    log.info("Pilot tasks finished.")
+    log.buffer.flush(force=True)

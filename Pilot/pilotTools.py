@@ -518,7 +518,8 @@ class RemoteLogger(Logger):
 
     def __init__(
         self,
-        url,
+        url, # Not used yet
+        useServerCertificate,
         name="Pilot",
         debugFlag=False,
         pilotOutput="pilot.out",
@@ -526,7 +527,6 @@ class RemoteLogger(Logger):
         pilotUUID="unknown",
         flushInterval=10,
         bufsize=1000,
-        wnVO="unknown",
     ):
         """
         c'tor
@@ -538,34 +538,48 @@ class RemoteLogger(Logger):
         self.pilotUUID = pilotUUID
         self.wnVO = wnVO
         self.isPilotLoggerOn = isPilotLoggerOn
-        sendToURL = partial(sendMessage, url, pilotUUID, wnVO, "sendMessage")
+        sendToURL = partial(sendMessage, useServerCertificate, pilotUUID)
         self.buffer = FixedSizeBuffer(sendToURL, bufsize=bufsize, autoflush=flushInterval)
 
-    def debug(self, msg, header=True, _sendPilotLog=False):
-        # TODO: Send pilot log remotely?
+    def format_to_json(self, level, message):
+
+        escaped = json.dumps(message)[1:-1]  # remove outer quotes
+
+        # Split on escaped newlines
+        splitted_message = escaped.split("\\n")
+
+        output = []
+        for mess in splitted_message:
+            if mess:
+                output.append({
+                    "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+                    "severity": level,
+                    "message": mess,
+                    "scope": self.name
+                })
+        return output
+
+    def debug(self, msg, header=True):
         super(RemoteLogger, self).debug(msg, header)
         if (
             self.isPilotLoggerOn and self.debugFlag
         ):  # the -d flag activates this debug flag in CommandBase via PilotParams
-            self.sendMessage(self.messageTemplate.format(level="DEBUG", message=msg))
+            self.sendMessage(self.format_to_json(level="DEBUG", message=msg))
 
-    def error(self, msg, header=True, _sendPilotLog=False):
-        # TODO: Send pilot log remotely?
+    def error(self, msg, header=True):
         super(RemoteLogger, self).error(msg, header)
         if self.isPilotLoggerOn:
-            self.sendMessage(self.messageTemplate.format(level="ERROR", message=msg))
+            self.sendMessage(self.format_to_json(level="ERROR", message=msg))
 
-    def warn(self, msg, header=True, _sendPilotLog=False):
-        # TODO: Send pilot log remotely?
+    def warn(self, msg, header=True):
         super(RemoteLogger, self).warn(msg, header)
         if self.isPilotLoggerOn:
-            self.sendMessage(self.messageTemplate.format(level="WARNING", message=msg))
+            self.sendMessage(self.format_to_json(level="WARNING", message=msg))
 
-    def info(self, msg, header=True, _sendPilotLog=False):
-        # TODO: Send pilot log remotely?
+    def info(self, msg, header=True):
         super(RemoteLogger, self).info(msg, header)
         if self.isPilotLoggerOn:
-            self.sendMessage(self.messageTemplate.format(level="INFO", message=msg))
+            self.sendMessage(self.format_to_json(level="INFO", message=msg))
 
     def sendMessage(self, msg):
         """
@@ -577,7 +591,7 @@ class RemoteLogger(Logger):
         :rtype: None
         """
         try:
-            self.buffer.write(msg + "\n")
+            self.buffer.write(msg)
         except Exception as err:
             super(RemoteLogger, self).error("Message not sent")
             super(RemoteLogger, self).error(str(err))
@@ -622,33 +636,30 @@ class FixedSizeBuffer(object):
             self._timer.start()
         else:
             self._timer = None
-        self.output = StringIO()
+        self.output = []
         self.bufsize = bufsize
         self._nlines = 0
         self.senderFunc = senderFunc
 
     @synchronized
-    def write(self, text):
+    def write(self, content_json):
         """
         Write text to a string buffer. Newline characters are counted and number of lines in the buffer
         is increased accordingly.
 
-        :param text: text string to write
-        :type text: str
+        :param content_json: Json to send, format following format_to_json
+        :type content_json: list[dict]
         :return: None
         :rtype: None
         """
-        # reopen the buffer in a case we had to flush a partially filled buffer
-        if self.output.closed:
-            self.output = StringIO()
-        self.output.write(text)
-        self._nlines += max(1, text.count("\n"))
+        
+        self.output.extend(content_json)
+        
+        try:
+            self._nlines += max(1, len(content_json))
+        except Exception:
+            raise ValueError(content_json)
         self.sendFullBuffer()
-
-    @synchronized
-    def getValue(self):
-        content = self.output.getvalue()
-        return content
 
     @synchronized
     def sendFullBuffer(self):
@@ -659,22 +670,19 @@ class FixedSizeBuffer(object):
 
         if self._nlines >= self.bufsize:
             self.flush()
-            self.output = StringIO()
+            self.output = [] 
 
     @synchronized
-    def flush(self):
+    def flush(self, force=False):
         """
         Flush the buffer and send log records to a remote server. The buffer is closed as well.
 
         :return: None
         :rtype:  None
         """
-        if not self.output.closed and self._nlines > 0:
-            self.output.flush()
-            buf = self.getValue()
-            self.senderFunc(buf)
+        if force or (self.output and self._nlines > 0):
+            self.senderFunc(self.output)
             self._nlines = 0
-            self.output.close()
 
     def cancelTimer(self):
         """
@@ -687,40 +695,32 @@ class FixedSizeBuffer(object):
             self._timer.cancel()
 
 
-def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
-    """
-    Invoke a remote method on a Tornado server and pass a JSON message to it.
+def sendMessage(useServerCertificate, pilotUUID, rawMessage = []):
+    cfg = []
+    if useServerCertificate:
+        cfg.append("-o /DIRAC/Security/UseServerCertificate=yes")
 
-    :param str url: Server URL
-    :param str pilotUUID: pilot unique ID
-    :param str wnVO: VO name, relevant only if not contained in a proxy
-    :param str method: a method to be invoked
-    :param str rawMessage: a message to be sent, in JSON format
-    :return: None.
-    """
-    caPath = os.getenv("X509_CERT_DIR")
-    cert = os.getenv("X509_USER_PROXY")
+    formatted_logs = json.dumps(rawMessage)
+    
+    # Escape single quotes in JSON string for safe shell quoting
+    safe_logs = formatted_logs.replace("'", "'\\''")
 
-    context = ssl.create_default_context()
-    context.load_verify_locations(capath=caPath)
+    cmd = "dirac-admin-send-pilot-logs %s '%s' %s -d" % (
+        pilotUUID,
+        safe_logs,
+        " ".join(cfg),
+    )
 
-    message = json.dumps((json.dumps(rawMessage), pilotUUID, wnVO))
-
-    try:
-        context.load_cert_chain(cert)  # this is a proxy
-        raw_data = {"method": method, "args": message}
-    except IsADirectoryError:  # assuming it'a dir containing cert and key
-        context.load_cert_chain(os.path.join(cert, "hostcert.pem"), os.path.join(cert, "hostkey.pem"))
-        raw_data = {"method": method, "args": message, "extraCredentials": '"hosts"'}
-
-    if sys.version_info.major == 3:
-        data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
-    else:
-        # Python2
-        data = urlencode(raw_data)
-
-    res = urlopen(url, data, context=context)
-    res.close()
+    FNULL = open(os.devnull, 'w')
+    _p = subprocess.Popen(
+        cmd,
+        shell=True,
+        stdout=FNULL,
+        stderr=FNULL,
+        close_fds=False
+    )
+    _p.wait()
+    FNULL.close()
 
 
 class CommandBase(object):
@@ -750,12 +750,12 @@ class CommandBase(object):
             # remote logger
             self.log = RemoteLogger(
                 loggerURL,
-                self.__class__.__name__,
+                useServerCertificate=pilotParams.useServerCertificate,
+                name=self.__class__.__name__,
                 pilotUUID=pilotParams.pilotUUID,
                 debugFlag=self.debugFlag,
                 flushInterval=interval,
                 bufsize=bufsize,
-                wnVO=pilotParams.wnVO,
             )
 
         self.log.isPilotLoggerOn = isPilotLoggerOn
@@ -805,8 +805,12 @@ class CommandBase(object):
                 else:
                     sys.stdout.write(outChunk)
                     sys.stdout.flush()
-                    if hasattr(self.log, "buffer") and self.log.isPilotLoggerOn:
-                        self.log.buffer.write(outChunk)
+                    if hasattr(self.log, "url"):
+                        # It's a remote logger
+                        self.log.buffer.write(self.log.format_to_json( # type: ignore
+                            "COMMAND",
+                            outChunk
+                        ))
                     outData += outChunk
             # If no data was read on any of the pipes then the process has finished
             if not dataWasRead:
