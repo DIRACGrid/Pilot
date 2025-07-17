@@ -536,7 +536,6 @@ class RemoteLogger(Logger):
         super(RemoteLogger, self).__init__(name, debugFlag, pilotOutput)
         self.url = url
         self.pilotUUID = pilotUUID
-        self.wnVO = wnVO
         self.isPilotLoggerOn = isPilotLoggerOn
         sendToURL = partial(sendMessage, useServerCertificate, pilotUUID)
         self.buffer = FixedSizeBuffer(sendToURL, bufsize=bufsize, autoflush=flushInterval)
