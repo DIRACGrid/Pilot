@@ -549,7 +549,20 @@ class RegisterPilot(CommandBase):
 
     @logFinalizer
     def execute(self):
-        """Calls dirac-admin-add-pilot"""
+        """Calls dirac-admin-add-pilot
+        
+        Deprecated in DIRAC V8, new mechanism in V9 and DiracX."""
+
+        if self.pp.jwt:
+            if not self.pp.isLegacyPilot:
+                self.log.warn("Skipping module, normally it is already done via DiracX secret-exchange.")
+                return
+            
+            # If we're here, this is a legacy pilot with a DiracX token embedded in it.
+            # TODO: See if we do a dirac-admin-add-pilot in DiracX for legacy pilots
+        else:
+            # If we're here, this is a DIRAC only pilot without diracX token embedded in it.
+            pass
 
         if not self.pp.pilotReference:
             self.log.warn("Skipping module, no pilot reference found")
@@ -1232,3 +1245,4 @@ class NagiosProbes(CommandBase):
         """Standard entry point to a pilot command"""
         self._setNagiosOptions()
         self._runNagiosProbes()
+

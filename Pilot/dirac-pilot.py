@@ -41,6 +41,7 @@ try:
         getCommand,
         pythonPathCheck,
     )
+    from Pilot.proxyTools import revokePilotToken
 except ImportError:
     from pilotTools import (
         Logger,
@@ -49,6 +50,7 @@ except ImportError:
         getCommand,
         pythonPathCheck,
     )
+    from proxyTools import revokePilotToken
 ############################
 
 if __name__ == "__main__":
@@ -124,3 +126,15 @@ if __name__ == "__main__":
             if remote:
                 log.buffer.flush()
             sys.exit(-1)
+    
+    log.info("Pilot tasks finished.")
+
+    if pilotParams.jwt:
+        if not pilotParams.isLegacyPilot:
+            log.info("Revoking pilot token.")
+            revokePilotToken(
+                pilotParams.diracXServer,
+                pilotParams.pilotUUID,
+                pilotParams.jwt,
+                pilotParams.clientID
+            )
