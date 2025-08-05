@@ -22,16 +22,23 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-from proxyTools import getVO
-
-# Utilities functions
-
 
 def load_module_from_path(module_name, path_to_module):
     spec = importlib.util.spec_from_file_location(module_name, path_to_module)  # pylint: disable=no-member
     module = importlib.util.module_from_spec(spec)  # pylint: disable=no-member
     spec.loader.exec_module(module)
     return module
+
+
+from threading import Timer
+
+from proxyTools import (
+    BaseRequest,
+    extract_diracx_payload,
+    getVO,
+)
+
+# Utilities functions
 
 
 def parseVersion(releaseVersion):
@@ -884,10 +891,14 @@ class PilotParams(object):
         self.setup = ""
         self.configServer = ""
         self.preferredURLPatterns = ""
+        self.diracXServer = ""
         self.ceName = ""
         self.ceType = ""
         self.queueName = ""
         self.gridCEType = ""
+        self.pilotSecret = ""
+        self.clientID = ""
+        self.jwt = {}
         # maxNumberOfProcessors: the number of
         # processors allocated to the pilot which the pilot can allocate to one payload
         # used to set payloadProcessors unless other limits are reached (like the number of processors on the WN)
@@ -922,6 +933,7 @@ class PilotParams(object):
         self.pilotCFGFile = "pilot.json"
         self.pilotLogging = False
         self.loggerURL = None
+        self.isLegacyPilot = False
         self.loggerTimerInterval = 0
         self.loggerBufsize = 1000
         self.pilotUUID = "unknown"
@@ -978,6 +990,7 @@ class PilotParams(object):
             ("y:", "CEType=", "CE Type (normally InProcess)"),
             ("z", "pilotLogging", "Activate pilot logging system"),
             ("C:", "configurationServer=", "Configuration servers to use"),
+            ("", "diracx_URL=", "DiracX Server URL to use"),
             ("D:", "disk=", "Require at least <space> MB available"),
             ("E:", "commandExtensions=", "Python modules with extra commands"),
             ("F:", "pilotCFGFile=", "Specify pilot CFG file"),
@@ -1015,6 +1028,8 @@ class PilotParams(object):
             ),
             ("", "architectureScript=", "architecture script to use"),
             ("", "CVMFS_locations=", "comma-separated list of CVMS locations"),
+            ("", "pilotSecret=", "secret that the pilot uses with DiracX"),
+            ("", "clientID=", "client id used by DiracX to revoke a token"),
         )
 
         # Possibly get Setup and JSON URL/filename from command line
@@ -1040,6 +1055,74 @@ class PilotParams(object):
         if self.useServerCertificate:
             self.installEnv["X509_USER_PROXY"] = self.certsLocation
             os.environ["X509_USER_PROXY"] = self.certsLocation
+
+        try:
+            self.__get_diracx_jwt()
+        except Exception as e:
+            self.log.error("Error setting DiracX: %s" % e)
+            # Remove all settings to prevent using it.
+            self.diracXServer = None
+            self.pilotSecret = None
+            self.loggerURL = None
+            self.jwt = {}
+            self.log.error("Won't use DiracX.")
+
+    def __get_diracx_jwt(self):
+        # Pilot auth: two cases
+        # 1. Has a secret (DiracX Pilot), exchange for a token
+        # 2. Legacy Pilot, has a proxy with a DiracX section in it (extract the jwt from it)
+        if self.pilotUUID and self.pilotSecret and self.diracXServer:
+            self.log.info("Fetching JWT in DiracX (URL: %s)" % self.diracXServer)
+
+            config = BaseRequest(
+                "%s/api/auth/secret-exchange" % (self.diracXServer),
+                os.getenv("X509_CERT_DIR"),
+                self.pilotUUID,
+            )
+
+            try:
+                self.jwt = config.executeRequest(
+                    {"pilot_stamp": self.pilotUUID, "pilot_secret": self.pilotSecret}
+                )
+            except HTTPError as e:
+                self.log.error("Request failed: %s" % str(e))
+                self.log.error("Could not fetch pilot tokens.")
+                if e.code == 401:
+                    # First test if the error occurred because of "bad pilot_stamp"
+                    # If so, this pilot is in the vacuum case
+                    # So we redo auth, but this time with the right data for vacuum cases
+                    self.log.error("Retrying with vacuum case data...")
+                    self.jwt = config.executeRequest(
+                        {
+                            "pilot_stamp": self.pilotUUID,
+                            "pilot_secret": self.pilotSecret,
+                            "vo": self.wnVO,
+                            "grid_type": self.gridCEType,
+                            "grid_site": self.site,
+                            "status": "Running",
+                        }
+                    )
+                else:
+                    raise RuntimeError("Can't be a vacuum case.")
+
+            self.log.info("Fetched the pilot token with the pilot secret.")
+            self.isLegacyPilot = False
+        elif self.pilotUUID and self.diracXServer:
+            # Try to extract a token for proxy
+            self.log.info("Trying to extract diracx token from proxy.")
+
+            cert = os.getenv("X509_USER_PROXY")
+            if cert:
+                with open(cert, "rb") as fp:
+                    self.jwt = extract_diracx_payload(fp.read())
+                    self.isLegacyPilot = True
+                    self.log.info("Successfully extracted token from proxy.")
+            else:
+                raise RuntimeError("Could not locate a proxy via X509_USER_PROXY")
+        else:
+            self.log.info(
+                "PilotUUID, pilotSecret, and diracXServer are needed to support DiracX."
+            )
 
     def __setSecurityDir(self, envName, dirLocation):
         """Set the environment variable of the `envName`, and add it also to the Pilot Parameters
@@ -1152,6 +1235,8 @@ class PilotParams(object):
                 self.keepPythonPath = True
             elif o in ("-C", "--configurationServer"):
                 self.configServer = v
+            elif o == "--diracx_URL":
+                self.diracXServer = v
             elif o in ("-G", "--Group"):
                 self.userGroup = v
             elif o in ("-x", "--execute"):
@@ -1225,6 +1310,10 @@ class PilotParams(object):
                 self.architectureScript = v
             elif o == "--CVMFS_locations":
                 self.CVMFS_locations = v.split(",")
+            elif o == "--pilotSecret":
+                self.pilotSecret = v
+            elif o == "--clientID":
+                self.clientID = v
 
     def __loadJSON(self):
         """
