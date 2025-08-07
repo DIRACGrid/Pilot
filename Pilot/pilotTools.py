@@ -813,7 +813,7 @@ class CommandBase(object):
                 flushInterval=interval,
                 bufsize=bufsize,
                 jwt=pilotParams.jwt,
-                legacy_logging=pilotParams.isLegacyLogging,
+                legacy_logging=pilotParams.isLegacyPilot,
                 clientID=pilotParams.clientID
             )
 
