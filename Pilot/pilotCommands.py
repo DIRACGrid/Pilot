@@ -28,7 +28,6 @@ import stat
 import sys
 import time
 import traceback
-import subprocess
 from collections import Counter
 
 ############################
@@ -44,7 +43,6 @@ try:
     from shlex import quote
 except ImportError:
     from pipes import quote
-
 try:
     from Pilot.pilotTools import (
         CommandBase,
@@ -92,16 +90,20 @@ def logFinalizer(func):
             self.log.info(
                 "Flushing the remote logger buffer for pilot on sys.exit(): %s (exit code:%s)" % (pRef, str(exCode))
             )
-            self.log.buffer.flush()  # flush the buffer unconditionally (on sys.exit()).
+
             try:
-                sendMessage(self.log.url, self.log.pilotUUID, self.log.wnVO, "finaliseLogs", {"retCode": str(exCode)})
+                self.log.error(str(exCode))
+                self.log.error(traceback.format_exc())
+                self.log.buffer.flush(force=True)
             except Exception as exc:
                 self.log.error("Remote logger couldn't be finalised %s " % str(exc))
+
             raise
         except Exception as exc:
             # unexpected exit: document it and bail out.
             self.log.error(str(exc))
             self.log.error(traceback.format_exc())
+            self.log.buffer.flush(force=True)
             raise
         finally:
             self.log.buffer.cancelTimer()
@@ -132,7 +134,6 @@ class CheckWorkerNode(CommandBase):
     @logFinalizer
     def execute(self):
         """Get host and local user info, and other basic checks, e.g. space available"""
-
         self.log.info("Uname      = %s" % " ".join(os.uname()))
         self.log.info("Host Name  = %s" % socket.gethostname())
         self.log.info("Host FQDN  = %s" % socket.getfqdn())
@@ -549,7 +550,20 @@ class RegisterPilot(CommandBase):
 
     @logFinalizer
     def execute(self):
-        """Calls dirac-admin-add-pilot"""
+        """Calls dirac-admin-add-pilot
+        
+        Deprecated in DIRAC V8, new mechanism in V9 and DiracX."""
+
+        if self.pp.jwt:
+            if not self.pp.isLegacyPilot:
+                self.log.warn("Skipping module, normally it is already done via DiracX secret-exchange.")
+                return
+            
+            # If we're here, this is a legacy pilot with a DiracX token embedded in it.
+            # TODO: See if we do a dirac-admin-add-pilot in DiracX for legacy pilots
+        else:
+            # If we're here, this is a DIRAC only pilot without diracX token embedded in it.
+            pass
 
         if not self.pp.pilotReference:
             self.log.warn("Skipping module, no pilot reference found")
@@ -1113,8 +1127,6 @@ class LaunchAgent(CommandBase):
         self.__setInnerCEOpts()
         self.__startJobAgent()
 
-        sys.exit(0)
-
 
 class NagiosProbes(CommandBase):
     """Run one or more Nagios probe scripts that follow the Nagios Plugin API:
@@ -1232,3 +1244,4 @@ class NagiosProbes(CommandBase):
         """Standard entry point to a pilot command"""
         self._setNagiosOptions()
         self._runNagiosProbes()
+
