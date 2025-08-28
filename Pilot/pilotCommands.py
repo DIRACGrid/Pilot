@@ -357,10 +357,11 @@ class InstallDIRAC(CommandBase):
         self._saveEnvInFile()
 
         # 7. pip install DIRAC[pilot]
-        pipInstalling = "pip install %s " % self.pp.pipInstallOptions
+        pipInstallingPrefix = "pip install %s " % self.pp.pipInstallOptions
 
         if self.pp.modules:  # install a non-released (on pypi) version
             for modules in self.pp.modules.split(","):
+                pipInstalling = pipInstallingPrefix
                 branch = project = ""
                 elements = modules.split(":::")
                 url = ""
@@ -385,9 +386,9 @@ class InstallDIRAC(CommandBase):
         else:
             # pip install DIRAC[pilot]==version ExtensionDIRAC[pilot]==version_ext
             if not self.releaseVersion or self.releaseVersion in ["master", "main", "integration"]:
-                cmd = "%s %sDIRAC[pilot]" % (pipInstalling, self.pp.releaseProject)
+                cmd = "%s %sDIRAC[pilot]" % (pipInstallingPrefix, self.pp.releaseProject)
             else:
-                cmd = "%s %sDIRAC[pilot]==%s" % (pipInstalling, self.pp.releaseProject, self.releaseVersion)
+                cmd = "%s %sDIRAC[pilot]==%s" % (pipInstallingPrefix, self.pp.releaseProject, self.releaseVersion)
             retCode, output = self.executeAndGetOutput(cmd, self.pp.installEnv)
             if retCode:
                 self.log.error("Could not pip install %s [ERROR %d]" % (self.releaseVersion, retCode))
