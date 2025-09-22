@@ -1,4 +1,3 @@
-from __future__ import absolute_import, division, print_function
 
 import os
 import shlex
@@ -6,19 +5,12 @@ import shutil
 import subprocess
 import sys
 import unittest
+from unittest.mock import patch
 
-############################
-# python 2 -> 3 "hacks"
 try:
     from Pilot.proxyTools import getVO, parseASN1
-except ImportError:
+except ModuleNotFoundError:
     from proxyTools import getVO, parseASN1
-
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch
-
 
 class TestProxyTools(unittest.TestCase):
     def test_getVO(self):

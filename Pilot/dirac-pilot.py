@@ -19,19 +19,10 @@ DIRAC and runs the DIRAC JobAgent (https://github.com/DIRACGrid/DIRAC/blob/integ
 But, as said, all the actions are actually configurable.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import os
 import sys
 import time
-
-############################
-# python 2 -> 3 "hacks"
-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from io import StringIO
+from io import StringIO
 
 try:
     from Pilot.pilotTools import (
@@ -41,7 +32,7 @@ try:
         getCommand,
         pythonPathCheck,
     )
-except ImportError:
+except ModuleNotFoundError:
     from pilotTools import (
         Logger,
         PilotParams,
@@ -49,6 +40,7 @@ except ImportError:
         getCommand,
         pythonPathCheck,
     )
+
 ############################
 
 if __name__ == "__main__":
