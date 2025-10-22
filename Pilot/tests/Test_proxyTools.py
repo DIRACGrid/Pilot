@@ -7,10 +7,7 @@ import sys
 import unittest
 from unittest.mock import patch
 
-try:
-    from Pilot.proxyTools import getVO, parseASN1
-except ModuleNotFoundError:
-    from proxyTools import getVO, parseASN1
+from ..proxyTools import getVO, parseASN1
 
 class TestProxyTools(unittest.TestCase):
     def test_getVO(self):
@@ -84,46 +81,7 @@ class TestProxyTools(unittest.TestCase):
         """
         Create a fake proxy locally.
         """
-
         basedir = os.path.dirname(__file__)
-        shutil.copy(basedir + "/certs/user/userkey.pem", basedir + "/certs/user/userkey400.pem")
-        os.chmod(basedir + "/certs/user/userkey400.pem", 0o400)
-        ret = self.createFakeProxy(
-            basedir + "/certs/user/usercert.pem",
-            basedir + "/certs/user/userkey400.pem",
-            "fakeserver.cern.ch:15000",
-            "fakevo",
-            basedir + "/certs//host/hostcert.pem",
-            basedir + "/certs/host/hostkey.pem",
-            basedir + "/certs/ca",
-            proxyFile,
-        )
-        os.remove(basedir + "/certs/user/userkey400.pem")
-        return ret
+        shutil.copy(basedir + "/certs/voms/proxy.pem", proxyFile)
+        return 0
 
-    def createFakeProxy(self, usercert, userkey, serverURI, vo, hostcert, hostkey, CACertDir, proxyfile):
-        """
-        voms-proxy-fake --cert usercert.pem
-                        --key userkey.pem
-                        -rfc
-                        -fqan "/fakevo/Role=user/Capability=NULL"
-                        -uri fakeserver.cern.ch:15000
-                        -voms fakevo
-                        -hostcert hostcert.pem
-                        -hostkey hostkey.pem
-                        -certdir ca
-        """
-        opt = (
-            '--cert %s --key %s -rfc -fqan "/fakevo/Role=user/Capability=NULL" -uri %s -voms %s -hostcert %s'
-            "  -hostkey %s  -certdir %s -out %s"
-            % (usercert, userkey, serverURI, vo, hostcert, hostkey, CACertDir, proxyfile)
-        )
-        proc = subprocess.Popen(
-            shlex.split("voms-proxy-fake " + opt),
-            bufsize=1,
-            stdout=sys.stdout,
-            stderr=sys.stderr,
-            universal_newlines=True,
-        )
-        proc.communicate()
-        return proc.returncode

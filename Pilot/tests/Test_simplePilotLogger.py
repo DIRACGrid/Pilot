@@ -8,10 +8,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-try:
-    from Pilot.pilotTools import CommandBase, Logger, PilotParams
-except ModuleNotFoundError:
-    from pilotTools import CommandBase, Logger, PilotParams
+from ..pilotTools import CommandBase, Logger, PilotParams
 
 class TestPilotParams(unittest.TestCase):
     @patch("sys.argv")

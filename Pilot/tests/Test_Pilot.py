@@ -10,12 +10,8 @@ import sys
 # imports
 import unittest
 
-try:
-    from Pilot.pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes
-    from Pilot.pilotTools import PilotParams
-except ModuleNotFoundError:
-    from pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes
-    from pilotTools import PilotParams
+from ..pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes
+from ..pilotTools import PilotParams
 
 
 class PilotTestCase(unittest.TestCase):

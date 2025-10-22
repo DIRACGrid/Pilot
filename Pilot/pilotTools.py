@@ -22,10 +22,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-try:
-    from Pilot.proxyTools import getVO
-except ModuleNotFoundError:
-    from proxyTools import getVO
+from .proxyTools import getVO
 
 # Utilities functions
 
