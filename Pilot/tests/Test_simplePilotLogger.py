@@ -1,26 +1,14 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import, division, print_function
-
 import json
 import os
 import random
 import string
-import sys
 import tempfile
-
-try:
-    from Pilot.pilotTools import CommandBase, Logger, PilotParams
-except ImportError:
-    from pilotTools import CommandBase, Logger, PilotParams
-
 import unittest
+from unittest.mock import patch
 
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch
-
+from ..pilotTools import CommandBase, Logger, PilotParams
 
 class TestPilotParams(unittest.TestCase):
     @patch("sys.argv")
@@ -146,16 +134,10 @@ class TestCommandBase(unittest.TestCase):
 
         for size in [1000, 1024, 1025, 2005]:
             random_str = "".join(random.choice(string.ascii_letters + "\n") for i in range(size))
-            if sys.version_info.major == 3:
-                random_bytes = random_str.encode("UTF-8")
-                self.stdout_mock.write(random_bytes)
-            else:
-                self.stdout_mock.write(random_str)
+            random_bytes = random_str.encode("UTF-8")
+            self.stdout_mock.write(random_bytes)
             self.stdout_mock.seek(0)
-            if sys.version_info.major == 3:
-                self.stderr_mock.write("Errare humanum est!".encode("UTF-8"))
-            else:
-                self.stderr_mock.write("Errare humanum est!")
+            self.stderr_mock.write("Errare humanum est!".encode("UTF-8"))
             self.stderr_mock.seek(0)
             pp = PilotParams()
 
