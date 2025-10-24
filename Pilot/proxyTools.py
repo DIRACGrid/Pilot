@@ -1,5 +1,7 @@
 """few functions for dealing with proxies"""
 
+from __future__ import absolute_import, division, print_function
+
 import re
 from base64 import b16decode
 from subprocess import PIPE, Popen

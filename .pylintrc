@@ -18,3 +18,7 @@ dummy-variables=_
 disable=
     invalid-name,
     line-too-long, # would be nice to remove this one
+    consider-using-f-string, # python2/3 support
+    unspecified-encoding, # python2/3 support
+    super-with-arguments, # python2/3 support
+    redefined-builtin, # python2/3 support

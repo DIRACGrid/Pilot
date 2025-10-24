@@ -1,5 +1,7 @@
 """Test class for Pilot"""
 
+from __future__ import absolute_import, division, print_function
+
 import json
 import os
 import shutil
@@ -10,8 +12,8 @@ import sys
 # imports
 import unittest
 
-from ..pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes
-from ..pilotTools import PilotParams
+from Pilot.pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes
+from Pilot.pilotTools import PilotParams
 
 
 class PilotTestCase(unittest.TestCase):
