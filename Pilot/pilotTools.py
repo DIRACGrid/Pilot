@@ -1,8 +1,9 @@
 """A set of common tools to be used in pilot commands"""
 
+from __future__ import absolute_import, division, print_function
+
 import fcntl
 import getopt
-import importlib.util
 import json
 import os
 import re
@@ -15,23 +16,81 @@ import threading
 import warnings
 from datetime import datetime
 from functools import partial, wraps
-from importlib import import_module
-from io import StringIO
-from threading import RLock, Timer
-from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
-from urllib.request import urlopen
+from threading import RLock
 
-from .proxyTools import getVO
+############################
+# python 2 -> 3 "hacks"
+try:
+    from urllib.error import HTTPError, URLError
+    from urllib.parse import urlencode
+    from urllib.request import urlopen
+except ImportError:
+    from urllib import urlencode
+
+    from urllib2 import HTTPError, URLError, urlopen
+
+try:
+    import importlib.util
+    from importlib import import_module
+
+    def load_module_from_path(module_name, path_to_module):
+        spec = importlib.util.spec_from_file_location(module_name, path_to_module)  # pylint: disable=no-member
+        module = importlib.util.module_from_spec(spec)  # pylint: disable=no-member
+        spec.loader.exec_module(module)
+        return module
+
+except ImportError:
+
+    def import_module(module):
+        import imp
+
+        impData = imp.find_module(module)
+        return imp.load_module(module, *impData)
+
+    def load_module_from_path(module_name, path_to_module):
+        import imp
+
+        fp, pathname, description = imp.find_module(module_name, [path_to_module])
+        try:
+            return imp.load_module(module_name, fp, pathname, description)
+        finally:
+            if fp:
+                fp.close()
+
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
+
+try:
+    basestring  # pylint: disable=used-before-assignment
+except NameError:
+    basestring = str
+
+try:
+    from Pilot.proxyTools import getVO
+except ImportError:
+    from proxyTools import getVO
+
+try:
+    FileNotFoundError  # pylint: disable=used-before-assignment
+    # because of https://github.com/PyCQA/pylint/issues/6748
+except NameError:
+    FileNotFoundError = OSError
+
+try:
+    IsADirectoryError  # pylint: disable=used-before-assignment
+except NameError:
+    IsADirectoryError = IOError
+
+# Timer 2.7 and < 3.3 versions issue where Timer is a function
+if sys.version_info.major == 2 or sys.version_info.major == 3 and sys.version_info.minor < 3:
+    from threading import _Timer as Timer  # pylint: disable=no-name-in-module
+else:
+    from threading import Timer
 
 # Utilities functions
-
-
-def load_module_from_path(module_name, path_to_module):
-    spec = importlib.util.spec_from_file_location(module_name, path_to_module)  # pylint: disable=no-member
-    module = importlib.util.module_from_spec(spec)  # pylint: disable=no-member
-    spec.loader.exec_module(module)
-    return module
 
 
 def parseVersion(releaseVersion):
@@ -340,7 +399,7 @@ class ObjectLoader(object):
 
     def __recurseImport(self, modName, parentModule=None, hideExceptions=False):
         """Internal function to load modules"""
-        if isinstance(modName, str):
+        if isinstance(modName, basestring):
             modName = modName.split(".")
         try:
             if parentModule:
@@ -654,7 +713,11 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
         context.load_cert_chain(os.path.join(cert, "hostcert.pem"), os.path.join(cert, "hostkey.pem"))
         raw_data = {"method": method, "args": message, "extraCredentials": '"hosts"'}
 
-    data = urlencode(raw_data).encode("utf-8")  # encode to bytes
+    if sys.version_info.major == 3:
+        data = urlencode(raw_data).encode("utf-8")  # encode to bytes ! for python3
+    else:
+        # Python2
+        data = urlencode(raw_data)
 
     res = urlopen(url, data, context=context)
     res.close()
@@ -724,7 +787,17 @@ class CommandBase(object):
                 if not outChunk:
                     continue
                 dataWasRead = True
-                outChunk = str(outChunk.replace("\ufffd", ""))  # Ensure it's a string
+                if sys.version_info.major == 2:
+                    # Ensure outChunk is unicode in Python 2
+                    if isinstance(outChunk, str):
+                        outChunk = outChunk.decode("utf-8")
+                    # Strip unicode replacement characters
+                    # Ensure correct type conversion in Python 2
+                    outChunk = str(outChunk.replace(u"\ufffd", ""))
+                    # Avoid potential str() issues in Py2
+                    outChunk = unicode(outChunk)  # pylint: disable=undefined-variable
+                else:
+                    outChunk = str(outChunk.replace("\ufffd", ""))  # Python 3: Ensure it's a string
 
                 if stream == _p.stderr:
                     sys.stderr.write(outChunk)
@@ -1382,7 +1455,7 @@ class PilotParams(object):
         # Commands first
         # FIXME: pilotSynchronizer() should publish these as comma-separated lists. We are ready for that.
         try:
-            if isinstance(self.pilotJSON["Setups"][self.setup]["Commands"][self.gridCEType], str):
+            if isinstance(self.pilotJSON["Setups"][self.setup]["Commands"][self.gridCEType], basestring):
                 self.commands = [
                     str(pv).strip()
                     for pv in self.pilotJSON["Setups"][self.setup]["Commands"][self.gridCEType].split(",")
@@ -1393,7 +1466,7 @@ class PilotParams(object):
                 ]
         except KeyError:
             try:
-                if isinstance(self.pilotJSON["Setups"][self.setup]["Commands"]["Defaults"], str):
+                if isinstance(self.pilotJSON["Setups"][self.setup]["Commands"]["Defaults"], basestring):
                     self.commands = [
                         str(pv).strip()
                         for pv in self.pilotJSON["Setups"][self.setup]["Commands"]["Defaults"].split(",")
@@ -1404,7 +1477,7 @@ class PilotParams(object):
                     ]
             except KeyError:
                 try:
-                    if isinstance(self.pilotJSON["Setups"]["Defaults"]["Commands"][self.gridCEType], str):
+                    if isinstance(self.pilotJSON["Setups"]["Defaults"]["Commands"][self.gridCEType], basestring):
                         self.commands = [
                             str(pv).strip()
                             for pv in self.pilotJSON["Setups"]["Defaults"]["Commands"][self.gridCEType].split(",")
@@ -1415,7 +1488,7 @@ class PilotParams(object):
                         ]
                 except KeyError:
                     try:
-                        if isinstance(self.pilotJSON["Defaults"]["Commands"]["Defaults"], str):
+                        if isinstance(self.pilotJSON["Defaults"]["Commands"]["Defaults"], basestring):
                             self.commands = [
                                 str(pv).strip() for pv in self.pilotJSON["Defaults"]["Commands"]["Defaults"].split(",")
                             ]
@@ -1431,7 +1504,7 @@ class PilotParams(object):
         # pilotSynchronizer() can publish this as a comma separated list. We are ready for that.
         try:
             if isinstance(
-                self.pilotJSON["Setups"][self.setup]["CommandExtensions"], str
+                self.pilotJSON["Setups"][self.setup]["CommandExtensions"], basestring
             ):  # In the specific setup?
                 self.commandExtensions = [
                     str(pv).strip() for pv in self.pilotJSON["Setups"][self.setup]["CommandExtensions"].split(",")
@@ -1443,7 +1516,7 @@ class PilotParams(object):
         except KeyError:
             try:
                 if isinstance(
-                    self.pilotJSON["Setups"]["Defaults"]["CommandExtensions"], str
+                    self.pilotJSON["Setups"]["Defaults"]["CommandExtensions"], basestring
                 ):  # Or in the defaults section?
                     self.commandExtensions = [
                         str(pv).strip() for pv in self.pilotJSON["Setups"]["Defaults"]["CommandExtensions"].split(",")
@@ -1460,7 +1533,7 @@ class PilotParams(object):
         # pilotSynchronizer() can publish this as a comma separated list. We are ready for that
         try:
             if isinstance(
-                self.pilotJSON["ConfigurationServers"], str
+                self.pilotJSON["ConfigurationServers"], basestring
             ):  # Generic, there may also be setup-specific ones
                 self.configServer = ",".join(
                     [str(pv).strip() for pv in self.pilotJSON["ConfigurationServers"].split(",")]
@@ -1471,7 +1544,7 @@ class PilotParams(object):
             pass
         try:  # now trying to see if there is setup-specific ones
             if isinstance(
-                self.pilotJSON["Setups"][self.setup]["ConfigurationServer"], str
+                self.pilotJSON["Setups"][self.setup]["ConfigurationServer"], basestring
             ):  # In the specific setup?
                 self.configServer = ",".join(
                     [str(pv).strip() for pv in self.pilotJSON["Setups"][self.setup]["ConfigurationServer"].split(",")]
@@ -1483,7 +1556,7 @@ class PilotParams(object):
         except KeyError:  # and if it doesn't exist
             try:
                 if isinstance(
-                    self.pilotJSON["Setups"]["Defaults"]["ConfigurationServer"], str
+                    self.pilotJSON["Setups"]["Defaults"]["ConfigurationServer"], basestring
                 ):  # Is there one in the defaults section?
                     self.configServer = ",".join(
                         [
