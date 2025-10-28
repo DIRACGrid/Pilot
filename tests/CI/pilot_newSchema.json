@@ -153,5 +153,8 @@
 	},
 	"ConfigurationServers": [
 		"VAR_CS"
-	]
+	],
+  "PreferredURLPatterns": [
+    "VAR_PREF_URL_PATTERN"
+  ]
 }

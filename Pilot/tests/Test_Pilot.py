@@ -13,7 +13,7 @@ import sys
 import unittest
 
 from Pilot.pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes
-from Pilot.pilotTools import PilotParams
+from Pilot.pilotTools import PilotParams, orderCSByPatterns
 
 
 class PilotTestCase(unittest.TestCase):
@@ -33,7 +33,12 @@ class PilotTestCase(unittest.TestCase):
                             "Version": "v1r1, v2r2",
                         }
                     },
-                    "CEs": {"grid1.example.com": {"GridCEType": "cetype1", "Site": "site.example.com"}},
+                    "CEs": {
+                        "grid1.example.com": {
+                            "GridCEType": "cetype1",
+                            "Site": "site.example.com",
+                        }
+                    },
                     "DefaultSetup": "TestSetup",
                 },
                 fp,
@@ -69,7 +74,14 @@ class CommandsTestCase(PilotTestCase):
 
     def test_InitJSON(self):
         """Test the pilot.json and command line parsing"""
-        sys.argv[1:] = ["--Name", "grid1.example.com", "--commandOptions", "a=1,b=2", "-Z", "c=3"]
+        sys.argv[1:] = [
+            "--Name",
+            "grid1.example.com",
+            "--commandOptions",
+            "a=1,b=2",
+            "-Z",
+            "c=3",
+        ]
         pp = PilotParams()
 
         self.assertEqual(pp.commands, ["x", "y", "z"])
@@ -93,7 +105,13 @@ class CommandsTestCase(PilotTestCase):
         self.assertEqual(pp.commandOptions["b"], "2")
         self.assertEqual(pp.commandOptions["c"], "3")
 
-        sys.argv[1:] = ["--Name", "grid1.example.com", "--commandOptions=a = 1,  b=2", "-Z", " c=3"]  # spaces and '=''
+        sys.argv[1:] = [
+            "--Name",
+            "grid1.example.com",
+            "--commandOptions=a = 1,  b=2",
+            "-Z",
+            " c=3",
+        ]  # spaces and '=''
         pp = PilotParams()
 
         self.assertEqual(pp.commandOptions["a"], "1")
@@ -132,6 +150,57 @@ class CommandsTestCase(PilotTestCase):
 
         self.assertEqual(nagios.nagiosProbes, ["Nagios1", "Nagios2"])
         self.assertEqual(nagios.nagiosPutURL, "https://127.0.0.2/")
+
+    def test_orderCSByPatterns(self):
+        cs_list = orderCSByPatterns(["dips://some.site:9132"], ["dips://.*\.site:."])
+        assert cs_list == ["dips://some.site:9132"]
+
+        cs_list = orderCSByPatterns(
+            ["dips://some.anotherSite:9132", "dips://some.site:9132"],
+            ["dips://.*\.site:."],
+        )
+        assert cs_list == ["dips://some.site:9132", "dips://some.anotherSite:9132"]
+
+        cs_list = orderCSByPatterns(
+            [
+                "dips://another.site:9132",
+                "dips://some.another:9132",
+                "dips://some.site:9132",
+            ],
+            ["dips://.*\.site:."],
+        )
+        assert cs_list[-1] == "dips://some.another:9132"
+
+        cs_list = orderCSByPatterns(
+            [
+                "dips://another.site:9132",
+                "dips://some.site:9132",
+                "dips://some.anotherSite:9132",
+                "dips://anothe.anotherSite:9132",
+            ],
+            ["dips://.*\.site:."],
+        )
+        assert set(cs_list[0:2]) == {
+            "dips://some.site:9132",
+            "dips://another.site:9132",
+        }
+
+        cs_list = orderCSByPatterns(
+            [
+                "dips://another.site:9132",
+                "dips://some.exclude:9132",
+                "dips://some.anotherSite:9132",
+                "dips://anothe.anotherSite:9132",
+            ],
+            ["^(?!.*some\.exclude).*dips*"],
+        )
+        assert set(cs_list) == {
+            "dips://another.site:9132",
+            "dips://some.anotherSite:9132",
+            "dips://anothe.anotherSite:9132",
+            "dips://some.exclude:9132",
+        }
+        assert cs_list[-1] == "dips://some.exclude:9132"
 
 
 #############################################################################
