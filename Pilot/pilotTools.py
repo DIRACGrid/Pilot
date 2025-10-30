@@ -793,7 +793,7 @@ class CommandBase(object):
                         outChunk = outChunk.decode("utf-8")
                     # Strip unicode replacement characters
                     # Ensure correct type conversion in Python 2
-                    outChunk = str(outChunk.replace(u"\ufffd", ""))
+                    outChunk = str(outChunk.replace("\ufffd", ""))
                     # Avoid potential str() issues in Py2
                     outChunk = unicode(outChunk)  # pylint: disable=undefined-variable
                 else:
