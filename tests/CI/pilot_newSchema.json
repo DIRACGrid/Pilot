@@ -1,157 +1,160 @@
 {
-	"timestamp": "2023-02-13T14:34:26.725499",
-	"CEs": {
-		"jenkins.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "TEST"
-		},
-		"jenkins-full.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "TEST-FULL"
-		},
-		"jenkins-mp.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "TEST-MP"
-		},
-		"jenkins-mp-full.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "TEST-FULL"
-		},
-		"jenkins-singularity.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "TEST",
-			"LocalCEType": "Singularity",
-			"InstallDIRACInContainer": "True"
-		},
-		"jenkins-singularity-full.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "TEST-FULL",
-			"LocalCEType": "Singularity"
-		},
-		"jenkins-mp-pool.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"Queue": "VAR_JENKINS_QUEUE",
-			"GridCEType": "TEST-MP",
-			"LocalCEType": "Pool"
-		},
-		"jenkins-mp-pool-full.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "TEST-FULL",
-			"LocalCEType": "InProcess",
-			"VAR_JENKINS_QUEUE": {
-				"LocalCEType": "Pool"
-			}
-		},
-		"jenkins-mp-pool-sudo.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "TEST-MP",
-			"VAR_JENKINS_QUEUE": {
-				"LocalCEType": "Pool/Sudo"
-			}
-		},
-		"jenkins-mp-pool-sudo-full.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "TEST-FULL",
-			"VAR_JENKINS_QUEUE": {
-				"LocalCEType": "Pool/Sudo"
-			}
-		},
-		"jenkins-mp-pool-singularity.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "TEST-MP",
-			"VAR_JENKINS_QUEUE": {
-				"LocalCEType": "Pool/Singularity"
-			}
-		},
-		"jenkins-mp-pool-singularity-full.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "TEST-FULL",
-			"VAR_JENKINS_QUEUE": {
-				"LocalCEType": "Pool/Singularity"
-			}
-		},
-		"jenkins-lhcb.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "LHCb"
-		},
-		"jenkins-lhcb-d.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "LHCbD"
-		},
-		"jenkins-lhcb-dd.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "LHCbDD"
-		},
-    "jenkins-revised.cern.ch": {
-			"Site": "VAR_JENKINS_SITE",
-			"GridCEType": "TEST-REVISED-COMMANDS"
-    }
-	},
-	"Defaults": {
-		"Pilot": {
-			"RemoteLogging": "False",
-			"Commands": {
-				"TEST": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
-				"TEST-MP": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
-				"TEST-FULL": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements, LaunchAgent",
-				"LHCb": "CheckWorkerNode, LHCbInstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
-				"LHCbD": "CheckWorkerNode, InstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
-				"LHCbDD": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
-				"TEST-REVISED-COMMANDS": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitectureWithoutCLI, ConfigureCPURequirements"
+  "timestamp": "2023-02-13T14:34:26.725499",
+  "CEs": {
+    "jenkins.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST"
+    },
+    "jenkins-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-FULL"
+    },
+    "jenkins-mp.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-MP"
+    },
+    "jenkins-mp-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-FULL"
+    },
+    "jenkins-singularity.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST",
+      "LocalCEType": "Singularity",
+      "InstallDIRACInContainer": "True"
+    },
+    "jenkins-singularity-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-FULL",
+      "LocalCEType": "Singularity"
+    },
+    "jenkins-mp-pool.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "Queue": "VAR_JENKINS_QUEUE",
+      "GridCEType": "TEST-MP",
+      "LocalCEType": "Pool"
+    },
+    "jenkins-mp-pool-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-FULL",
+      "LocalCEType": "InProcess",
+      "VAR_JENKINS_QUEUE": {
+        "LocalCEType": "Pool"
       }
-		}
-	},
-	"gridpp": {
-		"Pilot": {
-			"Version": "VAR_DIRAC_VERSION",
-			"Extensions": "None",
-			"CheckVersion": "False",
-			"pilotFileServer": "lbcertifdirac70.cern.ch:8443",
-			"pilotRepoBranch": "does_not_matter",
-			"pilotRepo": "https://github.com/does_not_matter/Pilot.git",
-			"GenericPilotGroup": "gridpp_pilot",
-			"GenericPilotDN": "VAR_USERDN_GRIDPP",
-			"RemoteLogging": "False",
-			"RemoteLoggerURL": "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
-			"UploadSE": "UKI-LT2-IC-HEP-disk",
-			"UploadPath": "/gridpp/pilotlogs/",
-			"RemoteLoggerTimerInterval": 0,
-			"LoggingShifterName": "GridPPLogManager",
-			"PilotLogLevel": "DEBUG",
-			"CVMFS_locations": "/cvmfs/grid.cern.ch, /cvmfs/dirac.egi.eu"
-		}
-	},
-	"dteam": {
-		"Pilot": {
-			"Version": "VAR_DIRAC_VERSION",
-			"CheckVersion": "False",
-			"pilotFileServer": "lbcertifdirac70.cern.ch:8443",
-			"pilotRepoBranch": "should_not_matter",
-			"pilotRepo": "https://github.com/should_not_matter/Pilot.git",
-			"GenericPilotGroup": "dteam_pilot",
-			"GenericPilotDN": "VAR_USERDN",
-			"RemoteLogging": "True",
-			"RemoteLoggerCEsWhiteList": "jenkins.cern.ch, jenkins-mp-pool.cern.ch",
-			"RemoteLoggerURL": "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
-			"RemoteLoggerTimerInterval": 0,
-			"PilotLogLevel": "DEBUG",
-			"CVMFS_locations": "/cvmfs/grid.cern.ch, /cvmfs/dirac.egi.eu"
-		}
-	},
-	"LHCb": {
-		"Pilot": {
-			"Version": "VAR_DIRAC_VERSION",
-			"CheckVersion": "False",
-			"pilotFileServer": "lbcertifdirac70.cern.ch:8443",
-			"GenericPilotGroup": "dteam_pilot",
-			"GenericPilotDN": "VAR_USERDN",
-			"RemoteLogging": "False",
-			"RemoteLoggerTimerInterval": 0,
-			"PilotLogLevel": "DEBUG",
-			"CVMFS_locations": "/cvmfs/lhcb.cern.ch/, $VO_LHCB_SW_DIR"
-		}
-	},
-	"ConfigurationServers": [
-		"VAR_CS"
-	]
+    },
+    "jenkins-mp-pool-sudo.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-MP",
+      "VAR_JENKINS_QUEUE": {
+        "LocalCEType": "Pool/Sudo"
+      }
+    },
+    "jenkins-mp-pool-sudo-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-FULL",
+      "VAR_JENKINS_QUEUE": {
+        "LocalCEType": "Pool/Sudo"
+      }
+    },
+    "jenkins-mp-pool-singularity.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-MP",
+      "VAR_JENKINS_QUEUE": {
+        "LocalCEType": "Pool/Singularity"
+      }
+    },
+    "jenkins-mp-pool-singularity-full.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-FULL",
+      "VAR_JENKINS_QUEUE": {
+        "LocalCEType": "Pool/Singularity"
+      }
+    },
+    "jenkins-lhcb.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "LHCb"
+    },
+    "jenkins-lhcb-d.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "LHCbD"
+    },
+    "jenkins-lhcb-dd.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "LHCbDD"
+    },
+    "jenkins-revised.cern.ch": {
+      "Site": "VAR_JENKINS_SITE",
+      "GridCEType": "TEST-REVISED-COMMANDS"
+    }
+  },
+  "Defaults": {
+    "Pilot": {
+      "RemoteLogging": "False",
+      "Commands": {
+        "TEST": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
+        "TEST-MP": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
+        "TEST-FULL": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements, LaunchAgent",
+        "LHCb": "CheckWorkerNode, LHCbInstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
+        "LHCbD": "CheckWorkerNode, InstallDIRAC, LHCbConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
+        "LHCbDD": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, LHCbAddCVMFSTags, CheckWNCapabilities, ConfigureSite, ConfigureArchitecture, ConfigureCPURequirements",
+        "TEST-REVISED-COMMANDS": "CheckWorkerNode, InstallDIRAC, ConfigureBasics, RegisterPilot, CheckCECapabilities, CheckWNCapabilities, ConfigureSite, ConfigureArchitectureWithoutCLI, ConfigureCPURequirements"
+      }
+    }
+  },
+  "gridpp": {
+    "Pilot": {
+      "Version": "VAR_DIRAC_VERSION",
+      "Extensions": "None",
+      "CheckVersion": "False",
+      "pilotFileServer": "lbcertifdirac70.cern.ch:8443",
+      "pilotRepoBranch": "does_not_matter",
+      "pilotRepo": "https://github.com/does_not_matter/Pilot.git",
+      "GenericPilotGroup": "gridpp_pilot",
+      "GenericPilotDN": "VAR_USERDN_GRIDPP",
+      "RemoteLogging": "False",
+      "RemoteLoggerURL": "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
+      "UploadSE": "UKI-LT2-IC-HEP-disk",
+      "UploadPath": "/gridpp/pilotlogs/",
+      "RemoteLoggerTimerInterval": 0,
+      "LoggingShifterName": "GridPPLogManager",
+      "PilotLogLevel": "DEBUG",
+      "CVMFS_locations": "/cvmfs/grid.cern.ch, /cvmfs/dirac.egi.eu"
+    }
+  },
+  "dteam": {
+    "Pilot": {
+      "Version": "VAR_DIRAC_VERSION",
+      "CheckVersion": "False",
+      "pilotFileServer": "lbcertifdirac70.cern.ch:8443",
+      "pilotRepoBranch": "should_not_matter",
+      "pilotRepo": "https://github.com/should_not_matter/Pilot.git",
+      "GenericPilotGroup": "dteam_pilot",
+      "GenericPilotDN": "VAR_USERDN",
+      "RemoteLogging": "True",
+      "RemoteLoggerCEsWhiteList": "jenkins.cern.ch, jenkins-mp-pool.cern.ch",
+      "RemoteLoggerURL": "https://lbcertifdirac70.cern.ch:8443/WorkloadManagement/TornadoPilotLogging",
+      "RemoteLoggerTimerInterval": 0,
+      "PilotLogLevel": "DEBUG",
+      "CVMFS_locations": "/cvmfs/grid.cern.ch, /cvmfs/dirac.egi.eu"
+    }
+  },
+  "LHCb": {
+    "Pilot": {
+      "Version": "VAR_DIRAC_VERSION",
+      "CheckVersion": "False",
+      "pilotFileServer": "lbcertifdirac70.cern.ch:8443",
+      "GenericPilotGroup": "dteam_pilot",
+      "GenericPilotDN": "VAR_USERDN",
+      "RemoteLogging": "False",
+      "RemoteLoggerTimerInterval": 0,
+      "PilotLogLevel": "DEBUG",
+      "CVMFS_locations": "/cvmfs/lhcb.cern.ch/, $VO_LHCB_SW_DIR"
+    }
+  },
+  "ConfigurationServers": [
+    "VAR_CS"
+  ],
+  "PreferredURLPatterns": [
+    "VAR_PREF_URL_PATTERN"
+  ]
 }
