@@ -508,6 +508,8 @@ class ConfigureBasics(CommandBase):
         self.cfg.append('-S "%s"' % self.pp.setup)
         if self.pp.configServer:
             self.cfg.append('-C "%s"' % self.pp.configServer)
+        if self.pp.preferredURLPatterns:
+            self.cfg.append("-o /DIRAC/PreferredURLPatterns=%s" % quote(",".join(self.pp.preferredURLPatterns)))
         if self.pp.releaseProject:
             self.cfg.append('-e "%s"' % self.pp.releaseProject)
             self.cfg.append("-o /LocalSite/ReleaseProject=%s" % self.pp.releaseProject)
