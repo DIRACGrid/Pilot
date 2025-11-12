@@ -14,7 +14,7 @@ jobs:
         pilot_schema:
           - pilot_oldSchema.json
           - pilot_newSchema.json
-        VO: 
+        VO:
           - dteam
           - gridpp
 
@@ -58,7 +58,7 @@ jobs:
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::${{ matrix.dirac_branch }} -M 1 -S DIRAC-Certification -N jenkins.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --wnVO=${{ matrix.VO }} --pilotUUID="${pilotUUID}" --debug
 
-  release_prod_pre-cvmfs:
+  release_prod_pre-cvmfs_CEs:
     runs-on: ubuntu-latest
 
     strategy:
@@ -68,7 +68,13 @@ jobs:
           - pilot_newSchema.json
         dirac_version:
           - prod
-          - pre
+          - old
+        ce:
+          - jenkins.cern.ch
+          - jenkins-singularity.cern.ch
+          - jenkins-mp.cern.ch
+          - jenkins-mp-pool.cern.ch
+          - jenkins-mp-pool-singularity.cern.ch
 
     steps:
       - uses: actions/checkout@v4
@@ -92,9 +98,9 @@ jobs:
           chmod 440 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem
           chmod 400 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
           if [ "${{ matrix.dirac_version }}" == "prod" ]; then
-            version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep -v 'a' | tail -n 1)
+            version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'v9' | tail -n 1)
           else
-            version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'a' | tail -n 1)
+            version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'v8' | tail -n 1)
           fi
           source /cvmfs/dirac.egi.eu/dirac/${version}/Linux-x86_64/diracosrc
           pilot_proxy_file=$(mktemp)
@@ -112,59 +118,7 @@ jobs:
           g_job="testintegrationworkflow${GITHUB_JOB//-/}"
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --architectureScript=dirac-platform --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --wnVO=dteam --pilotUUID="${pilotUUID}" --debug
-
-
-  release_prod-cvmfs_no_env_CEs:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        ce:
-          - jenkins.cern.ch
-          - jenkins-singularity.cern.ch
-          - jenkins-mp.cern.ch
-          - jenkins-mp-pool.cern.ch
-          - jenkins-mp-pool-singularity.cern.ch
-          - jenkins-revised.cern.ch
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: cvmfs-contrib/github-action-cvmfs@v3
-
-      - name: Test CernVM-FS
-        run: ls /cvmfs/dirac.egi.eu
-
-      - name: Tests
-        env:
-          HOSTCERT_BASE64: ${{ secrets.HOSTCERT_BASE64 }}
-          HOSTKEY_BASE64: ${{ secrets.HOSTKEY_BASE64 }}
-        run: |
-          mkdir -p ${GITHUB_WORKSPACE}/Client/etc/grid-security
-          cd ${GITHUB_WORKSPACE}/Client
-          echo "$HOSTCERT_BASE64" | base64 --decode > ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem
-          echo "$HOSTKEY_BASE64" | base64 --decode > ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
-          chmod 440 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem
-          chmod 400 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
-          version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'a' | tail -n 1)
-          source /cvmfs/dirac.egi.eu/dirac/${version}/Linux-x86_64/diracosrc
-          pilot_proxy_file=$(mktemp)
-          dirac-configure --ConfigurationServer=https://lbcertifdirac70.cern.ch:9135/Configuration/Server --UseServerCertificate -o /DIRAC/Security/CertFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem -o /DIRAC/Security/KeyFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem --SkipCADownload -O config.cfg
-          dirac-admin-get-proxy atsareg dteam_pilot -o /DIRAC/Security/UseServerCertificate=yes -o /DIRAC/Security/CertFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem -o /DIRAC/Security/KeyFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem --out $pilot_proxy_file --cfg config.cfg
-          cd ${GITHUB_WORKSPACE}/Pilot
-          cp ../tests/CI/pilot_newSchema.json pilot.json
-          sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
-          sed -i "s/VAR_JENKINS_CE/${{ matrix.ce }}/g" pilot.json
-          sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
-          sed -i "s/VAR_DIRAC_VERSION/${version}/g" pilot.json
-          sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
-          sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
-          sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
-          g_job="testintegrationworkflow${GITHUB_JOB//-/}"
-          pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
-          pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py -M 1 -S DIRAC-Certification -N ${{ matrix.ce }} -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --wnVO=dteam -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
-
+          X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py -M 1 -S DIRAC-Certification -N ${{ matrix.ce }} -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --architectureScript=dirac-platform --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --wnVO=dteam --pilotUUID="${pilotUUID}" --debug
 
   matching:
     runs-on: ubuntu-latest
@@ -186,6 +140,9 @@ jobs:
         env:
           HOSTCERT_BASE64: ${{ secrets.HOSTCERT_BASE64 }}
           HOSTKEY_BASE64: ${{ secrets.HOSTKEY_BASE64 }}
+          X509_CERT_DIR: /cvmfs/grid.cern.ch/etc/grid-security/certificates
+          X509_VOMS_DIR: /cvmfs/grid.cern.ch/etc/grid-security/vomsdir
+          DIRAC_VOMSES: /cvmfs/grid.cern.ch/etc/grid-security/vomses
         run: |
           mkdir -p ${GITHUB_WORKSPACE}/Client/etc/grid-security
           cd ${GITHUB_WORKSPACE}/Client
@@ -193,7 +150,7 @@ jobs:
           echo "$HOSTKEY_BASE64" | base64 --decode > ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
           chmod 440 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem
           chmod 400 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
-          version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'a' | tail -n 1)
+          version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep -v 'a' | tail -n 1)
           source /cvmfs/dirac.egi.eu/dirac/${version}/Linux-x86_64/diracosrc
           pilot_proxy_file=$(mktemp)
           dirac-configure --ConfigurationServer=https://lbcertifdirac70.cern.ch:9135/Configuration/Server --UseServerCertificate -o /DIRAC/Security/CertFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem -o /DIRAC/Security/KeyFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem --SkipCADownload -O config.cfg
@@ -212,18 +169,17 @@ jobs:
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::integration -M 1 -N jenkins-full.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --wnVO=dteam --pilotUUID="${pilotUUID}" --debug
 
-
   release_prod_pre-cvmfs_matching:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        VO: 
+        VO:
           - dteam
           - gridpp
         dirac_version:
           - prod
-          - pre
+          - old
 
     steps:
       - uses: actions/checkout@v4
@@ -236,6 +192,9 @@ jobs:
         env:
           HOSTCERT_BASE64: ${{ secrets.HOSTCERT_BASE64 }}
           HOSTKEY_BASE64: ${{ secrets.HOSTKEY_BASE64 }}
+          X509_CERT_DIR: /cvmfs/grid.cern.ch/etc/grid-security/certificates
+          X509_VOMS_DIR: /cvmfs/grid.cern.ch/etc/grid-security/vomsdir
+          DIRAC_VOMSES: /cvmfs/grid.cern.ch/etc/grid-security/vomses
         run: |
           mkdir -p ${GITHUB_WORKSPACE}/Client/etc/grid-security
           cd ${GITHUB_WORKSPACE}/Client
@@ -245,9 +204,9 @@ jobs:
           chmod 400 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
           cd ${GITHUB_WORKSPACE}/Pilot
           if [ "${{ matrix.dirac_version }}" == "prod" ]; then
-            version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep -v 'a' | tail -n 1)
+            version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'v9' | tail -n 1)
           else
-            version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'a' | tail -n 1)
+            version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'v8' | tail -n 1)
           fi
           source /cvmfs/dirac.egi.eu/dirac/${version}/Linux-x86_64/diracosrc
           pilot_proxy_file=$(mktemp)
@@ -267,7 +226,6 @@ jobs:
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins-full.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --wnVO=${{ matrix.VO }} -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
 
-
   release_prod-cvmfs_matching_CEs:
     runs-on: ubuntu-latest
 
@@ -279,7 +237,6 @@ jobs:
           - jenkins-mp-full.cern.ch
           - jenkins-mp-pool-full.cern.ch
           - jenkins-mp-pool-singularity-full.cern.ch
-          - jenkins-revised.cern.ch
 
     steps:
       - uses: actions/checkout@v4
@@ -292,6 +249,9 @@ jobs:
         env:
           HOSTCERT_BASE64: ${{ secrets.HOSTCERT_BASE64 }}
           HOSTKEY_BASE64: ${{ secrets.HOSTKEY_BASE64 }}
+          X509_CERT_DIR: /cvmfs/grid.cern.ch/etc/grid-security/certificates
+          X509_VOMS_DIR: /cvmfs/grid.cern.ch/etc/grid-security/vomsdir
+          DIRAC_VOMSES: /cvmfs/grid.cern.ch/etc/grid-security/vomses
         run: |
           mkdir -p ${GITHUB_WORKSPACE}/Client/etc/grid-security
           cd ${GITHUB_WORKSPACE}/Client
@@ -299,7 +259,7 @@ jobs:
           echo "$HOSTKEY_BASE64" | base64 --decode > ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
           chmod 440 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem
           chmod 400 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
-          version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'a' | tail -n 1)
+          version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep -v 'a' | tail -n 1)
           source /cvmfs/dirac.egi.eu/dirac/${version}/Linux-x86_64/diracosrc
           pilot_proxy_file=$(mktemp)
           dirac-configure --ConfigurationServer=https://lbcertifdirac70.cern.ch:9135/Configuration/Server --UseServerCertificate -o /DIRAC/Security/CertFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem -o /DIRAC/Security/KeyFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem --SkipCADownload -O config.cfg
@@ -317,7 +277,6 @@ jobs:
           pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py -M 1 -N ${{ matrix.ce }} -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --StopAfterFailedMatches=1 --wnVO=dteam -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
-
 
   ##################################
   ### # extensions tests
@@ -380,58 +339,7 @@ jobs:
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py -M 1 -N jenkins-lhcb.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch -e LHCb -l LHCb -E LHCbPilot --architectureScript=dirac-architecture --wnVO=LHCb  -o lbRunOnly --pilotUUID="${pilotUUID}" --debug
 
-  ext-lhcb_integration_dirac_installer_no_env:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        pilot_schema:
-          - pilot_oldSchema.json
-          - pilot_newSchema.json
-        ce:
-          - jenkins-lhcb-d.cern.ch
-          - jenkins-lhcb-dd.cern.ch
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: cvmfs-contrib/github-action-cvmfs@v3
-
-      - name: Test CernVM-FS
-        run: ls /cvmfs/lhcb.cern.ch
-
-      - name: Tests
-        env:
-          HOSTCERT_BASE64: ${{ secrets.HOSTCERT_BASE64 }}
-          HOSTKEY_BASE64: ${{ secrets.HOSTKEY_BASE64 }}
-        run: |
-          mkdir -p ${GITHUB_WORKSPACE}/Client/etc/grid-security
-          cd ${GITHUB_WORKSPACE}/Client
-          echo "$HOSTCERT_BASE64" | base64 --decode > ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem
-          echo "$HOSTKEY_BASE64" | base64 --decode > ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
-          chmod 440 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem
-          chmod 400 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
-          version=$(echo $(curl -s "https://gitlab.cern.ch/api/v4/projects/3588/releases") | jq -r '.[].name' | sort -V | grep -v 'a' | tail -n 1)
-          source /cvmfs/lhcb.cern.ch/lhcbdirac/${version}/Linux-x86_64/diracosrc
-          pilot_proxy_file=$(mktemp)
-          dirac-configure --ConfigurationServer=https://lbcertifdirac70.cern.ch:9135/Configuration/Server --UseServerCertificate -o /DIRAC/Security/CertFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem -o /DIRAC/Security/KeyFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem --SkipCADownload -O config.cfg
-          dirac-admin-get-proxy atsareg dteam_pilot -o /DIRAC/Security/UseServerCertificate=yes -o /DIRAC/Security/CertFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem -o /DIRAC/Security/KeyFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem --out $pilot_proxy_file --cfg config.cfg
-          X509_CERT_DIR="/cvmfs/lhcb.cern.ch/etc/grid-security/certificates" X509_VOMS_DIR="/cvmfs/lhcb.cern.ch/etc/grid-security/vomsdir" DIRAC_VOMSES="/cvmfs/lhcb.cern.ch/etc/grid-security/vomses" dirac-admin-get-proxy atsareg dteam_pilot -o /DIRAC/Security/UseServerCertificate=yes -o /DIRAC/Security/CertFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem -o /DIRAC/Security/KeyFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem --out $pilot_proxy_file --cfg config.cfg
-          cd ${GITHUB_WORKSPACE}/Pilot
-          curl https://lhcbdirac.s3.cern.ch/Pilot3/LHCbPilotCommands.py -o LHCbPilotCommands.py
-          cp ../tests/CI/${{ matrix.pilot_schema }} pilot.json
-          sed -i "s/VAR_JENKINS_SITE/DIRAC.Jenkins.ch/g" pilot.json
-          sed -i "s/VAR_JENKINS_CE/${{ matrix.ce }}/g" pilot.json
-          sed -i "s/VAR_JENKINS_QUEUE/jenkins-queue_not_important/g" pilot.json
-          sed -i "s/VAR_DIRAC_VERSION/${version}/g" pilot.json
-          sed -i "s#VAR_CS#https://lbcertifdirac70.cern.ch:9135/Configuration/Server#g" pilot.json
-          sed -i "s#VAR_USERDN#/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=alboyer/CN=819281/CN=Alexandre Franck Boyer#g" pilot.json
-          sed -i "s#VAR_USERDN_GRIDPP#${DIRACUSERDN_GRIDPP}#g" pilot.json
-          g_job="testintegrationworkflow${GITHUB_JOB//-/}"
-          pilotUUID="${g_job//_/}""$(shuf -i 2000-65000 -n 1)"
-          pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
-          X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py -M 1 -N ${{ matrix.ce }} -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch -e LHCb -l LHCb -E LHCbPilot --preinstalledEnvPrefix=/cvmfs/lhcb.cern.ch/lhcbdirac/ --wnVO=LHCb -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
-
-  ext-lhcb_integration_no_env:
+  ext-lhcb_integration_cvmfs:
     runs-on: ubuntu-latest
 
     strategy:
@@ -454,6 +362,9 @@ jobs:
         env:
           HOSTCERT_BASE64: ${{ secrets.HOSTCERT_BASE64 }}
           HOSTKEY_BASE64: ${{ secrets.HOSTKEY_BASE64 }}
+          X509_CERT_DIR: /cvmfs/lhcb.cern.ch/etc/grid-security/certificates
+          X509_VOMS_DIR: /cvmfs/lhcb.cern.ch/etc/grid-security/vomsdir
+          DIRAC_VOMSES: /cvmfs/lhcb.cern.ch/etc/grid-security/vomses
         run: |
           mkdir -p ${GITHUB_WORKSPACE}/Client/etc/grid-security
           cd ${GITHUB_WORKSPACE}/Client
