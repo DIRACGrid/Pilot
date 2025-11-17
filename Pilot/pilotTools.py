@@ -793,7 +793,7 @@ class CommandBase(object):
                         outChunk = outChunk.decode("utf-8")
                     # Strip unicode replacement characters
                     # Ensure correct type conversion in Python 2
-                    outChunk = str(outChunk.replace(u"\ufffd", ""))
+                    outChunk = str(outChunk.replace("\ufffd", ""))
                     # Avoid potential str() issues in Py2
                     outChunk = unicode(outChunk)  # pylint: disable=undefined-variable
                 else:
@@ -908,6 +908,7 @@ class PilotParams(object):
         self.site = ""
         self.setup = ""
         self.configServer = ""
+        self.preferredURLPatterns = ""
         self.ceName = ""
         self.ceType = ""
         self.queueName = ""
@@ -1305,6 +1306,8 @@ class PilotParams(object):
         # Configuration server (the synchroniser looks into gConfig.getServersList(), as before
         # the generic one (a list):
         self.configServer = ",".join([str(pv).strip() for pv in self.pilotJSON["ConfigurationServers"]])
+
+        self.preferredURLPatterns = self.pilotJSON.get("PreferredURLPatterns", self.preferredURLPatterns)
 
         # version(a comma separated values in a string). We take the first one. (the default value defined in the code)
         dVersion = pilotOptions.get("Version", self.releaseVersion)
