@@ -30,22 +30,13 @@ from collections import Counter
 from http.client import HTTPSConnection
 from shlex import quote
 
-try:
-    from Pilot.pilotTools import (
-        CommandBase,
-        getSubmitterInfo,
-        retrieveUrlTimeout,
-        safe_listdir,
-        sendMessage,
-    )
-except ModuleNotFoundError:
-    from pilotTools import (
-        CommandBase,
-        getSubmitterInfo,
-        retrieveUrlTimeout,
-        safe_listdir,
-        sendMessage,
-    )
+from pilotTools import (
+    CommandBase,
+    getSubmitterInfo,
+    retrieveUrlTimeout,
+    safe_listdir,
+    sendMessage,
+)
 
 ############################
 

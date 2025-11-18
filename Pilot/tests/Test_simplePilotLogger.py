@@ -4,14 +4,15 @@ import json
 import os
 import random
 import string
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
-try:
-    from Pilot.pilotTools import CommandBase, Logger, PilotParams
-except ModuleNotFoundError:
-    from pilotTools import CommandBase, Logger, PilotParams
+sys.path.insert(0, os.getcwd() + "/Pilot")
+
+from pilotTools import CommandBase, Logger, PilotParams
+
 
 class TestPilotParams(unittest.TestCase):
     @patch("sys.argv")
