@@ -24,22 +24,13 @@ import sys
 import time
 from io import StringIO
 
-try:
-    from Pilot.pilotTools import (
-        Logger,
-        PilotParams,
-        RemoteLogger,
-        getCommand,
-        pythonPathCheck,
-    )
-except ModuleNotFoundError:
-    from pilotTools import (
-        Logger,
-        PilotParams,
-        RemoteLogger,
-        getCommand,
-        pythonPathCheck,
-    )
+from pilotTools import (
+    Logger,
+    PilotParams,
+    RemoteLogger,
+    getCommand,
+    pythonPathCheck,
+)
 
 ############################
 
