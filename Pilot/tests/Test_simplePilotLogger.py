@@ -172,5 +172,6 @@ class TestCommandBase(unittest.TestCase):
             self.stdout_mock.truncate()
             self.stderr_mock.truncate()
 
+
 if __name__ == "__main__":
     unittest.main()

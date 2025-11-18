@@ -508,6 +508,8 @@ class ConfigureBasics(CommandBase):
         self.cfg.append('-S "%s"' % self.pp.setup)
         if self.pp.configServer:
             self.cfg.append('-C "%s"' % self.pp.configServer)
+        if self.pp.preferredURLPatterns:
+            self.cfg.append("-o /DIRAC/PreferredURLPatterns=%s" % quote(",".join(self.pp.preferredURLPatterns)))
         if self.pp.releaseProject:
             self.cfg.append('-e "%s"' % self.pp.releaseProject)
             self.cfg.append("-o /LocalSite/ReleaseProject=%s" % self.pp.releaseProject)
@@ -834,7 +836,7 @@ class ConfigureArchitecture(CommandBase):
         archScript = self.pp.architectureScript
         if self.pp.architectureScript.split(" ")[0] == "dirac-apptainer-exec":
             archScript = " ".join(self.pp.architectureScript.split(" ")[1:])
-        
+
         architectureCmd = "%s %s -ddd" % (archScript, " ".join(cfg))
 
         if self.pp.architectureScript.split(" ")[0] == "dirac-apptainer-exec":
@@ -872,10 +874,12 @@ class ConfigureArchitecture(CommandBase):
 
         return localArchitecture
 
+
 class ConfigureArchitectureWithoutCLI(CommandBase):
     """This command determines the platform.
     Separated from the ConfigureDIRAC command for easier extensibility.
     """
+
     def getPlatformString(self):
         # Modified to return our desired platform string, R. Graciani
         platformTuple = (platform.system(), platform.machine())
@@ -902,7 +906,6 @@ class ConfigureArchitectureWithoutCLI(CommandBase):
         except Exception as e:
             self.log.error("Configuration error [ERROR %s]" % str(e))
             self.exitWithError(1)
-
 
         cfg = ["-FDMH"]  # force update, skip CA checks, skip CA download, skip VOMS
         if self.pp.useServerCertificate:
