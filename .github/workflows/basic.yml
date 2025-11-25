@@ -24,7 +24,6 @@ jobs:
       fail-fast: false
       matrix:
         python: 
-          - 2.7.18
           - 3.6.15
           - 3.9.17
 
@@ -55,7 +54,6 @@ jobs:
       fail-fast: false
       matrix:
         python: 
-          - 2.7.18
           - 3.6.15
           - 3.9.17
 
@@ -82,7 +80,6 @@ jobs:
       fail-fast: false
       matrix:
         python: 
-          - 2.7.18
           - 3.6.15
           - 3.9.17
 
