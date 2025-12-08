@@ -27,9 +27,14 @@ def load_module_from_path(module_name, path_to_module):
     return module
 
 
-from threading import Timer
-
-from proxyTools import BaseRequest, extract_diracx_payload, getVO, refreshUserToken
+from proxyTools import (
+    BaseRequest,
+    extract_diracx_payload,
+    getVO,
+    refreshUserToken,
+    refreshPilotToken,
+    TokenBasedRequest,
+)
 
 # Utilities functions
 
@@ -768,7 +773,7 @@ class CommandBase(object):
                 flushInterval=interval,
                 bufsize=bufsize,
                 jwt=pilotParams.jwt,
-                legacy_logging=pilotParams.isLegacyLogging,
+                legacy_logging=pilotParams.isLegacyPilot,
                 clientID=pilotParams.clientID,
             )
 

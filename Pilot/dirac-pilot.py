@@ -62,7 +62,7 @@ if __name__ == "__main__":
             pilotUUID=pilotParams.pilotUUID,
             debugFlag=pilotParams.debugFlag,
             jwt=pilotParams.jwt,
-            legacy_logging=pilotParams.isLegacyLogging,
+            legacy_logging=pilotParams.isLegacyPilot,
             clientID=pilotParams.clientID
         )
         log.info("Remote logger activated")
@@ -126,7 +126,7 @@ if __name__ == "__main__":
         if remote:
             log.buffer.flush(force=True)
 
-        if not pilotParams.isLegacyLogging:
+        if not pilotParams.isLegacyPilot:
             log.info("Revoking pilot token.")
             revokePilotToken(
                 pilotParams.diracXServer,
