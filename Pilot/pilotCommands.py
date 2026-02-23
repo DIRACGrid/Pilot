@@ -115,15 +115,19 @@ class CheckWorkerNode(CommandBase):
         self.log.info("Host FQDN  = %s" % socket.getfqdn())
         self.log.info("WorkingDir = %s" % self.pp.workingDir)  # this could be different than rootPath
 
-        fileName = "/etc/redhat-release"
-        if os.path.exists(fileName):
-            with open(fileName, "r") as f:
-                self.log.info("RedHat Release = %s" % f.read().strip())
-
-        fileName = "/etc/lsb-release"
-        if os.path.isfile(fileName):
-            with open(fileName, "r") as f:
-                self.log.info("Linux release:\n%s" % f.read().strip())
+        for fileName in ["/etc/os-release", "/usr/lib/os-release"]:
+            if os.path.isfile(fileName):
+                try:
+                    with open(fileName, "r") as f:
+                        for line in f:
+                            line = line.strip()
+                            if line.startswith(("NAME=", "VERSION=", "PRETTY_NAME=")):
+                                self.log.info(
+                                    "OS Release = %s" % line.split("=", 1)[1].strip('"')
+                                )
+                    break
+                except (OSError, IOError):
+                    self.log.debug("Could not read %s" % fileName)
 
         fileName = "/proc/cpuinfo"
         if os.path.exists(fileName):
