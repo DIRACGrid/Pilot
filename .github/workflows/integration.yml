@@ -59,7 +59,7 @@ jobs:
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::${{ matrix.dirac_branch }} -M 1 -S DIRAC-Certification -N jenkins.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --wnVO=${{ matrix.VO }} --pilotUUID="${pilotUUID}" --debug
 
-  release_prod_pre-cvmfs_CEs:
+  release_cvmfs_CEs:
     runs-on: ubuntu-latest
 
     strategy:
@@ -67,9 +67,6 @@ jobs:
         pilot_schema:
           - pilot_oldSchema.json
           - pilot_newSchema.json
-        dirac_version:
-          - prod
-          - old
         ce:
           - jenkins.cern.ch
           - jenkins-singularity.cern.ch
@@ -98,11 +95,7 @@ jobs:
           echo "$HOSTKEY_BASE64" | base64 --decode > ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
           chmod 440 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem
           chmod 400 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
-          if [ "${{ matrix.dirac_version }}" == "prod" ]; then
-            version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'v9' | tail -n 1)
-          else
-            version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'v8' | tail -n 1)
-          fi
+          version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'v9' | tail -n 1)
           source /cvmfs/dirac.egi.eu/dirac/${version}/Linux-x86_64/diracosrc
           pilot_proxy_file=$(mktemp)
           dirac-configure --ConfigurationServer=https://lbcertifdirac70.cern.ch:9135/Configuration/Server --UseServerCertificate -o /DIRAC/Security/CertFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem -o /DIRAC/Security/KeyFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem --SkipCADownload -O config.cfg
@@ -172,7 +165,7 @@ jobs:
           pilotUUID=$(echo $pilotUUID | rev | cut -c 1-32 | rev)
           X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::integration -M 1 -N jenkins-full.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --wnVO=dteam --pilotUUID="${pilotUUID}" --debug
 
-  release_prod_pre-cvmfs_matching:
+  release_cvmfs_matching:
     runs-on: ubuntu-latest
 
     strategy:
@@ -180,10 +173,6 @@ jobs:
         VO:
           - dteam
           - gridpp
-        dirac_version:
-          - prod
-          - old
-
     steps:
       - uses: actions/checkout@v4
       - uses: cvmfs-contrib/github-action-cvmfs@v3
@@ -206,11 +195,7 @@ jobs:
           chmod 440 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem
           chmod 400 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
           cd ${GITHUB_WORKSPACE}/Pilot
-          if [ "${{ matrix.dirac_version }}" == "prod" ]; then
-            version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'v9' | tail -n 1)
-          else
-            version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'v8' | tail -n 1)
-          fi
+          version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'v9' | tail -n 1)
           source /cvmfs/dirac.egi.eu/dirac/${version}/Linux-x86_64/diracosrc
           pilot_proxy_file=$(mktemp)
           dirac-configure --ConfigurationServer=https://lbcertifdirac70.cern.ch:9135/Configuration/Server --UseServerCertificate -o /DIRAC/Security/CertFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem -o /DIRAC/Security/KeyFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem --SkipCADownload -O config.cfg
