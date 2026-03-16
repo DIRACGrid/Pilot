@@ -1,19 +1,21 @@
 """Test class for Pilot"""
 
-from __future__ import absolute_import, division, print_function
-
 import json
 import os
 import shutil
 import stat
 import sys
+import tempfile
+from unittest import mock
 
 # pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 # imports
 import unittest
 
-from Pilot.pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes
-from Pilot.pilotTools import PilotParams
+sys.path.insert(0, os.getcwd() + "/Pilot")
+
+from pilotCommands import CheckWorkerNode, ConfigureSite, NagiosProbes
+from pilotTools import PilotParams
 
 
 class PilotTestCase(unittest.TestCase):
@@ -33,7 +35,12 @@ class PilotTestCase(unittest.TestCase):
                             "Version": "v1r1, v2r2",
                         }
                     },
-                    "CEs": {"grid1.example.com": {"GridCEType": "cetype1", "Site": "site.example.com"}},
+                    "CEs": {
+                        "grid1.example.com": {
+                            "GridCEType": "cetype1",
+                            "Site": "site.example.com",
+                        }
+                    },
                     "DefaultSetup": "TestSetup",
                 },
                 fp,
@@ -62,6 +69,18 @@ class PilotTestCase(unittest.TestCase):
                 shutil.rmtree("ReplacementCode")
             except OSError:
                 pass
+            try:
+                shutil.rmtree("etc")
+            except OSError:
+                pass
+            try:
+                os.remove(fileProd)
+            except OSError:
+                pass
+            try:
+                shutil.rmtree("ReplacementCode")
+            except OSError:
+                pass
 
 
 class CommandsTestCase(PilotTestCase):
@@ -69,7 +88,14 @@ class CommandsTestCase(PilotTestCase):
 
     def test_InitJSON(self):
         """Test the pilot.json and command line parsing"""
-        sys.argv[1:] = ["--Name", "grid1.example.com", "--commandOptions", "a=1,b=2", "-Z", "c=3"]
+        sys.argv[1:] = [
+            "--Name",
+            "grid1.example.com",
+            "--commandOptions",
+            "a=1,b=2",
+            "-Z",
+            "c=3",
+        ]
         pp = PilotParams()
 
         self.assertEqual(pp.commands, ["x", "y", "z"])
@@ -93,7 +119,13 @@ class CommandsTestCase(PilotTestCase):
         self.assertEqual(pp.commandOptions["b"], "2")
         self.assertEqual(pp.commandOptions["c"], "3")
 
-        sys.argv[1:] = ["--Name", "grid1.example.com", "--commandOptions=a = 1,  b=2", "-Z", " c=3"]  # spaces and '=''
+        sys.argv[1:] = [
+            "--Name",
+            "grid1.example.com",
+            "--commandOptions=a = 1,  b=2",
+            "-Z",
+            " c=3",
+        ]  # spaces and '=''
         pp = PilotParams()
 
         self.assertEqual(pp.commandOptions["a"], "1")
@@ -105,6 +137,42 @@ class CommandsTestCase(PilotTestCase):
         pp = PilotParams()
         cwn = CheckWorkerNode(pp)
         self.assertEqual(cwn.execute(), None)
+        with open("pilot.out") as po:
+            s = po.read()
+            self.assertTrue("OS Release =" in s)
+
+    def test_CheckWorkerNode_osrelease_unavailable(self):
+        """Test CheckWorkerNode when os-release is unavailable"""
+        pp = PilotParams()
+        cwn = CheckWorkerNode(pp)
+
+        with mock.patch("pilotCommands.os.path.isfile") as mock_isfile:
+            mock_isfile.return_value = False
+
+            cwn.execute()
+
+            with open("pilot.out") as po:
+                s = po.read()
+                self.assertNotIn("OS Release =", s)
+
+    def test_CheckWorkerNode_osrelease_blocked(self):
+        """Test CheckWorkerNode when os-release access is blocked"""
+        pp = PilotParams()
+        cwn = CheckWorkerNode(pp)
+
+        original_open = open
+
+        def selective_open(path, *args, **kwargs):
+            if path in ["/etc/os-release", "/usr/lib/os-release"]:
+                raise IOError("Permission denied")
+            return original_open(path, *args, **kwargs)
+
+        with mock.patch("pilotCommands.open", side_effect=selective_open):
+            cwn.execute()
+
+            with open("pilot.out") as po:
+                s = po.read()
+                self.assertNotIn("OS Release =", s)
 
     def test_ConfigureSite(self):
         """Test ConfigureSite command"""

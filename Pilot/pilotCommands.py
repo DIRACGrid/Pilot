@@ -17,8 +17,6 @@ The command class must implement execute() method for the actual command
 execution.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import filecmp
 import os
 import platform
@@ -28,39 +26,18 @@ import stat
 import sys
 import time
 import traceback
-import subprocess
 from collections import Counter
+from http.client import HTTPSConnection
+from shlex import quote
 
-############################
-# python 2 -> 3 "hacks"
-try:
-    # For Python 3.0 and later
-    from http.client import HTTPSConnection
-except ImportError:
-    # Fall back to Python 2
-    from httplib import HTTPSConnection
+from pilotTools import (
+    CommandBase,
+    getSubmitterInfo,
+    retrieveUrlTimeout,
+    safe_listdir,
+    sendMessage,
+)
 
-try:
-    from shlex import quote
-except ImportError:
-    from pipes import quote
-
-try:
-    from Pilot.pilotTools import (
-        CommandBase,
-        getSubmitterInfo,
-        retrieveUrlTimeout,
-        safe_listdir,
-        sendMessage,
-    )
-except ImportError:
-    from pilotTools import (
-        CommandBase,
-        getSubmitterInfo,
-        retrieveUrlTimeout,
-        safe_listdir,
-        sendMessage,
-    )
 ############################
 
 
@@ -138,15 +115,19 @@ class CheckWorkerNode(CommandBase):
         self.log.info("Host FQDN  = %s" % socket.getfqdn())
         self.log.info("WorkingDir = %s" % self.pp.workingDir)  # this could be different than rootPath
 
-        fileName = "/etc/redhat-release"
-        if os.path.exists(fileName):
-            with open(fileName, "r") as f:
-                self.log.info("RedHat Release = %s" % f.read().strip())
-
-        fileName = "/etc/lsb-release"
-        if os.path.isfile(fileName):
-            with open(fileName, "r") as f:
-                self.log.info("Linux release:\n%s" % f.read().strip())
+        for fileName in ["/etc/os-release", "/usr/lib/os-release"]:
+            if os.path.isfile(fileName):
+                try:
+                    with open(fileName, "r") as f:
+                        for line in f:
+                            line = line.strip()
+                            if line.startswith(("NAME=", "VERSION=", "PRETTY_NAME=")):
+                                self.log.info(
+                                    "OS Release = %s" % line.split("=", 1)[1].strip('"')
+                                )
+                    break
+                except (OSError, IOError):
+                    self.log.debug("Could not read %s" % fileName)
 
         fileName = "/proc/cpuinfo"
         if os.path.exists(fileName):
@@ -283,7 +264,7 @@ class InstallDIRAC(CommandBase):
                 self.pp.installEnv["DIRAC_RC_PATH"] = preinstalledEnvScript
 
     def _localInstallDIRAC(self):
-        """Install python3 version of DIRAC client"""
+        """Install DIRAC client"""
 
         self.log.info("Installing DIRAC locally")
 
@@ -296,10 +277,7 @@ class InstallDIRAC(CommandBase):
 
         # 1. Get the DIRACOS installer name
         # curl -O -L https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-$(uname -m).sh
-        try:
-            machine = os.uname().machine  # py3
-        except AttributeError:
-            machine = os.uname()[4]  # py2
+        machine = os.uname().machine
 
         installerName = "DIRACOS-Linux-%s.sh" % machine
 
