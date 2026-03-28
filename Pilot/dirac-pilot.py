@@ -31,6 +31,7 @@ from pilotTools import (
     getCommand,
     pythonPathCheck,
 )
+from proxyTools import revokePilotToken
 
 ############################
 
@@ -46,25 +47,34 @@ if __name__ == "__main__":
     # print the buffer, so we have a "classic' logger back in sync.
     sys.stdout.write(bufContent)
     # now the remote logger.
-    remote = pilotParams.pilotLogging and (pilotParams.loggerURL is not None)
-    if remote:
+    remote = pilotParams.pilotLogging and pilotParams.diracXServer
+    if remote and pilotParams.jwt != {}:
         # In a remote logger enabled Dirac version we would have some classic logger content from a wrapper,
         # which we passed in:
         receivedContent = ""
         if not sys.stdin.isatty():
             receivedContent = sys.stdin.read()
+        
         log = RemoteLogger(
-            pilotParams.loggerURL,
+            pilotParams.diracXServer,
             "Pilot",
             bufsize=pilotParams.loggerBufsize,
             pilotUUID=pilotParams.pilotUUID,
             debugFlag=pilotParams.debugFlag,
-            wnVO=pilotParams.wnVO,
+            jwt=pilotParams.jwt,
+            legacy_logging=pilotParams.isLegacyPilot,
+            clientID=pilotParams.clientID
         )
         log.info("Remote logger activated")
-        log.buffer.write(receivedContent)
+        log.buffer.write(log.format_to_json(
+            "INFO",
+            receivedContent,
+        ))
         log.buffer.flush()
-        log.buffer.write(bufContent)
+        log.buffer.write(log.format_to_json(
+            "INFO",
+            bufContent,
+        ))
     else:
         log = Logger("Pilot", debugFlag=pilotParams.debugFlag)
 
@@ -83,11 +93,13 @@ if __name__ == "__main__":
     log.debug("PARAMETER [%s]" % ", ".join(map(str, pilotParams.optList)))
 
     if pilotParams.commandExtensions:
-        log.info("Requested command extensions: %s" % str(pilotParams.commandExtensions))
+        log.info(
+            "Requested command extensions: %s" % str(pilotParams.commandExtensions)
+        )
 
     log.info("Executing commands: %s" % str(pilotParams.commands))
 
-    if remote:
+    if remote and pilotParams.jwt:
         # It's safer to cancel the timer here. Each command has got its own logger object with a timer cancelled by the
         # finaliser. No need for a timer in the "else" code segment below.
         try:
@@ -105,5 +117,20 @@ if __name__ == "__main__":
             log.error("Command %s could not be instantiated" % commandName)
             # send the last message and abandon ship.
             if remote:
-                log.buffer.flush()
+                log.buffer.flush(force=True)
             sys.exit(-1)
+
+    log.info("Pilot tasks finished.")
+
+    if pilotParams.jwt:
+        if remote:
+            log.buffer.flush(force=True)
+
+        if not pilotParams.isLegacyPilot:
+            log.info("Revoking pilot token.")
+            revokePilotToken(
+                pilotParams.diracXServer,
+                pilotParams.pilotUUID,
+                pilotParams.jwt,
+                pilotParams.clientID,
+            )
