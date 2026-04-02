@@ -348,15 +348,12 @@ class InstallDIRAC(CommandBase):
                     url, project, branch = elements
                 elif len(elements) == 1:
                     url = elements[0]
-                if url.endswith(".git"):
-                    pipInstalling += "git+"
-                pipInstalling += url
+                gitUrl = "git+" + url if url.endswith(".git") else url
                 if branch and project:
-                    # e.g. git+https://github.com/fstagni/DIRAC.git@v7r2-fixes33#egg=DIRAC[pilot]
-                    pipInstalling += "@%s#egg=%s" % (branch, project)
-                pipInstalling += "[pilot]"
-
-                # pipInstalling = "pip install %s%s@%s#egg=%s[pilot]" % (prefix, url, branch, project)
+                    # e.g. DIRAC[pilot] @ git+https://github.com/fstagni/DIRAC.git@v7r2-fixes33
+                    pipInstalling += "%s[pilot] @ %s@%s" % (project, gitUrl, branch)
+                else:
+                    pipInstalling += "%s[pilot]" % gitUrl
                 retCode, output = self.executeAndGetOutput(pipInstalling, self.pp.installEnv)
                 if retCode:
                     self.log.error("Could not %s [ERROR %d]" % (pipInstalling, retCode))
