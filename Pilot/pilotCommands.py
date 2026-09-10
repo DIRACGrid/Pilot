@@ -203,6 +203,7 @@ class InstallDIRAC(CommandBase):
         if retCode:
             self.log.error("Could not parse the %s file [ERROR %d]" % (self.pp.installEnv["DIRAC_RC_PATH"], retCode))
             self.exitWithError(retCode)
+        self.pp.installEnv = {}
         for line in output.split("\n"):
             try:
                 var, value = [vx.strip() for vx in line.split("=", 1)]
