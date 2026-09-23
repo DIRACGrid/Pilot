@@ -47,4 +47,4 @@ jobs:
         with:
           name: Pilot_${{ matrix.branch }}
           path: tmp_dir
-          retention-days: 1
+          retention-days: 3
