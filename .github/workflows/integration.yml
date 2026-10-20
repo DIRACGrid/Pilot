@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   local_install:
+    if: github.repository_owner != 'DIRACGrid'
     runs-on: ubuntu-latest
 
     strategy:
@@ -60,6 +61,7 @@ jobs:
           X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::${{ matrix.dirac_branch }} -M 1 -S DIRAC-Certification -N jenkins.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --wnVO=${{ matrix.VO }} --pilotUUID="${pilotUUID}" --debug
 
   release_cvmfs_CEs:
+    if: github.repository_owner != 'DIRACGrid'
     runs-on: ubuntu-latest
 
     strategy:
@@ -116,6 +118,7 @@ jobs:
           X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py -M 1 -S DIRAC-Certification -N ${{ matrix.ce }} -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --architectureScript=dirac-platform --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --wnVO=dteam --pilotUUID="${pilotUUID}" --debug
 
   matching:
+    if: github.repository_owner != 'DIRACGrid'
     runs-on: ubuntu-latest
 
     strategy:
@@ -166,6 +169,7 @@ jobs:
           X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py --modules https://github.com/DIRACGrid/DIRAC.git:::DIRAC:::integration -M 1 -N jenkins-full.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --wnVO=dteam --pilotUUID="${pilotUUID}" --debug
 
   release_cvmfs_matching:
+    if: github.repository_owner != 'DIRACGrid'
     runs-on: ubuntu-latest
 
     strategy:
@@ -216,6 +220,7 @@ jobs:
           X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py -M 1 -S DIRAC-Certification -N jenkins-full.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch --preinstalledEnvPrefix=/cvmfs/dirac.egi.eu/dirac --wnVO=${{ matrix.VO }} -o cvmfsOnly --pilotUUID="${pilotUUID}" --debug
 
   release_prod-cvmfs_matching_CEs:
+    if: github.repository_owner != 'DIRACGrid'
     runs-on: ubuntu-latest
 
     strategy:
@@ -276,6 +281,7 @@ jobs:
   #### LHCb
 
   ext-lhcb_integration:
+    if: github.repository_owner != 'DIRACGrid'
     runs-on: ubuntu-latest
 
     strategy:
@@ -331,6 +337,7 @@ jobs:
           X509_USER_PROXY=$pilot_proxy_file python dirac-pilot.py -M 1 -N jenkins-lhcb.cern.ch -Q jenkins-queue_not_important -n DIRAC.Jenkins.ch -e LHCb -l LHCb -E LHCbPilot --architectureScript=dirac-architecture --wnVO=LHCb  -o lbRunOnly --pilotUUID="${pilotUUID}" --debug
 
   ext-lhcb_integration_cvmfs:
+    if: github.repository_owner != 'DIRACGrid'
     runs-on: ubuntu-latest
 
     strategy:
