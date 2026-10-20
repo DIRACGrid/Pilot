@@ -907,7 +907,7 @@ class PilotParams(object):
         self.gateway = ""
         self.useServerCertificate = False
         self.pilotScriptName = ""
-        self.genericOption = ""
+        self.genericOptions = []
         self.wnVO = ""  # for binding the resource (WN) to a specific VO
         # Some commands can define environment necessary to execute subsequent commands
         self.installEnv = os.environ
@@ -1206,7 +1206,7 @@ class PilotParams(object):
             elif o == "--pilotUUID":
                 self.pilotUUID = v
             elif o in ("-o", "--option"):
-                self.genericOption = v
+                self.genericOptions.append(v)
             elif o in ("-t", "--tag"):
                 self.tags.append(v)
             elif o == "--requiredTag":

@@ -108,6 +108,18 @@ class CommandsTestCase(PilotTestCase):
         sys.argv[1:] = [
             "--Name",
             "grid1.example.com",
+            "--option",
+            "diracInstallOnly",
+            "-o",
+            "/LocalSite/Example=value",
+        ]
+        pp = PilotParams()
+
+        self.assertEqual(pp.genericOptions, ["diracInstallOnly", "/LocalSite/Example=value"])
+
+        sys.argv[1:] = [
+            "--Name",
+            "grid1.example.com",
             "--commandOptions",
             "a = 1,  b=2",
             "-Z",
