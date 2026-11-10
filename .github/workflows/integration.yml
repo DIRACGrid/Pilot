@@ -28,6 +28,7 @@ jobs:
 
       - name: Tests
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOSTCERT_BASE64: ${{ secrets.HOSTCERT_BASE64 }}
           HOSTKEY_BASE64: ${{ secrets.HOSTKEY_BASE64 }}
         run: |
@@ -85,6 +86,7 @@ jobs:
 
       - name: Tests
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOSTCERT_BASE64: ${{ secrets.HOSTCERT_BASE64 }}
           HOSTKEY_BASE64: ${{ secrets.HOSTKEY_BASE64 }}
           X509_CERT_DIR: /cvmfs/grid.cern.ch/etc/grid-security/certificates
@@ -97,7 +99,7 @@ jobs:
           echo "$HOSTKEY_BASE64" | base64 --decode > ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
           chmod 440 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem
           chmod 400 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
-          version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'v9' | tail -n 1)
+          version=$(gh api repos/DIRACGrid/DIRAC/releases --jq '.[].tag_name' | sort -V | grep 'v9' | tail -n 1)
           source /cvmfs/dirac.egi.eu/dirac/${version}/Linux-x86_64/diracosrc
           pilot_proxy_file=$(mktemp)
           dirac-configure --ConfigurationServer=https://lbcertifdirac70.cern.ch:9135/Configuration/Server --UseServerCertificate -o /DIRAC/Security/CertFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem -o /DIRAC/Security/KeyFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem --SkipCADownload -O config.cfg
@@ -136,6 +138,7 @@ jobs:
 
       - name: Tests
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOSTCERT_BASE64: ${{ secrets.HOSTCERT_BASE64 }}
           HOSTKEY_BASE64: ${{ secrets.HOSTKEY_BASE64 }}
           X509_CERT_DIR: /cvmfs/grid.cern.ch/etc/grid-security/certificates
@@ -148,7 +151,7 @@ jobs:
           echo "$HOSTKEY_BASE64" | base64 --decode > ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
           chmod 440 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem
           chmod 400 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
-          version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep -v 'a' | tail -n 1)
+          version=$(gh api repos/DIRACGrid/DIRAC/releases --jq '.[].tag_name' | sort -V | grep -v 'a' | tail -n 1)
           source /cvmfs/dirac.egi.eu/dirac/${version}/Linux-x86_64/diracosrc
           pilot_proxy_file=$(mktemp)
           dirac-configure --ConfigurationServer=https://lbcertifdirac70.cern.ch:9135/Configuration/Server --UseServerCertificate -o /DIRAC/Security/CertFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem -o /DIRAC/Security/KeyFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem --SkipCADownload -O config.cfg
@@ -186,6 +189,7 @@ jobs:
 
       - name: Tests
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOSTCERT_BASE64: ${{ secrets.HOSTCERT_BASE64 }}
           HOSTKEY_BASE64: ${{ secrets.HOSTKEY_BASE64 }}
           X509_CERT_DIR: /cvmfs/grid.cern.ch/etc/grid-security/certificates
@@ -199,7 +203,7 @@ jobs:
           chmod 440 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem
           chmod 400 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
           cd ${GITHUB_WORKSPACE}/Pilot
-          version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep 'v9' | tail -n 1)
+          version=$(gh api repos/DIRACGrid/DIRAC/releases --jq '.[].tag_name' | sort -V | grep 'v9' | tail -n 1)
           source /cvmfs/dirac.egi.eu/dirac/${version}/Linux-x86_64/diracosrc
           pilot_proxy_file=$(mktemp)
           dirac-configure --ConfigurationServer=https://lbcertifdirac70.cern.ch:9135/Configuration/Server --UseServerCertificate -o /DIRAC/Security/CertFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem -o /DIRAC/Security/KeyFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem --SkipCADownload -O config.cfg
@@ -253,7 +257,7 @@ jobs:
           echo "$HOSTKEY_BASE64" | base64 --decode > ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
           chmod 440 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem
           chmod 400 ${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem
-          version=$(curl -s "https://api.github.com/repos/DIRACGrid/DIRAC/releases" | jq -r '.[].tag_name' | sort -V | grep -v 'a' | tail -n 1)
+          version=$(gh api repos/DIRACGrid/DIRAC/releases --jq '.[].tag_name' | sort -V | grep -v 'a' | tail -n 1)
           source /cvmfs/dirac.egi.eu/dirac/${version}/Linux-x86_64/diracosrc
           pilot_proxy_file=$(mktemp)
           dirac-configure --ConfigurationServer=https://lbcertifdirac70.cern.ch:9135/Configuration/Server --UseServerCertificate -o /DIRAC/Security/CertFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostcert.pem -o /DIRAC/Security/KeyFile=${GITHUB_WORKSPACE}/Client/etc/grid-security/hostkey.pem --SkipCADownload -O config.cfg
