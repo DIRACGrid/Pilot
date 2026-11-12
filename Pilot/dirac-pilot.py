@@ -31,8 +31,7 @@ from pilotTools import (
     getCommand,
     pythonPathCheck,
 )
-
-############################
+from proxyTools import revokePilotToken
 
 if __name__ == "__main__":
     pilotStartTime = int(time.time())
@@ -83,7 +82,9 @@ if __name__ == "__main__":
     log.debug("PARAMETER [%s]" % ", ".join(map(str, pilotParams.optList)))
 
     if pilotParams.commandExtensions:
-        log.info("Requested command extensions: %s" % str(pilotParams.commandExtensions))
+        log.info(
+            "Requested command extensions: %s" % str(pilotParams.commandExtensions)
+        )
 
     log.info("Executing commands: %s" % str(pilotParams.commands))
 
@@ -107,3 +108,15 @@ if __name__ == "__main__":
             if remote:
                 log.buffer.flush()
             sys.exit(-1)
+
+    log.info("Pilot tasks finished.")
+
+    if pilotParams.jwt:
+        if not pilotParams.isLegacyPilot:
+            log.info("Revoking pilot token.")
+            revokePilotToken(
+                pilotParams.diracXServer,
+                pilotParams.pilotUUID,
+                pilotParams.jwt,
+                pilotParams.clientID,
+            )
