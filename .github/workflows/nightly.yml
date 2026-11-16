@@ -7,6 +7,13 @@ on:
     - cron:  '0 0 * * *'
   workflow_dispatch:
 
+# Only one scheduled run at a time.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   # uploading master and devel tarballs as artifacts, for use in subsequent tests
@@ -14,6 +21,7 @@ jobs:
   # https://github.com/DIRACGrid/DIRAC/actions?query=workflow%3A%22pilot+wrapper%22
   # (triggered by https://github.com/DIRACGrid/DIRAC/blob/integration/.github/workflows/pilotWrapper.yml)
   upload:
+    name: upload (${{ matrix.branch }})
     runs-on: ubuntu-latest
     if: github.repository == 'DIRACGrid/Pilot'
 
@@ -25,9 +33,10 @@ jobs:
           - devel
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ matrix.branch }}
+          persist-credentials: false
 
       - name: create artifacts
         run: |
@@ -43,7 +52,7 @@ jobs:
           rm *.py
 
       - name: upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Pilot_${{ matrix.branch }}
           path: tmp_dir
