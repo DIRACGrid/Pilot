@@ -5,3 +5,17 @@ target-version = ['py39','py310']
 [tool.ruff]
 select = ["E", "F", "B", "I", "PLE"]
 ignore = ["E501"]
+
+[tool.bandit]
+exclude_dirs = [".github", "docs", "test", "tests"]
+skips = [
+  # The pilot bootstraps itself on worker nodes: downloading files over
+  # URLs and starting processes is its core function, not an accident.
+  "B110", # try_except_pass - best-effort cleanup must never abort the pilot
+  "B310", # blacklist - the pilot downloads code/files from URLs it is given
+  "B404", # import_subprocess
+  "B602", # subprocess_popen_with_shell_equals_true
+  "B603", # subprocess_without_shell_equals_true
+  "B605", # start_process_with_a_shell
+  "B607", # start_process_with_partial_path - e.g. bare "openssl" resolved via PATH
+]
