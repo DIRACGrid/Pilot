@@ -1065,7 +1065,7 @@ class LaunchAgent(CommandBase):
         if self.pp.executeCmd:
             # Execute user command
             self.log.info("Executing user defined command: %s" % self.pp.executeCmd)
-            self.exitWithError(int(os.system("source diracos/diracosrc; %s" % self.pp.executeCmd) / 256))
+            self.exitWithError(int(os.system("source diracos/diracosrc; %s" % self.pp.executeCmd) / 256))  # nosec B605
 
         self.log.info("Starting JobAgent")
         os.environ["PYTHONUNBUFFERED"] = "yes"

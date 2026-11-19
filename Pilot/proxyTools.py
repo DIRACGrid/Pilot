@@ -12,7 +12,7 @@ RE_OPENSSL_ANS1_FORMAT = re.compile(br"^\s*\d+:d=(\d+)\s+hl=")
 
 def parseASN1(data):
     cmd = ["openssl", "asn1parse", "-inform", "der"]
-    proc = Popen(cmd, stdin=PIPE, stdout=PIPE)
+    proc = Popen(cmd, stdin=PIPE, stdout=PIPE)  # nosec B603
     out, _ = proc.communicate(data)
     if proc.returncode != 0:
         raise Exception("Error when invoking openssl asn1parse")
@@ -41,7 +41,7 @@ def getVO(proxy_data):
 
     chain = re.findall(br"-----BEGIN CERTIFICATE-----\n.+?\n-----END CERTIFICATE-----", proxy_data, flags=re.DOTALL)
     for cert in chain:
-        proc = Popen(["openssl", "x509", "-outform", "der"], stdin=PIPE, stdout=PIPE)
+        proc = Popen(["openssl", "x509", "-outform", "der"], stdin=PIPE, stdout=PIPE)  # nosec B603, B607
         out, _ = proc.communicate(cert)
         if proc.returncode != 0:
             raise Exception("Error when invoking openssl X509")

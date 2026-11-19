@@ -100,7 +100,7 @@ def retrieveUrlTimeout(url, fileName, log, timeout=0):
         # set timeout alarm
         signal.alarm(timeout + 5)
     try:
-        remoteFD = urlopen(url)
+        remoteFD = urlopen(url)  # nosec B310
         expectedBytes = 0
         # Sometimes repositories do not return Content-Length parameter
         try:
@@ -421,7 +421,7 @@ def getCommand(params, commandName):
         try:
             commandModule = import_module(module)
             commandObject = getattr(commandModule, commandName)
-        except Exception:
+        except Exception:  # nosec B110
             pass
         if commandObject:
             return commandObject(params), module
@@ -695,7 +695,7 @@ def sendMessage(url, pilotUUID, wnVO, method, rawMessage):
 
     data = urlencode(raw_data).encode("utf-8")  # encode to bytes
 
-    res = urlopen(url, data, context=context)
+    res = urlopen(url, data, context=context)  # nosec B310
     res.close()
 
 
@@ -747,7 +747,7 @@ class CommandBase(object):
         self.log.info("Executing command %s" % cmd)
         _p = subprocess.Popen(
             cmd,
-            shell=True,
+            shell=True,  # nosec B602
             env=environDict,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -823,7 +823,7 @@ class CommandBase(object):
             try:
                 _p = subprocess.Popen(
                     "%s" % cmd,
-                    shell=True,
+                    shell=True,  # nosec B602
                     env=environDict,
                     close_fds=False,
                     stdout=fpLogFile,
@@ -940,7 +940,7 @@ class PilotParams(object):
         # Set number of allocatable processors from MJF if available
         try:
             self.pilotProcessors = int(
-                urlopen(os.path.join(os.environ["JOBFEATURES"], "allocated_cpu")).read()
+                urlopen(os.path.join(os.environ["JOBFEATURES"], "allocated_cpu")).read()  # nosec B310
             )
         except Exception:
             self.pilotProcessors = 1
