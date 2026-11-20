@@ -2,6 +2,22 @@
 line-length = 120
 target-version = ['py39','py310']
 
-[tool.ruff]
-select = ["E", "F", "B", "I", "PLE"]
-ignore = ["E501"]
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "PLE", "S"]
+ignore = [
+  "E501",
+  "B905", # zip(strict=) requires Python 3.10; Pilot still supports 3.9
+  # flake8-bandit (https://docs.astral.sh/ruff/default-rules/#flake8-bandit-s):
+  # the pilot bootstraps itself on worker nodes, so these are its core
+  # function by design
+  "S101", # use of assert
+  "S110", # try-except-pass: best-effort cleanup must never abort the pilot
+  "S310", # urllib request with possibly unvetted URL
+  "S602", # subprocess call with shell=True
+  "S603", # subprocess call without shell
+  "S605", # starting a process with a shell
+  "S607", # starting a process with a partial executable path
+]
+
+[tool.ruff.lint.per-file-ignores]
+"Pilot/tests/**" = ["S311"] # pseudo-random generators are fine for test data

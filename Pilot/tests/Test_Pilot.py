@@ -5,12 +5,11 @@ import os
 import shutil
 import stat
 import sys
-import tempfile
-from unittest import mock
 
 # pylint: disable=protected-access, missing-docstring, invalid-name, line-too-long
 # imports
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.getcwd() + "/Pilot")
 
