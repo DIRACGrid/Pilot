@@ -930,25 +930,28 @@ class ConfigureCPURequirements(CommandBase):
         if retCode:
             self.log.error("Failed to determine cpu normalization [ERROR %d]" % retCode)
             self.exitWithError(retCode)
-        # HS06 benchmark
+        # DB12 benchmark (HS06 units); may be absent if disabled via JobScheduling/RunDB12Benchmark
+        cpuNormalizationFactor = None
         for line in cpuNormalizationFactorOutput.split("\n"):
             if "Estimated CPU power is" in line:
                 line = line.replace("Estimated CPU power is", "")
-            if "HS06" in line:
-                line = line.replace("HS06", "")
-                cpuNormalizationFactor = float(line.strip())
-                self.log.info(
-                    "Current normalized CPU as determined by 'dirac-wms-cpu-normalization' is %f"
-                    % cpuNormalizationFactor
-                )
+                if "HS06" in line:
+                    line = line.replace("HS06", "")
+                    cpuNormalizationFactor = float(line.strip())
+                    self.log.info(
+                        "Current normalized CPU as determined by 'dirac-wms-cpu-normalization' is %f"
+                        % cpuNormalizationFactor
+                    )
 
         configFileArg = ""
         if self.pp.useServerCertificate:
             configFileArg = "-o /DIRAC/Security/UseServerCertificate=yes"
         cfgFile = "--cfg %s" % self.pp.localConfigFile
+        cpuFactorArg = ""
+        if cpuNormalizationFactor:
+            cpuFactorArg = "--CPUNormalizationFactor=%f " % cpuNormalizationFactor
         retCode, cpuTimeOutput = self.executeAndGetOutput(
-            "dirac-wms-get-queue-cpu-time --CPUNormalizationFactor=%f %s %s -d"
-            % (cpuNormalizationFactor, configFileArg, cfgFile),
+            "dirac-wms-get-queue-cpu-time %s%s %s -d" % (cpuFactorArg, configFileArg, cfgFile),
             self.pp.installEnv,
         )
 
@@ -956,16 +959,27 @@ class ConfigureCPURequirements(CommandBase):
             self.log.error("Failed to determine cpu time left in the queue [ERROR %d]" % retCode)
             self.exitWithError(retCode)
 
+        cpuTime = None
         for line in cpuTimeOutput.split("\n"):
             if "CPU time left determined as" in line:
                 cpuTimeOutput = line.replace("CPU time left determined as", "").strip()
                 cpuTime = int(cpuTimeOutput)
                 self.log.info("CPUTime left (in seconds) is %d" % cpuTime)
 
+        if cpuTime is None:
+            self.log.error("Pilot command output does not have the correct format")
+            self.exitWithError(1)
+
         # HS06s = seconds * HS06
         try:
-            # determining the CPU time left (in HS06s)
-            self.pp.jobCPUReq = float(cpuTime) * float(cpuNormalizationFactor)
+            if cpuNormalizationFactor:
+                # determining the CPU time left (in HS06s)
+                self.pp.jobCPUReq = float(cpuTime) * float(cpuNormalizationFactor)
+            else:
+                # no benchmark value available (e.g. DB12 disabled and the HS23 lookup failed):
+                # the queue length can only be expressed in wall-clock seconds
+                self.log.warn("No CPU normalization factor available: CPUTimeLeft will be in seconds")
+                self.pp.jobCPUReq = float(cpuTime)
             self.log.info("Queue length (which is also set as CPUTimeLeft) is %f" % self.pp.jobCPUReq)
         except ValueError:
             self.log.error("Pilot command output does not have the correct format")
