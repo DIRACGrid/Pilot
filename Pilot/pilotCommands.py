@@ -1167,7 +1167,7 @@ class NagiosProbes(CommandBase):
             else:
                 # retCode could be 2 (error) or 3 (unknown) or something we haven't thought of
                 self.log.error("Return code = %d: %s" % (retCode, str(output).split("\n", 1)[0]))
-                retStatus = "error"
+                retStatus = "error"  # noqa: F841  kept for the TODO below
 
             # TODO: Do something with the retStatus (for example: log it?)
 
