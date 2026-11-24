@@ -14,7 +14,7 @@ jobs:
 
   shellcheck:
     name: shellcheck
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     if: github.event_name != 'push' || github.repository == 'DIRACGrid/DIRAC'
     timeout-minutes: 10
 
@@ -28,7 +28,7 @@ jobs:
 
   pycodestyle:
     name: pycodestyle (${{ matrix.python }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     if: github.event_name != 'push' || github.repository == 'DIRACGrid/Pilot'
     timeout-minutes: 10
 
@@ -63,7 +63,7 @@ jobs:
 
   pytest:
     name: pytest (${{ matrix.python }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     if: github.event_name != 'push' || github.repository == 'DIRACGrid/Pilot'
     timeout-minutes: 10
 
@@ -94,7 +94,7 @@ jobs:
 
   pylint:
     name: pylint (${{ matrix.python }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     if: github.event_name != 'push' || github.repository == 'DIRACGrid/Pilot'
     timeout-minutes: 10
 
