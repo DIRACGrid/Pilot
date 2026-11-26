@@ -117,3 +117,17 @@ jobs:
         python -m pip install pylint
     - name: Run pylint
       run: pylint -E Pilot/
+
+  # The one check the branch ruleset requires: its name does not change with the matrices above.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [shellcheck, pycodestyle, pytest, pylint]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail unless every job passed or was skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "${RESULTS}"
+          [[ ! "${RESULTS}" =~ failure|cancelled ]]
